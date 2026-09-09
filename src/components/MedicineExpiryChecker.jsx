@@ -23,7 +23,11 @@ import {
   Stethoscope,
   Trash2,
   Building2,
-  Check
+  Check,
+  Video,
+  VideoOff,
+  SwitchCamera,
+  X
 } from 'lucide-react';
 
 /**
@@ -47,6 +51,14 @@ export default function MedicineExpiryChecker({ appLang = 'or-IN', currentUser, 
   const [manualInputMode, setManualInputMode] = useState(false);
   const [manualExpDate, setManualExpDate] = useState('');
   const [manualMedicineName, setManualMedicineName] = useState('');
+
+  // Real Camera capture state & refs
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
+  const [facingMode, setFacingMode] = useState('environment'); // 'environment' (back camera) or 'user' (webcam)
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
 
   const fileInputRef = useRef(null);
   const canvasRef = useRef(null);
@@ -98,7 +110,16 @@ export default function MedicineExpiryChecker({ appLang = 'or-IN', currentUser, 
       disposal1: 'ଔଷଧକୁ ସିଧା ନଦୀ, ପୋଖରୀ କିମ୍ବା ନାଳରେ ଭସାନ୍ତୁ ନାହିଁ।',
       disposal2: 'ଟାବଲେଟ୍ କୁ ପ୍ୟାକେଟ୍‌ରୁ ବାହାର କରି ମାଟିରେ ପୋତି ଦିଅନ୍ତୁ କିମ୍ବା ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର ଡିସକାର୍ଡ ବିନ୍‌ରେ ଦିଅନ୍ତୁ।',
       disposal3: 'ଅପବ୍ୟବହାର ରୋକିବା ପାଇଁ ଖାଲି ବ୍ଲିଷ୍ଟର ଫଏଲ୍ କୁ ଚିରି ଡଷ୍ଟବିନରେ ପକାନ୍ତୁ।',
-      btnConsultDoctor: 'ଡାକ୍ତରଙ୍କ ସହ ପରାମର୍ଶ କରନ୍ତୁ / OPD ବୁକ୍ କରନ୍ତୁ'
+      btnConsultDoctor: 'ଡାକ୍ତରଙ୍କ ସହ ପରାମର୍ଶ କରନ୍ତୁ / OPD ବୁକ୍ କରନ୍ତୁ',
+      cameraModalTitle: 'ଲାଇଭ୍ କ୍ୟାମେରା ମିଆଦ ସ୍କାନର୍',
+      cameraModalSubtitle: 'କଟା ଔଷଧ ଷ୍ଟ୍ରିପ୍ କିମ୍ବା ପ୍ୟାକେଟ୍‌କୁ କ୍ୟାମେରା ଫ୍ରେମ୍ ମଧ୍ୟରେ ସ୍ପଷ୍ଟ ଭାବେ ରଖନ୍ତୁ',
+      cameraPermissionRequest: 'କ୍ୟାମେରା ଅନୁମତି ଅନୁରୋଧ କରାଯାଉଛି...',
+      cameraErrorDenied: 'କ୍ୟାମେରା ଅନୁମତି ମିଳିଲା ନାହିଁ। ଦୟାକରି ବ୍ରାଉଜର୍ ସେଟିଂସ୍‌ରୁ କ୍ୟାମେରା ଅନୁମତି ଦିଅନ୍ତୁ କିମ୍ବା ଫଟୋ ଅପଲୋଡ୍ କରନ୍ତୁ।',
+      cameraErrorNoDevice: 'କୌଣସି କ୍ୟାମେରା ମିଳିଲା ନାହିଁ। ଦୟାକରି ଫଟୋ ଅପଲୋଡ୍ କରନ୍ତୁ।',
+      btnCapturePhoto: 'ଫଟୋ କ୍ଲିକ୍ କରନ୍ତୁ',
+      btnSwitchCamera: 'କ୍ୟାମେରା ବଦଳାନ୍ତୁ',
+      btnCloseCamera: 'କ୍ୟାମେରା ବନ୍ଦ କରନ୍ତୁ',
+      cameraAlignGuide: 'କଟା ଷ୍ଟ୍ରିପ୍‌ର ମିଆଦ ତାରିଖ (EXP / BATCH) ଏହି ବାକ୍ସ ମଧ୍ୟରେ ରଖନ୍ତୁ'
     },
     'hi-IN': {
       tabNumber: '7. दवा एक्सपायरी जांच',
@@ -145,7 +166,16 @@ export default function MedicineExpiryChecker({ appLang = 'or-IN', currentUser, 
       disposal1: 'दवाओं को नालियों या खुले पानी में न बहाएं।',
       disposal2: 'टैबलेट को पत्ते से निकाल कर मिट्टी में दबाएं या अस्पताल निस्तारण पेटी में डालें।',
       disposal3: 'खाली एल्युमिनियम फॉयल को फाड़कर कूड़ेदान में डालें ताकि दुरुपयोग न हो सके।',
-      btnConsultDoctor: 'डॉक्टर से परामर्श करें / OPD बुक करें'
+      btnConsultDoctor: 'डॉक्टर से परामर्श करें / OPD बुक करें',
+      cameraModalTitle: 'लाइव कैमरा एक्सपायरी स्कैनर',
+      cameraModalSubtitle: 'कटे हुए टैबलेट स्ट्रिप या पैकेट को कैमरा फ्रेम में स्पष्ट रखें',
+      cameraPermissionRequest: 'कैमरा अनुमति मांगी जा रही है...',
+      cameraErrorDenied: 'कैमरा अनुमति अस्वीकृत। कृपया ब्राउज़र सेटिंग्स से कैमरा अनुमति दें अथवा फोटो अपलोड करें।',
+      cameraErrorNoDevice: 'कोई कैमरा नहीं मिला। कृपया फोटो अपलोड करें।',
+      btnCapturePhoto: 'फोटो खींचें',
+      btnSwitchCamera: 'कैमरा बदलें',
+      btnCloseCamera: 'कैमरा बंद करें',
+      cameraAlignGuide: 'कटी स्ट्रिप की एक्सपायरी तारीख (EXP / BATCH) इस बॉक्स में रखें'
     },
     'en-IN': {
       tabNumber: '7. Medicine Expiry Checker',
@@ -192,7 +222,16 @@ export default function MedicineExpiryChecker({ appLang = 'or-IN', currentUser, 
       disposal1: 'Never flush medications down toilets or throw into waterways to prevent environmental antibiotic resistance.',
       disposal2: 'Crush solid tablets, mix with unpalatable soil/coffee grounds, and seal in disposal pouch or return to PHC yellow bin.',
       disposal3: 'Deface or shred empty aluminum blister foil to prevent illegal counterfeit repackaging.',
-      btnConsultDoctor: 'Consult a Doctor / Book OPD Appointment'
+      btnConsultDoctor: 'Consult a Doctor / Book OPD Appointment',
+      cameraModalTitle: 'Live Camera Expiry Scanner',
+      cameraModalSubtitle: 'Position cut tablet strip or severed foil within the camera guide frame',
+      cameraPermissionRequest: 'Requesting camera access permission...',
+      cameraErrorDenied: 'Camera permission was denied. Please allow camera access in your browser settings or upload a saved photo.',
+      cameraErrorNoDevice: 'No camera hardware found on this device. Please upload an image file.',
+      btnCapturePhoto: 'Capture Photo',
+      btnSwitchCamera: 'Switch Camera',
+      btnCloseCamera: 'Close Camera',
+      cameraAlignGuide: 'Align stamped EXP / BATCH date inside this focal box'
     }
   }[lang] || {};
 
@@ -274,6 +313,114 @@ export default function MedicineExpiryChecker({ appLang = 'or-IN', currentUser, 
       imageType: 'ambiguous'
     }
   ];
+
+  // Stop camera media stream safely
+  const stopCameraStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  // Launch live camera with user permission
+  const startCamera = async (overrideFacingMode = null) => {
+    stopCameraStream();
+    setCameraLoading(true);
+    setCameraError(null);
+    setShowCameraModal(true);
+
+    const mode = overrideFacingMode || facingMode;
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('NO_MEDIA_DEVICES');
+      }
+
+      const constraints = {
+        video: {
+          facingMode: { ideal: mode },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          console.warn('Video auto-play interrupted:', playErr);
+        }
+      }
+      setCameraLoading(false);
+    } catch (err) {
+      console.error('Camera access error:', err);
+      setCameraLoading(false);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setCameraError(txt.cameraErrorDenied);
+      } else if (err.name === 'NotFoundError' || err.message === 'NO_MEDIA_DEVICES') {
+        setCameraError(txt.cameraErrorNoDevice);
+      } else {
+        setCameraError(txt.cameraErrorDenied);
+      }
+    }
+  };
+
+  // Switch between front/back camera
+  const toggleFacingMode = () => {
+    const nextMode = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(nextMode);
+    startCamera(nextMode);
+  };
+
+  // Close camera modal
+  const closeCamera = () => {
+    stopCameraStream();
+    setShowCameraModal(false);
+    setCameraError(null);
+  };
+
+  // Capture current video frame onto invisible canvas & convert to File/Blob
+  const capturePhotoFromCamera = () => {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2) return;
+
+    const width = video.videoWidth || 1280;
+    const height = video.videoHeight || 720;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, width, height);
+
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const file = new File([blob], `medicine-camera-${timestamp}.jpg`, { type: 'image/jpeg' });
+          closeCamera();
+          processUploadedFile(file);
+        }
+      },
+      'image/jpeg',
+      0.95
+    );
+  };
+
+  // Clean up media stream on unmount
+  useEffect(() => {
+    return () => {
+      stopCameraStream();
+    };
+  }, []);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -417,11 +564,19 @@ export default function MedicineExpiryChecker({ appLang = 'or-IN', currentUser, 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="px-5 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              onClick={() => startCamera()}
+              className="px-5 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
               <Camera className="w-4 h-4 text-slate-950" />
               {txt.btnTakePhoto}
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-bold text-xs rounded-xl border border-white/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <UploadCloud className="w-4 h-4 text-teal-300" />
+              {txt.btnUploadPhoto}
             </button>
             <button
               type="button"
@@ -651,9 +806,9 @@ export default function MedicineExpiryChecker({ appLang = 'or-IN', currentUser, 
                 </div>
               ) : (
                 /* Empty Dropzone State */
-                <div className="text-center p-6 space-y-3">
+                <div className="text-center p-6 space-y-4">
                   <div className="w-16 h-16 mx-auto rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center shadow-xs">
-                    <UploadCloud className="w-8 h-8" />
+                    <Pill className="w-8 h-8 text-teal-600" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-800">
@@ -663,10 +818,29 @@ export default function MedicineExpiryChecker({ appLang = 'or-IN', currentUser, 
                       {txt.uploadBoxSubtitle}
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center justify-center gap-2">
-                    <span className="px-3.5 py-1.5 bg-teal-600 text-white font-bold text-xs rounded-xl shadow-xs">
+                  <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startCamera();
+                      }}
+                      className="px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <Camera className="w-4 h-4 text-slate-950" />
+                      {txt.btnTakePhoto}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <UploadCloud className="w-4 h-4 text-teal-300" />
                       {txt.btnUploadPhoto}
-                    </span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -689,23 +863,33 @@ export default function MedicineExpiryChecker({ appLang = 'or-IN', currentUser, 
             </div>
 
             {/* Bottom action buttons */}
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <UploadCloud className="w-3.5 h-3.5 text-teal-600" />
-                {txt.btnNewScan}
-              </button>
+            <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => startCamera()}
+                  className="px-3.5 py-2 bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Camera className="w-3.5 h-3.5 text-teal-700" />
+                  {txt.btnTakePhoto}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <UploadCloud className="w-3.5 h-3.5 text-teal-600" />
+                  {txt.btnUploadPhoto}
+                </button>
+              </div>
 
               {scanResult && (
                 <button
                   type="button"
                   onClick={() => runScannerAnalysis(scanResult.title, scanResult)}
-                  className="px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-bold rounded-xl border border-teal-200 transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                  <RefreshCw className="w-3.5 h-3.5 text-teal-600" />
+                  <RefreshCw className="w-3.5 h-3.5 text-white" />
                   {txt.btnRescan}
                 </button>
               )}
@@ -891,6 +1075,165 @@ export default function MedicineExpiryChecker({ appLang = 'or-IN', currentUser, 
           </div>
         </div>
       </div>
+
+      {/* LIVE CAMERA CAPTURE MODAL WITH NATIVE PERMISSION & STREAM HUD */}
+      {showCameraModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-slate-900 border border-teal-500/40 rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center">
+                  <Video className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    {txt.cameraModalTitle}
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                      REC
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    {txt.cameraModalSubtitle}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeCamera}
+                className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Video Viewport Area */}
+            <div className="relative bg-black flex-1 min-h-[320px] sm:min-h-[380px] flex items-center justify-center overflow-hidden">
+              {cameraLoading && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white space-y-3 p-6 text-center">
+                  <RefreshCw className="w-8 h-8 text-teal-400 animate-spin" />
+                  <p className="text-xs font-semibold text-teal-300">
+                    {txt.cameraPermissionRequest}
+                  </p>
+                  <p className="text-[11px] text-slate-400 max-w-xs">
+                    {lang === 'or-IN'
+                      ? 'ଦୟାକରି ବ୍ରାଉଜର୍‌ର "Allow / ଅନୁମତି ଦିଅନ୍ତୁ" ବଟନ୍ ଦବାନ୍ତୁ।'
+                      : (lang === 'hi-IN'
+                      ? 'कृपया ब्राउज़र के "Allow" बटन पर क्लिक करके कैमरा अनुमति दें।'
+                      : 'Please grant camera access when prompted by your browser.')}
+                  </p>
+                </div>
+              )}
+
+              {cameraError ? (
+                <div className="p-6 text-center space-y-4 max-w-md mx-auto">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center">
+                    <VideoOff className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white mb-1">
+                      {lang === 'or-IN' ? 'କ୍ୟାମେରା ଖୋଲିବାରେ ସମସ୍ୟା' : (lang === 'hi-IN' ? 'कैमरा शुरू करने में समस्या' : 'Camera Access Issue')}
+                    </h4>
+                    <p className="text-xs text-rose-300 leading-relaxed">
+                      {cameraError}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => startCamera()}
+                      className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+                    >
+                      {lang === 'or-IN' ? 'ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ' : (lang === 'hi-IN' ? 'पुनः प्रयास करें' : 'Try Again')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeCamera();
+                        fileInputRef.current?.click();
+                      }}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                    >
+                      {txt.btnUploadPhoto}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Native HTML5 Video Element with Camera Stream */}
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+
+                  {/* Laser & OCR Target Bounding Guide Frame */}
+                  <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6">
+                    <div className="relative w-64 sm:w-80 h-44 sm:h-52 border-2 border-dashed border-teal-400/90 rounded-2xl shadow-[0_0_30px_rgba(45,212,191,0.2)] flex flex-col justify-between p-3">
+                      {/* Corner markings */}
+                      <div className="flex justify-between">
+                        <span className="w-4 h-4 border-t-3 border-l-3 border-teal-300"></span>
+                        <span className="w-4 h-4 border-t-3 border-r-3 border-teal-300"></span>
+                      </div>
+
+                      {/* Animated Laser Scanning Beam */}
+                      <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-teal-300 to-transparent shadow-[0_0_12px_#2dd4bf] animate-pulse" />
+
+                      <div className="flex justify-between">
+                        <span className="w-4 h-4 border-b-3 border-l-3 border-teal-300"></span>
+                        <span className="w-4 h-4 border-b-3 border-r-3 border-teal-300"></span>
+                      </div>
+                    </div>
+
+                    <p className="mt-3 bg-slate-950/80 text-teal-200 font-mono text-[10px] px-3 py-1 rounded-full border border-teal-500/30 text-center max-w-xs shadow-md">
+                      {txt.cameraAlignGuide}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Camera Bottom Controls */}
+            <div className="p-4 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between gap-4">
+              <button
+                type="button"
+                onClick={toggleFacingMode}
+                className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Switch Camera"
+              >
+                <SwitchCamera className="w-4 h-4 text-teal-400" />
+                <span className="hidden sm:inline">{txt.btnSwitchCamera}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={cameraLoading || !!cameraError}
+                onClick={capturePhotoFromCamera}
+                className={`px-6 py-3 rounded-2xl font-black text-xs flex items-center gap-2 shadow-lg transition-all ${
+                  cameraLoading || cameraError
+                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-50'
+                    : 'bg-gradient-to-r from-teal-400 via-emerald-400 to-teal-500 hover:from-teal-300 hover:to-emerald-300 text-slate-950 cursor-pointer active:scale-95 shadow-teal-500/20'
+                }`}
+              >
+                <div className="w-3.5 h-3.5 rounded-full bg-slate-950 border-2 border-white" />
+                {txt.btnCapturePhoto}
+              </button>
+
+              <button
+                type="button"
+                onClick={closeCamera}
+                className="px-3.5 py-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer"
+              >
+                {txt.btnCloseCamera}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
