@@ -3,8 +3,9 @@ import MultimodalIntakeForm from './components/MultimodalIntakeForm';
 import OcrUploader from './components/OcrUploader';
 import TriageDoctorDashboard from './components/TriageDoctorDashboard';
 import DoctorBookingSystem from './components/DoctorBookingSystem';
-import AmbulanceBooking from './components/AmbulanceBooking';
-import BedBookingSystem from './components/BedBookingSystem';
+import BloodBankSystem from './components/BloodBankSystem';
+import MedicineExpiryChecker from './components/MedicineExpiryChecker';
+import NearestMedicalGPS from './components/NearestMedicalGPS';
 import AuthPage from './components/AuthPage';
 import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments } from './utils/authStorage';
 import {
@@ -25,8 +26,9 @@ import {
   MapPin,
   Globe,
   Calendar,
-  Truck,
-  Bed
+  Droplet,
+  Pill,
+  Navigation
 } from 'lucide-react';
 
 export default function App() {
@@ -231,16 +233,17 @@ export default function App() {
       protocol: 'ଡାକ୍ତରୀ ନିଷ୍ପତ୍ତି ସହାୟକ ପୋର୍ଟାଲ୍ (Non-Diagnostic) | ଆୟୁଷ୍ମାନ ଭାରତ ଓ BSKY ଅନ୍ତର୍ଭୁକ୍ତ',
       facilityLabel: 'କେନ୍ଦ୍ର:',
       portalTag: 'ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ପୋର୍ଟାଲ୍',
-      ambulanceTab: '1. 🚑 ଆମ୍ବୁଲାନ୍ସ',
-      patientIntakeTab: '2. ମୋର ଲକ୍ଷଣ ଦାଖଲ',
-      patientOcrTab: '3. ରିପୋର୍ଟ ଅପଲୋଡ୍',
-      patientQueueTab: '4. ଟ୍ରାଏଜ୍ ଧାଡ଼ି',
-      doctorDeskTab: '2. ଡାକ୍ତର ଡେସ୍କ',
-      doctorIntakeTab: '3. ରୋଗୀ ବିବରଣୀ',
-      doctorOcrTab: '4. ଲ୍ୟାବ୍ OCR',
-      doctorBookingTab: '5. ଡାକ୍ତର ବୁକିଂ',
-      bedTab: '6. 🛏️ ବେଡ୍ ବୁକିଂ',
-      scenariosTab: '7. ସ୍ୱାସ୍ଥ୍ୟ ନିୟମ',
+      patientIntakeTab: '୧. ମୋର ଲକ୍ଷଣ ଦାଖଲ',
+      patientOcrTab: '୨. ରିପୋର୍ଟ ଅପଲୋଡ୍',
+      patientQueueTab: '୩. ହସ୍ପିଟାଲ୍ ଟ୍ରାଏଜ୍ ଧାଡ଼ି',
+      doctorDeskTab: '୧. ଡାକ୍ତର ରିଭ୍ୟୁ ଡେସ୍କ',
+      doctorIntakeTab: '୨. ରୋଗୀ ବିବରଣୀ',
+      doctorOcrTab: '୩. ଲ୍ୟାବ୍ ରିପୋର୍ଟ ଯାଞ୍ଚ',
+      doctorBookingTab: '୪. ଡାକ୍ତର ତାଲିକା ଓ ବୁକିଂ',
+      bloodBankTab: '୫. ରକ୍ତ ଭଣ୍ଡାର (Blood Bank)',
+      scenariosTab: '୬. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
+      medicineExpiryTab: '୭. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
+      nearestMedicalTab: '୮. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
@@ -270,16 +273,17 @@ export default function App() {
       protocol: 'क्लिनिकल निर्णय समर्थन (Non-Diagnostic) | आयुष्मान भारत एवं राष्ट्रीय स्वास्थ्य मिशन',
       facilityLabel: 'केंद्र:',
       portalTag: 'राष्ट्रीय स्वास्थ्य पोर्टल',
-      ambulanceTab: '1. 🚑 एम्बुलेंस',
-      patientIntakeTab: '2. लक्षण दर्ज करें',
-      patientOcrTab: '3. रिपोर्ट अपलोड',
-      patientQueueTab: '4. ट्रायज कतार',
-      doctorDeskTab: '2. डॉक्टर डेस्क',
-      doctorIntakeTab: '3. मरीज विवरण',
-      doctorOcrTab: '4. लैब OCR',
-      doctorBookingTab: '5. डॉक्टर बुकिंग',
-      bedTab: '6. 🛏️ बेड बुकिंग',
-      scenariosTab: '7. फील्ड परिदृश्य',
+      patientIntakeTab: '1. लक्षण दर्ज करें',
+      patientOcrTab: '2. रिपोर्ट अपलोड',
+      patientQueueTab: '3. अस्पताल ट्रायज कतार',
+      doctorDeskTab: '1. डॉक्टर रिव्यू डेस्क',
+      doctorIntakeTab: '2. मरीज विवरण',
+      doctorOcrTab: '3. लैब रिपोर्ट OCR',
+      doctorBookingTab: '4. डॉक्टर सूची एवं बुकिंग',
+      bloodBankTab: '5. ब्लड बैंक (Blood Bank)',
+      scenariosTab: '6. फील्ड परिदृश्य',
+      medicineExpiryTab: '7. दवा एक्सपायरी जांच',
+      nearestMedicalTab: '8. निकटतम अस्पताल (GPS Map)',
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
@@ -309,16 +313,17 @@ export default function App() {
       protocol: 'Human-in-the-Loop Decision Support (Non-Diagnostic) | MoHFW Aligned',
       facilityLabel: 'Facility:',
       portalTag: 'National Health Portal',
-      ambulanceTab: '1. 🚑 Ambulance',
-      patientIntakeTab: '2. My Symptom Intake',
-      patientOcrTab: '3. Upload Lab Reports',
-      patientQueueTab: '4. Triage Queue',
-      doctorDeskTab: '2. Doctor Desk',
-      doctorIntakeTab: '3. Patient Intake',
-      doctorOcrTab: '4. Lab OCR',
-      doctorBookingTab: '5. Doctor Booking',
-      bedTab: '6. 🛏️ Bed Booking',
-      scenariosTab: '7. Field Scenarios',
+      patientIntakeTab: '1. My Symptom Intake',
+      patientOcrTab: '2. Upload Lab Reports',
+      patientQueueTab: '3. Hospital Triage Queue',
+      doctorDeskTab: '1. Doctor Review Desk',
+      doctorIntakeTab: '2. Patient Intake',
+      doctorOcrTab: '3. Lab Report OCR',
+      doctorBookingTab: '4. Doctor Directory & Booking',
+      bloodBankTab: '5. Blood Bank Portal',
+      scenariosTab: '6. Field Scenarios',
+      medicineExpiryTab: '7. Medicine Expiry Checker',
+      nearestMedicalTab: '8. Nearest Medical & GPS Map',
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
@@ -461,17 +466,16 @@ export default function App() {
                   )}
                 </button>
 
-                {/* TAB 6: BED BOOKING */}
                 <button
-                  onClick={() => setActiveTab('beds')}
+                  onClick={() => setActiveTab('bloodbank')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                    activeTab === 'beds'
-                      ? 'bg-teal-700 text-white shadow-xs'
+                    activeTab === 'bloodbank'
+                      ? 'bg-rose-700 text-white shadow-xs'
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  <Bed className="w-3.5 h-3.5" />
-                  {uiText.bedTab}
+                  <Droplet className="w-3.5 h-3.5 text-rose-300 fill-rose-200" />
+                  {uiText.bloodBankTab}
                 </button>
               </>
             ) : (
@@ -553,17 +557,16 @@ export default function App() {
                   )}
                 </button>
 
-                {/* TAB 6: BED BOOKING */}
                 <button
-                  onClick={() => setActiveTab('beds')}
+                  onClick={() => setActiveTab('bloodbank')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                    activeTab === 'beds'
-                      ? 'bg-teal-700 text-white shadow-xs'
+                    activeTab === 'bloodbank'
+                      ? 'bg-rose-700 text-white shadow-xs'
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  <Bed className="w-3.5 h-3.5" />
-                  {uiText.bedTab}
+                  <Droplet className="w-3.5 h-3.5 text-rose-300 fill-rose-200" />
+                  {uiText.bloodBankTab}
                 </button>
               </>
             )}
@@ -579,6 +582,36 @@ export default function App() {
             >
               <Activity className="w-3.5 h-3.5 text-indigo-600" />
               {uiText.scenariosTab}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('expiry')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'expiry'
+                  ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Pill className="w-3.5 h-3.5 text-teal-400" />
+              {uiText.medicineExpiryTab}
+              <span className="bg-amber-400 text-slate-950 text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                NEW
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('nearest')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'nearest'
+                  ? 'bg-gradient-to-r from-emerald-700 to-teal-800 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Navigation className="w-3.5 h-3.5 text-emerald-300" />
+              {uiText.nearestMedicalTab}
+              <span className="bg-rose-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
+                GPS
+              </span>
             </button>
           </nav>
 
@@ -802,20 +835,10 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: AMBULANCE BOOKING */}
-        {activeTab === 'ambulance' && (
+        {/* TAB 5: ODISHA BLOOD BANK PORTAL */}
+        {activeTab === 'bloodbank' && (
           <div>
-            <AmbulanceBooking
-              currentUser={currentUser}
-              appLang={appLang}
-            />
-          </div>
-        )}
-
-        {/* TAB: HOSPITAL BED BOOKING */}
-        {activeTab === 'beds' && (
-          <div>
-            <BedBookingSystem
+            <BloodBankSystem
               currentUser={currentUser}
               appLang={appLang}
             />
@@ -1019,6 +1042,27 @@ export default function App() {
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* TAB 7: MEDICINE EXPIRY DATE CHECKER */}
+        {activeTab === 'expiry' && (
+          <div className="space-y-6">
+            <MedicineExpiryChecker
+              appLang={appLang}
+              currentUser={currentUser}
+              onBookDoctor={() => setActiveTab('booking')}
+            />
+          </div>
+        )}
+
+        {/* TAB 8: NEAREST MEDICAL & EMERGENCY AMBULANCE GPS */}
+        {activeTab === 'nearest' && (
+          <div className="space-y-6">
+            <NearestMedicalGPS
+              currentUser={currentUser}
+              appLang={appLang}
+            />
           </div>
         )}
       </main>
