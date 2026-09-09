@@ -9,6 +9,8 @@ const DoctorBookingSystem = lazy(() => import('./components/DoctorBookingSystem'
 const BloodBankSystem = lazy(() => import('./components/BloodBankSystem'));
 const MedicineExpiryChecker = lazy(() => import('./components/MedicineExpiryChecker'));
 const NearestMedicalGPS = lazy(() => import('./components/NearestMedicalGPS'));
+const BedBookingSystem = lazy(() => import('./components/BedBookingSystem'));
+const AmbulanceBooking = lazy(() => import('./components/AmbulanceBooking'));
 import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments } from './utils/authStorage';
 import { DoctorAvatar } from './utils/doctorPhotos';
 import {
@@ -31,7 +33,9 @@ import {
   Calendar,
   Droplet,
   Pill,
-  Navigation
+  Navigation,
+  Bed,
+  Truck
 } from 'lucide-react';
 
 export default function App() {
@@ -39,7 +43,7 @@ export default function App() {
   const [appLang, setAppLang] = useState(() => currentUser?.preferredLanguage || 'or-IN');
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('beds');
   const [currentIntake, setCurrentIntake] = useState(null);
   const [currentOcr, setCurrentOcr] = useState(null);
   const [generatedTriageNote, setGeneratedTriageNote] = useState(null);

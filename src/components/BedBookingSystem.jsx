@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Bed,
   Building2,
@@ -567,34 +567,42 @@ export default function BedBookingSystem({ currentUser, appLang }) {
     }
   };
 
-  // Filtered hospitals
-  const filteredHospitals = HOSPITALS_DATABASE.filter((hosp) => {
-    // District filter
-    if (selectedDistrict !== 'ALL' && hosp.district !== selectedDistrict) {
-      return false;
-    }
-    // Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const nameMatch = Object.values(hosp.name).some((n) => n.toLowerCase().includes(q));
-      const cityMatch = hosp.city.toLowerCase().includes(q);
-      const distMatch = hosp.district.toLowerCase().includes(q);
-      if (!nameMatch && !cityMatch && !distMatch) return false;
-    }
-    // Bed type filter
-    if (selectedBedType !== 'ALL') {
-      const available = hosp.beds[selectedBedType]?.available || 0;
-      if (available <= 0) return false;
-    }
-    return true;
-  });
+  // Filtered hospitals - memoized to avoid repeated reprocessing on every render
+  const filteredHospitals = useMemo(() => {
+    return HOSPITALS_DATABASE.filter((hosp) => {
+      if (selectedDistrict !== 'ALL' && hosp.district !== selectedDistrict) {
+        return false;
+      }
 
-  // Calculate totals
-  const totalAvailableBeds = HOSPITALS_DATABASE.reduce((sum, h) => {
-    return sum + Object.values(h.beds).reduce((s, b) => s + b.available, 0);
-  }, 0);
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const nameMatch = Object.values(hosp.name).some((n) => n.toLowerCase().includes(q));
+        const cityMatch = hosp.city.toLowerCase().includes(q);
+        const distMatch = hosp.district.toLowerCase().includes(q);
+        if (!nameMatch && !cityMatch && !distMatch) return false;
+      }
 
-  const totalIcuBeds = HOSPITALS_DATABASE.reduce((sum, h) => sum + (h.beds.icu?.available || 0), 0);
+      if (selectedBedType !== 'ALL') {
+        const available = hosp.beds[selectedBedType]?.available || 0;
+        if (available <= 0) return false;
+      }
+
+      return true;
+    });
+  }, [selectedDistrict, searchQuery, selectedBedType]);
+
+  // Calculate totals efficiently and only when source data changes
+  const totals = useMemo(() => {
+    const totalAvailableBeds = HOSPITALS_DATABASE.reduce((sum, h) => {
+      return sum + Object.values(h.beds).reduce((s, b) => s + b.available, 0);
+    }, 0);
+
+    const totalIcuBeds = HOSPITALS_DATABASE.reduce((sum, h) => sum + (h.beds.icu?.available || 0), 0);
+
+    return { totalAvailableBeds, totalIcuBeds };
+  }, []);
+
+  const { totalAvailableBeds, totalIcuBeds } = totals;
 
   return (
     <div className="space-y-6">
@@ -709,6 +717,7 @@ export default function BedBookingSystem({ currentUser, appLang }) {
                       <img
                         src={bed.image}
                         alt={bed.name['en-IN']}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         onError={(e) => {
                           e.target.onerror = null;
@@ -1101,6 +1110,7 @@ export default function BedBookingSystem({ currentUser, appLang }) {
               <img
                 src={targetBedType.image}
                 alt={targetBedType.name['en-IN']}
+                loading="lazy"
                 className="w-16 h-12 object-cover rounded-lg border border-slate-300"
               />
               <div>
