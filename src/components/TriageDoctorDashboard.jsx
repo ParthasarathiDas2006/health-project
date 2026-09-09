@@ -29,7 +29,7 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
   const [filterUrgency, setFilterUrgency] = useState('ALL');
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [acceptedTicketId, setAcceptedTicketId] = useState(null);
-  const [customApexHospital, setCustomApexHospital] = useState('');
+  const [customSwasthyaMitraHospital, setCustomSwasthyaMitraHospital] = useState('');
   const apexHospitals = getHospitalPartners(activeLang);
 
   // Default fallback clinician profile
@@ -872,7 +872,7 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
                   </span>
                   <button
                     onClick={() => {
-                      setCustomApexHospital(selectedTicket.referralRecommendation);
+                      setCustomSwasthyaMitraHospital(selectedTicket.referralRecommendation);
                       setShowReferralModal(true);
                     }}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded font-medium transition-colors flex items-center gap-1"
@@ -964,25 +964,25 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
                       {txt.referredToFacility}
                     </span>
                     <span className="text-[9px] bg-indigo-200 text-indigo-900 font-bold px-1.5 py-0.2 rounded">
-                      Apex Tie-Up Network
+                      Swasthya Mitra Network
                     </span>
                   </div>
                   <select
-                    value={customApexHospital || selectedTicket.referralRecommendation}
-                    onChange={(e) => setCustomApexHospital(e.target.value)}
+                    value={customSwasthyaMitraHospital || selectedTicket.referralRecommendation}
+                    onChange={(e) => setCustomSwasthyaMitraHospital(e.target.value)}
                     className="w-full mt-0.5 p-1.5 bg-white border border-indigo-300 rounded text-xs font-bold text-indigo-950 outline-none focus:border-indigo-600"
                   >
                     <option value={selectedTicket.referralRecommendation}>
                       ★ {selectedTicket.referralRecommendation} ({activeLang === 'or-IN' ? 'ପ୍ରସ୍ତାବିତ' : (activeLang === 'hi-IN' ? 'प्रस्तावित' : 'Recommended')})
                     </option>
-                    <optgroup label={activeLang === 'or-IN' ? 'ଓଡ଼ିଶାର ସହବନ୍ଧିତ ଏପେକ୍ସ ହସ୍ପିଟାଲ୍ (Odisha Apex)' : (activeLang === 'hi-IN' ? 'ओडिशा संबद्ध शीर्ष अस्पताल' : 'Odisha Partner Apex Hospitals')}>
+                    <optgroup label={activeLang === 'or-IN' ? 'ଓଡ଼ିଶାର ସହବନ୍ଧିତ ଏପେକ୍ସ ହସ୍ପିଟାଲ୍ (Odisha Swasthya Mitra)' : (activeLang === 'hi-IN' ? 'ओडिशा संबद्ध शीर्ष अस्पताल' : 'Odisha Partner Swasthya Mitra Hospitals')}>
                       {apexHospitals.filter((h) => h.region === 'Odisha').map((h) => (
                         <option key={h.id} value={`${h.name} - ${h.cityLabel}`}>
                           {h.name} ({h.cityLabel})
                         </option>
                       ))}
                     </optgroup>
-                    <optgroup label={activeLang === 'or-IN' ? 'ଜାତୀୟ ଏପେକ୍ସ ସେଣ୍ଟର୍ (National Metros)' : (activeLang === 'hi-IN' ? 'राष्ट्रीय शीर्ष संस्थान' : 'National Apex Metro Centers')}>
+                    <optgroup label={activeLang === 'or-IN' ? 'ଜାତୀୟ ଏପେକ୍ସ ସେଣ୍ଟର୍ (National Metros)' : (activeLang === 'hi-IN' ? 'राष्ट्रीय शीर्ष संस्थान' : 'National Swasthya Mitra Metro Centers')}>
                       {apexHospitals.filter((h) => h.region === 'National').map((h) => (
                         <option key={h.id} value={`${h.name} - ${h.cityLabel}`}>
                           {h.name} ({h.cityLabel})

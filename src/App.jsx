@@ -361,8 +361,8 @@ export default function App() {
       doctorBookingTab: '୪. ଡାକ୍ତର ତାଲିକା ଓ ବୁକିଂ',
       bedsTab: '୫. ହସ୍ପିଟାଲ୍ ବେଡ୍ ରିଜର୍ଭେସନ୍',
       bloodBankTab: '୬. ରକ୍ତ ଭଣ୍ଡାର (Blood Bank)',
-      patientHospitalsTab: '୭. ହସ୍ପିଟାଲ୍ ସହବନ୍ଧିତା (Tie-Ups)',
-      doctorHospitalsTab: '୭. ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍ ନେଟୱାର୍କ',
+      patientHospitalsTab: '୭. ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର (Swasthya Mitra)',
+      doctorHospitalsTab: '୭. ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ନେଟୱାର୍କ',
       scenariosTab: '୮. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
       medicineExpiryTab: '୯. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
       nearestMedicalTab: '୧୦. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
@@ -404,8 +404,8 @@ export default function App() {
       doctorBookingTab: '4. डॉक्टर सूची एवं बुकिंग',
       bedsTab: '5. अस्पताल बेड रिज़र्वेशन',
       bloodBankTab: '6. ब्लड बैंक (Blood Bank)',
-      patientHospitalsTab: '7. अस्पताल संबद्धता (Tie-Ups)',
-      doctorHospitalsTab: '7. संबद्ध अस्पताल नेटवर्क',
+      patientHospitalsTab: '7. स्वास्थ्य मित्र (Swasthya Mitra)',
+      doctorHospitalsTab: '7. स्वास्थ्य मित्र नेटवर्क',
       scenariosTab: '8. फील्ड परिदृश्य',
       medicineExpiryTab: '9. दवा एक्सपायरी जांच',
       nearestMedicalTab: '10. निकटतम अस्पताल (GPS Map)',
@@ -447,8 +447,8 @@ export default function App() {
       doctorBookingTab: '4. Doctor Directory & Booking',
       bedsTab: '5. Hospital Bed Reservation',
       bloodBankTab: '6. Blood Bank Portal',
-      patientHospitalsTab: '7. Hospital Tie-Ups',
-      doctorHospitalsTab: '7. Apex Hospital Network',
+      patientHospitalsTab: '7. Swasthya Mitra',
+      doctorHospitalsTab: '7. Swasthya Mitra Network',
       scenariosTab: '8. Field Scenarios',
       medicineExpiryTab: '9. Medicine Expiry Checker',
       nearestMedicalTab: '10. Nearest Medical & GPS Map',
@@ -616,7 +616,7 @@ export default function App() {
                   <Building2 className="w-3.5 h-3.5 text-indigo-200" />
                   {uiText.patientHospitalsTab}
                   <span className="bg-indigo-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-                    {transfersCount > 0 ? transfersCount : '44 Apex'}
+                    {transfersCount > 0 ? transfersCount : '44 Partners'}
                   </span>
                 </button>
               </>
@@ -721,7 +721,7 @@ export default function App() {
                   <Building2 className="w-3.5 h-3.5 text-indigo-200" />
                   {uiText.doctorHospitalsTab}
                   <span className="bg-indigo-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-                    {transfersCount > 0 ? transfersCount : '44 Apex'}
+                    {transfersCount > 0 ? transfersCount : '44 Partners'}
                   </span>
                 </button>
               </>
