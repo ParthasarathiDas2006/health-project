@@ -616,7 +616,7 @@ export default function App() {
                   <Building2 className="w-3.5 h-3.5 text-indigo-200" />
                   {uiText.patientHospitalsTab}
                   <span className="bg-indigo-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-                    {transfersCount > 0 ? transfersCount : '44 Partners'}
+                    {transfersCount > 0 ? transfersCount : '110'}
                   </span>
                 </button>
               </>
@@ -721,7 +721,7 @@ export default function App() {
                   <Building2 className="w-3.5 h-3.5 text-indigo-200" />
                   {uiText.doctorHospitalsTab}
                   <span className="bg-indigo-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-                    {transfersCount > 0 ? transfersCount : '44 Partners'}
+                    {transfersCount > 0 ? transfersCount : '110'}
                   </span>
                 </button>
               </>
