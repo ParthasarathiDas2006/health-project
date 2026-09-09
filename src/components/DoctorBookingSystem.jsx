@@ -18,7 +18,12 @@ import {
   Video,
   Award,
   ChevronRight,
-  Trash2
+  Trash2,
+  Sunrise,
+  Sun,
+  Sunset,
+  Moon,
+  Filter
 } from 'lucide-react';
 import { getBookedAppointments, saveAppointment, cancelAppointment } from '../utils/authStorage';
 
@@ -43,6 +48,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+  const [shiftFilter, setShiftFilter] = useState('all'); // 'all', 'early', 'morning', 'afternoon', 'evening'
   const [consultType, setConsultType] = useState('in-person'); // 'in-person' or 'tele'
   const [patientName, setPatientName] = useState(currentUser?.name || '');
   const [patientPhone, setPatientPhone] = useState(currentUser?.phone || '');
@@ -67,14 +73,26 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       tabDirectory: 'ଡାକ୍ତର ତାଲିକା (Doctor Directory)',
       tabMyBookings: 'ମୋର ଆପଏଣ୍ଟମେଣ୍ଟ (My Bookings)',
       searchPlaceholder: 'ଡାକ୍ତରଙ୍କ ନାମ, ବିଭାଗ କିମ୍ବା ହସ୍ପିଟାଲ୍ ଖୋଜନ୍ତୁ...',
-      allSpecialties: 'ସମସ୍ତ ବିଶେଷଜ୍ଞ',
-      allLocations: 'ସମସ୍ତ କେନ୍ଦ୍ର',
+      allSpecialties: 'ସମସ୍ତ ବିଶେଷଜ୍ଞ ବିଭାଗ (All Specialties)',
+      allLocations: 'ସମସ୍ତ ମେଡିକାଲ୍ କେନ୍ଦ୍ର (All Centers)',
       specialtyGenMed: 'ସାଧାରଣ ଚିକିତ୍ସା (General Medicine)',
       specialtyObGyn: 'ମାତୃ ଓ ସ୍ତ୍ରୀ ରୋଗ (OB-GYN)',
-      specialtyPediatrics: 'ଶିଶୁ ରୋଗ (Pediatrics)',
-      specialtyCardio: 'ହୃଦରୋଗ (Cardiology)',
-      specialtyEmergency: 'ଜରୁରୀକାଳୀନ ଚିକିତ୍ସା (Emergency)',
-      specialtyOrtho: 'ଅସ୍ଥିଶଲ୍ୟ (Orthopedics)',
+      specialtyPediatrics: 'ଶିଶୁ ରୋଗ ବିଶେଷଜ୍ଞ (Pediatrics)',
+      specialtyCardio: 'ହୃଦରୋଗ ବିଶେଷଜ୍ଞ (Cardiology)',
+      specialtyEmergency: 'ଜରୁରୀକାଳୀନ ଚିକିତ୍ସା (Emergency & Trauma)',
+      specialtyOrtho: 'ଅସ୍ଥିଶଲ୍ୟ ଚିକିତ୍ସା (Orthopedics)',
+      specialtyPulmo: 'ଫୁସଫୁସ୍ ଓ ଶ୍ୱାସରୋଗ (Pulmonology & Chest)',
+      specialtyDerma: 'ଚର୍ମ ରୋଗ ବିଶେଷଜ୍ଞ (Dermatology)',
+      specialtyNeuro: 'ସ୍ନାୟୁ ଓ ମସ୍ତିଷ୍କ ରୋଗ (Neurology)',
+      specialtyNephro: 'ବୃକ୍‌କ ଓ କିଡନୀ ରୋଗ (Nephrology & Dialysis)',
+      specialtyGastro: 'ପେଟ ଓ ଯକୃତ ରୋଗ (Gastroenterology)',
+      specialtyOphthal: 'ନେତ୍ର ଚିକିତ୍ସା (Ophthalmology & Eye)',
+      specialtyENT: 'ନାକ, କାନ ଓ ଗଳା (ENT)',
+      specialtyPsych: 'ମାନସିକ ସ୍ୱାସ୍ଥ୍ୟ (Psychiatry)',
+      specialtyEndo: 'ମଧୁମେହ ଓ ଏଣ୍ଡୋକ୍ରାଇନ୍ (Endocrinology)',
+      specialtySurgery: 'ସାଧାରଣ ଶଲ୍ୟ ଚିକିତ୍ସା (General Surgery)',
+      specialtyOnco: 'କର୍କଟ ରୋଗ ଚିକିତ୍ସା (Oncology & Cancer)',
+      specialtyDental: 'ଦନ୍ତ ଚିକିତ୍ସା (Dentistry & Oral Care)',
       bookBtn: 'ଆପଏଣ୍ଟମେଣ୍ଟ ବୁକ୍ କରନ୍ତୁ',
       experience: 'ବର୍ଷର ଅଭିଜ୍ଞତା',
       reviews: 'ସମୀକ୍ଷା',
@@ -85,9 +103,16 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       teleConsult: 'ଇ-ସଞ୍ଜୀବନୀ ଟେଲି-ପରାମର୍ଶ',
       modalTitle: 'ଡାକ୍ତରୀ ଆପଏଣ୍ଟମେଣ୍ଟ ବୁକିଂ ଫର୍ମ',
       step1Date: '୧. ପରାମର୍ଶ ତାରିଖ ଚୟନ କରନ୍ତୁ:',
-      step2Time: '୨. ସମୟ ସ୍ଲଟ୍ (Timing Slot) ଚୟନ କରନ୍ତୁ:',
-      morningShift: 'ପ୍ରାତଃ ସିଫ୍ଟ୍ (Morning OPD)',
-      afternoonShift: 'ଅପରାହ୍ନ ସିଫ୍ଟ୍ (Afternoon OPD)',
+      step2Time: '୨. ସମୟ ସ୍ଲଟ୍ (Timing Slot) ଚୟନ କରନ୍ତୁ (ମୋଟ ୩୪ ସ୍ଲଟ୍):',
+      shiftAll: 'ସମସ୍ତ ଶିଫ୍ଟ୍ (All 34)',
+      shiftEarly: 'ପ୍ରଭାତ (Early OPD 07:30 - 09:00)',
+      shiftMorning: 'ପ୍ରାତଃ ମୁଖ୍ୟ (Prime OPD 09:00 - 12:30)',
+      shiftAfternoon: 'ଅପରାହ୍ନ (Afternoon OPD 13:30 - 16:30)',
+      shiftEvening: 'ସାନ୍ଧ୍ୟ କ୍ଲିନିକ୍ (Evening Clinic 17:00 - 20:00)',
+      earlyMorningShift: 'ପ୍ରଭାତ ସିଫ୍ଟ୍ (Early OPD 07:30 - 09:00)',
+      morningShift: 'ପ୍ରାତଃ ମୁଖ୍ୟ ସିଫ୍ଟ୍ (Prime Morning OPD 09:00 - 12:30)',
+      afternoonShift: 'ଅପରାହ୍ନ ସିଫ୍ଟ୍ (Afternoon OPD 13:30 - 16:30)',
+      eveningShift: 'ସାନ୍ଧ୍ୟ ସ୍ୱତନ୍ତ୍ର କ୍ଲିନିକ୍ (Evening Clinic 17:00 - 20:00)',
       step3Type: '୩. ପରାମର୍ଶ ମାଧ୍ୟମ:',
       step4Details: '୪. ରୋଗୀଙ୍କ ବିବରଣୀ:',
       nameLabel: 'ରୋଗୀଙ୍କ ନାମ *',
@@ -114,20 +139,33 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       noBookings: 'ବର୍ତ୍ତମାନ କୌଣସି ବୁକ୍ ହୋଇଥିବା ଆପଏଣ୍ଟମେଣ୍ଟ ନାହିଁ।',
       cancelBookingConfirm: 'ଆପଣ ଏହି ଆପଏଣ୍ଟମେଣ୍ଟ ବାତିଲ୍ କରିବାକୁ ଚାହୁଁଛନ୍ତି କି?',
       selectSlotNotice: 'ଦୟାକରି ଏକ ତାରିଖ ଏବଂ ସମୟ ସ୍ଲଟ୍ ଚୟନ କରନ୍ତୁ।',
-      bookingSuccessAlert: 'ଆପଣଙ୍କର OPD ଆପଏଣ୍ଟମେଣ୍ଟ ସଫଳତାର ସହ ବୁକ୍ ହୋଇଛି!'
+      bookingSuccessAlert: 'ଆପଣଙ୍କର OPD ଆପଏଣ୍ଟମେଣ୍ଟ ସଫଳତାର ସହ ବୁକ୍ ହୋଇଛି!',
+      doctorsFound: 'ଜଣ ବିଶେଷଜ୍ଞ ଚିକିତ୍ସକ ଉପଲବ୍ଧ'
     },
     'hi-IN': {
       tabDirectory: 'डॉक्टर सूची (Doctor Directory)',
       tabMyBookings: 'मेरी बुकिंग (My Bookings)',
       searchPlaceholder: 'डॉक्टर का नाम, विशेषज्ञता अथवा अस्पताल खोजें...',
-      allSpecialties: 'सभी विशेषज्ञताएं',
-      allLocations: 'सभी केंद्र',
+      allSpecialties: 'सभी विशेषज्ञ विभाग (All Specialties)',
+      allLocations: 'सभी मेडिकल केंद्र (All Centers)',
       specialtyGenMed: 'सामान्य चिकित्सा (General Medicine)',
       specialtyObGyn: 'प्रसूति एवं स्त्री रोग (OB-GYN)',
       specialtyPediatrics: 'बाल रोग विशेषज्ञ (Pediatrics)',
-      specialtyCardio: 'हृदय रोग (Cardiology)',
-      specialtyEmergency: 'आपातकालीन चिकित्सा (Emergency)',
-      specialtyOrtho: 'अस्थि रोग (Orthopedics)',
+      specialtyCardio: 'हृदय रोग विशेषज्ञ (Cardiology)',
+      specialtyEmergency: 'आपातकालीन चिकित्सा (Emergency & Trauma)',
+      specialtyOrtho: 'अस्थि एवं जोड़ रोग (Orthopedics)',
+      specialtyPulmo: 'श्वसन एवं फेफड़ा रोग (Pulmonology)',
+      specialtyDerma: 'त्वचा रोग विशेषज्ञ (Dermatology)',
+      specialtyNeuro: 'तंत्रिका एवं मस्तिष्क रोग (Neurology)',
+      specialtyNephro: 'गुर्दा एवं डायलिसिस रोग (Nephrology)',
+      specialtyGastro: 'पेट एवं लिवर रोग (Gastroenterology)',
+      specialtyOphthal: 'नेत्र रोग विशेषज्ञ (Ophthalmology)',
+      specialtyENT: 'नाक, कान एवं गला रोग (ENT)',
+      specialtyPsych: 'मानसिक स्वास्थ्य एवं मनोचिकित्सा (Psychiatry)',
+      specialtyEndo: 'मधुमेह एवं अंतःस्रावी रोग (Endocrinology)',
+      specialtySurgery: 'सामान्य शल्य चिकित्सा (General Surgery)',
+      specialtyOnco: 'कैंसर एवं ट्यूमर चिकित्सा (Oncology)',
+      specialtyDental: 'दंत एवं मुख चिकित्सा (Dentistry)',
       bookBtn: 'अपॉइंटमेंट बुक करें',
       experience: 'वर्ष का अनुभव',
       reviews: 'समीक्षाएं',
@@ -138,9 +176,16 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       teleConsult: 'ई-संजीवनी टेली-परामर्श',
       modalTitle: 'डॉक्टर अपॉइंटमेंट बुकिंग फॉर्म',
       step1Date: '1. परामर्श की तारीख चुनें:',
-      step2Time: '2. समय स्लॉट (Timing Slot) चुनें:',
-      morningShift: 'सुबह की शिफ्ट (Morning OPD)',
-      afternoonShift: 'दोपहर की शिफ्ट (Afternoon OPD)',
+      step2Time: '2. समय स्लॉट (Timing Slot) चुनें (कुल 34 स्लॉट उपलब्ध):',
+      shiftAll: 'सभी शिफ्ट (All 34)',
+      shiftEarly: 'प्रातः (Early OPD 07:30 - 09:00)',
+      shiftMorning: 'मुख्य सुबह (Prime OPD 09:00 - 12:30)',
+      shiftAfternoon: 'दोपहर (Afternoon OPD 13:30 - 16:30)',
+      shiftEvening: 'शाम का क्लीनिक (Evening Clinic 17:00 - 20:00)',
+      earlyMorningShift: 'प्रातः कालीन शिफ्ट (Early OPD 07:30 - 09:00)',
+      morningShift: 'मुख्य सुबह की शिफ्ट (Prime Morning OPD 09:00 - 12:30)',
+      afternoonShift: 'दोपहर की शिफ्ट (Afternoon OPD 13:30 - 16:30)',
+      eveningShift: 'सांध्य विशेष क्लीनिक (Evening Clinic 17:00 - 20:00)',
       step3Type: '3. परामर्श का प्रकार:',
       step4Details: '4. मरीज का विवरण:',
       nameLabel: 'मरीज का नाम *',
@@ -167,20 +212,33 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       noBookings: 'वर्तमान में कोई सक्रिय अपॉइंटमेंट नहीं है।',
       cancelBookingConfirm: 'क्या आप इस अपॉइंटमेंट को रद्द करना चाहते हैं?',
       selectSlotNotice: 'कृपया परामर्श की तारीख एवं समय स्लॉट चुनें।',
-      bookingSuccessAlert: 'आपकी OPD अपॉइंटमेंट सफलतापूर्वक दर्ज हो गई है!'
+      bookingSuccessAlert: 'आपकी OPD अपॉइंटमेंट सफलतापूर्वक दर्ज हो गई है!',
+      doctorsFound: 'विशेषज्ञ चिकित्सक उपलब्ध'
     },
     'en-IN': {
       tabDirectory: 'Doctor Directory',
       tabMyBookings: 'My Bookings',
       searchPlaceholder: 'Search doctor by name, specialty, or facility...',
       allSpecialties: 'All Specialties',
-      allLocations: 'All Locations',
+      allLocations: 'All Medical Centers',
       specialtyGenMed: 'General Medicine',
       specialtyObGyn: 'Obstetrics & Gynecology',
-      specialtyPediatrics: 'Pediatrics',
-      specialtyCardio: 'Cardiology',
-      specialtyEmergency: 'Emergency Medicine',
-      specialtyOrtho: 'Orthopedics',
+      specialtyPediatrics: 'Pediatrics & Child Care',
+      specialtyCardio: 'Cardiology & Heart Care',
+      specialtyEmergency: 'Emergency Medicine & Trauma',
+      specialtyOrtho: 'Orthopedics & Joint Care',
+      specialtyPulmo: 'Pulmonology & Chest Medicine',
+      specialtyDerma: 'Dermatology & Skin Care',
+      specialtyNeuro: 'Neurology & Stroke Care',
+      specialtyNephro: 'Nephrology & Dialysis',
+      specialtyGastro: 'Gastroenterology & Hepatology',
+      specialtyOphthal: 'Ophthalmology & Eye Care',
+      specialtyENT: 'ENT / Otorhinolaryngology',
+      specialtyPsych: 'Psychiatry & Behavioral Health',
+      specialtyEndo: 'Endocrinology & Diabetology',
+      specialtySurgery: 'General & Laparoscopic Surgery',
+      specialtyOnco: 'Oncology & Cancer Care',
+      specialtyDental: 'Dentistry & Maxillofacial',
       bookBtn: 'Book Appointment',
       experience: 'yrs experience',
       reviews: 'reviews',
@@ -191,9 +249,16 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       teleConsult: 'e-Sanjeevani Tele-Consult',
       modalTitle: 'Doctor Appointment Booking Form',
       step1Date: '1. Select Consultation Date:',
-      step2Time: '2. Select Time Slot:',
-      morningShift: 'Morning Shift (09:00 - 12:00)',
-      afternoonShift: 'Afternoon Shift (14:00 - 17:00)',
+      step2Time: '2. Select Appointment Time Slot (34 Active Slots):',
+      shiftAll: 'All Shifts (34)',
+      shiftEarly: 'Early (07:30 - 09:00)',
+      shiftMorning: 'Prime (09:00 - 12:30)',
+      shiftAfternoon: 'Afternoon (13:30 - 16:30)',
+      shiftEvening: 'Evening (17:00 - 20:00)',
+      earlyMorningShift: 'Early Morning OPD (07:30 - 09:00)',
+      morningShift: 'Prime Morning OPD (09:00 - 12:30)',
+      afternoonShift: 'Afternoon OPD (13:30 - 16:30)',
+      eveningShift: 'Evening Special Clinic (17:00 - 20:00)',
       step3Type: '3. Consultation Mode:',
       step4Details: '4. Patient Demographics & Complaint:',
       nameLabel: 'Patient Full Name *',
@@ -220,11 +285,12 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       noBookings: 'No booked appointments found.',
       cancelBookingConfirm: 'Are you sure you want to cancel this appointment?',
       selectSlotNotice: 'Please select a date and an appointment time slot.',
-      bookingSuccessAlert: 'Your OPD appointment has been successfully booked!'
+      bookingSuccessAlert: 'Your OPD appointment has been successfully booked!',
+      doctorsFound: 'specialist doctors available'
     }
   }[lang] || {};
 
-  // Standard Verified Doctors Directory
+  // Standard Verified Doctors Directory (Expanded to 20 Medical Specialists)
   const doctorsList = [
     {
       id: 'DOC-01',
@@ -275,7 +341,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       experience: 14,
       rating: 4.9,
       reviewsCount: 1580,
-      days: lang === 'or-IN' ? 'ସୋମ, ବୁଧ, ଶୁକ୍ର' : (lang === 'hi-IN' ? 'सोम, बुध, शुक्र' : 'Mon, Wed, Fri'),
+      days: lang === 'or-IN' ? 'ସୋମ, ବୁଧ, ଶୁକ୍ର (Mon, Wed, Fri)' : (lang === 'hi-IN' ? 'सोम, बुध, शुक्र (Mon, Wed, Fri)' : 'Mon, Wed, Fri'),
       teleAvailable: false,
       initials: 'BJ',
       color: 'from-rose-600 to-red-700'
@@ -333,6 +399,258 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       teleAvailable: true,
       initials: 'SD',
       color: 'from-teal-600 to-cyan-700'
+    },
+    {
+      id: 'DOC-07',
+      name: lang === 'or-IN' ? 'ଡା. ଦେବୀ ପ୍ରସାଦ ସାହୁ' : (lang === 'hi-IN' ? 'डॉ. देबी प्रसाद साहू' : 'Dr. Debi Prasad Sahu'),
+      specialty: 'Pulmo',
+      specialtyLabel: txt.specialtyPulmo,
+      qualifications: 'MBBS, MD (Pulmonary & Critical Care)',
+      regNo: 'OMC-2014-48912',
+      facility: lang === 'or-IN' ? 'SCB ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍, କଟକ' : (lang === 'hi-IN' ? 'एससीबी मेडिकल कॉलेज अस्पताल, कटक' : 'SCB Medical College & Hospital, Cuttack'),
+      location: 'Cuttack',
+      room: lang === 'or-IN' ? 'ଛାତି ଓ ଶ୍ୱାସରୋଗ OPD, କକ୍ଷ ୧୪' : (lang === 'hi-IN' ? 'वक्ष एवं फेफड़ा OPD, कमरा 14' : 'Chest & Respiratory OPD, Room 14'),
+      experience: 13,
+      rating: 4.9,
+      reviewsCount: 1310,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
+      teleAvailable: true,
+      initials: 'DS',
+      color: 'from-cyan-600 to-blue-700'
+    },
+    {
+      id: 'DOC-08',
+      name: lang === 'or-IN' ? 'ଡା. ସ୍ନେହଲତା ପଣ୍ଡା' : (lang === 'hi-IN' ? 'डॉ. स्नेहलता पंडा' : 'Dr. Snehalata Panda'),
+      specialty: 'Derma',
+      specialtyLabel: txt.specialtyDerma,
+      qualifications: 'MBBS, MD (Dermatology, Venereology & Leprosy)',
+      regNo: 'OMC-2018-72315',
+      facility: lang === 'or-IN' ? 'କ୍ୟାପିଟାଲ୍ ହସ୍ପିଟାଲ୍, ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'कैपिटल अस्पताल, भुवनेश्वर' : 'Capital Hospital, Bhubaneswar'),
+      location: 'Bhubaneswar',
+      room: lang === 'or-IN' ? 'ଚର୍ମ ରୋଗ OPD, କକ୍ଷ ୦୭' : (lang === 'hi-IN' ? 'त्वचा रोग OPD, कमरा 07' : 'Dermatology OPD, Room 07'),
+      experience: 7,
+      rating: 4.8,
+      reviewsCount: 680,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
+      teleAvailable: true,
+      initials: 'SP',
+      color: 'from-pink-600 to-rose-700'
+    },
+    {
+      id: 'DOC-09',
+      name: lang === 'or-IN' ? 'ଡା. ସତ୍ୟବ୍ରତ ମିଶ୍ର' : (lang === 'hi-IN' ? 'डॉ. सत्यव्रत मिश्र' : 'Dr. Satyabrata Mishra'),
+      specialty: 'Neuro',
+      specialtyLabel: txt.specialtyNeuro,
+      qualifications: 'MBBS, MD, DM (Neurology)',
+      regNo: 'NMC-2011-29401',
+      facility: lang === 'or-IN' ? 'AIIMS ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'एम्स भुवनेश्वर' : 'AIIMS Bhubaneswar'),
+      location: 'Bhubaneswar',
+      room: lang === 'or-IN' ? 'ନ୍ୟୁରୋଲୋଜି ସେଣ୍ଟର, କକ୍ଷ ୨୫' : (lang === 'hi-IN' ? 'न्यूरोलॉजी सेंटर, कमरा 25' : 'Neurology Center, Room 25'),
+      experience: 16,
+      rating: 4.9,
+      reviewsCount: 1620,
+      days: lang === 'or-IN' ? 'ମଙ୍ଗଳ, ଗୁରୁ, ଶନି (Tue, Thu, Sat)' : (lang === 'hi-IN' ? 'मंगल, गुरु, शनि (Tue, Thu, Sat)' : 'Tue, Thu, Sat'),
+      teleAvailable: true,
+      initials: 'SM',
+      color: 'from-indigo-600 to-violet-700'
+    },
+    {
+      id: 'DOC-10',
+      name: lang === 'or-IN' ? 'ଡା. ଅରୁଣ କୁମାର ପାଣିଗ୍ରାହୀ' : (lang === 'hi-IN' ? 'डॉ. अरुण कुमार पाणिग्राही' : 'Dr. Arun Kumar Panigrahi'),
+      specialty: 'Nephro',
+      specialtyLabel: txt.specialtyNephro,
+      qualifications: 'MBBS, MD, DM (Nephrology & Renal Transplant)',
+      regNo: 'OMC-2013-39870',
+      facility: lang === 'or-IN' ? 'SCB ମେଡିକାଲ୍ କଲେଜ୍, କଟକ' : (lang === 'hi-IN' ? 'एससीबी मेडिकल कॉलेज, कटक' : 'SCB Medical College, Cuttack'),
+      location: 'Cuttack',
+      room: lang === 'or-IN' ? 'ଡାଏଲିସିସ୍ ଓ କିଡନୀ ବିଭାଗ, କକ୍ଷ ୦୯' : (lang === 'hi-IN' ? 'डायलिसिस एवं गुर्दा विभाग, कमरा 09' : 'Dialysis & Renal OPD, Room 09'),
+      experience: 15,
+      rating: 4.9,
+      reviewsCount: 1450,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
+      teleAvailable: false,
+      initials: 'AP',
+      color: 'from-blue-700 to-teal-800'
+    },
+    {
+      id: 'DOC-11',
+      name: lang === 'or-IN' ? 'ଡା. ମନୋରଞ୍ଜନ ମହାନ୍ତି' : (lang === 'hi-IN' ? 'डॉ. मनोरंजन महंती' : 'Dr. Manoranjan Mohanty'),
+      specialty: 'Gastro',
+      specialtyLabel: txt.specialtyGastro,
+      qualifications: 'MBBS, MD, DM (Gastroenterology & Hepatology)',
+      regNo: 'OMC-2015-46721',
+      facility: lang === 'or-IN' ? 'MKCG ମେଡିକାଲ୍ କଲେଜ୍, ବ୍ରହ୍ମପୁର' : (lang === 'hi-IN' ? 'एमकेसीजी मेडिकल कॉलेज, ब्रह्मपुर' : 'MKCG Medical College, Berhampur'),
+      location: 'Berhampur',
+      room: lang === 'or-IN' ? 'ଏଣ୍ଡୋସ୍କୋପି ଓ ପେଟରୋଗ, କକ୍ଷ ୧୧' : (lang === 'hi-IN' ? 'एंडोस्कोपी एवं गैस्ट्रो OPD, कमरा 11' : 'Gastro & Endoscopy, Room 11'),
+      experience: 11,
+      rating: 4.8,
+      reviewsCount: 830,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
+      teleAvailable: true,
+      initials: 'MM',
+      color: 'from-emerald-700 to-green-800'
+    },
+    {
+      id: 'DOC-12',
+      name: lang === 'or-IN' ? 'ଡା. ସୁଚରିତା ମହାପାତ୍ର' : (lang === 'hi-IN' ? 'डॉ. सुचरिता महापात्र' : 'Dr. Sucharita Mohapatra'),
+      specialty: 'Ophthal',
+      specialtyLabel: txt.specialtyOphthal,
+      qualifications: 'MBBS, MS (Ophthalmology & Cataract Surgery)',
+      regNo: 'OMC-2017-58190',
+      facility: lang === 'or-IN' ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ (DHH), ପୁରୀ' : (lang === 'hi-IN' ? 'जिला मुख्य अस्पताल (DHH), पुरी' : 'District Headquarters Hospital (DHH), Puri'),
+      location: 'Puri',
+      room: lang === 'or-IN' ? 'ଚକ୍ଷୁ ଚିକିତ୍ସା କକ୍ଷ ୦୩' : (lang === 'hi-IN' ? 'नेत्र चिकित्सा कक्ष 03' : 'Eye Care OPD Room 03'),
+      experience: 8,
+      rating: 4.8,
+      reviewsCount: 720,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
+      teleAvailable: false,
+      initials: 'SM',
+      color: 'from-teal-700 to-emerald-600'
+    },
+    {
+      id: 'DOC-13',
+      name: lang === 'or-IN' ? 'ଡା. ସୁରେନ୍ଦ୍ର ନାଥ ଷଡ଼ଙ୍ଗୀ' : (lang === 'hi-IN' ? 'डॉ. सुरेंद्र नाथ सारंगी' : 'Dr. Surendra Nath Sarangi'),
+      specialty: 'ENT',
+      specialtyLabel: txt.specialtyENT,
+      qualifications: 'MBBS, MS (ENT / Otorhinolaryngology)',
+      regNo: 'OMC-2012-31089',
+      facility: lang === 'or-IN' ? 'ଭିମସାର୍ (VIMSAR), ବୁର୍ଲା, ସମ୍ବଲପୁର' : (lang === 'hi-IN' ? 'विमसार (VIMSAR), बुर्ला, संबलपुर' : 'VIMSAR, Burla, Sambalpur'),
+      location: 'Burla',
+      room: lang === 'or-IN' ? 'ENT OPD କକ୍ଷ ୧୫' : (lang === 'hi-IN' ? 'ENT OPD कक्ष 15' : 'ENT OPD Room 15'),
+      experience: 15,
+      rating: 4.9,
+      reviewsCount: 1190,
+      days: lang === 'or-IN' ? 'ସୋମ, ବୁଧ, ଗୁରୁ, ଶନି' : (lang === 'hi-IN' ? 'सोम, बुध, गुरु, शनि' : 'Mon, Wed, Thu, Sat'),
+      teleAvailable: true,
+      initials: 'SS',
+      color: 'from-amber-700 to-red-800'
+    },
+    {
+      id: 'DOC-14',
+      name: lang === 'or-IN' ? 'ଡା. ପ୍ରୀତି ସ୍ୱରୂପା ପଟ୍ଟନାୟକ' : (lang === 'hi-IN' ? 'डॉ. प्रीति स्वरूपा पटनायक' : 'Dr. Priti Swarupa Pattnaik'),
+      specialty: 'Psych',
+      specialtyLabel: txt.specialtyPsych,
+      qualifications: 'MBBS, MD (Psychiatry & Behavioral Sciences)',
+      regNo: 'OMC-2019-81045',
+      facility: lang === 'or-IN' ? 'SCB ମେଡିକାଲ୍ କଲେଜ୍, କଟକ' : (lang === 'hi-IN' ? 'एससीबी मेडिकल कॉलेज, कटक' : 'SCB Medical College, Cuttack'),
+      location: 'Cuttack',
+      room: lang === 'or-IN' ? 'ମାନସିକ ସ୍ୱାସ୍ଥ୍ୟ ବିଭାଗ, କକ୍ଷ ୨୧' : (lang === 'hi-IN' ? 'मानसिक स्वास्थ्य विभाग, कमरा 21' : 'Mental Health OPD, Room 21'),
+      experience: 7,
+      rating: 4.9,
+      reviewsCount: 640,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
+      teleAvailable: true,
+      initials: 'PP',
+      color: 'from-violet-600 to-purple-800'
+    },
+    {
+      id: 'DOC-15',
+      name: lang === 'or-IN' ? 'ଡା. ଆଲୋକ ରଞ୍ଜନ ପ୍ରଧାନ' : (lang === 'hi-IN' ? 'डॉ. आलोक रंजन प्रधान' : 'Dr. Alok Ranjan Pradhan'),
+      specialty: 'Endo',
+      specialtyLabel: txt.specialtyEndo,
+      qualifications: 'MBBS, MD, DM (Endocrinology & Diabetology)',
+      regNo: 'OMC-2016-52771',
+      facility: lang === 'or-IN' ? 'କ୍ୟାପିଟାଲ୍ ହସ୍ପିଟାଲ୍, ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'कैपिटल अस्पताल, भुवनेश्वर' : 'Capital Hospital, Bhubaneswar'),
+      location: 'Bhubaneswar',
+      room: lang === 'or-IN' ? 'ମଧୁମେହ କ୍ଲିନିକ୍, କକ୍ଷ ୦୫' : (lang === 'hi-IN' ? 'मधुमेह क्लीनिक, कमरा 05' : 'Diabetic Clinic, Room 05'),
+      experience: 10,
+      rating: 4.8,
+      reviewsCount: 950,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
+      teleAvailable: true,
+      initials: 'AP',
+      color: 'from-sky-600 to-indigo-700'
+    },
+    {
+      id: 'DOC-16',
+      name: lang === 'or-IN' ? 'ଡା. ପ୍ରଦୀପ କୁମାର ବେହେରା' : (lang === 'hi-IN' ? 'डॉ. प्रदीप कुमार बेहेरा' : 'Dr. Pradeep Kumar Behera'),
+      specialty: 'Surgery',
+      specialtyLabel: txt.specialtySurgery,
+      qualifications: 'MBBS, MS (General & Laparoscopic Surgery)',
+      regNo: 'OMC-2014-41120',
+      facility: lang === 'or-IN' ? 'SLN ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍, କୋରାପୁଟ' : (lang === 'hi-IN' ? 'एसएलएन मेडिकल कॉलेज अस्पताल, कोरापुट' : 'SLN Medical College & Hospital, Koraput'),
+      location: 'Koraput',
+      room: lang === 'or-IN' ? 'ସର୍ଜିକାଲ୍ OPD କକ୍ଷ ୧୦' : (lang === 'hi-IN' ? 'सर्जिकल OPD कमरा 10' : 'Surgical OPD Room 10'),
+      experience: 12,
+      rating: 4.7,
+      reviewsCount: 780,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
+      teleAvailable: false,
+      initials: 'PB',
+      color: 'from-emerald-800 to-teal-900'
+    },
+    {
+      id: 'DOC-17',
+      name: lang === 'or-IN' ? 'ଡା. ମମତା ପତି' : (lang === 'hi-IN' ? 'डॉ. ममता पति' : 'Dr. Mamata Pati'),
+      specialty: 'Onco',
+      specialtyLabel: txt.specialtyOnco,
+      qualifications: 'MBBS, MD (Radiation & Medical Oncology)',
+      regNo: 'OMC-2013-37651',
+      facility: lang === 'or-IN' ? 'ଆଚାର୍ଯ୍ୟ ହରିହର କର୍କଟ କେନ୍ଦ୍ର (AHPGIC), କଟକ' : (lang === 'hi-IN' ? 'आचार्य हरिहर कैंसर संस्थान (AHPGIC), कटक' : 'Acharya Harihar Post Graduate Institute of Cancer, Cuttack'),
+      location: 'Cuttack',
+      room: lang === 'or-IN' ? 'ଅଙ୍କୋଲୋଜି OPD କକ୍ଷ ୦୬' : (lang === 'hi-IN' ? 'ऑन्कोलॉजी OPD कमरा 06' : 'Oncology OPD Room 06'),
+      experience: 14,
+      rating: 4.9,
+      reviewsCount: 1390,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
+      teleAvailable: true,
+      initials: 'MP',
+      color: 'from-rose-700 to-pink-800'
+    },
+    {
+      id: 'DOC-18',
+      name: lang === 'or-IN' ? 'ଡା. ହରପ୍ରସାଦ ତ୍ରିପାଠୀ' : (lang === 'hi-IN' ? 'डॉ. हरप्रसाद त्रिपाठी' : 'Dr. Haraprasad Tripathy'),
+      specialty: 'Dental',
+      specialtyLabel: txt.specialtyDental,
+      qualifications: 'BDS, MDS (Oral & Maxillofacial Surgery)',
+      regNo: 'ODC-2016-19402',
+      facility: lang === 'or-IN' ? 'SCB ଡେଣ୍ଟାଲ୍ କଲେଜ୍, କଟକ' : (lang === 'hi-IN' ? 'एससीबी डेंटल कॉलेज, कटक' : 'SCB Dental College, Cuttack'),
+      location: 'Cuttack',
+      room: lang === 'or-IN' ? 'ଦନ୍ତ ଚିକିତ୍ସା କକ୍ଷ ୦୨' : (lang === 'hi-IN' ? 'दंत चिकित्सा कमरा 02' : 'Dental OPD Room 02'),
+      experience: 9,
+      rating: 4.8,
+      reviewsCount: 810,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
+      teleAvailable: false,
+      initials: 'HT',
+      color: 'from-teal-600 to-emerald-700'
+    },
+    {
+      id: 'DOC-19',
+      name: lang === 'or-IN' ? 'ଡା. ଜ୍ୟୋତି ରଞ୍ଜନ ପରିଡ଼ା' : (lang === 'hi-IN' ? 'डॉ. ज्योति रंजन परिड़ा' : 'Dr. Jyoti Ranjan Parida'),
+      specialty: 'Ortho',
+      specialtyLabel: txt.specialtyOrtho,
+      qualifications: 'MBBS, MD, DM (Clinical Immunology & Rheumatology)',
+      regNo: 'NMC-2010-21894',
+      facility: lang === 'or-IN' ? 'AIIMS ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'एम्स भुवनेश्वर' : 'AIIMS Bhubaneswar'),
+      location: 'Bhubaneswar',
+      room: lang === 'or-IN' ? 'ଗଣ୍ଠିବାତ ଓ ଆର୍ଥ୍ରାଇଟିସ୍ OPD, କକ୍ଷ ୧୯' : (lang === 'hi-IN' ? 'संधिवात एवं आर्थराइटिस OPD, कमरा 19' : 'Rheumatology & Arthritis OPD, Room 19'),
+      experience: 17,
+      rating: 4.9,
+      reviewsCount: 1750,
+      days: lang === 'or-IN' ? 'ସୋମ, ବୁଧ, ଶୁକ୍ର (Mon, Wed, Fri)' : (lang === 'hi-IN' ? 'सोम, बुध, शुक्र (Mon, Wed, Fri)' : 'Mon, Wed, Fri'),
+      teleAvailable: true,
+      initials: 'JP',
+      color: 'from-orange-600 to-amber-700'
+    },
+    {
+      id: 'DOC-20',
+      name: lang === 'or-IN' ? 'ଡା. ନଳିନୀ କାନ୍ତ ମହାନ୍ତି' : (lang === 'hi-IN' ? 'डॉ. नलिनी कांत महंती' : 'Dr. Nalini Kanta Mohanty'),
+      specialty: 'GenMed',
+      specialtyLabel: txt.specialtyGenMed,
+      qualifications: 'MBBS, MD (Internal & Geriatric Medicine)',
+      regNo: 'OMC-2009-18342',
+      facility: lang === 'or-IN' ? 'କ୍ୟାପିଟାଲ୍ ହସ୍ପିଟାଲ୍, ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'कैपिटल अस्पताल, भुवनेश्वर' : 'Capital Hospital, Bhubaneswar'),
+      location: 'Bhubaneswar',
+      room: lang === 'or-IN' ? 'ବରିଷ୍ଠ ନାଗରିକ ଓ ଜେରିଆଟ୍ରିକ୍ OPD, କକ୍ଷ ୦୧' : (lang === 'hi-IN' ? 'वरिष्ठ नागरिक एवं जेरियाट्रिक OPD, कमरा 01' : 'Senior Citizen & Geriatric OPD, Room 01'),
+      experience: 20,
+      rating: 4.9,
+      reviewsCount: 2100,
+      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
+      teleAvailable: true,
+      initials: 'NM',
+      color: 'from-slate-700 to-emerald-800'
     }
   ];
 
@@ -354,9 +672,25 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
 
   const availableDays = getNextDays();
 
-  // Timing Slots
-  const morningSlots = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:15 AM'];
-  const afternoonSlots = ['02:00 PM', '02:30 PM', '03:15 PM', '04:00 PM'];
+  // Comprehensive Timing Slots Organized in 4 Distinct Shifts (Total 34 Timing Slots)
+  const earlyMorningSlots = [
+    '07:30 AM', '07:50 AM', '08:10 AM', '08:30 AM', '08:50 AM'
+  ];
+
+  const morningPrimeSlots = [
+    '09:00 AM', '09:20 AM', '09:40 AM', '10:00 AM', '10:20 AM',
+    '10:40 AM', '11:00 AM', '11:20 AM', '11:40 AM', '12:00 PM', '12:20 PM'
+  ];
+
+  const afternoonSlots = [
+    '01:30 PM', '01:50 PM', '02:10 PM', '02:30 PM', '02:50 PM',
+    '03:10 PM', '03:30 PM', '03:50 PM', '04:10 PM'
+  ];
+
+  const eveningSlots = [
+    '05:00 PM', '05:20 PM', '05:40 PM', '06:00 PM', '06:20 PM',
+    '06:40 PM', '07:00 PM', '07:20 PM', '07:40 PM'
+  ];
 
   // Filter Doctors
   const filteredDoctors = doctorsList.filter((doc) => {
@@ -372,7 +706,8 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
   const handleStartBooking = (doc) => {
     setSelectedDoctor(doc);
     setSelectedDate(availableDays[0].iso);
-    setSelectedTimeSlot(morningSlots[1]); // Default 09:30 AM
+    setSelectedTimeSlot(morningPrimeSlots[1]); // Default 09:20 AM
+    setShiftFilter('all');
     setPatientName(currentUser?.name || '');
     setPatientPhone(currentUser?.phone || '+91 94370 00000');
     setPatientAbha(currentUser?.staffId || 'ABHA: 91-0000-0000-0000');
@@ -440,10 +775,10 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             {lang === 'or-IN'
-              ? 'ସରକାରୀ ମେଡିକାଲ୍ କଲେଜ୍, DHH ଏବଂ CHC ର ବିଶେଷଜ୍ଞ ଡାକ୍ତରଙ୍କ ସହିତ ସମୟ ସ୍ଲଟ୍ ନିର୍ଦ୍ଧାରଣ'
+              ? '୨୦ ଜଣ ବିଶେଷଜ୍ଞ ଚିକିତ୍ସକ • ୩୪ ଟି ସମୟ ସ୍ଲଟ୍ (ସକାଳ ୭:୩୦ ରୁ ରାତି ୮:୦୦) • BSKY / ଆୟୁଷ୍ମାନ ନିଃଶୁଳ୍କ ସେବା'
               : (lang === 'hi-IN'
-              ? 'सरकारी मेडिकल कॉलेज एवं अस्पतालों के विशेषज्ञ चिकित्सकों के साथ समय स्लॉट बुकिंग'
-              : 'Book confirmed OPD & Tele-Consultation slots with verified Government Medical Specialists')}
+              ? '20 विशेषज्ञ चिकित्सक • 34 समय स्लॉट (सुबह 7:30 से रात 8:00) • आयुष्मान भारत / BSKY निःशुल्क परामर्श'
+              : '20 Verified Medical Specialists • 34 Daily OPD Timing Slots (07:30 AM - 08:00 PM) • BSKY / Ayushman Free')}
           </p>
         </div>
 
@@ -485,7 +820,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
           {/* Search & Filter Bar */}
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-3 items-center justify-between">
             {/* Search Input */}
-            <div className="relative w-full md:w-96">
+            <div className="relative w-full md:w-80">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -501,7 +836,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
               <select
                 value={selectedSpecialty}
                 onChange={(e) => setSelectedSpecialty(e.target.value)}
-                className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 outline-none cursor-pointer max-w-[200px] truncate"
               >
                 <option value="ALL">{txt.allSpecialties}</option>
                 <option value="GenMed">{txt.specialtyGenMed}</option>
@@ -510,6 +845,18 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                 <option value="Cardio">{txt.specialtyCardio}</option>
                 <option value="Emergency">{txt.specialtyEmergency}</option>
                 <option value="Ortho">{txt.specialtyOrtho}</option>
+                <option value="Pulmo">{txt.specialtyPulmo}</option>
+                <option value="Derma">{txt.specialtyDerma}</option>
+                <option value="Neuro">{txt.specialtyNeuro}</option>
+                <option value="Nephro">{txt.specialtyNephro}</option>
+                <option value="Gastro">{txt.specialtyGastro}</option>
+                <option value="Ophthal">{txt.specialtyOphthal}</option>
+                <option value="ENT">{txt.specialtyENT}</option>
+                <option value="Psych">{txt.specialtyPsych}</option>
+                <option value="Endo">{txt.specialtyEndo}</option>
+                <option value="Surgery">{txt.specialtySurgery}</option>
+                <option value="Onco">{txt.specialtyOnco}</option>
+                <option value="Dental">{txt.specialtyDental}</option>
               </select>
 
               <select
@@ -522,8 +869,15 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                 <option value="Bhubaneswar">Bhubaneswar (ଭୁବନେଶ୍ୱର)</option>
                 <option value="Berhampur">Berhampur (ବ୍ରହ୍ମପୁର)</option>
                 <option value="Rourkela">Rourkela (ରାଉରକେଲା)</option>
+                <option value="Burla">Sambalpur / Burla (ସମ୍ବଲପୁର / ବୁର୍ଲା)</option>
+                <option value="Puri">Puri (ପୁରୀ)</option>
+                <option value="Koraput">Koraput (କୋରାପୁଟ)</option>
                 <option value="Wardha">Wardha (वर्धा)</option>
               </select>
+
+              <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                {filteredDoctors.length} {txt.doctorsFound}
+              </span>
             </div>
           </div>
 
@@ -755,55 +1109,192 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                 </div>
               </div>
 
-              {/* Step 2: Select Time Slot */}
-              <div>
-                <label className="font-bold text-slate-700 block mb-1.5">{txt.step2Time}</label>
+              {/* Step 2: Select Time Slot (Organized across 4 Shifts with Shift Filter) */}
+              <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <label className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-emerald-600" />
+                    {txt.step2Time}
+                  </label>
 
-                {/* Morning Slots */}
-                <div className="mb-2">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                    {txt.morningShift}
-                  </span>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                    {morningSlots.map((slot) => (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => setSelectedTimeSlot(slot)}
-                        className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all border ${
-                          selectedTimeSlot === slot
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-emerald-300'
-                        }`}
-                      >
-                        {slot}
-                      </button>
-                    ))}
+                  {/* Shift Filter Pills */}
+                  <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+                    <button
+                      type="button"
+                      onClick={() => setShiftFilter('all')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
+                        shiftFilter === 'all'
+                          ? 'bg-slate-800 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {txt.shiftAll}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShiftFilter('early')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
+                        shiftFilter === 'early'
+                          ? 'bg-amber-600 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      07:30
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShiftFilter('morning')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
+                        shiftFilter === 'morning'
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      09:00
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShiftFilter('afternoon')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
+                        shiftFilter === 'afternoon'
+                          ? 'bg-sky-600 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      13:30
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShiftFilter('evening')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
+                        shiftFilter === 'evening'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      17:00
+                    </button>
                   </div>
                 </div>
 
-                {/* Afternoon Slots */}
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                    {txt.afternoonShift}
-                  </span>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {afternoonSlots.map((slot) => (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => setSelectedTimeSlot(slot)}
-                        className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all border ${
-                          selectedTimeSlot === slot
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-emerald-300'
-                        }`}
-                      >
-                        {slot}
-                      </button>
-                    ))}
+                {/* Shift 1: Early Morning OPD (07:30 - 09:00) */}
+                {(shiftFilter === 'all' || shiftFilter === 'early') && (
+                  <div className="mb-3.5">
+                    <div className="flex items-center gap-1.5 text-amber-700 font-bold text-[11px] mb-1.5">
+                      <Sunrise className="w-3.5 h-3.5" />
+                      <span>{txt.earlyMorningShift}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">({earlyMorningSlots.length} slots)</span>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                      {earlyMorningSlots.map((slot) => (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => setSelectedTimeSlot(slot)}
+                          className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all border text-center ${
+                            selectedTimeSlot === slot
+                              ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                              : 'bg-white text-slate-700 border-slate-200 hover:border-amber-400'
+                          }`}
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Shift 2: Prime Morning OPD (09:00 - 12:30) */}
+                {(shiftFilter === 'all' || shiftFilter === 'morning') && (
+                  <div className="mb-3.5">
+                    <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-[11px] mb-1.5">
+                      <Sun className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{txt.morningShift}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">({morningPrimeSlots.length} slots)</span>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                      {morningPrimeSlots.map((slot) => (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => setSelectedTimeSlot(slot)}
+                          className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all border text-center ${
+                            selectedTimeSlot === slot
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                              : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-400'
+                          }`}
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Shift 3: Afternoon OPD (13:30 - 16:30) */}
+                {(shiftFilter === 'all' || shiftFilter === 'afternoon') && (
+                  <div className="mb-3.5">
+                    <div className="flex items-center gap-1.5 text-sky-800 font-bold text-[11px] mb-1.5">
+                      <Sunset className="w-3.5 h-3.5 text-sky-600" />
+                      <span>{txt.afternoonShift}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">({afternoonSlots.length} slots)</span>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                      {afternoonSlots.map((slot) => (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => setSelectedTimeSlot(slot)}
+                          className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all border text-center ${
+                            selectedTimeSlot === slot
+                              ? 'bg-sky-600 text-white border-sky-600 shadow-xs'
+                              : 'bg-white text-slate-700 border-slate-200 hover:border-sky-400'
+                          }`}
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Shift 4: Evening Special Clinic (17:00 - 20:00) */}
+                {(shiftFilter === 'all' || shiftFilter === 'evening') && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-indigo-800 font-bold text-[11px] mb-1.5">
+                      <Moon className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>{txt.eveningShift}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">({eveningSlots.length} slots)</span>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                      {eveningSlots.map((slot) => (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => setSelectedTimeSlot(slot)}
+                          className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all border text-center ${
+                            selectedTimeSlot === slot
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                              : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-400'
+                          }`}
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected Slot Confirmation Indicator */}
+                {selectedTimeSlot && (
+                  <div className="mt-3 pt-2.5 border-t border-slate-200 flex items-center justify-between text-xs">
+                    <span className="text-slate-500">Selected Slot:</span>
+                    <span className="font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      {selectedDate} at {selectedTimeSlot}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Step 3: Consultation Mode */}
