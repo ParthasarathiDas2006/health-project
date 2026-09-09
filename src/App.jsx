@@ -247,10 +247,11 @@ export default function App() {
       doctorIntakeTab: '୨. ରୋଗୀ ବିବରଣୀ',
       doctorOcrTab: '୩. ଲ୍ୟାବ୍ ରିପୋର୍ଟ ଯାଞ୍ଚ',
       doctorBookingTab: '୪. ଡାକ୍ତର ତାଲିକା ଓ ବୁକିଂ',
-      bloodBankTab: '୫. ରକ୍ତ ଭଣ୍ଡାର (Blood Bank)',
-      scenariosTab: '୬. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
-      medicineExpiryTab: '୭. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
-      nearestMedicalTab: '୮. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
+      bedsTab: '୫. ହସ୍ପିଟାଲ୍ ବେଡ୍ ରିଜର୍ଭେସନ୍',
+      bloodBankTab: '୬. ରକ୍ତ ଭଣ୍ଡାର (Blood Bank)',
+      scenariosTab: '୭. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
+      medicineExpiryTab: '୮. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
+      nearestMedicalTab: '୨. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
@@ -287,10 +288,11 @@ export default function App() {
       doctorIntakeTab: '2. मरीज विवरण',
       doctorOcrTab: '3. लैब रिपोर्ट OCR',
       doctorBookingTab: '4. डॉक्टर सूची एवं बुकिंग',
-      bloodBankTab: '5. ब्लड बैंक (Blood Bank)',
-      scenariosTab: '6. फील्ड परिदृश्य',
-      medicineExpiryTab: '7. दवा एक्सपायरी जांच',
-      nearestMedicalTab: '8. निकटतम अस्पताल (GPS Map)',
+      bedsTab: '5. अस्पताल बेड रिज़र्वेशन',
+      bloodBankTab: '6. ब्लड बैंक (Blood Bank)',
+      scenariosTab: '7. फील्ड परिदृश्य',
+      medicineExpiryTab: '8. दवा एक्सपायरी जांच',
+      nearestMedicalTab: '9. निकटतम अस्पताल (GPS Map)',
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
@@ -327,10 +329,11 @@ export default function App() {
       doctorIntakeTab: '2. Patient Intake',
       doctorOcrTab: '3. Lab Report OCR',
       doctorBookingTab: '4. Doctor Directory & Booking',
-      bloodBankTab: '5. Blood Bank Portal',
-      scenariosTab: '6. Field Scenarios',
-      medicineExpiryTab: '7. Medicine Expiry Checker',
-      nearestMedicalTab: '8. Nearest Medical & GPS Map',
+      bedsTab: '5. Hospital Bed Reservation',
+      bloodBankTab: '6. Blood Bank Portal',
+      scenariosTab: '7. Field Scenarios',
+      medicineExpiryTab: '8. Medicine Expiry Checker',
+      nearestMedicalTab: '9. Nearest Medical & GPS Map',
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
@@ -461,6 +464,18 @@ export default function App() {
                 </button>
 
                 <button
+                  onClick={() => setActiveTab('beds')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                    activeTab === 'beds'
+                      ? 'bg-emerald-700 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Bed className="w-3.5 h-3.5 text-emerald-200" />
+                  {uiText.bedsTab}
+                </button>
+
+                <button
                   onClick={() => setActiveTab('bloodbank')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                     activeTab === 'bloodbank'
@@ -536,6 +551,18 @@ export default function App() {
                       {bookedCount}
                     </span>
                   )}
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('beds')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                    activeTab === 'beds'
+                      ? 'bg-emerald-700 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Bed className="w-3.5 h-3.5 text-emerald-200" />
+                  {uiText.bedsTab}
                 </button>
 
                 <button
@@ -835,7 +862,28 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: ODISHA BLOOD BANK PORTAL */}
+        {/* TAB 5: HOSPITAL BED RESERVATION */}
+        {activeTab === 'beds' && (
+          <div>
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+                  <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-600 animate-pulse">
+                    {appLang === 'or-IN' ? 'ହସ୍ପିଟାଲ୍ ବେଡ୍ ଲୋଡ୍ ହେଉଛି...' : (appLang === 'hi-IN' ? 'अस्पताल बेड डेटा लोड हो रहा है...' : 'Loading Hospital Beds...')}
+                  </p>
+                </div>
+              }
+            >
+              <BedBookingSystem
+                currentUser={currentUser}
+                appLang={appLang}
+              />
+            </Suspense>
+          </div>
+        )}
+
+        {/* TAB 6: ODISHA BLOOD BANK PORTAL */}
         {activeTab === 'bloodbank' && (
           <div>
             <Suspense
