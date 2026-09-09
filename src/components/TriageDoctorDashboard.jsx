@@ -17,6 +17,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { DoctorAvatar } from '../utils/doctorPhotos';
+import { getHospitalPartners } from '../data/hospitalPartners';
 
 /**
  * Triage Doctor / Nurse Dashboard
@@ -28,6 +29,8 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
   const [filterUrgency, setFilterUrgency] = useState('ALL');
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [acceptedTicketId, setAcceptedTicketId] = useState(null);
+  const [customApexHospital, setCustomApexHospital] = useState('');
+  const apexHospitals = getHospitalPartners(activeLang);
 
   // Default fallback clinician profile
   const activeUser = currentUser || {
@@ -868,7 +871,10 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
                     {txt.targetFacility} <strong>{selectedTicket.referralRecommendation}</strong>
                   </span>
                   <button
-                    onClick={() => setShowReferralModal(true)}
+                    onClick={() => {
+                      setCustomApexHospital(selectedTicket.referralRecommendation);
+                      setShowReferralModal(true);
+                    }}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded font-medium transition-colors flex items-center gap-1"
                   >
                     <Send className="w-3.5 h-3.5" />
@@ -953,13 +959,38 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
                   <p className="text-[11px] text-slate-500">{activeUser.district}, {activeUser.state}</p>
                 </div>
                 <div className="p-3 bg-indigo-50/60 rounded-lg border border-indigo-200">
-                  <span className="text-[10px] uppercase font-bold text-indigo-500 block">
-                    {txt.referredToFacility}
-                  </span>
-                  <p className="font-bold text-indigo-900 text-xs mt-0.5">
-                    {selectedTicket.referralRecommendation}
-                  </p>
-                  <p className="text-[11px] text-indigo-700">{txt.criticalCareDept}</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] uppercase font-bold text-indigo-700 block">
+                      {txt.referredToFacility}
+                    </span>
+                    <span className="text-[9px] bg-indigo-200 text-indigo-900 font-bold px-1.5 py-0.2 rounded">
+                      Apex Tie-Up Network
+                    </span>
+                  </div>
+                  <select
+                    value={customApexHospital || selectedTicket.referralRecommendation}
+                    onChange={(e) => setCustomApexHospital(e.target.value)}
+                    className="w-full mt-0.5 p-1.5 bg-white border border-indigo-300 rounded text-xs font-bold text-indigo-950 outline-none focus:border-indigo-600"
+                  >
+                    <option value={selectedTicket.referralRecommendation}>
+                      ★ {selectedTicket.referralRecommendation} ({activeLang === 'or-IN' ? 'ପ୍ରସ୍ତାବିତ' : (activeLang === 'hi-IN' ? 'प्रस्तावित' : 'Recommended')})
+                    </option>
+                    <optgroup label={activeLang === 'or-IN' ? 'ଓଡ଼ିଶାର ସହବନ୍ଧିତ ଏପେକ୍ସ ହସ୍ପିଟାଲ୍ (Odisha Apex)' : (activeLang === 'hi-IN' ? 'ओडिशा संबद्ध शीर्ष अस्पताल' : 'Odisha Partner Apex Hospitals')}>
+                      {apexHospitals.filter((h) => h.region === 'Odisha').map((h) => (
+                        <option key={h.id} value={`${h.name} - ${h.cityLabel}`}>
+                          {h.name} ({h.cityLabel})
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label={activeLang === 'or-IN' ? 'ଜାତୀୟ ଏପେକ୍ସ ସେଣ୍ଟର୍ (National Metros)' : (activeLang === 'hi-IN' ? 'राष्ट्रीय शीर्ष संस्थान' : 'National Apex Metro Centers')}>
+                      {apexHospitals.filter((h) => h.region === 'National').map((h) => (
+                        <option key={h.id} value={`${h.name} - ${h.cityLabel}`}>
+                          {h.name} ({h.cityLabel})
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  <p className="text-[11px] text-indigo-700 mt-1">{txt.criticalCareDept}</p>
                 </div>
               </div>
 

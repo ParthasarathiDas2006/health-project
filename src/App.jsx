@@ -2,7 +2,10 @@ import React, { useState, useEffect, Suspense, lazy } from 'react';
 import MultimodalIntakeForm from './components/MultimodalIntakeForm';
 import OcrUploader from './components/OcrUploader';
 import TriageDoctorDashboard from './components/TriageDoctorDashboard';
+import HospitalTieUpSystem from './components/HospitalTieUpSystem';
 import AuthPage from './components/AuthPage';
+import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments, getHospitalTransfers } from './utils/authStorage';
+import { DoctorAvatar } from './utils/doctorPhotos';
 
 // Code-split heavy components to load on demand for instant initial site loading
 const DoctorBookingSystem = lazy(() => import('./components/DoctorBookingSystem'));
@@ -11,8 +14,6 @@ const MedicineExpiryChecker = lazy(() => import('./components/MedicineExpiryChec
 const NearestMedicalGPS = lazy(() => import('./components/NearestMedicalGPS'));
 const BedBookingSystem = lazy(() => import('./components/BedBookingSystem'));
 const AmbulanceBooking = lazy(() => import('./components/AmbulanceBooking'));
-import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments } from './utils/authStorage';
-import { DoctorAvatar } from './utils/doctorPhotos';
 import {
   Activity,
   FileText,
@@ -52,6 +53,7 @@ export default function App() {
   const [generatedTriageNote, setGeneratedTriageNote] = useState(null);
   const [isGeneratingNote, setIsGeneratingNote] = useState(false);
   const [bookedCount, setBookedCount] = useState(() => getBookedAppointments().length);
+  const [transfersCount, setTransfersCount] = useState(() => getHospitalTransfers().length);
 
   // Theme Mode: 'light', 'dark', or 'reading'
   const [themeMode, setThemeMode] = useState(() => {
@@ -359,9 +361,11 @@ export default function App() {
       doctorBookingTab: '୪. ଡାକ୍ତର ତାଲିକା ଓ ବୁକିଂ',
       bedsTab: '୫. ହସ୍ପିଟାଲ୍ ବେଡ୍ ରିଜର୍ଭେସନ୍',
       bloodBankTab: '୬. ରକ୍ତ ଭଣ୍ଡାର (Blood Bank)',
-      scenariosTab: '୭. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
-      medicineExpiryTab: '୮. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
-      nearestMedicalTab: '୨. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
+      patientHospitalsTab: '୭. ହସ୍ପିଟାଲ୍ ସହବନ୍ଧିତା (Tie-Ups)',
+      doctorHospitalsTab: '୭. ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍ ନେଟୱାର୍କ',
+      scenariosTab: '୮. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
+      medicineExpiryTab: '୯. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
+      nearestMedicalTab: '୧୦. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
@@ -400,9 +404,11 @@ export default function App() {
       doctorBookingTab: '4. डॉक्टर सूची एवं बुकिंग',
       bedsTab: '5. अस्पताल बेड रिज़र्वेशन',
       bloodBankTab: '6. ब्लड बैंक (Blood Bank)',
-      scenariosTab: '7. फील्ड परिदृश्य',
-      medicineExpiryTab: '8. दवा एक्सपायरी जांच',
-      nearestMedicalTab: '9. निकटतम अस्पताल (GPS Map)',
+      patientHospitalsTab: '7. अस्पताल संबद्धता (Tie-Ups)',
+      doctorHospitalsTab: '7. संबद्ध अस्पताल नेटवर्क',
+      scenariosTab: '8. फील्ड परिदृश्य',
+      medicineExpiryTab: '9. दवा एक्सपायरी जांच',
+      nearestMedicalTab: '10. निकटतम अस्पताल (GPS Map)',
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
@@ -441,9 +447,11 @@ export default function App() {
       doctorBookingTab: '4. Doctor Directory & Booking',
       bedsTab: '5. Hospital Bed Reservation',
       bloodBankTab: '6. Blood Bank Portal',
-      scenariosTab: '7. Field Scenarios',
-      medicineExpiryTab: '8. Medicine Expiry Checker',
-      nearestMedicalTab: '9. Nearest Medical & GPS Map',
+      patientHospitalsTab: '7. Hospital Tie-Ups',
+      doctorHospitalsTab: '7. Apex Hospital Network',
+      scenariosTab: '8. Field Scenarios',
+      medicineExpiryTab: '9. Medicine Expiry Checker',
+      nearestMedicalTab: '10. Nearest Medical & GPS Map',
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
@@ -596,6 +604,21 @@ export default function App() {
                   <Droplet className="w-3.5 h-3.5 text-rose-300 fill-rose-200" />
                   {uiText.bloodBankTab}
                 </button>
+
+                <button
+                  onClick={() => setActiveTab('hospitals')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                    activeTab === 'hospitals'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5 text-indigo-200" />
+                  {uiText.patientHospitalsTab}
+                  <span className="bg-indigo-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                    {transfersCount > 0 ? transfersCount : '44 Apex'}
+                  </span>
+                </button>
               </>
             ) : (
               <>
@@ -685,6 +708,21 @@ export default function App() {
                 >
                   <Droplet className="w-3.5 h-3.5 text-rose-300 fill-rose-200" />
                   {uiText.bloodBankTab}
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('hospitals')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                    activeTab === 'hospitals'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5 text-indigo-200" />
+                  {uiText.doctorHospitalsTab}
+                  <span className="bg-indigo-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                    {transfersCount > 0 ? transfersCount : '44 Apex'}
+                  </span>
                 </button>
               </>
             )}
@@ -1054,7 +1092,18 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 6: INDIA & ODISHA SCENARIOS REFERENCE */}
+        {/* TAB 7: APEX HOSPITAL TIE-UPS & BED TRACKER */}
+        {activeTab === 'hospitals' && (
+          <div>
+            <HospitalTieUpSystem
+              currentUser={currentUser}
+              appLang={appLang}
+              onTransfersCountChange={(cnt) => setTransfersCount(cnt)}
+            />
+          </div>
+        )}
+
+        {/* TAB 8: INDIA & ODISHA SCENARIOS REFERENCE */}
         {activeTab === 'scenarios' && (
           <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 mb-2">

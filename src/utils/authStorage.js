@@ -302,3 +302,29 @@ export const cancelBedBooking = (bookingId) => {
   return updated;
 };
 
+const HOSPITAL_TRANSFERS_KEY = 'triage_hospital_transfers';
+
+export const getHospitalTransfers = () => {
+  try {
+    const raw = localStorage.getItem(HOSPITAL_TRANSFERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Failed to read hospital transfers:', e);
+    return [];
+  }
+};
+
+export const saveHospitalTransfer = (transfer) => {
+  const current = getHospitalTransfers();
+  const updated = [transfer, ...current];
+  localStorage.setItem(HOSPITAL_TRANSFERS_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+export const cancelHospitalTransfer = (transferId) => {
+  const current = getHospitalTransfers();
+  const updated = current.filter((t) => t.id !== transferId);
+  localStorage.setItem(HOSPITAL_TRANSFERS_KEY, JSON.stringify(updated));
+  return updated;
+};
+
