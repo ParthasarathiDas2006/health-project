@@ -491,39 +491,79 @@ export default function HospitalTieUpSystem({ currentUser, appLang, onTransfersC
       {/* SECTION 1: HOSPITALS DIRECTORY & FILTERING */}
       {activeSection === 'sec-directory' && (
         <div className="space-y-4">
-          {/* Search & Filter Controls */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={txt.searchPlaceholder}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
-              />
-              {searchQuery && (
+          {/* Search & Filter Form (Supports Enter Key + Reset + Any Options) */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              // Form submit on Enter key press
+            }}
+            className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3"
+          >
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <div className="relative flex-1 w-full">
+                <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
+                  placeholder={txt.searchPlaceholder}
+                  className="w-full pl-10 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none font-medium"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
                 <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                  type="submit"
+                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-extrabold flex items-center gap-1 shadow-xs transition-all whitespace-nowrap"
+                  title="Press Enter key to search"
                 >
-                  ✕
+                  <Search className="w-3.5 h-3.5" />
+                  <span>{lang === 'or-IN' ? 'ଖୋଜନ୍ତୁ (Enter ↵)' : (lang === 'hi-IN' ? 'खोजें (Enter ↵)' : 'Search (Press Enter ↵)')}</span>
                 </button>
-              )}
+
+                {(searchQuery || selectedCity !== 'ALL' || selectedSpecialty !== 'ALL' || selectedScheme !== 'ALL') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCity('ALL');
+                      setSelectedSpecialty('ALL');
+                      setSelectedScheme('ALL');
+                    }}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold whitespace-nowrap transition-all"
+                  >
+                    🔄 {lang === 'or-IN' ? 'ରିସେଟ୍ (Any)' : (lang === 'hi-IN' ? 'रीसेट (Any)' : 'Reset All (Any)')}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {/* City Filter */}
+              {/* City Filter - Any City Option */}
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                  Location / City Filter
+                  Location / City (Any / କୌଣସି ବି ସହର)
                 </label>
                 <select
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
                   className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
-                  <option value="ALL">📍 {txt.allCities} ({HOSPITAL_CITIES.length})</option>
+                  <option value="ALL">📍 {lang === 'or-IN' ? 'ଯେକୌଣସି ସହର (Any City / All 110 Hospitals)' : (lang === 'hi-IN' ? 'कोई भी शहर (Any City / All 110 Hospitals)' : 'Any City / All Locations (110 Hospitals)')}</option>
                   <optgroup label={lang === 'or-IN' ? 'ଓଡ଼ିଶାର ୩୦ଟି ଜିଲ୍ଲା (Odisha Districts)' : 'Odisha Districts (30)'}>
                     {HOSPITAL_CITIES.filter((c) => c.region === 'Odisha').map((c) => (
                       <option key={c.id} value={c.id}>
@@ -541,17 +581,17 @@ export default function HospitalTieUpSystem({ currentUser, appLang, onTransfersC
                 </select>
               </div>
 
-              {/* Specialty Filter */}
+              {/* Specialty Filter - Any Specialty Option */}
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                  Specialty Filter
+                  Specialty (Any / କୌଣସି ବି ବିଭାଗ)
                 </label>
                 <select
                   value={selectedSpecialty}
                   onChange={(e) => setSelectedSpecialty(e.target.value)}
                   className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
-                  <option value="ALL">⚕️ {txt.allSpecialties}</option>
+                  <option value="ALL">⚕️ {lang === 'or-IN' ? 'ଯେକୌଣସି ବିଭାଗ (Any Specialty / All Depts)' : (lang === 'hi-IN' ? 'कोई भी विभाग (Any Specialty / All Depts)' : 'Any Specialty / All Departments')}</option>
                   <option value="Trauma">{txt.specTrauma}</option>
                   <option value="Cardio">{txt.specCardio}</option>
                   <option value="Oncology">{txt.specOncology}</option>
@@ -560,23 +600,23 @@ export default function HospitalTieUpSystem({ currentUser, appLang, onTransfersC
                 </select>
               </div>
 
-              {/* Scheme Filter */}
+              {/* Scheme Filter - Any Scheme Option */}
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                  Government Scheme Filter
+                  Scheme (Any / କୌଣସି ବି ଯୋଜନା)
                 </label>
                 <select
                   value={selectedScheme}
                   onChange={(e) => setSelectedScheme(e.target.value)}
                   className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
-                  <option value="ALL">💳 {txt.allSchemes}</option>
+                  <option value="ALL">💳 {lang === 'or-IN' ? 'ଯେକୌଣସି ସରକାରୀ ଯୋଜନା (Any Govt Scheme)' : (lang === 'hi-IN' ? 'कोई भी सरकारी योजना (Any Govt Scheme)' : 'Any Government Scheme / All Schemes')}</option>
                   <option value="BSKY">{txt.bskyScheme}</option>
                   <option value="PMJAY">{txt.pmjayScheme}</option>
                 </select>
               </div>
             </div>
-          </div>
+          </form>
 
           {/* Hospital Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
