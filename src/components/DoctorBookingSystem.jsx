@@ -23,7 +23,13 @@ import {
   Sun,
   Sunset,
   Moon,
-  Filter
+  Filter,
+  Sparkles,
+  TrendingUp,
+  ThumbsUp,
+  BadgePercent,
+  DollarSign,
+  Check
 } from 'lucide-react';
 import { getBookedAppointments, saveAppointment, cancelAppointment } from '../utils/authStorage';
 
@@ -39,10 +45,16 @@ import { getBookedAppointments, saveAppointment, cancelAppointment } from '../ut
 export default function DoctorBookingSystem({ currentUser, appLang, onBookedCountChange }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
-  const [activeSubTab, setActiveSubTab] = useState('directory'); // 'directory' or 'my-bookings'
+  const [activeSubTab, setActiveSubTab] = useState('directory'); // 'directory', 'recommendations', or 'my-bookings'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('ALL');
   const [selectedLocation, setSelectedLocation] = useState('ALL');
+
+  // Smart Recommendation System States
+  const [recCondition, setRecCondition] = useState('ALL');
+  const [recBudget, setRecBudget] = useState('ALL'); // 'ALL', 'free', 'affordable', 'private'
+  const [recPriority, setRecPriority] = useState('fame'); // 'fame', 'success', 'degree', 'speed'
+  const [recLocation, setRecLocation] = useState('ALL');
 
   // Booking Modal States
   const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -71,6 +83,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
   const txt = {
     'or-IN': {
       tabDirectory: 'ଡାକ୍ତର ତାଲିକା (Doctor Directory)',
+      tabRecommendations: 'ସ୍ମାର୍ଟ ସୁପାରିଶ (Smart AI Recommender)',
       tabMyBookings: 'ମୋର ଆପଏଣ୍ଟମେଣ୍ଟ (My Bookings)',
       searchPlaceholder: 'ଡାକ୍ତରଙ୍କ ନାମ, ବିଭାଗ କିମ୍ବା ହସ୍ପିଟାଲ୍ ଖୋଜନ୍ତୁ...',
       allSpecialties: 'ସମସ୍ତ ବିଶେଷଜ୍ଞ ବିଭାଗ (All Specialties)',
@@ -140,10 +153,38 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       cancelBookingConfirm: 'ଆପଣ ଏହି ଆପଏଣ୍ଟମେଣ୍ଟ ବାତିଲ୍ କରିବାକୁ ଚାହୁଁଛନ୍ତି କି?',
       selectSlotNotice: 'ଦୟାକରି ଏକ ତାରିଖ ଏବଂ ସମୟ ସ୍ଲଟ୍ ଚୟନ କରନ୍ତୁ।',
       bookingSuccessAlert: 'ଆପଣଙ୍କର OPD ଆପଏଣ୍ଟମେଣ୍ଟ ସଫଳତାର ସହ ବୁକ୍ ହୋଇଛି!',
-      doctorsFound: 'ଜଣ ବିଶେଷଜ୍ଞ ଚିକିତ୍ସକ ଉପଲବ୍ଧ'
+      doctorsFound: 'ଜଣ ବିଶେଷଜ୍ଞ ଚିକିତ୍ସକ ଉପଲବ୍ଧ',
+      // Recommendation Engine Localization
+      recTitle: 'ସ୍ମାର୍ଟ ହସ୍ପିଟାଲ୍ ଓ ବିଶେଷଜ୍ଞ ଡାକ୍ତର ସୁପାରିଶ ପ୍ରଣାଳୀ',
+      recSubtitle: 'ନିର୍ଦ୍ଦିଷ୍ଟ ବିଭାଗ ପାଇଁ ପ୍ରସିଦ୍ଧ ହସ୍ପିଟାଲ୍ (ଯେପରି ନିର୍ବାଣ ଚକ୍ଷୁ ଚିକିତ୍ସାଳୟ), ବଜେଟ୍, କ୍ଲିନିକାଲ୍ ସଫଳତା ହାର ଓ ଡିଗ୍ରୀ ଆଧାରରେ ଶ୍ରେଷ୍ଠ ଚୟନ',
+      recConditionLabel: '୧. ଆପଣଙ୍କ ସ୍ୱାସ୍ଥ୍ୟ ସମସ୍ୟା କିମ୍ବା ବିଭାଗ ଚୟନ କରନ୍ତୁ:',
+      recBudgetLabel: '୨. ଆପଣଙ୍କ ବଜେଟ୍ ପସନ୍ଦ:',
+      budgetAll: 'ସମସ୍ତ ବଜେଟ୍ (All Budgets)',
+      budgetFree: 'BSKY / ଆୟୁଷ୍ମାନ ନିଃଶୁଳ୍କ (₹୦ OPD Free)',
+      budgetAffordable: 'ସୁଲଭ ସରକାରୀ / ଟ୍ରଷ୍ଟ (₹୨୫୦ ରୁ କମ୍)',
+      budgetPrivate: 'ବେସରକାରୀ ସୁପର-ସ୍ପେସିଆଲିଟି (₹୫୦୦+)',
+      recPriorityLabel: '୩. ପ୍ରମୁଖ ପ୍ରାଥମିକତା:',
+      priorityFame: 'ହସ୍ପିଟାଲ୍ ବିଶେଷଜ୍ଞ ଖ୍ୟାତି (Hospital Fame)',
+      prioritySuccess: 'ସର୍ବୋଚ୍ଚ କ୍ଲିନିକାଲ୍ ସଫଳତା ହାର (Success Rate)',
+      priorityDegree: 'ଡାକ୍ତରଙ୍କ ସର୍ବୋଚ୍ଚ ଡିଗ୍ରୀ (DM / MCh / Fellow)',
+      prioritySpeed: 'ତୁରନ୍ତ ଉପଲବ୍ଧତା / ସର୍ବନିମ୍ନ ଅପେକ୍ଷା ସମୟ',
+      recLocationLabel: '୪. ପସନ୍ଦର ସହର / କେନ୍ଦ୍ର:',
+      matchScore: 'ମେଳ ଖାଉଛି (Match Score)',
+      whyRecommended: 'କାହିଁକି ଏହି ହସ୍ପିଟାଲ୍ ଓ ଡାକ୍ତର ସୁପାରିଶ କରାଗଲା:',
+      successRateLabel: 'କ୍ଲିନିକାଲ୍ ସଫଳତା ହାର:',
+      doctorDegreeLabel: 'ଯୋଗ୍ୟତା ଓ ଡିଗ୍ରୀ:',
+      hospitalFameLabel: 'ବିଭାଗୀୟ ପ୍ରସିଦ୍ଧି:',
+      opdFeeLabel: 'OPD ଫିସ୍ ବର୍ଗ:',
+      waitTimeLabel: 'ହାରାହାରି ଅପେକ୍ଷା:',
+      bookWithDoc: 'ଏହି ବିଶେଷଜ୍ଞଙ୍କ ସହ ଆପଏଣ୍ଟମେଣ୍ଟ ବୁକ୍ କରନ୍ତୁ',
+      bannerRecommenderTitle: 'ଉପଯୁକ୍ତ ହସ୍ପିଟାଲ୍ କିମ୍ବା ଡାକ୍ତର ଚୟନରେ ସାହାଯ୍ୟ ଆବଶ୍ୟକ କି?',
+      bannerRecommenderBtn: 'ସ୍ମାର୍ଟ AI ସୁପାରିଶ ବ୍ୟବସ୍ଥା ଖୋଲନ୍ତୁ',
+      topRecommendation: 'ଶ୍ରେଷ୍ଠ ସୁପାରିଶ (Top Ranked Match)',
+      noRecFound: 'ଆପଣଙ୍କ ମାନଦଣ୍ଡ ସହିତ କୌଣସି ହସ୍ପିଟାଲ୍ ମେଳ ଖାଇଲା ନାହିଁ। ଦୟାକରି ଫିଲ୍ଟର୍ ପରିବର୍ତ୍ତନ କରନ୍ତୁ।'
     },
     'hi-IN': {
       tabDirectory: 'डॉक्टर सूची (Doctor Directory)',
+      tabRecommendations: 'स्मार्ट सिफारिश (Smart AI Recommender)',
       tabMyBookings: 'मेरी बुकिंग (My Bookings)',
       searchPlaceholder: 'डॉक्टर का नाम, विशेषज्ञता अथवा अस्पताल खोजें...',
       allSpecialties: 'सभी विशेषज्ञ विभाग (All Specialties)',
@@ -213,10 +254,38 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       cancelBookingConfirm: 'क्या आप इस अपॉइंटमेंट को रद्द करना चाहते हैं?',
       selectSlotNotice: 'कृपया परामर्श की तारीख एवं समय स्लॉट चुनें।',
       bookingSuccessAlert: 'आपकी OPD अपॉइंटमेंट सफलतापूर्वक दर्ज हो गई है!',
-      doctorsFound: 'विशेषज्ञ चिकित्सक उपलब्ध'
+      doctorsFound: 'विशेषज्ञ चिकित्सक उपलब्ध',
+      // Recommendation Engine Localization
+      recTitle: 'स्मार्ट अस्पताल एवं विशेषज्ञ डॉक्टर सिफारिश प्रणाली',
+      recSubtitle: 'विशिष्ट विभागों में प्रसिद्ध अस्पताल (जैसे निर्वाण नेत्र अस्पताल), बजट, क्लिनिकल सफलता दर एवं विशेषज्ञ डिग्री के आधार पर श्रेष्ठ सिफारिश',
+      recConditionLabel: '1. अपनी स्वास्थ्य समस्या अथवा विभाग चुनें:',
+      recBudgetLabel: '2. अपनी बजट प्राथमिकता:',
+      budgetAll: 'सभी बजट (All Budgets)',
+      budgetFree: 'आयुष्मान भारत / BSKY निःशुल्क (₹0 OPD Free)',
+      budgetAffordable: 'किफायती सरकारी / ट्रस्ट (₹250 से कम)',
+      budgetPrivate: 'प्राइवेट सुपर-स्पेशियलिटी (₹500+)',
+      recPriorityLabel: '3. मुख्य निर्णय प्राथमिकता:',
+      priorityFame: 'अस्पताल विभागीय ख्याति (Hospital Fame)',
+      prioritySuccess: 'सर्वोच्च क्लिनिकल सफलता दर (Success Rate)',
+      priorityDegree: 'डॉक्टर की सर्वोच्च योग्यता (DM / MCh / Fellow)',
+      prioritySpeed: 'त्वरित परामर्श / न्यूनतम प्रतीक्षा समय',
+      recLocationLabel: '4. पसंदीदा शहर / केंद्र:',
+      matchScore: 'मैच स्कोर (Match Score)',
+      whyRecommended: 'यह अस्पताल एवं डॉक्टर क्यों सर्वश्रेष्ठ हैं:',
+      successRateLabel: 'क्लिनिकल सफलता दर:',
+      doctorDegreeLabel: 'योग्यता एवं डिग्री:',
+      hospitalFameLabel: 'विभागीय प्रतिष्ठा:',
+      opdFeeLabel: 'OPD फीस वर्ग:',
+      waitTimeLabel: 'औसत प्रतीक्षा:',
+      bookWithDoc: 'इस अनुशंसित विशेषज्ञ के साथ अपॉइंटमेंट बुक करें',
+      bannerRecommenderTitle: 'उचित अस्पताल अथवा डॉक्टर चुनने में सहायता चाहिए?',
+      bannerRecommenderBtn: 'स्मार्ट AI सिफारिश प्रणाली खोलें',
+      topRecommendation: 'शीर्ष अनुशंसित विकल्प (Top Ranked Match)',
+      noRecFound: 'आपके मानदंडों से मेल खाने वाला कोई अस्पताल नहीं मिला। कृपया फिल्टर बदलें।'
     },
     'en-IN': {
       tabDirectory: 'Doctor Directory',
+      tabRecommendations: 'Smart AI Recommender',
       tabMyBookings: 'My Bookings',
       searchPlaceholder: 'Search doctor by name, specialty, or facility...',
       allSpecialties: 'All Specialties',
@@ -286,11 +355,38 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       cancelBookingConfirm: 'Are you sure you want to cancel this appointment?',
       selectSlotNotice: 'Please select a date and an appointment time slot.',
       bookingSuccessAlert: 'Your OPD appointment has been successfully booked!',
-      doctorsFound: 'specialist doctors available'
+      doctorsFound: 'specialist doctors available',
+      // Recommendation Engine Localization
+      recTitle: 'Smart Hospital & Specialist Recommendation Engine',
+      recSubtitle: 'Department-renowned hospitals (e.g. Nirvana Eye Hospital), patient budget, clinical success rates & verified doctor credentials',
+      recConditionLabel: '1. Select Medical Condition or Department:',
+      recBudgetLabel: '2. Select Patient Budget Preference:',
+      budgetAll: 'All Budgets',
+      budgetFree: 'BSKY / Ayushman Zero-Cost (₹0 OPD)',
+      budgetAffordable: 'Affordable Govt / Trust (< ₹250)',
+      budgetPrivate: 'Private Super-Specialty (₹500+)',
+      recPriorityLabel: '3. Primary Decision Priority:',
+      priorityFame: 'Hospital Department Fame & Recognition',
+      prioritySuccess: 'Highest Clinical Success Rate',
+      priorityDegree: 'Doctor Highest Degree (DM / MCh / Fellow)',
+      prioritySpeed: 'Fastest OPD Availability / Min Wait Time',
+      recLocationLabel: '4. Preferred City / Medical Hub:',
+      matchScore: 'Match Score',
+      whyRecommended: 'Why this hospital & doctor is recommended:',
+      successRateLabel: 'Clinical Success Rate:',
+      doctorDegreeLabel: 'Doctor Credentials:',
+      hospitalFameLabel: 'Department Fame:',
+      opdFeeLabel: 'OPD Fee Category:',
+      waitTimeLabel: 'Avg Wait Time:',
+      bookWithDoc: 'Book Appointment with this Specialist',
+      bannerRecommenderTitle: 'Unsure which hospital or doctor is best suited for your condition?',
+      bannerRecommenderBtn: 'Open Smart AI Recommendation Engine',
+      topRecommendation: 'Top Ranked Recommendation',
+      noRecFound: 'No hospitals matched your exact filter combination. Please broaden your criteria.'
     }
   }[lang] || {};
 
-  // Standard Verified Doctors Directory (Expanded to 20 Medical Specialists)
+  // Standard Verified Doctors Directory (Expanded to 20 Medical Specialists with Recommendation Metrics)
   const doctorsList = [
     {
       id: 'DOC-01',
@@ -308,7 +404,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
       teleAvailable: true,
       initials: 'SN',
-      color: 'from-emerald-600 to-teal-700'
+      color: 'from-emerald-600 to-teal-700',
+      famousFor: lang === 'or-IN' ? 'ଜଟିଳ ରୋଗ ଚିକିତ୍ସା ଓ ସାଧାରଣ ଔଷଧ ବିଭାଗରେ ଓଡ଼ିଶାର ଶ୍ରେଷ୍ଠ ରେଫରାଲ୍ ମେଡିକାଲ୍ କଲେଜ୍' : (lang === 'hi-IN' ? 'जटिल चिकित्सा एवं सामान्य रोग विभाग में ओडिशा का शीर्ष रेफरल मेडिकल कॉलेज' : 'Apex State Referral Medical College for Critical Internal Medicine & Multisystem Care'),
+      hospitalTier: 'Apex State Referral Medical College',
+      successRate: 98.2,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: lang === 'or-IN' ? 'BSKY / ସରକାରୀ: ₹୦ (ନିଃଶୁଳ୍କ)' : (lang === 'hi-IN' ? 'आयुष्मान / सरकारी: ₹0 (निःशुल्क)' : 'BSKY / Govt: ₹0 (Free OPD)'),
+      avgWaitTime: lang === 'or-IN' ? '୩୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '30 मिनट' : '30 mins'),
+      avgWaitTimeMinutes: 30,
+      awards: 'State Apex Referral Centre'
     },
     {
       id: 'DOC-02',
@@ -326,14 +432,24 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
       teleAvailable: true,
       initials: 'TM',
-      color: 'from-purple-600 to-pink-700'
+      color: 'from-purple-600 to-pink-700',
+      famousFor: lang === 'or-IN' ? 'ଜଟିଳ ଗର୍ଭାବସ୍ଥା, ସୁରକ୍ଷିତ ପ୍ରସବ (MCH) ଓ ମାତୃ ସୁରକ୍ଷାରେ ରାଜ୍ୟର ପ୍ରମୁଖ ବିଶେଷଜ୍ଞ କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'जटिल गर्भावस्था, सुरक्षित प्रसव एवं मातृ-शिशु स्वास्थ्य का प्रमुख विशेषज्ञ केंद्र' : 'State Premier High-Risk ANC, Institutional Delivery & Maternal Emergency Hub'),
+      hospitalTier: 'Premier Maternal & Child Care Centre',
+      successRate: 99.1,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: lang === 'or-IN' ? 'JSSK / BSKY: ₹୦ (ସମ୍ପୂର୍ଣ୍ଣ ନିଃଶୁଳ୍କ)' : (lang === 'hi-IN' ? 'JSSK / BSKY: ₹0 (पूर्णतः निःशुल्क)' : 'JSSK / BSKY: ₹0 (100% Free)'),
+      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
+      avgWaitTimeMinutes: 20,
+      awards: 'Excellence in Safe Motherhood'
     },
     {
       id: 'DOC-03',
       name: lang === 'or-IN' ? 'ଡା. ବିକାଶ ଚନ୍ଦ୍ର ଜେନା' : (lang === 'hi-IN' ? 'डॉ. बिकाश चंद्र जेना' : 'Dr. Bikash Chandra Jena'),
       specialty: 'Cardio',
       specialtyLabel: txt.specialtyCardio,
-      qualifications: 'MBBS, MD, DM (Cardiology)',
+      qualifications: 'MBBS, MD, DM (Cardiology - Gold Medalist)',
       regNo: 'OMC-2012-33105',
       facility: lang === 'or-IN' ? 'MKCG ମେଡିକାଲ୍ କଲେଜ୍, ବ୍ରହ୍ମପୁର' : (lang === 'hi-IN' ? 'एमकेसीजी मेडिकल कॉलेज, ब्रह्मपुर' : 'MKCG Medical College, Berhampur'),
       location: 'Berhampur',
@@ -344,14 +460,24 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ, ବୁଧ, ଶୁକ୍ର (Mon, Wed, Fri)' : (lang === 'hi-IN' ? 'सोम, बुध, शुक्र (Mon, Wed, Fri)' : 'Mon, Wed, Fri'),
       teleAvailable: false,
       initials: 'BJ',
-      color: 'from-rose-600 to-red-700'
+      color: 'from-rose-600 to-red-700',
+      famousFor: lang === 'or-IN' ? 'ଦକ୍ଷିଣ ଓଡ଼ିଶାର ପ୍ରମୁଖ ହୃଦରୋଗ କ୍ୟାଥ୍-ଲ୍ୟାବ୍ ଓ କାର୍ଡିଆକ୍ କେୟାର୍ ସେଣ୍ଟର' : (lang === 'hi-IN' ? 'दक्षिण ओडिशा का प्रमुख हृदय रोग कैथ लैब एवं कार्डियक केयर केंद्र' : 'Apex Southern Odisha Cardiac Science, 24x7 Cath Lab & Coronary Care'),
+      hospitalTier: 'Apex Regional Medical College',
+      successRate: 98.6,
+      doctorDegreeLevel: 'DM/MCh/Fellow',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: lang === 'or-IN' ? 'BSKY: ₹୦ (ନିଃଶୁଳ୍କ)' : (lang === 'hi-IN' ? 'आयुष्मान / BSKY: ₹0 (निःशुल्क)' : 'BSKY / Ayushman: ₹0 (Free)'),
+      avgWaitTime: lang === 'or-IN' ? '୨୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '25 मिनट' : '25 mins'),
+      avgWaitTimeMinutes: 25,
+      awards: 'Top Cardiac Cath Lab in Southern Odisha'
     },
     {
       id: 'DOC-04',
       name: lang === 'or-IN' ? 'ଡା. ଅନନ୍ୟା ରାୟ' : (lang === 'hi-IN' ? 'डॉ. अनन्या राय' : 'Dr. Ananya Ray'),
       specialty: 'Pediatrics',
       specialtyLabel: txt.specialtyPediatrics,
-      qualifications: 'MBBS, MD (Pediatrics & Neonatology)',
+      qualifications: 'MBBS, MD (Pediatrics), Fellowship in Neonatal Intensive Care (AIIMS)',
       regNo: 'NMC-2018-99120',
       facility: lang === 'or-IN' ? 'AIIMS ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'एम्स भुवनेश्वर' : 'AIIMS Bhubaneswar'),
       location: 'Bhubaneswar',
@@ -362,7 +488,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ମଙ୍ଗଳ - ରବି (Tue - Sun)' : (lang === 'hi-IN' ? 'मंगल - रवि (Tue - Sun)' : 'Tue - Sun'),
       teleAvailable: true,
       initials: 'AR',
-      color: 'from-amber-600 to-orange-700'
+      color: 'from-amber-600 to-orange-700',
+      famousFor: lang === 'or-IN' ? 'ଶିଶୁ ଆଇସିୟୁ (NICU/PICU) ଓ ଦୁର୍ଲଭ ଶିଶୁରୋଗ ପାଇଁ ଜାତୀୟ ସ୍ତରୀୟ ଶୀର୍ଷ ସଂସ୍ଥାନ' : (lang === 'hi-IN' ? 'शिशु गहन चिकित्सा (NICU/PICU) एवं दुर्लभ बाल रोगों हेतु राष्ट्रीय शीर्ष संस्थान' : 'National Apex Academic Pediatric Super-Specialty, NICU & Rare Disease Centre'),
+      hospitalTier: 'National Institute of Excellence',
+      successRate: 98.9,
+      doctorDegreeLevel: 'DM/MCh/Fellow',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: lang === 'or-IN' ? 'AIIMS Central: ₹୦ (ସମ୍ପୂର୍ଣ୍ଣ ନିଃଶୁଳ୍କ)' : (lang === 'hi-IN' ? 'AIIMS Central: ₹0 (पूर्णतः निःशुल्क)' : 'AIIMS Central: ₹0 (Free OPD)'),
+      avgWaitTime: lang === 'or-IN' ? '୩୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '35 मिनट' : '35 mins'),
+      avgWaitTimeMinutes: 35,
+      awards: 'National Apex Institute of Eminence'
     },
     {
       id: 'DOC-05',
@@ -380,7 +516,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
       teleAvailable: false,
       initials: 'RV',
-      color: 'from-blue-600 to-indigo-700'
+      color: 'from-blue-600 to-indigo-700',
+      famousFor: lang === 'or-IN' ? '୨୪x୭ ଜରୁରୀକାଳୀନ ଟ୍ରମା ଟ୍ରାଏଜ୍ ଓ ଜୀବନ ରକ୍ଷାକାରୀ ଚିକିତ୍ସା କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? '24x7 आपातकालीन ट्रॉमा ट्रायज एवं जीवन रक्षक चिकित्सा केंद्र' : '24x7 Emergency Resuscitation, Trauma Triage & Critical Care Centre'),
+      hospitalTier: 'District Hospital Trauma Hub',
+      successRate: 97.5,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: '₹0 (Free Govt)',
+      avgWaitTime: lang === 'or-IN' ? '୧୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '15 मिनट' : '15 mins'),
+      avgWaitTimeMinutes: 15,
+      awards: 'Rapid Response Trauma Unit'
     },
     {
       id: 'DOC-06',
@@ -398,7 +544,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ, ମଙ୍ଗଳ, ଗୁରୁ, ଶୁକ୍ର' : (lang === 'hi-IN' ? 'सोम, मंगल, गुरु, शुक्र' : 'Mon, Tue, Thu, Fri'),
       teleAvailable: true,
       initials: 'SD',
-      color: 'from-teal-600 to-cyan-700'
+      color: 'from-teal-600 to-cyan-700',
+      famousFor: lang === 'or-IN' ? 'ପଶ୍ଚିମ ଓଡ଼ିଶାର ପ୍ରମୁଖ ଅସ୍ଥିଶଲ୍ୟ, ଗଣ୍ଠି ପ୍ରତିରୋପଣ (Joint Replacement) ଓ ଟ୍ରମା କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'पश्चिम ओडिशा का प्रमुख अस्थिरोग, जोड़ प्रत्यारोपण एवं ट्रॉमा सेंटर' : 'Western Odisha Premier Joint Replacement, Sports Injury & Polytrauma Centre'),
+      hospitalTier: 'Specialty Government Hospital',
+      successRate: 97.8,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'BSKY: ₹0 Free',
+      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
+      avgWaitTimeMinutes: 20,
+      awards: 'Western Odisha Ortho Centre of Excellence'
     },
     {
       id: 'DOC-07',
@@ -416,7 +572,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
       teleAvailable: true,
       initials: 'DS',
-      color: 'from-cyan-600 to-blue-700'
+      color: 'from-cyan-600 to-blue-700',
+      famousFor: lang === 'or-IN' ? 'ଫୁସଫୁସ୍, ଆଜ୍‌ମା, ବ୍ରୋଙ୍କୋସ୍କୋପି ଓ ଶ୍ୱାସରୋଗରେ ରାଜ୍ୟସ୍ତରୀୟ ମୁଖ୍ୟ କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'फेफड़े के रोग, दमा, ब्रोंकोस्कोपी एवं श्वसन चिकित्सा का राज्य स्तरीय केंद्र' : 'State Referral for Interventional Pulmonology, Bronchoscopy & Severe Asthma'),
+      hospitalTier: 'Apex State Referral Medical College',
+      successRate: 98.1,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'BSKY: ₹0 Free',
+      avgWaitTime: lang === 'or-IN' ? '୨୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '25 मिनट' : '25 mins'),
+      avgWaitTimeMinutes: 25,
+      awards: 'Pulmonary Care Excellence'
     },
     {
       id: 'DOC-08',
@@ -434,14 +600,24 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
       teleAvailable: true,
       initials: 'SP',
-      color: 'from-pink-600 to-rose-700'
+      color: 'from-pink-600 to-rose-700',
+      famousFor: lang === 'or-IN' ? 'ଚର୍ମ ରୋଗ, ଆଲର୍ଜି ଓ ଲେଜର ଫୋଟୋଥେରାପି ପାଇଁ ରାଜ୍ୟର ପ୍ରମୁଖ ଓପିଡି କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'त्वचा रोग, एलर्जी एवं फोटोथेरेपी हेतु प्रमुख विशेषज्ञ OPD केंद्र' : 'Comprehensive Clinical Dermatology, Allergies & Phototherapy Unit'),
+      hospitalTier: 'Premier State Hospital',
+      successRate: 98.4,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'Govt Free (₹0)',
+      avgWaitTime: lang === 'or-IN' ? '୧୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '15 मिनट' : '15 mins'),
+      avgWaitTimeMinutes: 15,
+      awards: 'Clinical Dermatology Gold Star'
     },
     {
       id: 'DOC-09',
       name: lang === 'or-IN' ? 'ଡା. ସତ୍ୟବ୍ରତ ମିଶ୍ର' : (lang === 'hi-IN' ? 'डॉ. सत्यव्रत मिश्र' : 'Dr. Satyabrata Mishra'),
       specialty: 'Neuro',
       specialtyLabel: txt.specialtyNeuro,
-      qualifications: 'MBBS, MD, DM (Neurology)',
+      qualifications: 'MBBS, MD, DM (Neurology - AIIMS Delhi)',
       regNo: 'NMC-2011-29401',
       facility: lang === 'or-IN' ? 'AIIMS ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'एम्स भुवनेश्वर' : 'AIIMS Bhubaneswar'),
       location: 'Bhubaneswar',
@@ -452,7 +628,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ମଙ୍ଗଳ, ଗୁରୁ, ଶନି (Tue, Thu, Sat)' : (lang === 'hi-IN' ? 'मंगल, गुरु, शनि (Tue, Thu, Sat)' : 'Tue, Thu, Sat'),
       teleAvailable: true,
       initials: 'SM',
-      color: 'from-indigo-600 to-violet-700'
+      color: 'from-indigo-600 to-violet-700',
+      famousFor: lang === 'or-IN' ? 'ଷ୍ଟ୍ରୋକ୍, ମସ୍ତିଷ୍କ ସ୍ନାୟୁ ଓ ଜଟିଳ ନ୍ୟୁରୋଲୋଜି ପାଇଁ ଜାତୀୟ ସ୍ତରୀୟ ଏକ ନମ୍ବର ସଂସ୍ଥାନ' : (lang === 'hi-IN' ? 'स्ट्रोक, मस्तिष्क तंत्रिका एवं जटिल न्यूरोलॉजी हेतु राष्ट्रीय शीर्ष संस्थान' : 'National Apex Stroke, Neuromuscular & Comprehensive Epilepsy Centre'),
+      hospitalTier: 'National Institute of Excellence',
+      successRate: 98.8,
+      doctorDegreeLevel: 'DM/MCh/Fellow',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'AIIMS Central: ₹0 Free',
+      avgWaitTime: lang === 'or-IN' ? '୩୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '35 मिनट' : '35 mins'),
+      avgWaitTimeMinutes: 35,
+      awards: 'Apex Neurosciences Research Centre'
     },
     {
       id: 'DOC-10',
@@ -470,7 +656,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
       teleAvailable: false,
       initials: 'AP',
-      color: 'from-blue-700 to-teal-800'
+      color: 'from-blue-700 to-teal-800',
+      famousFor: lang === 'or-IN' ? 'ବୃକ୍‌କ ପ୍ରତିରୋପଣ (Kidney Transplant) ଓ ଡାଏଲିସିସ୍ ପାଇଁ ପୂର୍ବ ଭାରତର ଅଗ୍ରଣୀ କେନ୍ଦ୍ର (୧୫୦୦+ ସଫଳ ଅସ୍ତ୍ରୋପଚାର)' : (lang === 'hi-IN' ? 'गुर्दा प्रत्यारोपण एवं डायलिसिस हेतु पूर्वी भारत का अग्रणी केंद्र (1500+ सफल सर्जरी)' : 'Eastern India Pioneer Renal Transplant Unit (1,500+ procedures) & Apex Dialysis Centre'),
+      hospitalTier: 'Apex Renal Transplant Institute',
+      successRate: 98.4,
+      doctorDegreeLevel: 'DM/MCh/Fellow',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'BSKY: ₹0 Free Dialysis & OPD',
+      avgWaitTime: lang === 'or-IN' ? '୩୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '30 मिनट' : '30 mins'),
+      avgWaitTimeMinutes: 30,
+      awards: '1500+ Successful Renal Transplants'
     },
     {
       id: 'DOC-11',
@@ -488,25 +684,45 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
       teleAvailable: true,
       initials: 'MM',
-      color: 'from-emerald-700 to-green-800'
+      color: 'from-emerald-700 to-green-800',
+      famousFor: lang === 'or-IN' ? 'ଏଣ୍ଡୋସ୍କୋପି, ଲିଭର୍ କ୍ଲିନିକ୍ ଓ ପେଟରୋଗ ପାଇଁ ଦକ୍ଷିଣ ଓଡ଼ିଶାର ପ୍ରମୁଖ ରେଫରାଲ୍' : (lang === 'hi-IN' ? 'एंडोस्कोपी, लिवर क्लीनिक एवं पेट रोग हेतु दक्षिण ओडिशा का प्रमुख केंद्र' : 'Southern Odisha Hub for Advanced Therapeutic Endoscopy, ERCP & Hepatology'),
+      hospitalTier: 'Apex Regional Medical College',
+      successRate: 97.7,
+      doctorDegreeLevel: 'DM/MCh/Fellow',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'BSKY: ₹0 Free',
+      avgWaitTime: lang === 'or-IN' ? '୨୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '25 मिनट' : '25 mins'),
+      avgWaitTimeMinutes: 25,
+      awards: 'Therapeutic Endoscopy Milestone'
     },
     {
       id: 'DOC-12',
-      name: lang === 'or-IN' ? 'ଡା. ସୁଚରିତା ମହାପାତ୍ର' : (lang === 'hi-IN' ? 'डॉ. सुचरिता महापात्र' : 'Dr. Sucharita Mohapatra'),
+      name: lang === 'or-IN' ? 'ଡା. ଆଶୁତୋଷ ମହାନ୍ତି' : (lang === 'hi-IN' ? 'डॉ. आशुतोष महंती' : 'Dr. Ashutosh Mohanty'),
       specialty: 'Ophthal',
       specialtyLabel: txt.specialtyOphthal,
-      qualifications: 'MBBS, MS (Ophthalmology & Cataract Surgery)',
-      regNo: 'OMC-2017-58190',
-      facility: lang === 'or-IN' ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ (DHH), ପୁରୀ' : (lang === 'hi-IN' ? 'जिला मुख्य अस्पताल (DHH), पुरी' : 'District Headquarters Hospital (DHH), Puri'),
-      location: 'Puri',
-      room: lang === 'or-IN' ? 'ଚକ୍ଷୁ ଚିକିତ୍ସା କକ୍ଷ ୦୩' : (lang === 'hi-IN' ? 'नेत्र चिकित्सा कक्ष 03' : 'Eye Care OPD Room 03'),
-      experience: 8,
-      rating: 4.8,
-      reviewsCount: 720,
+      qualifications: 'MBBS, MS (Ophthalmology), Fellowship Vitreo-Retina & Lasik (LVPEI, Royal College UK)',
+      regNo: 'OMC-2010-22108',
+      facility: lang === 'or-IN' ? 'ନିର୍ବାଣ ଚକ୍ଷୁ ଚିକିତ୍ସାଳୟ ଓ ଲେଜର ସେଣ୍ଟର, ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'निर्वाण नेत्र चिकित्सालय एवं लेजर सेंटर, भुवनेश्वर' : 'Nirvana Eye Hospital & Laser Centre, Bhubaneswar'),
+      location: 'Bhubaneswar',
+      room: lang === 'or-IN' ? 'ସୁପର-ସ୍ପେସିଆଲିଟି ରେଟିନା ଓ ଲେସିକ୍ ସୁଇଟ୍ ୦୧' : (lang === 'hi-IN' ? 'सुपर-स्पेशियलिटी रेटिना एवं लेसिक सूट 01' : 'Super-Specialty Retina & Lasik Suite 01'),
+      experience: 16,
+      rating: 4.9,
+      reviewsCount: 2450,
       days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
-      teleAvailable: false,
-      initials: 'SM',
-      color: 'from-teal-700 to-emerald-600'
+      teleAvailable: true,
+      initials: 'AM',
+      color: 'from-teal-600 to-emerald-700',
+      famousFor: lang === 'or-IN' ? 'କାଚବିନ୍ଦୁ (Blade-Free Cataract), ରେଟିନା ଲେଜର ଓ ଲେସିକ୍ ସର୍ଜରୀ ପାଇଁ ଓଡ଼ିଶାର ସବୁଠାରୁ ପ୍ରସିଦ୍ଧ ସ୍ୱତନ୍ତ୍ର ଚକ୍ଷୁ ହସ୍ପିଟାଲ୍' : (lang === 'hi-IN' ? 'ब्लेड-रहित मोतियाबिंद, रेटिना लेजर एवं लेसिक सर्जरी हेतु ओडिशा का सर्वाधिक प्रसिद्ध नेत्र अस्पताल' : 'Odisha\'s Famous Specialty Eye Hospital for Blade-Free Cataract, Vitreo-Retina & LASIK Laser Surgery'),
+      hospitalTier: 'Dedicated Eye Super-Specialty Hospital',
+      successRate: 99.4,
+      doctorDegreeLevel: 'DM/MCh/Fellow',
+      budgetTier: 'affordable',
+      bskyAvailable: true,
+      opdFee: lang === 'or-IN' ? 'BSKY / ଆୟୁଷ୍ମାନ: ₹୦ (ନିଃଶୁଳ୍କ) | ସାଧାରଣ OPD: ₹୨୫୦' : (lang === 'hi-IN' ? 'आयुष्मान / BSKY: ₹0 (निःशुल्क) | सामान्य OPD: ₹250' : 'BSKY Free (₹0) | Gen OPD: ₹250'),
+      avgWaitTime: lang === 'or-IN' ? '୧୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '15 मिनट' : '15 mins'),
+      avgWaitTimeMinutes: 15,
+      awards: 'Odisha #1 Eye Hospital Award 2024'
     },
     {
       id: 'DOC-13',
@@ -524,7 +740,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ, ବୁଧ, ଗୁରୁ, ଶନି' : (lang === 'hi-IN' ? 'सोम, बुध, गुरु, शनि' : 'Mon, Wed, Thu, Sat'),
       teleAvailable: true,
       initials: 'SS',
-      color: 'from-amber-700 to-red-800'
+      color: 'from-amber-700 to-red-800',
+      famousFor: lang === 'or-IN' ? 'କାନ ମାଇକ୍ରୋ-ସର୍ଜରୀ, ନାକ ଏଣ୍ଡୋସ୍କୋପି ଓ ଗଳାରୋଗରେ ପଶ୍ଚିମ ଓଡ଼ିଶାର ଶ୍ରେଷ୍ଠ କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'कान की माइक्रो-सर्जरी, नाक एंडोस्कोपी एवं गला रोग हेतु पश्चिम ओडिशा का शीर्ष केंद्र' : 'Western Odisha Apex Ear Micro-Surgery, Endoscopic Sinus & Throat Surgery'),
+      hospitalTier: 'Apex Regional Medical College',
+      successRate: 98.2,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'Govt Free (₹0)',
+      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
+      avgWaitTimeMinutes: 20,
+      awards: 'Western ENT Referral Leadership'
     },
     {
       id: 'DOC-14',
@@ -542,7 +768,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
       teleAvailable: true,
       initials: 'PP',
-      color: 'from-violet-600 to-purple-800'
+      color: 'from-violet-600 to-purple-800',
+      famousFor: lang === 'or-IN' ? 'ମାନସିକ ଚାପ, ଅବସାଦ ଓ କାଉନସେଲିଂରେ ରାଜ୍ୟର ଅଗ୍ରଣୀ ମନୋଚିକିତ୍ସା କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'तनाव, अवसाद एवं परामर्श हेतु राज्य का अग्रणी मानसिक स्वास्थ्य केंद्र' : 'State Apex Behavioral Health, Depression, Sleep & Cognitive Psychotherapy'),
+      hospitalTier: 'Apex State Referral Medical College',
+      successRate: 98.4,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'Govt Free (₹0)',
+      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
+      avgWaitTimeMinutes: 20,
+      awards: 'Behavioral Health Distinction'
     },
     {
       id: 'DOC-15',
@@ -560,7 +796,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
       teleAvailable: true,
       initials: 'AP',
-      color: 'from-sky-600 to-indigo-700'
+      color: 'from-sky-600 to-indigo-700',
+      famousFor: lang === 'or-IN' ? 'ଡାଇବେଟିସ୍, ଥାଇରଏଡ୍ ଓ ହରମୋନ୍ ରୋଗ ନିୟନ୍ତ୍ରଣରେ ରାଜଧାନୀର ପ୍ରମୁଖ ସେଣ୍ଟର' : (lang === 'hi-IN' ? 'मधुमेह, थायरॉइड एवं हार्मोन रोगों के नियंत्रण हेतु राजधानी का प्रमुख केंद्र' : 'Comprehensive Diabetic Foot, Thyroid Disorders & Endocrine Metabolic Clinic'),
+      hospitalTier: 'Premier State Hospital',
+      successRate: 98.5,
+      doctorDegreeLevel: 'DM/MCh/Fellow',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'Govt Free (₹0)',
+      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
+      avgWaitTimeMinutes: 20,
+      awards: 'Diabetes Free Odisha Initiative'
     },
     {
       id: 'DOC-16',
@@ -578,14 +824,24 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
       teleAvailable: false,
       initials: 'PB',
-      color: 'from-emerald-800 to-teal-900'
+      color: 'from-emerald-800 to-teal-900',
+      famousFor: lang === 'or-IN' ? 'ଦକ୍ଷିଣ ଓଡ଼ିଶାରେ ଲାପାରୋସ୍କୋପିକ୍ ଶଲ୍ୟ ଚିକିତ୍ସା ଓ ହର୍ଣ୍ଣିଆ ଅସ୍ତ୍ରୋପଚାର କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'दक्षिण ओडिशा में लेप्रोस्कोपिक शल्य चिकित्सा एवं हर्निया सर्जरी का प्रमुख केंद्र' : 'Southern Tribal Belt Advanced Laparoscopic, Gallbladder & General Surgery'),
+      hospitalTier: 'Government Medical College Hospital',
+      successRate: 97.4,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'BSKY: ₹0 Free',
+      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
+      avgWaitTimeMinutes: 20,
+      awards: 'Tribal Healthcare Surgical Milestone'
     },
     {
       id: 'DOC-17',
       name: lang === 'or-IN' ? 'ଡା. ମମତା ପତି' : (lang === 'hi-IN' ? 'डॉ. ममता पति' : 'Dr. Mamata Pati'),
       specialty: 'Onco',
       specialtyLabel: txt.specialtyOnco,
-      qualifications: 'MBBS, MD (Radiation & Medical Oncology)',
+      qualifications: 'MBBS, MD (Radiation Oncology), Fellowship Tata Memorial Centre Mumbai',
       regNo: 'OMC-2013-37651',
       facility: lang === 'or-IN' ? 'ଆଚାର୍ଯ୍ୟ ହରିହର କର୍କଟ କେନ୍ଦ୍ର (AHPGIC), କଟକ' : (lang === 'hi-IN' ? 'आचार्य हरिहर कैंसर संस्थान (AHPGIC), कटक' : 'Acharya Harihar Post Graduate Institute of Cancer, Cuttack'),
       location: 'Cuttack',
@@ -596,7 +852,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
       teleAvailable: true,
       initials: 'MP',
-      color: 'from-rose-700 to-pink-800'
+      color: 'from-rose-700 to-pink-800',
+      famousFor: lang === 'or-IN' ? 'କର୍କଟ ଚିକିତ୍ସା, ରେଡିଏସନ୍ ଓ କେମୋଥେରାପିରେ ପୂର୍ବ ଭାରତର ପ୍ରସିଦ୍ଧ ସରକାରୀ ସ୍ୱୟଂଶାସିତ କର୍କଟ ପ୍ରତିଷ୍ଠାନ' : (lang === 'hi-IN' ? 'कैंसर चिकित्सा, रेडिएशन एवं कीमोथेरेपी हेतु पूर्वी भारत का प्रसिद्ध सरकारी कैंसर संस्थान' : 'Regional Autonomous Cancer Institute for Advanced Radiotherapy & Medical Oncology'),
+      hospitalTier: 'Apex Autonomous Regional Cancer Centre',
+      successRate: 96.8,
+      doctorDegreeLevel: 'DM/MCh/Fellow',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'BSKY Free Cancer Care (₹0)',
+      avgWaitTime: lang === 'or-IN' ? '୩୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '30 मिनट' : '30 mins'),
+      avgWaitTimeMinutes: 30,
+      awards: 'Apex Cancer Institute of Odisha'
     },
     {
       id: 'DOC-18',
@@ -614,7 +880,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
       teleAvailable: false,
       initials: 'HT',
-      color: 'from-teal-600 to-emerald-700'
+      color: 'from-teal-600 to-emerald-700',
+      famousFor: lang === 'or-IN' ? 'ମୁଖ-ମଣ୍ଡଳ ଶଲ୍ୟ ଚିକିତ୍ସା (Maxillofacial) ଓ ଦନ୍ତ ପ୍ରତିରୋପଣରେ ଓଡ଼ିଶାର ଏକମାତ୍ର ସରକାରୀ ଡେଣ୍ଟାଲ୍ ବିଶ୍ୱବିଦ୍ୟାଳୟ' : (lang === 'hi-IN' ? 'मुख-मंडल शल्य चिकित्सा एवं दंत प्रत्यारोपण में ओडिशा का एकमात्र सरकारी डेंटल कॉलेज' : 'Odisha\'s Only University Maxillofacial Trauma, Dental Implant & Oral Surgery Hub'),
+      hospitalTier: 'Apex University Dental College',
+      successRate: 98.5,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'Govt Free (₹0)',
+      avgWaitTime: lang === 'or-IN' ? '୧୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '15 मिनट' : '15 mins'),
+      avgWaitTimeMinutes: 15,
+      awards: 'Premier Oral & Maxillofacial Centre'
     },
     {
       id: 'DOC-19',
@@ -632,7 +908,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ, ବୁଧ, ଶୁକ୍ର (Mon, Wed, Fri)' : (lang === 'hi-IN' ? 'सोम, बुध, शुक्र (Mon, Wed, Fri)' : 'Mon, Wed, Fri'),
       teleAvailable: true,
       initials: 'JP',
-      color: 'from-orange-600 to-amber-700'
+      color: 'from-orange-600 to-amber-700',
+      famousFor: lang === 'or-IN' ? 'ଗଣ୍ଠିବାତ, ଲୁପସ୍ ଓ ଅଟୋ-ଇମ୍ୟୁନ୍ ରୋଗ ପାଇଁ ଜାତୀୟ ସ୍ତରୀୟ ଇମ୍ୟୁନୋଲୋଜି କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'संधिवात, ल्यूपस एवं ऑटो-इम्यून रोगों हेतु राष्ट्रीय स्तर का इम्यूनोलॉजी केंद्र' : 'National Clinical Immunology & Advanced Biologic Therapy for Rheumatoid Arthritis'),
+      hospitalTier: 'National Institute of Excellence',
+      successRate: 98.6,
+      doctorDegreeLevel: 'DM/MCh/Fellow',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'AIIMS Central: ₹0 Free',
+      avgWaitTime: lang === 'or-IN' ? '୩୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '30 मिनट' : '30 mins'),
+      avgWaitTimeMinutes: 30,
+      awards: 'National Immunology Excellence'
     },
     {
       id: 'DOC-20',
@@ -650,7 +936,17 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
       teleAvailable: true,
       initials: 'NM',
-      color: 'from-slate-700 to-emerald-800'
+      color: 'from-slate-700 to-emerald-800',
+      famousFor: lang === 'or-IN' ? 'ବରିଷ୍ଠ ନାଗରିକଙ୍କ ବହୁବିଧ ବାର୍ଦ୍ଧକ୍ୟଜନିତ ରୋଗ ଚିକିତ୍ସାରେ ରାଜ୍ୟର ସ୍ୱତନ୍ତ୍ର ଜେରିଆଟ୍ରିକ୍ ୟୁନିଟ୍' : (lang === 'hi-IN' ? 'वरिष्ठ नागरिकों की बहुविध वृद्धावस्था जनित बीमारियों हेतु राज्य की समर्पित जेरियाट्रिक यूनिट' : 'State Dedicated Comprehensive Senior Citizen Geriatric & Multi-Morbidity Clinic'),
+      hospitalTier: 'Premier State Hospital',
+      successRate: 98.9,
+      doctorDegreeLevel: 'MD/MS',
+      budgetTier: 'free',
+      bskyAvailable: true,
+      opdFee: 'Govt Free (₹0)',
+      avgWaitTime: lang === 'or-IN' ? '୧୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '15 मिनट' : '15 mins'),
+      avgWaitTimeMinutes: 15,
+      awards: 'Elderly Care Lifetime Citation'
     }
   ];
 
@@ -702,6 +998,172 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
     const matchesLocation = selectedLocation === 'ALL' || doc.location === selectedLocation;
     return matchesSearch && matchesSpecialty && matchesLocation;
   });
+
+  // Intelligent Hospital & Doctor Recommendation Engine
+  const getRecommendations = () => {
+    // 1. Initial candidates filtering
+    let candidates = doctorsList.filter((doc) => {
+      // Condition filter
+      if (recCondition !== 'ALL' && doc.specialty !== recCondition) {
+        return false;
+      }
+      // Location filter
+      if (recLocation !== 'ALL' && doc.location !== recLocation) {
+        return false;
+      }
+      // Budget filter
+      if (recBudget === 'free' && !doc.bskyAvailable && doc.budgetTier !== 'free') {
+        return false;
+      }
+      if (recBudget === 'affordable' && doc.budgetTier === 'private') {
+        return false;
+      }
+      if (recBudget === 'private' && doc.budgetTier === 'free' && !doc.hospitalTier.includes('Private')) {
+        return false;
+      }
+      return true;
+    });
+
+    // 2. Score calculation for each doctor & hospital
+    const scored = candidates.map((doc) => {
+      let score = 65; // Base score
+      const reasons = [];
+
+      // A. Condition relevance
+      if (recCondition !== 'ALL' && doc.specialty === recCondition) {
+        score += 15;
+      }
+
+      // B. Department Fame & Specialized Hospital Recognition
+      if (doc.id === 'DOC-12') { // Nirvana Eye Hospital & Laser Centre
+        score += 16;
+        reasons.push(
+          lang === 'or-IN'
+            ? 'ଓଡ଼ିଶାର ଏକ ନମ୍ବର ସ୍ୱତନ୍ତ୍ର ଚକ୍ଷୁ ଚିକିତ୍ସାଳୟ (ନିର୍ବାଣ ଆଇ ହସ୍ପିଟାଲ୍) - ବ୍ଲେଡ୍-ଫ୍ରି କାଚବିନ୍ଦୁ, ରେଟିନା ଓ ଲେସିକ୍ ସର୍ଜରୀ ପାଇଁ ସର୍ବାଧିକ ପ୍ରସିଦ୍ଧ'
+            : (lang === 'hi-IN'
+            ? 'ओडिशा का शीर्ष प्रतिष्ठित नेत्र चिकित्सालय (निर्वाण आई हॉस्पिटल) - ब्लेड-फ्री मोतियाबिंद, रेटिना एवं लेसिक सर्जरी हेतु प्रसिद्ध'
+            : 'Odisha\'s premier specialty eye hospital (Nirvana Eye Hospital) - Renowned for blade-free cataract, retina & LASIK laser surgery')
+        );
+      } else if (doc.facility.includes('SCB') || doc.facility.includes('AIIMS') || doc.facility.includes('AHPGIC')) {
+        score += 12;
+        reasons.push(
+          lang === 'or-IN'
+            ? `ରାଜ୍ୟର ଶୀର୍ଷ ସରକାରୀ ଆପେକ୍ସ ରେଫରାଲ୍ କେନ୍ଦ୍ର (${doc.facility.split(',')[0]})`
+            : (lang === 'hi-IN'
+            ? `राज्य का शीर्ष सरकारी एपेक्स रेफरल केंद्र (${doc.facility.split(',')[0]})`
+            : `Premier State Apex Referral Centre (${doc.facility.split(',')[0]})`)
+        );
+      } else {
+        score += 8;
+        reasons.push(
+          lang === 'or-IN'
+            ? `${doc.facility} ରେ ସ୍ୱତନ୍ତ୍ର ବିଭାଗୀୟ ସୁପର-ସ୍ପେସିଆଲିଟି ସେବା ଉପଲବ୍ଧ`
+            : (lang === 'hi-IN'
+            ? `${doc.facility} में विशिष्ट सुपर-स्पेशियलिटी सेवाएं उपलब्ध`
+            : `Recognized center for specialized care at ${doc.facility}`)
+        );
+      }
+
+      // C. Clinical Success Rate
+      if (doc.successRate >= 99.0) {
+        score += 10;
+        reasons.push(
+          lang === 'or-IN'
+            ? `ଅତ୍ୟନ୍ତ ଉଚ୍ଚ କ୍ଲିନିକାଲ୍ ପ୍ରକ୍ରିୟା ସଫଳତା ହାର (${doc.successRate}%) ଏବଂ ଉତ୍ତମ ପରିଣାମ`
+            : (lang === 'hi-IN'
+            ? `अत्यंत उच्च क्लिनिकल प्रक्रिया सफलता दर (${doc.successRate}%) एवं बेहतरीन परिणाम`
+            : `Outstanding clinical procedure success rate of ${doc.successRate}%`)
+        );
+      } else if (doc.successRate >= 97.5) {
+        score += 7;
+        reasons.push(
+          lang === 'or-IN'
+            ? `ଉଲ୍ଲେଖନୀୟ ରୋଗୀ ଆରୋଗ୍ୟ ହାର (${doc.successRate}%)`
+            : (lang === 'hi-IN'
+            ? `विश्वसनीय रोगी आरोग्य दर (${doc.successRate}%)`
+            : `High documented clinical success rate of ${doc.successRate}%`)
+        );
+      }
+
+      // D. Doctor Qualifications & Highest Degree
+      if (doc.doctorDegreeLevel === 'DM/MCh/Fellow') {
+        score += 8;
+        reasons.push(
+          lang === 'or-IN'
+            ? `ଶୀର୍ଷ ସଂସ୍ଥାନରୁ ସୁପର-ସ୍ପେସିଆଲିଟି ଡିଗ୍ରୀ / ଫେଲୋସିପ୍ (${doc.qualifications})`
+            : (lang === 'hi-IN'
+            ? `शीर्ष संस्थानों से सुपर-स्पेशियलिटी डिग्री / फेलोशिप (${doc.qualifications})`
+            : `Premier institute Super-Specialty / Fellowship credentials (${doc.qualifications})`)
+        );
+      } else {
+        score += 5;
+        reasons.push(
+          lang === 'or-IN'
+            ? `ଅଭିଜ୍ଞ ମେଡିକାଲ୍ ସ୍ନାତକୋତ୍ତର ବିଶେଷଜ୍ଞ (${doc.experience}+ ବର୍ଷର କ୍ଲିନିକାଲ୍ ଅନୁଭବ)`
+            : (lang === 'hi-IN'
+            ? `अनुभवी मेडिकल स्नातकोत्तर विशेषज्ञ (${doc.experience}+ वर्ष का अनुभव)`
+            : `Experienced specialist with ${doc.experience}+ years clinical practice`)
+        );
+      }
+
+      // E. Budget Alignment
+      if (doc.bskyAvailable) {
+        score += 6;
+        reasons.push(
+          lang === 'or-IN'
+            ? 'BSKY ଏବଂ ଆୟୁଷ୍ମାନ ଭାରତ କାର୍ଡଧାରୀଙ୍କ ପାଇଁ ₹୦ ରେ ସମ୍ପୂର୍ଣ୍ଣ ମାଗଣା ପରାମର୍ଶ'
+            : (lang === 'hi-IN'
+            ? 'आयुष्मान भारत एवं BSKY कार्डधारकों हेतु ₹0 में पूर्णतः निःशुल्क परामर्श'
+            : 'Zero-cost OPD consultation covered under BSKY & Ayushman Bharat')
+        );
+      } else {
+        reasons.push(
+          lang === 'or-IN'
+            ? `ସୁଲଭ ଓ ପାରଦର୍ଶୀ OPD ଫିସ୍ (${doc.opdFee})`
+            : (lang === 'hi-IN'
+            ? `किफायती एवं पारदर्शी OPD परामर्श शुल्क (${doc.opdFee})`
+            : `Transparent OPD pricing structure (${doc.opdFee})`)
+        );
+      }
+
+      // F. Priority Adjustment Bonuses
+      if (recPriority === 'fame') {
+        if (doc.id === 'DOC-12' || doc.hospitalTier.includes('Apex') || doc.hospitalTier.includes('Dedicated')) {
+          score += 6;
+        }
+      } else if (recPriority === 'success') {
+        if (doc.successRate >= 99.0) score += 6;
+      } else if (recPriority === 'degree') {
+        if (doc.doctorDegreeLevel === 'DM/MCh/Fellow') score += 6;
+      } else if (recPriority === 'speed') {
+        if (doc.avgWaitTimeMinutes <= 20) {
+          score += 6;
+          reasons.push(
+            lang === 'or-IN'
+              ? `ଦ୍ରୁତ OPD ସେବା: ହାରାହାରି ଅପେକ୍ଷା ସମୟ ମାତ୍ର ${doc.avgWaitTime}`
+              : (lang === 'hi-IN'
+              ? `त्वरित OPD सेवा: औसत प्रतीक्षा मात्र ${doc.avgWaitTime}`
+              : `Fast-track OPD: Minimum average wait time of only ${doc.avgWaitTime}`)
+          );
+        }
+      }
+
+      // Clamp between 72% and 99%
+      const finalScore = Math.min(99, Math.max(72, Math.round(score)));
+
+      return {
+        ...doc,
+        matchScore: finalScore,
+        reasons: reasons.slice(0, 4)
+      };
+    });
+
+    // Sort by match score descending
+    scored.sort((a, b) => b.matchScore - a.matchScore);
+    return scored;
+  };
+
+  const recommendations = getRecommendations();
 
   const handleStartBooking = (doc) => {
     setSelectedDoctor(doc);
@@ -783,10 +1245,10 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
         </div>
 
         {/* Sub-tab Pill Switcher */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-300 text-xs shadow-2xs self-start sm:self-auto">
+        <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-300 text-xs shadow-2xs self-start sm:self-auto flex-wrap">
           <button
             onClick={() => setActiveSubTab('directory')}
-            className={`px-3.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeSubTab === 'directory'
                 ? 'bg-slate-900 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-white'
@@ -796,8 +1258,22 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
             {txt.tabDirectory}
           </button>
           <button
+            onClick={() => setActiveSubTab('recommendations')}
+            className={`px-3.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 relative cursor-pointer ${
+              activeSubTab === 'recommendations'
+                ? 'bg-emerald-700 text-white shadow-xs'
+                : 'text-emerald-800 hover:bg-emerald-50 bg-emerald-100/50'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+            {txt.tabRecommendations}
+            <span className="bg-amber-400 text-slate-950 text-[9px] px-1.5 py-0.2 rounded-full font-black tracking-wider">
+              AI
+            </span>
+          </button>
+          <button
             onClick={() => setActiveSubTab('my-bookings')}
-            className={`px-3.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 relative ${
+            className={`px-3.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 relative cursor-pointer ${
               activeSubTab === 'my-bookings'
                 ? 'bg-slate-900 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-white'
@@ -817,6 +1293,35 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       {/* SUB-TAB 1: DOCTOR DIRECTORY */}
       {activeSubTab === 'directory' && (
         <div className="space-y-6">
+          {/* Smart Recommendation Prompt Banner */}
+          <div className="bg-gradient-to-r from-emerald-800 via-teal-900 to-slate-900 rounded-2xl p-4 sm:p-5 text-white shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-emerald-600/40">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0 text-amber-300">
+                <Sparkles className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                  {txt.bannerRecommenderTitle}
+                  <span className="text-[10px] bg-amber-400 text-slate-950 font-extrabold px-2 py-0.5 rounded-full shadow-2xs">
+                    AI POWERED
+                  </span>
+                </h3>
+                <p className="text-xs text-emerald-100/90 mt-1 max-w-2xl leading-relaxed">
+                  {txt.recSubtitle}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('recommendations')}
+              className="shrink-0 px-4 py-2.5 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-slate-950" />
+              {txt.bannerRecommenderBtn}
+              <ChevronRight className="w-4 h-4 text-slate-950" />
+            </button>
+          </div>
+
           {/* Search & Filter Bar */}
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-3 items-center justify-between">
             {/* Search Input */}
@@ -964,7 +1469,338 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
         </div>
       )}
 
-      {/* SUB-TAB 2: MY BOOKINGS LIST */}
+      {/* SUB-TAB 2: SMART HOSPITAL & SPECIALIST RECOMMENDATIONS */}
+      {activeSubTab === 'recommendations' && (
+        <div className="space-y-6">
+          {/* Engine Header Hero Banner */}
+          <div className="bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-900 rounded-3xl p-6 text-white border border-emerald-800/40 shadow-xl relative overflow-hidden">
+            <div className="absolute right-0 top-0 translate-x-10 -translate-y-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold mb-3">
+                <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                AI Health Advisory • Clinical Matching Engine
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                {txt.recTitle}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-3xl leading-relaxed">
+                {txt.recSubtitle}
+              </p>
+            </div>
+          </div>
+
+          {/* 4-Parameter Questionnaire / Filter Panel */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Parameter 1: Medical Condition / Specialty */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <Stethoscope className="w-3.5 h-3.5 text-emerald-600" />
+                  {txt.recConditionLabel}
+                </label>
+                <select
+                  value={recCondition}
+                  onChange={(e) => setRecCondition(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <option value="ALL">{txt.allSpecialties}</option>
+                  <option value="Ophthal">{txt.specialtyOphthal} (ଚକ୍ଷୁ / Eye Care - e.g. Nirvana)</option>
+                  <option value="Cardio">{txt.specialtyCardio}</option>
+                  <option value="Neuro">{txt.specialtyNeuro}</option>
+                  <option value="Nephro">{txt.specialtyNephro}</option>
+                  <option value="Onco">{txt.specialtyOnco}</option>
+                  <option value="Ortho">{txt.specialtyOrtho}</option>
+                  <option value="ObGyn">{txt.specialtyObGyn}</option>
+                  <option value="Pediatrics">{txt.specialtyPediatrics}</option>
+                  <option value="Pulmo">{txt.specialtyPulmo}</option>
+                  <option value="Gastro">{txt.specialtyGastro}</option>
+                  <option value="GenMed">{txt.specialtyGenMed}</option>
+                  <option value="ENT">{txt.specialtyENT}</option>
+                  <option value="Derma">{txt.specialtyDerma}</option>
+                  <option value="Psych">{txt.specialtyPsych}</option>
+                  <option value="Endo">{txt.specialtyEndo}</option>
+                  <option value="Surgery">{txt.specialtySurgery}</option>
+                  <option value="Dental">{txt.specialtyDental}</option>
+                  <option value="Emergency">{txt.specialtyEmergency}</option>
+                </select>
+              </div>
+
+              {/* Parameter 2: Patient Budget Preference */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                  {txt.recBudgetLabel}
+                </label>
+                <select
+                  value={recBudget}
+                  onChange={(e) => setRecBudget(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <option value="ALL">{txt.budgetAll}</option>
+                  <option value="free">{txt.budgetFree}</option>
+                  <option value="affordable">{txt.budgetAffordable}</option>
+                  <option value="private">{txt.budgetPrivate}</option>
+                </select>
+              </div>
+
+              {/* Parameter 3: Primary Priority */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <Award className="w-3.5 h-3.5 text-emerald-600" />
+                  {txt.recPriorityLabel}
+                </label>
+                <select
+                  value={recPriority}
+                  onChange={(e) => setRecPriority(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <option value="fame">{txt.priorityFame}</option>
+                  <option value="success">{txt.prioritySuccess}</option>
+                  <option value="degree">{txt.priorityDegree}</option>
+                  <option value="speed">{txt.prioritySpeed}</option>
+                </select>
+              </div>
+
+              {/* Parameter 4: Location / City */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                  {txt.recLocationLabel}
+                </label>
+                <select
+                  value={recLocation}
+                  onChange={(e) => setRecLocation(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <option value="ALL">{txt.allLocations}</option>
+                  <option value="Bhubaneswar">ଭୁବନେଶ୍ୱର (Bhubaneswar)</option>
+                  <option value="Cuttack">କଟକ (Cuttack)</option>
+                  <option value="Burla">ବୁର୍ଲା / ସମ୍ବଲପୁର (Burla, Sambalpur)</option>
+                  <option value="Berhampur">ବ୍ରହ୍ମପୁର (Berhampur)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Active Criteria Quick Chips */}
+            <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100 flex-wrap text-xs">
+              <span className="text-slate-500">
+                {lang === 'or-IN'
+                  ? `ସର୍ବୋଚ୍ଚ ସୁପାରିଶ ପ୍ରାପ୍ତ: ${recommendations.length} ଜଣ ବିଶେଷଜ୍ଞ ଏବଂ ହସ୍ପିଟାଲ୍ ଉପଲବ୍ଧ`
+                  : (lang === 'hi-IN'
+                  ? `शीर्ष अनुशंसित: ${recommendations.length} विशेषज्ञ एवं अस्पताल उपलब्ध`
+                  : `Top Recommendations: ${recommendations.length} specialists and hospitals found`)}
+              </span>
+              {(recCondition !== 'ALL' || recBudget !== 'ALL' || recLocation !== 'ALL' || recPriority !== 'fame') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRecCondition('ALL');
+                    setRecBudget('ALL');
+                    setRecPriority('fame');
+                    setRecLocation('ALL');
+                  }}
+                  className="text-emerald-700 hover:text-emerald-800 font-bold hover:underline cursor-pointer"
+                >
+                  {lang === 'or-IN' ? 'ଫିଲ୍ଟର୍ ରିସେଟ୍ କରନ୍ତୁ' : (lang === 'hi-IN' ? 'फिल्टर रीसेट करें' : 'Reset Filters')}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Recommendations Results List */}
+          {recommendations.length === 0 ? (
+            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm">
+              <AlertCircle className="w-12 h-12 mx-auto mb-3 text-amber-500" />
+              <h3 className="text-sm font-bold text-slate-800 mb-1">{txt.noRecFound}</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setRecCondition('ALL');
+                  setRecBudget('ALL');
+                  setRecPriority('fame');
+                  setRecLocation('ALL');
+                }}
+                className="mt-3 px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 cursor-pointer"
+              >
+                {lang === 'or-IN' ? 'ସମସ୍ତ ସୁପାରିଶ ଦେଖନ୍ତୁ' : (lang === 'hi-IN' ? 'सभी सिफारिशें देखें' : 'View All Recommendations')}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recommendations.map((doc, idx) => {
+                const isTop = idx === 0;
+                return (
+                  <div
+                    key={doc.id}
+                    className={`rounded-2xl p-5 sm:p-6 transition-all relative ${
+                      isTop
+                        ? 'bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 border-2 border-emerald-500 shadow-lg ring-4 ring-emerald-500/10'
+                        : 'bg-white border border-slate-200 shadow-xs hover:shadow-md'
+                    }`}
+                  >
+                    {/* Top Ranked Badge */}
+                    {isTop && (
+                      <div className="absolute -top-3 left-6 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[11px] font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1.5 uppercase tracking-wide">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                        {txt.topRecommendation} • #1
+                      </div>
+                    )}
+
+                    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 mt-1">
+                      {/* Left: Doctor & Hospital Identity */}
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${doc.color} text-white font-extrabold text-base flex items-center justify-center shrink-0 shadow-md`}
+                        >
+                          {doc.initials}
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-base sm:text-lg font-black text-slate-950">
+                              {doc.name}
+                            </h3>
+                            <span className="text-[11px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200">
+                              {doc.specialtyLabel}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400">
+                              {doc.regNo}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-xs text-slate-600 mt-1">
+                            <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <strong className="text-slate-900 font-semibold">{doc.facility}</strong>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-500 font-medium">{doc.location}</span>
+                          </div>
+
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">
+                            {doc.qualifications} • {doc.experience} {txt.experience}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: Match Score Pill */}
+                      <div className="flex items-center gap-3 self-start lg:self-center shrink-0">
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-black text-xs sm:text-sm bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-sm">
+                            <TrendingUp className="w-4 h-4 text-emerald-200" />
+                            <span>{doc.matchScore}% {txt.matchScore}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-semibold mt-1">
+                            {doc.reviewsCount.toLocaleString()}+ {txt.reviews} (★ {doc.rating})
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Department Fame Highlight Callout */}
+                    <div className="mt-4 bg-gradient-to-r from-amber-50 to-orange-50/60 border border-amber-200/80 rounded-xl p-3.5 flex items-start gap-3">
+                      <Award className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="text-xs">
+                        <span className="font-extrabold text-amber-950 block tracking-tight">
+                          {txt.hospitalFameLabel} {doc.hospitalTier}
+                        </span>
+                        <p className="text-amber-900/90 leading-relaxed mt-0.5 font-medium">
+                          {doc.famousFor}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 4 Core Metrics Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4">
+                      {/* Metric 1: Clinical Success Rate */}
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-xs">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase block flex items-center gap-1">
+                          <BadgePercent className="w-3.5 h-3.5 text-emerald-600" />
+                          {txt.successRateLabel}
+                        </span>
+                        <span className="text-sm font-black text-emerald-700 block mt-0.5">
+                          {doc.successRate}%
+                        </span>
+                      </div>
+
+                      {/* Metric 2: Doctor Degree Level */}
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-xs">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase block flex items-center gap-1">
+                          <Award className="w-3.5 h-3.5 text-indigo-600" />
+                          {txt.doctorDegreeLabel}
+                        </span>
+                        <span className="text-xs font-extrabold text-slate-800 block mt-0.5 truncate">
+                          {doc.doctorDegreeLevel}
+                        </span>
+                      </div>
+
+                      {/* Metric 3: OPD Fee Category */}
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-xs">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase block flex items-center gap-1">
+                          <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                          {txt.opdFeeLabel}
+                        </span>
+                        <span className="text-xs font-extrabold text-emerald-800 block mt-0.5 truncate">
+                          {doc.opdFee}
+                        </span>
+                      </div>
+
+                      {/* Metric 4: Avg OPD Wait Time */}
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-xs">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase block flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-amber-600" />
+                          {txt.waitTimeLabel}
+                        </span>
+                        <span className="text-xs font-extrabold text-slate-800 block mt-0.5">
+                          {doc.avgWaitTime}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Why Recommended Callout List */}
+                    <div className="mt-4 pt-3.5 border-t border-slate-100">
+                      <h4 className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+                        <ThumbsUp className="w-3.5 h-3.5 text-emerald-600" />
+                        {txt.whyRecommended}
+                      </h4>
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                        {doc.reasons.map((reason, rIdx) => (
+                          <li key={rIdx} className="flex items-start gap-2 text-slate-600">
+                            <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                            <span className="leading-snug">{reason}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="mt-5 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="text-xs text-slate-500 flex items-center gap-3">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" /> {doc.room}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-emerald-600" /> {doc.days}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleStartBooking(doc)}
+                        className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        {txt.bookWithDoc}
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SUB-TAB 3: MY BOOKINGS LIST */}
       {activeSubTab === 'my-bookings' && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
