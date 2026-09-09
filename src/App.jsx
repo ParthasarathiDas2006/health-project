@@ -4,6 +4,7 @@ import OcrUploader from './components/OcrUploader';
 import TriageDoctorDashboard from './components/TriageDoctorDashboard';
 import DoctorBookingSystem from './components/DoctorBookingSystem';
 import BloodBankSystem from './components/BloodBankSystem';
+import MedicineExpiryChecker from './components/MedicineExpiryChecker';
 import AuthPage from './components/AuthPage';
 import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments } from './utils/authStorage';
 import {
@@ -24,7 +25,8 @@ import {
   MapPin,
   Globe,
   Calendar,
-  Droplet
+  Droplet,
+  Pill
 } from 'lucide-react';
 
 export default function App() {
@@ -238,6 +240,7 @@ export default function App() {
       doctorBookingTab: '୪. ଡାକ୍ତର ତାଲିକା ଓ ବୁକିଂ',
       bloodBankTab: '୫. ରକ୍ତ ଭଣ୍ଡାର (Blood Bank)',
       scenariosTab: '୬. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
+      medicineExpiryTab: '୭. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
@@ -276,6 +279,7 @@ export default function App() {
       doctorBookingTab: '4. डॉक्टर सूची एवं बुकिंग',
       bloodBankTab: '5. ब्लड बैंक (Blood Bank)',
       scenariosTab: '6. फील्ड परिदृश्य',
+      medicineExpiryTab: '7. दवा एक्सपायरी जांच',
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
@@ -314,6 +318,7 @@ export default function App() {
       doctorBookingTab: '4. Doctor Directory & Booking',
       bloodBankTab: '5. Blood Bank Portal',
       scenariosTab: '6. Field Scenarios',
+      medicineExpiryTab: '7. Medicine Expiry Checker',
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
@@ -537,6 +542,21 @@ export default function App() {
             >
               <Activity className="w-3.5 h-3.5 text-indigo-600" />
               {uiText.scenariosTab}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('expiry')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'expiry'
+                  ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Pill className="w-3.5 h-3.5 text-teal-400" />
+              {uiText.medicineExpiryTab}
+              <span className="bg-amber-400 text-slate-950 text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                NEW
+              </span>
             </button>
           </nav>
 
@@ -967,6 +987,17 @@ export default function App() {
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* TAB 7: MEDICINE EXPIRY DATE CHECKER */}
+        {activeTab === 'expiry' && (
+          <div className="space-y-6">
+            <MedicineExpiryChecker
+              appLang={appLang}
+              currentUser={currentUser}
+              onBookDoctor={() => setActiveTab('booking')}
+            />
           </div>
         )}
       </main>
