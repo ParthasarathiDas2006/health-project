@@ -217,3 +217,29 @@ export const setCurrentUser = (user) => {
 export const logoutUser = () => {
   localStorage.removeItem(CURRENT_USER_KEY);
 };
+
+const APPOINTMENTS_STORAGE_KEY = 'triage_booked_appointments';
+
+export const getBookedAppointments = () => {
+  try {
+    const raw = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Failed to read appointments:', e);
+    return [];
+  }
+};
+
+export const saveAppointment = (appointment) => {
+  const current = getBookedAppointments();
+  const updated = [appointment, ...current];
+  localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+export const cancelAppointment = (appointmentId) => {
+  const current = getBookedAppointments();
+  const updated = current.filter((a) => a.id !== appointmentId);
+  localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(updated));
+  return updated;
+};

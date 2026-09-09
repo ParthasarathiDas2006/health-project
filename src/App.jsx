@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import MultimodalIntakeForm from './components/MultimodalIntakeForm';
 import OcrUploader from './components/OcrUploader';
 import TriageDoctorDashboard from './components/TriageDoctorDashboard';
+import DoctorBookingSystem from './components/DoctorBookingSystem';
 import AuthPage from './components/AuthPage';
-import { getCurrentUser, setCurrentUser, logoutUser } from './utils/authStorage';
+import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments } from './utils/authStorage';
 import {
   Activity,
   FileText,
@@ -20,7 +21,8 @@ import {
   Phone,
   Mail,
   MapPin,
-  Globe
+  Globe,
+  Calendar
 } from 'lucide-react';
 
 export default function App() {
@@ -33,6 +35,7 @@ export default function App() {
   const [currentOcr, setCurrentOcr] = useState(null);
   const [generatedTriageNote, setGeneratedTriageNote] = useState(null);
   const [isGeneratingNote, setIsGeneratingNote] = useState(false);
+  const [bookedCount, setBookedCount] = useState(() => getBookedAppointments().length);
 
   // Authentication callbacks
   const handleLoginSuccess = (user) => {
@@ -230,7 +233,8 @@ export default function App() {
       doctorDeskTab: '୧. ଡାକ୍ତର ରିଭ୍ୟୁ ଡେସ୍କ',
       doctorIntakeTab: '୨. ରୋଗୀ ବିବରଣୀ',
       doctorOcrTab: '୩. ଲ୍ୟାବ୍ ରିପୋର୍ଟ ଯାଞ୍ଚ',
-      scenariosTab: '୪. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
+      doctorBookingTab: '୪. ଡାକ୍ତର ତାଲିକା ଓ ବୁକିଂ',
+      scenariosTab: '୫. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
@@ -266,7 +270,8 @@ export default function App() {
       doctorDeskTab: '1. डॉक्टर रिव्यू डेस्क',
       doctorIntakeTab: '2. मरीज विवरण',
       doctorOcrTab: '3. लैब रिपोर्ट OCR',
-      scenariosTab: '4. फील्ड परिदृश्य',
+      doctorBookingTab: '4. डॉक्टर सूची एवं बुकिंग',
+      scenariosTab: '5. फील्ड परिदृश्य',
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
@@ -302,7 +307,8 @@ export default function App() {
       doctorDeskTab: '1. Doctor Review Desk',
       doctorIntakeTab: '2. Patient Intake',
       doctorOcrTab: '3. Lab Report OCR',
-      scenariosTab: '4. Field Scenarios',
+      doctorBookingTab: '4. Doctor Directory & Booking',
+      scenariosTab: '5. Field Scenarios',
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
@@ -410,6 +416,23 @@ export default function App() {
                     </span>
                   )}
                 </button>
+
+                <button
+                  onClick={() => setActiveTab('booking')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                    activeTab === 'booking'
+                      ? 'bg-teal-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5 text-teal-200" />
+                  {uiText.doctorBookingTab}
+                  {bookedCount > 0 && (
+                    <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                      {bookedCount}
+                    </span>
+                  )}
+                </button>
               </>
             ) : (
               <>
@@ -454,6 +477,23 @@ export default function App() {
                   <UploadCloud className="w-3.5 h-3.5 text-blue-600" />
                   {uiText.doctorOcrTab}
                   {currentOcr && <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>}
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('booking')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                    activeTab === 'booking'
+                      ? 'bg-teal-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5 text-teal-200" />
+                  {uiText.doctorBookingTab}
+                  {bookedCount > 0 && (
+                    <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                      {bookedCount}
+                    </span>
+                  )}
                 </button>
               </>
             )}
@@ -680,7 +720,18 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: INDIA & ODISHA SCENARIOS REFERENCE */}
+        {/* TAB 4: DOCTOR DIRECTORY & BOOKING */}
+        {activeTab === 'booking' && (
+          <div>
+            <DoctorBookingSystem
+              currentUser={currentUser}
+              appLang={appLang}
+              onBookedCountChange={(cnt) => setBookedCount(cnt)}
+            />
+          </div>
+        )}
+
+        {/* TAB 5: INDIA & ODISHA SCENARIOS REFERENCE */}
         {activeTab === 'scenarios' && (
           <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 mb-2">
