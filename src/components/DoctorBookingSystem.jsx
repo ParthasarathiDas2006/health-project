@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { getBookedAppointments, saveAppointment, cancelAppointment } from '../utils/authStorage';
 import { getDoctorsList, ODISHA_DISTRICTS } from '../data/doctorsData';
+import { DoctorAvatar, getDoctorPhotoUrl } from '../utils/doctorPhotos';
 
 /**
  * Doctor Directory & Appointment Booking System
@@ -700,6 +701,9 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
     const newAppointment = {
       id: `APT-${Math.floor(10000 + Math.random() * 90000)}`,
       tokenNo: `OPD-${Math.floor(10 + Math.random() * 90)}`,
+      doctorId: selectedDoctor.id,
+      doctorColor: selectedDoctor.color,
+      doctorInitials: selectedDoctor.initials,
       doctorName: selectedDoctor.name,
       doctorQualifications: selectedDoctor.qualifications,
       doctorRegNo: selectedDoctor.regNo,
@@ -919,11 +923,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                 <div>
                   {/* Doctor Profile Header */}
                   <div className="flex items-start gap-3.5 mb-3">
-                    <div
-                      className={`w-13 h-13 rounded-2xl text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0 bg-gradient-to-br ${doc.color}`}
-                    >
-                      {doc.initials}
-                    </div>
+                    <DoctorAvatar doc={doc} size="md" />
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -1273,11 +1273,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                     <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 mt-1">
                       {/* Left: Doctor & Hospital Identity */}
                       <div className="flex items-start gap-4">
-                        <div
-                          className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${doc.color} text-white font-extrabold text-base flex items-center justify-center shrink-0 shadow-md`}
-                        >
-                          {doc.initials}
-                        </div>
+                        <DoctorAvatar doc={doc} size="lg" />
 
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1502,10 +1498,20 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                   className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col md:flex-row md:items-center justify-between gap-4"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex flex-col items-center justify-center shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex flex-col items-center justify-center shrink-0 shadow-2xs">
                       <span className="text-[10px] font-bold uppercase">Token</span>
                       <span className="text-sm font-extrabold leading-none">{b.tokenNo.split('-')[1]}</span>
                     </div>
+
+                    <DoctorAvatar
+                      doc={{
+                        id: b.doctorId || b.id,
+                        name: b.doctorName,
+                        initials: b.doctorInitials || 'DR',
+                        color: b.doctorColor || 'from-teal-600 to-emerald-800'
+                      }}
+                      size="sm"
+                    />
 
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -1579,15 +1585,18 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
             </div>
 
             {/* Doctor Info Banner */}
-            <div className="p-4 bg-emerald-50/70 border-b border-emerald-100 flex items-center justify-between">
-              <div>
-                <h4 className="font-bold text-sm text-slate-900">{selectedDoctor.name}</h4>
-                <p className="text-xs text-emerald-800 font-medium">
-                  {selectedDoctor.specialtyLabel} • {selectedDoctor.facility}
-                </p>
-                <p className="text-[11px] text-slate-500 font-mono mt-0.5">{selectedDoctor.room}</p>
+            <div className="p-4 bg-emerald-50/70 border-b border-emerald-100 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <DoctorAvatar doc={selectedDoctor} size="md" />
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900">{selectedDoctor.name}</h4>
+                  <p className="text-xs text-emerald-800 font-medium">
+                    {selectedDoctor.specialtyLabel} • {selectedDoctor.facility}
+                  </p>
+                  <p className="text-[11px] text-slate-500 font-mono mt-0.5">{selectedDoctor.room}</p>
+                </div>
               </div>
-              <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded shrink-0">
                 BSKY OPD Free
               </span>
             </div>
@@ -1977,9 +1986,20 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
 
               {/* Consultation Details */}
               <div className="space-y-2 border-b border-slate-100 pb-3">
-                <div className="flex justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500">{txt.appointedDoctor}</span>
-                  <strong className="text-slate-900">{confirmedSlip.doctorName}</strong>
+                  <div className="flex items-center gap-2">
+                    <DoctorAvatar
+                      doc={{
+                        id: confirmedSlip.doctorId || confirmedSlip.id,
+                        name: confirmedSlip.doctorName,
+                        initials: confirmedSlip.doctorInitials || 'DR',
+                        color: confirmedSlip.doctorColor || 'from-teal-600 to-emerald-800'
+                      }}
+                      size="sm"
+                    />
+                    <strong className="text-slate-900">{confirmedSlip.doctorName}</strong>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Department:</span>

@@ -8,6 +8,7 @@ import MedicineExpiryChecker from './components/MedicineExpiryChecker';
 import NearestMedicalGPS from './components/NearestMedicalGPS';
 import AuthPage from './components/AuthPage';
 import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments } from './utils/authStorage';
+import { DoctorAvatar } from './utils/doctorPhotos';
 import {
   Activity,
   FileText,
@@ -643,15 +644,23 @@ export default function App() {
                     : 'border-slate-200 hover:border-emerald-500 bg-slate-50 hover:bg-white'
                 }`}
               >
-                <div
-                  className={`w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-xs shadow-xs ${
-                    currentUser.roleCategory === 'patient'
-                      ? 'bg-gradient-to-br from-amber-600 to-orange-700'
-                      : 'bg-gradient-to-br from-emerald-600 to-teal-700'
-                  }`}
-                >
-                  {userInitials}
-                </div>
+                {currentUser.roleCategory === 'doctor' ? (
+                  <DoctorAvatar
+                    doc={{
+                      id: currentUser.staffId || currentUser.name,
+                      name: currentUser.name,
+                      initials: userInitials,
+                      color: 'from-emerald-600 to-teal-700'
+                    }}
+                    size="sm"
+                  />
+                ) : (
+                  <div
+                    className="w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-xs shadow-xs bg-gradient-to-br from-amber-600 to-orange-700"
+                  >
+                    {userInitials}
+                  </div>
+                )}
                 <div className="hidden sm:block">
                   <div
                     className={`text-xs font-bold leading-tight ${

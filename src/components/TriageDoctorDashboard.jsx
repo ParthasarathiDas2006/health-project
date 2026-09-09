@@ -16,6 +16,7 @@ import {
   X,
   MapPin
 } from 'lucide-react';
+import { DoctorAvatar } from '../utils/doctorPhotos';
 
 /**
  * Triage Doctor / Nurse Dashboard
@@ -489,19 +490,25 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* User Details Block */}
           <div className="flex items-start sm:items-center gap-4">
-            <div
-              className={`w-14 h-14 rounded-2xl text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0 ${
-                activeUser.roleCategory === 'patient'
-                  ? 'bg-gradient-to-br from-amber-600 to-orange-700'
-                  : 'bg-gradient-to-br from-emerald-600 to-teal-700'
-              }`}
-            >
-              {activeUser.name
-                .split(' ')
-                .map((n) => n[0])
-                .slice(0, 2)
-                .join('')}
-            </div>
+            {activeUser.roleCategory === 'doctor' ? (
+              <DoctorAvatar
+                doc={{
+                  id: activeUser.staffId || activeUser.name,
+                  name: activeUser.name,
+                  initials: activeUser.name.split(' ').map((n) => n[0]).slice(0, 2).join(''),
+                  color: 'from-emerald-600 to-teal-700'
+                }}
+                size="lg"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-2xl text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0 bg-gradient-to-br from-amber-600 to-orange-700">
+                {activeUser.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join('')}
+              </div>
+            )}
 
             <div>
               <div className="flex flex-wrap items-center gap-2">
