@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import MultimodalIntakeForm from './components/MultimodalIntakeForm';
 import OcrUploader from './components/OcrUploader';
 import TriageDoctorDashboard from './components/TriageDoctorDashboard';
-import DoctorBookingSystem from './components/DoctorBookingSystem';
-import BloodBankSystem from './components/BloodBankSystem';
-import MedicineExpiryChecker from './components/MedicineExpiryChecker';
-import NearestMedicalGPS from './components/NearestMedicalGPS';
 import AuthPage from './components/AuthPage';
+
+// Code-split heavy components to load on demand for instant initial site loading
+const DoctorBookingSystem = lazy(() => import('./components/DoctorBookingSystem'));
+const BloodBankSystem = lazy(() => import('./components/BloodBankSystem'));
+const MedicineExpiryChecker = lazy(() => import('./components/MedicineExpiryChecker'));
+const NearestMedicalGPS = lazy(() => import('./components/NearestMedicalGPS'));
 import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments } from './utils/authStorage';
 import { DoctorAvatar } from './utils/doctorPhotos';
 import {
@@ -390,20 +392,7 @@ export default function App() {
           <nav className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
             {currentUser.roleCategory === 'patient' ? (
               <>
-                {/* TAB 1: AMBULANCE */}
-                <button
-                  onClick={() => setActiveTab('ambulance')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                    activeTab === 'ambulance'
-                      ? 'bg-rose-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  <Truck className="w-3.5 h-3.5" />
-                  {uiText.ambulanceTab}
-                </button>
-
-                {/* TAB 2: SYMPTOM INTAKE */}
+                {/* TAB 1: SYMPTOM INTAKE */}
                 <button
                   onClick={() => setActiveTab('intake')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
@@ -481,20 +470,7 @@ export default function App() {
               </>
             ) : (
               <>
-                {/* TAB 1: AMBULANCE */}
-                <button
-                  onClick={() => setActiveTab('ambulance')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                    activeTab === 'ambulance'
-                      ? 'bg-rose-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  <Truck className="w-3.5 h-3.5" />
-                  {uiText.ambulanceTab}
-                </button>
-
-                {/* TAB 2: DOCTOR DESK */}
+                {/* TAB 1: DOCTOR DESK */}
                 <button
                   onClick={() => setActiveTab('dashboard')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
@@ -836,21 +812,43 @@ export default function App() {
         {/* TAB 4: DOCTOR DIRECTORY & BOOKING */}
         {activeTab === 'booking' && (
           <div>
-            <DoctorBookingSystem
-              currentUser={currentUser}
-              appLang={appLang}
-              onBookedCountChange={(cnt) => setBookedCount(cnt)}
-            />
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+                  <div className="w-10 h-10 border-4 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-600 animate-pulse">
+                    {appLang === 'or-IN' ? 'ଡାକ୍ତର ତାଲିକା ଲୋଡ୍ ହେଉଛି...' : (appLang === 'hi-IN' ? 'डॉक्टर निर्देशिका लोड हो रही है...' : 'Loading Doctor Directory...')}
+                  </p>
+                </div>
+              }
+            >
+              <DoctorBookingSystem
+                currentUser={currentUser}
+                appLang={appLang}
+                onBookedCountChange={(cnt) => setBookedCount(cnt)}
+              />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 5: ODISHA BLOOD BANK PORTAL */}
         {activeTab === 'bloodbank' && (
           <div>
-            <BloodBankSystem
-              currentUser={currentUser}
-              appLang={appLang}
-            />
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+                  <div className="w-10 h-10 border-4 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-600 animate-pulse">
+                    {appLang === 'or-IN' ? 'ରକ୍ତ ଭଣ୍ଡାର ତଥ୍ୟ ଲୋଡ୍ ହେଉଛି...' : (appLang === 'hi-IN' ? 'ब्लड बैंक डेटा लोड हो रहा है...' : 'Loading Blood Bank Data...')}
+                  </p>
+                </div>
+              }
+            >
+              <BloodBankSystem
+                currentUser={currentUser}
+                appLang={appLang}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -1057,21 +1055,43 @@ export default function App() {
         {/* TAB 7: MEDICINE EXPIRY DATE CHECKER */}
         {activeTab === 'expiry' && (
           <div className="space-y-6">
-            <MedicineExpiryChecker
-              appLang={appLang}
-              currentUser={currentUser}
-              onBookDoctor={() => setActiveTab('booking')}
-            />
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+                  <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-600 animate-pulse">
+                    {appLang === 'or-IN' ? 'ଔଷଧ ସ୍କାନର୍ ଲୋଡ୍ ହେଉଛି...' : (appLang === 'hi-IN' ? 'दवा स्कैनर लोड हो रहा है...' : 'Loading Medicine Scanner...')}
+                  </p>
+                </div>
+              }
+            >
+              <MedicineExpiryChecker
+                appLang={appLang}
+                currentUser={currentUser}
+                onBookDoctor={() => setActiveTab('booking')}
+              />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 8: NEAREST MEDICAL & EMERGENCY AMBULANCE GPS */}
         {activeTab === 'nearest' && (
           <div className="space-y-6">
-            <NearestMedicalGPS
-              currentUser={currentUser}
-              appLang={appLang}
-            />
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+                  <div className="w-10 h-10 border-4 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-600 animate-pulse">
+                    {appLang === 'or-IN' ? 'GPS ମ୍ୟାପ୍ ଓ ନିକଟସ୍ଥ ହସ୍ପିଟାଲ୍ ଲୋଡ୍ ହେଉଛି...' : (appLang === 'hi-IN' ? 'GPS मानचित्र लोड हो रहा है...' : 'Loading GPS Emergency Map...')}
+                  </p>
+                </div>
+              }
+            >
+              <NearestMedicalGPS
+                currentUser={currentUser}
+                appLang={appLang}
+              />
+            </Suspense>
           </div>
         )}
       </main>
