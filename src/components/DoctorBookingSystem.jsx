@@ -750,10 +750,10 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             {lang === 'or-IN'
-              ? 'ଓଡ଼ିଶାର ସମସ୍ତ ୩୦ ଟି ଜିଲ୍ଲା • ୪୮+ ମେଡିକାଲ୍ କେନ୍ଦ୍ର ଓ ହସ୍ପିଟାଲ୍ • ୧୦୪ ଜଣ ବିଶେଷଜ୍ଞ ଚିକିତ୍ସକ • ୩୪ ଟି ସମୟ ସ୍ଲଟ୍ • BSKY ନିଃଶୁଳ୍କ ସେବା'
+              ? 'ଓଡ଼ିଶାର ସମସ୍ତ ୩୦ ଟି ଜିଲ୍ଲା • ପ୍ରତ୍ୟେକ ବିଭାଗରେ ୪+ ବିଶେଷଜ୍ଞ • ୨,୫୨୦+ ଯୋଗ୍ୟ ଚିକିତ୍ସକ • ୩୪ ଟି ସମୟ ସ୍ଲଟ୍ • BSKY ନିଃଶୁଳ୍କ ସେବା'
               : (lang === 'hi-IN'
-              ? 'ओडिशा के सभी 30 ज़िले • 48+ चिकित्सा केंद्र एवं अस्पताल • 104 विशेषज्ञ चिकित्सक • 34 समय स्लॉट • BSKY निःशुल्क'
-              : 'All 30 Districts of Odisha • 48+ Medical Centers & Hospitals • 104 Verified Specialists • 34 Daily OPD Timing Slots • BSKY Free')}
+              ? 'ओडिशा के सभी 30 ज़िले • प्रत्येक विभाग में 4+ विशेषज्ञ • 2,520+ योग्य चिकित्सक • 34 समय स्लॉट • BSKY निःशुल्क'
+              : 'All 30 Districts of Odisha • 4+ Specialists per Department • 2,520+ Verified Doctors • 34 Timing Slots • BSKY Free')}
           </p>
         </div>
 
