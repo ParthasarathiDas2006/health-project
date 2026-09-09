@@ -33,7 +33,7 @@ import {
   Check
 } from 'lucide-react';
 import { getBookedAppointments, saveAppointment, cancelAppointment } from '../utils/authStorage';
-import { getDoctorsList } from '../data/doctorsData';
+import { getDoctorsList, ODISHA_DISTRICTS } from '../data/doctorsData';
 
 /**
  * Doctor Directory & Appointment Booking System
@@ -485,9 +485,14 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
         doc.specialtyLabel.toLowerCase().includes(q) ||
         doc.facility.toLowerCase().includes(q) ||
         doc.location.toLowerCase().includes(q) ||
+        (doc.district && doc.district.toLowerCase().includes(q)) ||
+        (doc.districtLabel && doc.districtLabel.toLowerCase().includes(q)) ||
         doc.qualifications.toLowerCase().includes(q);
       const matchesSpecialty = selectedSpecialty === 'ALL' || doc.specialty === selectedSpecialty;
-      const matchesLocation = selectedLocation === 'ALL' || doc.location === selectedLocation;
+      const matchesLocation =
+        selectedLocation === 'ALL' ||
+        doc.district === selectedLocation ||
+        doc.location === selectedLocation;
       return matchesSearch && matchesSpecialty && matchesLocation;
     });
   }, [doctorsList, searchQuery, selectedSpecialty, selectedLocation]);
@@ -508,8 +513,8 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       if (recCondition !== 'ALL' && doc.specialty !== recCondition) {
         return false;
       }
-      // Location filter
-      if (recLocation !== 'ALL' && doc.location !== recLocation) {
+      // Location / District filter (All 30 Districts)
+      if (recLocation !== 'ALL' && doc.district !== recLocation && doc.location !== recLocation) {
         return false;
       }
       // Budget filter
@@ -700,6 +705,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       doctorRegNo: selectedDoctor.regNo,
       department: selectedDoctor.specialtyLabel,
       facility: selectedDoctor.facility,
+      district: selectedDoctor.districtLabel || selectedDoctor.district,
       room: selectedDoctor.room,
       date: selectedDate,
       timeSlot: selectedTimeSlot,
@@ -744,10 +750,10 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             {lang === 'or-IN'
-              ? '୬୬ ଜଣ ବିଶେଷଜ୍ଞ ଚିକିତ୍ସକ • ୨୮ ଟି ଅଗ୍ରଣୀ ହସ୍ପିଟାଲ୍ • ୩୪ ଟି ସମୟ ସ୍ଲଟ୍ • BSKY / ଆୟୁଷ୍ମାନ ନିଃଶୁଳ୍କ ସେବା'
+              ? 'ଓଡ଼ିଶାର ସମସ୍ତ ୩୦ ଟି ଜିଲ୍ଲା • ୪୮+ ମେଡିକାଲ୍ କେନ୍ଦ୍ର ଓ ହସ୍ପିଟାଲ୍ • ୧୦୪ ଜଣ ବିଶେଷଜ୍ଞ ଚିକିତ୍ସକ • ୩୪ ଟି ସମୟ ସ୍ଲଟ୍ • BSKY ନିଃଶୁଳ୍କ ସେବା'
               : (lang === 'hi-IN'
-              ? '66 विशेषज्ञ चिकित्सक • 28 प्रमुख अस्पताल • 34 समय स्लॉट • आयुष्मान भारत / BSKY निःशुल्क परामर्श'
-              : '66 Verified Medical Specialists • 28 Leading Hospitals • 34 Daily OPD Timing Slots • BSKY / Ayushman Free')}
+              ? 'ओडिशा के सभी 30 ज़िले • 48+ चिकित्सा केंद्र एवं अस्पताल • 104 विशेषज्ञ चिकित्सक • 34 समय स्लॉट • BSKY निःशुल्क'
+              : 'All 30 Districts of Odisha • 48+ Medical Centers & Hospitals • 104 Verified Specialists • 34 Daily OPD Timing Slots • BSKY Free')}
           </p>
         </div>
 
@@ -877,21 +883,24 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
               <select
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
-                className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 outline-none cursor-pointer max-w-[220px] truncate"
               >
-                <option value="ALL">{txt.allLocations}</option>
-                <option value="Cuttack">Cuttack (କଟକ)</option>
-                <option value="Bhubaneswar">Bhubaneswar (ଭୁବନେଶ୍ୱର)</option>
-                <option value="Berhampur">Berhampur (ବ୍ରହ୍ମପୁର)</option>
-                <option value="Rourkela">Rourkela (ରାଉରକେଲା)</option>
-                <option value="Burla">Sambalpur / Burla (ସମ୍ବଲପୁର / ବୁର୍ଲା)</option>
-                <option value="Puri">Puri (ପୁରୀ)</option>
-                <option value="Balasore">Balasore (ବାଲେଶ୍ୱର)</option>
-                <option value="Baripada">Baripada / Mayurbhanj (ବାରିପଦା / ମୟୂରଭଞ୍ଜ)</option>
-                <option value="Koraput">Koraput (କୋରାପୁଟ)</option>
-                <option value="Balangir">Balangir (ବଲାଙ୍ଗୀର)</option>
-                <option value="Keonjhar">Keonjhar (କେନ୍ଦୁଝର)</option>
-                <option value="Wardha">Wardha (वर्धा)</option>
+                <option value="ALL">
+                  {txt.allLocations} (30 {lang === 'or-IN' ? 'ଜିଲ୍ଲା' : (lang === 'hi-IN' ? 'ज़िले' : 'Districts')})
+                </option>
+                {ODISHA_DISTRICTS.map((dist) => {
+                  const distDisplay =
+                    lang === 'or-IN'
+                      ? `${dist.nameOr} (${dist.nameEn})`
+                      : lang === 'hi-IN'
+                      ? `${dist.nameHi} (${dist.nameEn})`
+                      : `${dist.nameEn} (${dist.nameOr})`;
+                  return (
+                    <option key={dist.id} value={dist.id}>
+                      {distDisplay}
+                    </option>
+                  );
+                })}
               </select>
 
               <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
@@ -950,8 +959,12 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                       <span className="truncate font-medium text-slate-800">{doc.facility}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>{doc.room}</span>
+                      <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="inline-flex items-center gap-1 font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
+                        {doc.districtLabel || doc.district}
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      <span className="truncate">{doc.room}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -1172,17 +1185,22 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                   onChange={(e) => setRecLocation(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                 >
-                  <option value="ALL">{txt.allLocations}</option>
-                  <option value="Bhubaneswar">ଭୁବନେଶ୍ୱର (Bhubaneswar)</option>
-                  <option value="Cuttack">କଟକ (Cuttack)</option>
-                  <option value="Burla">ବୁର୍ଲା / ସମ୍ବଲପୁର (Burla, Sambalpur)</option>
-                  <option value="Berhampur">ବ୍ରହ୍ମପୁର (Berhampur)</option>
-                  <option value="Rourkela">ରାଉରକେଲା (Rourkela)</option>
-                  <option value="Balasore">ବାଲେଶ୍ୱର (Balasore)</option>
-                  <option value="Baripada">ବାରିପଦା / ମୟୂରଭଞ୍ଜ (Baripada)</option>
-                  <option value="Koraput">କୋରାପୁଟ (Koraput)</option>
-                  <option value="Balangir">ବଲାଙ୍ଗୀର (Balangir)</option>
-                  <option value="Keonjhar">କେନ୍ଦୁଝର (Keonjhar)</option>
+                  <option value="ALL">
+                    {txt.allLocations} (30 {lang === 'or-IN' ? 'ଜିଲ୍ଲା' : (lang === 'hi-IN' ? 'ज़िले' : 'Districts')})
+                  </option>
+                  {ODISHA_DISTRICTS.map((dist) => {
+                    const distDisplay =
+                      lang === 'or-IN'
+                        ? `${dist.nameOr} (${dist.nameEn})`
+                        : lang === 'hi-IN'
+                        ? `${dist.nameHi} (${dist.nameEn})`
+                        : `${dist.nameEn} (${dist.nameOr})`;
+                    return (
+                      <option key={dist.id} value={dist.id}>
+                        {distDisplay}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>
@@ -1274,11 +1292,13 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2 text-xs text-slate-600 mt-1">
+                          <div className="flex items-center gap-2 text-xs text-slate-600 mt-1 flex-wrap">
                             <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             <strong className="text-slate-900 font-semibold">{doc.facility}</strong>
                             <span className="text-slate-300">•</span>
-                            <span className="text-slate-500 font-medium">{doc.location}</span>
+                            <span className="inline-flex items-center font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
+                              {doc.districtLabel || doc.district}
+                            </span>
                           </div>
 
                           <p className="text-xs text-slate-500 font-medium mt-0.5">
