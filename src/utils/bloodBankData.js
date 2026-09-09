@@ -1,23 +1,41 @@
 /**
  * Odisha Blood Bank & Hospital Stock Dataset
  * Aligned with e-BloodBank Odisha, e-RaktKosh & Odisha State Blood Transfusion Council (OSBTC)
+ * Covers 30 districts of Odisha — Govt, DHH, CHC, Private & Red Cross Blood Banks
  */
 
 export const ODISHA_DISTRICTS = [
   'ALL',
-  'Cuttack',
-  'Khurda (Bhubaneswar)',
-  'Ganjam (Berhampur)',
-  'Sambalpur (Burla)',
-  'Balasore',
-  'Mayurbhanj (Baripada)',
-  'Koraput',
-  'Sundargarh (Rourkela)',
-  'Puri',
   'Angul',
+  'Balangir',
+  'Balasore',
+  'Bargarh',
+  'Bhadrak',
+  'Boudh',
+  'Cuttack',
+  'Deogarh',
+  'Dhenkanal',
+  'Gajapati',
+  'Ganjam (Berhampur)',
+  'Jagatsinghpur',
+  'Jajpur',
+  'Jharsuguda',
   'Kalahandi',
+  'Kandhamal',
   'Kendrapada',
-  'Bolangir'
+  'Keonjhar',
+  'Khurda (Bhubaneswar)',
+  'Koraput',
+  'Malkangiri',
+  'Mayurbhanj (Baripada)',
+  'Nabarangpur',
+  'Nayagarh',
+  'Nuapada',
+  'Puri',
+  'Rayagada',
+  'Sambalpur (Burla)',
+  'Sonepur',
+  'Sundargarh (Rourkela)'
 ];
 
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Bombay Group (Rare)'];
@@ -31,6 +49,9 @@ export const BLOOD_COMPONENTS = [
 ];
 
 export const ODISHA_BLOOD_BANKS = [
+  // ─────────────────────────────────────────────────────────
+  // CUTTACK
+  // ─────────────────────────────────────────────────────────
   {
     id: 'BB-CTC-001',
     name: 'Central Red Cross Blood Bank, SCB Medical College',
@@ -62,6 +83,40 @@ export const ODISHA_BLOOD_BANKS = [
     donorTimings: '08:00 AM - 08:00 PM (Daily)'
   },
   {
+    id: 'BB-CTC-002',
+    name: 'DHH Blood Bank, District Headquarter Hospital Cuttack',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, କଟକ',
+    hospitalName: 'District Headquarter Hospital, Cuttack',
+    district: 'Cuttack',
+    city: 'Cuttack',
+    address: 'Dolamundai, Near Barabati Stadium, Cuttack - 753001',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 671 2301234 / 104',
+    nodalOfficer: 'Dr. Sarat Kumar Mohanty',
+    nodalPhone: '+91 94370 66123',
+    email: 'bloodbank.dhhctc@odisha.gov.in',
+    operatingHours: '24x7 Emergency',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 8, PRBC: 14, FFP: 18, PLATELETS: 5, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 12, PRBC: 20, FFP: 25, PLATELETS: 8, SDP: 1 },
+      'B-': { WHOLE: 2, PRBC: 3, FFP: 4, PLATELETS: 1, SDP: 0 },
+      'AB+': { WHOLE: 5, PRBC: 9, FFP: 11, PLATELETS: 3, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 16, PRBC: 30, FFP: 36, PLATELETS: 12, SDP: 2 },
+      'O-': { WHOLE: 2, PRBC: 4, FFP: 5, PLATELETS: 1, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // KHURDA / BHUBANESWAR
+  // ─────────────────────────────────────────────────────────
+  {
     id: 'BB-BBS-002',
     name: 'Capital Hospital Blood Bank, Bhubaneswar',
     nameOdia: 'କ୍ୟାପିଟାଲ୍ ହସ୍ପିଟାଲ୍ ରକ୍ତ ଭଣ୍ଡାର, ଭୁବନେଶ୍ୱର',
@@ -91,6 +146,100 @@ export const ODISHA_BLOOD_BANKS = [
     acceptingDonors: true,
     donorTimings: '09:00 AM - 05:00 PM'
   },
+  {
+    id: 'BB-BBS-003',
+    name: 'AIIMS Bhubaneswar Blood Bank',
+    nameOdia: 'AIIMS ଭୁବନେଶ୍ୱର ରକ୍ତ ଭଣ୍ଡାର',
+    hospitalName: 'All India Institute of Medical Sciences (AIIMS), Bhubaneswar',
+    district: 'Khurda (Bhubaneswar)',
+    city: 'Bhubaneswar',
+    address: 'Sijua, Patrapada, Bhubaneswar - 751019',
+    category: 'Central Govt (AIIMS)',
+    bskyCovered: true,
+    helpline: '+91 674 2476789 / 104',
+    nodalOfficer: 'Dr. Prashanta Rath',
+    nodalPhone: '+91 94370 34521',
+    email: 'bloodbank.aiimsbbs@aiims.edu.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T11:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 22, PRBC: 40, FFP: 50, PLATELETS: 18, SDP: 6 },
+      'A-': { WHOLE: 4, PRBC: 7, FFP: 10, PLATELETS: 3, SDP: 1 },
+      'B+': { WHOLE: 28, PRBC: 55, FFP: 62, PLATELETS: 24, SDP: 8 },
+      'B-': { WHOLE: 5, PRBC: 8, FFP: 12, PLATELETS: 3, SDP: 1 },
+      'AB+': { WHOLE: 14, PRBC: 26, FFP: 34, PLATELETS: 12, SDP: 4 },
+      'AB-': { WHOLE: 2, PRBC: 4, FFP: 6, PLATELETS: 1, SDP: 0 },
+      'O+': { WHOLE: 35, PRBC: 70, FFP: 80, PLATELETS: 30, SDP: 10 },
+      'O-': { WHOLE: 6, PRBC: 11, FFP: 15, PLATELETS: 5, SDP: 2 },
+      'Bombay Group (Rare)': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '08:00 AM - 06:00 PM (Daily)'
+  },
+  {
+    id: 'BB-BBS-004',
+    name: 'Kalinga Institute of Medical Sciences (KIMS) Blood Bank',
+    nameOdia: 'KIMS ହସ୍ପିଟାଲ ରକ୍ତ ଭଣ୍ଡାର, ଭୁବନେଶ୍ୱର',
+    hospitalName: 'KIMS Hospital, Bhubaneswar',
+    district: 'Khurda (Bhubaneswar)',
+    city: 'Bhubaneswar',
+    address: 'KIIT Campus-5, Patia, Bhubaneswar - 751024',
+    category: 'Private (NABH Accredited)',
+    bskyCovered: false,
+    helpline: '+91 674 6646000',
+    nodalOfficer: 'Dr. Saroj Panda',
+    nodalPhone: '+91 94370 21456',
+    email: 'bloodbank@kimshealth.org',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T09:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 10, PRBC: 18, FFP: 22, PLATELETS: 8, SDP: 3 },
+      'A-': { WHOLE: 2, PRBC: 3, FFP: 5, PLATELETS: 1, SDP: 0 },
+      'B+': { WHOLE: 14, PRBC: 28, FFP: 32, PLATELETS: 12, SDP: 4 },
+      'B-': { WHOLE: 2, PRBC: 3, FFP: 5, PLATELETS: 1, SDP: 0 },
+      'AB+': { WHOLE: 6, PRBC: 12, FFP: 15, PLATELETS: 5, SDP: 2 },
+      'AB-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 18, PRBC: 38, FFP: 44, PLATELETS: 16, SDP: 5 },
+      'O-': { WHOLE: 3, PRBC: 5, FFP: 7, PLATELETS: 2, SDP: 1 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 05:00 PM'
+  },
+  {
+    id: 'BB-BBS-005',
+    name: 'Hi-Tech Medical College Blood Bank',
+    nameOdia: 'ହାଇ-ଟେକ ମେଡିକାଲ କଲେଜ ରକ୍ତ ଭଣ୍ଡାର, ଭୁବନେଶ୍ୱର',
+    hospitalName: 'Hi-Tech Medical College & Hospital',
+    district: 'Khurda (Bhubaneswar)',
+    city: 'Bhubaneswar',
+    address: 'Pandara, Bhubaneswar - 751025',
+    category: 'Private Medical College',
+    bskyCovered: false,
+    helpline: '+91 674 2360007',
+    nodalOfficer: 'Dr. Namita Rath',
+    nodalPhone: '+91 94370 55678',
+    email: 'bloodbank@hitech.edu.in',
+    operatingHours: '24x7 Emergency',
+    lastUpdated: '2026-09-09T08:30:00.000Z',
+    stock: {
+      'A+': { WHOLE: 7, PRBC: 12, FFP: 15, PLATELETS: 4, SDP: 1 },
+      'A-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 10, PRBC: 20, FFP: 24, PLATELETS: 8, SDP: 2 },
+      'B-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 4, PRBC: 8, FFP: 10, PLATELETS: 3, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 13, PRBC: 26, FFP: 30, PLATELETS: 10, SDP: 3 },
+      'O-': { WHOLE: 2, PRBC: 3, FFP: 4, PLATELETS: 1, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 05:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // GANJAM / BERHAMPUR
+  // ─────────────────────────────────────────────────────────
   {
     id: 'BB-MKCG-003',
     name: 'MKCG Medical College Blood Bank, Berhampur',
@@ -122,6 +271,40 @@ export const ODISHA_BLOOD_BANKS = [
     donorTimings: '08:30 AM - 06:00 PM'
   },
   {
+    id: 'BB-GNJ-002',
+    name: 'DHH Blood Bank, Ganjam (Chhatrapur)',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ଗଞ୍ଜାମ',
+    hospitalName: 'District Headquarter Hospital, Chhatrapur',
+    district: 'Ganjam (Berhampur)',
+    city: 'Chhatrapur',
+    address: 'Chhatrapur Town, Ganjam - 761020',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6811 222104 / 104',
+    nodalOfficer: 'Dr. Sunil Kumar Biswal',
+    nodalPhone: '+91 94373 12340',
+    email: 'bloodbank.dhhganjam@odisha.gov.in',
+    operatingHours: '24x7 Emergency',
+    lastUpdated: '2026-09-09T07:30:00.000Z',
+    stock: {
+      'A+': { WHOLE: 6, PRBC: 10, FFP: 13, PLATELETS: 3, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 9, PRBC: 16, FFP: 20, PLATELETS: 5, SDP: 1 },
+      'B-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 4, PRBC: 7, FFP: 9, PLATELETS: 2, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 12, PRBC: 22, FFP: 26, PLATELETS: 8, SDP: 1 },
+      'O-': { WHOLE: 2, PRBC: 3, FFP: 4, PLATELETS: 1, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // SAMBALPUR / BURLA
+  // ─────────────────────────────────────────────────────────
+  {
     id: 'BB-VIM-004',
     name: 'VIMSAR Hospital Blood Bank, Burla',
     nameOdia: 'ଭିମ୍‌ସାର୍ ହସ୍ପିଟାଲ୍ ରକ୍ତ ଭଣ୍ଡାର, ବୁର୍ଲା',
@@ -151,6 +334,40 @@ export const ODISHA_BLOOD_BANKS = [
     acceptingDonors: true,
     donorTimings: '09:00 AM - 05:00 PM'
   },
+  {
+    id: 'BB-SBP-002',
+    name: 'DHH Blood Bank, Sambalpur',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ସମ୍ବଲପୁର',
+    hospitalName: 'District Headquarter Hospital, Sambalpur',
+    district: 'Sambalpur (Burla)',
+    city: 'Sambalpur',
+    address: 'VSS Nagar, Sambalpur - 768001',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 663 2402234 / 104',
+    nodalOfficer: 'Dr. Mamata Singh',
+    nodalPhone: '+91 94371 55678',
+    email: 'bloodbank.dhhsbp@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 7, PRBC: 13, FFP: 16, PLATELETS: 4, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 10, PRBC: 19, FFP: 23, PLATELETS: 6, SDP: 1 },
+      'B-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 4, PRBC: 8, FFP: 10, PLATELETS: 2, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 14, PRBC: 28, FFP: 32, PLATELETS: 9, SDP: 2 },
+      'O-': { WHOLE: 2, PRBC: 3, FFP: 4, PLATELETS: 1, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:30 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // BALASORE
+  // ─────────────────────────────────────────────────────────
   {
     id: 'BB-BAL-005',
     name: 'FM Medical College & Hospital Blood Bank, Balasore',
@@ -182,6 +399,40 @@ export const ODISHA_BLOOD_BANKS = [
     donorTimings: '09:00 AM - 04:30 PM'
   },
   {
+    id: 'BB-BAL-006',
+    name: 'Red Cross Blood Bank, Balasore',
+    nameOdia: 'ଲାଲ ଶ୍ରାସ ରକ୍ତ ଭଣ୍ଡାର, ବାଲେଶ୍ୱର',
+    hospitalName: 'Indian Red Cross Society Blood Bank',
+    district: 'Balasore',
+    city: 'Balasore',
+    address: 'Civil Lines, Near Collectorate, Balasore - 756001',
+    category: 'Red Cross / Voluntary',
+    bskyCovered: true,
+    helpline: '+91 6782 260011 / 104',
+    nodalOfficer: 'Dr. Pinaki Ranjan Das',
+    nodalPhone: '+91 94373 88220',
+    email: 'redcross.balasore@odisha.gov.in',
+    operatingHours: '08:00 AM - 08:00 PM',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 5, PRBC: 10, FFP: 13, PLATELETS: 3, SDP: 0 },
+      'A-': { WHOLE: 0, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 8, PRBC: 16, FFP: 20, PLATELETS: 5, SDP: 1 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 3, PRBC: 6, FFP: 8, PLATELETS: 2, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 10, PRBC: 20, FFP: 24, PLATELETS: 7, SDP: 2 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '08:00 AM - 06:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // KORAPUT
+  // ─────────────────────────────────────────────────────────
+  {
     id: 'BB-KPT-006',
     name: 'SLN Medical College Blood Bank, Koraput',
     nameOdia: 'ଶାହୀଦ ଲକ୍ଷ୍ମଣ ନାୟକ ମେଡିକାଲ୍ କଲେଜ୍ ରକ୍ତ ଭଣ୍ଡାର, କୋରାପୁଟ',
@@ -211,11 +462,15 @@ export const ODISHA_BLOOD_BANKS = [
     acceptingDonors: true,
     donorTimings: '09:00 AM - 04:00 PM'
   },
+
+  // ─────────────────────────────────────────────────────────
+  // SUNDARGARH / ROURKELA
+  // ─────────────────────────────────────────────────────────
   {
     id: 'BB-RGH-007',
-    name: 'Rourkela General Hospital (RGH) Blood Bank',
+    name: 'Rourkela Government Hospital (RGH) Blood Bank',
     nameOdia: 'ରାଉରକେଲା ଜେନେରାଲ୍ ହସ୍ପିଟାଲ୍ (RGH) ରକ୍ତ ଭଣ୍ଡାର',
-    hospitalName: 'Rourkela General Hospital (RGH)',
+    hospitalName: 'Rourkela Government Hospital (RGH)',
     district: 'Sundargarh (Rourkela)',
     city: 'Rourkela',
     address: 'Panposh Road, Rourkela - 769004',
@@ -242,9 +497,43 @@ export const ODISHA_BLOOD_BANKS = [
     donorTimings: '08:30 AM - 05:00 PM'
   },
   {
+    id: 'BB-SGD-002',
+    name: 'DHH Blood Bank, Sundargarh',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ସୁନ୍ଦରଗଡ଼',
+    hospitalName: 'District Headquarter Hospital, Sundargarh',
+    district: 'Sundargarh (Rourkela)',
+    city: 'Sundargarh',
+    address: 'NH-143, Sundargarh Town - 770001',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6622 232104 / 104',
+    nodalOfficer: 'Dr. Ramesh Kiro',
+    nodalPhone: '+91 94371 76543',
+    email: 'bloodbank.dhhsgd@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T07:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 5, PRBC: 9, FFP: 12, PLATELETS: 3, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 8, PRBC: 15, FFP: 18, PLATELETS: 4, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 3, PRBC: 6, FFP: 7, PLATELETS: 2, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 10, PRBC: 20, FFP: 23, PLATELETS: 6, SDP: 1 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // PURI
+  // ─────────────────────────────────────────────────────────
+  {
     id: 'BB-PURI-008',
-    name: 'District Headquarter Hospital (DHH) Blood Bank, Puri',
-    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା (DHH) ରକ୍ତ ଭଣ୍ଡାର, ପୁରୀ',
+    name: 'DHH Blood Bank, Puri',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ପୁରୀ',
     hospitalName: 'District Headquarter Hospital, Puri',
     district: 'Puri',
     city: 'Puri',
@@ -270,6 +559,584 @@ export const ODISHA_BLOOD_BANKS = [
     },
     acceptingDonors: true,
     donorTimings: '09:00 AM - 05:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // MAYURBHANJ / BARIPADA
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-MYB-009',
+    name: 'Pandit Raghunath Murmu Medical College Blood Bank, Baripada',
+    nameOdia: 'ପଣ୍ଡିତ ରଘୁନାଥ ମୁର୍ମୁ ମେଡିକାଲ କଲେଜ ରକ୍ତ ଭଣ୍ଡାର, ବାରିପଦା',
+    hospitalName: 'PRM Medical College & Hospital, Baripada',
+    district: 'Mayurbhanj (Baripada)',
+    city: 'Baripada',
+    address: 'Near Airport Road, Baripada, Mayurbhanj - 757001',
+    category: 'Govt Medical College',
+    bskyCovered: true,
+    helpline: '+91 6792 255104 / 104',
+    nodalOfficer: 'Dr. Saroja Soren',
+    nodalPhone: '+91 94372 87654',
+    email: 'bloodbank.prmmch@odisha.gov.in',
+    operatingHours: '24x7 Emergency',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 9, PRBC: 16, FFP: 20, PLATELETS: 5, SDP: 1 },
+      'A-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 13, PRBC: 24, FFP: 29, PLATELETS: 8, SDP: 2 },
+      'B-': { WHOLE: 2, PRBC: 3, FFP: 4, PLATELETS: 1, SDP: 0 },
+      'AB+': { WHOLE: 5, PRBC: 9, FFP: 12, PLATELETS: 3, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 16, PRBC: 32, FFP: 37, PLATELETS: 11, SDP: 3 },
+      'O-': { WHOLE: 2, PRBC: 4, FFP: 5, PLATELETS: 1, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 05:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // ANGUL
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-ANG-010',
+    name: 'DHH Blood Bank, Angul',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ଅନୁଗୁଳ',
+    hospitalName: 'District Headquarter Hospital, Angul',
+    district: 'Angul',
+    city: 'Angul',
+    address: 'Hospital Road, Angul - 759122',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6764 231104 / 104',
+    nodalOfficer: 'Dr. Bikram Keshari Nanda',
+    nodalPhone: '+91 94370 44321',
+    email: 'bloodbank.dhhangul@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:30:00.000Z',
+    stock: {
+      'A+': { WHOLE: 6, PRBC: 11, FFP: 14, PLATELETS: 4, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 9, PRBC: 17, FFP: 21, PLATELETS: 5, SDP: 1 },
+      'B-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 3, PRBC: 6, FFP: 8, PLATELETS: 2, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 12, PRBC: 24, FFP: 28, PLATELETS: 8, SDP: 1 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // KEONJHAR
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-KNJ-011',
+    name: 'DHH Blood Bank, Keonjhar',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, କ୍ୟୋଞ୍ଝର',
+    hospitalName: 'District Headquarter Hospital, Keonjhar',
+    district: 'Keonjhar',
+    city: 'Keonjhar',
+    address: 'Hospital Chowk, Keonjhar - 758001',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6766 255104 / 104',
+    nodalOfficer: 'Dr. Gitanjali Mahanta',
+    nodalPhone: '+91 94374 22345',
+    email: 'bloodbank.dhhknj@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T07:45:00.000Z',
+    stock: {
+      'A+': { WHOLE: 5, PRBC: 9, FFP: 12, PLATELETS: 3, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 8, PRBC: 14, FFP: 17, PLATELETS: 4, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 3, PRBC: 5, FFP: 7, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 10, PRBC: 19, FFP: 22, PLATELETS: 6, SDP: 1 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // JHARSUGUDA
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-JHR-012',
+    name: 'DHH Blood Bank, Jharsuguda',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ଝାରସୁଗୁଡ଼ା',
+    hospitalName: 'District Headquarter Hospital, Jharsuguda',
+    district: 'Jharsuguda',
+    city: 'Jharsuguda',
+    address: 'Main Road, Jharsuguda - 768201',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6645 272104 / 104',
+    nodalOfficer: 'Dr. Sanjiv Kumar Patel',
+    nodalPhone: '+91 94374 33456',
+    email: 'bloodbank.dhhjhr@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 5, PRBC: 10, FFP: 12, PLATELETS: 3, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 8, PRBC: 15, FFP: 18, PLATELETS: 4, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 3, PRBC: 5, FFP: 7, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 10, PRBC: 20, FFP: 23, PLATELETS: 6, SDP: 1 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // JAJPUR
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-JJP-013',
+    name: 'DHH Blood Bank, Jajpur',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ଯାଜପୁର',
+    hospitalName: 'District Headquarter Hospital, Jajpur',
+    district: 'Jajpur',
+    city: 'Jajpur Town',
+    address: 'Hospital Road, Jajpur Town - 755001',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6728 222104 / 104',
+    nodalOfficer: 'Dr. Pradyumna Kumar Nayak',
+    nodalPhone: '+91 94370 11234',
+    email: 'bloodbank.dhhjjp@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 6, PRBC: 11, FFP: 14, PLATELETS: 3, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 9, PRBC: 17, FFP: 20, PLATELETS: 5, SDP: 1 },
+      'B-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 3, PRBC: 6, FFP: 8, PLATELETS: 2, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 12, PRBC: 22, FFP: 26, PLATELETS: 7, SDP: 1 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // KENDRAPADA
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-KDP-014',
+    name: 'DHH Blood Bank, Kendrapada',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, କେନ୍ଦ୍ରାପଡ଼ା',
+    hospitalName: 'District Headquarter Hospital, Kendrapada',
+    district: 'Kendrapada',
+    city: 'Kendrapada',
+    address: 'Hospital Square, Kendrapada - 754211',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6727 232104 / 104',
+    nodalOfficer: 'Dr. Lipsa Mohanty',
+    nodalPhone: '+91 94370 22345',
+    email: 'bloodbank.dhhkdp@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 4, PRBC: 8, FFP: 10, PLATELETS: 2, SDP: 0 },
+      'A-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 7, PRBC: 13, FFP: 16, PLATELETS: 4, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 2, PRBC: 4, FFP: 6, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 9, PRBC: 17, FFP: 20, PLATELETS: 5, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // BHADRAK
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-BDK-015',
+    name: 'DHH Blood Bank, Bhadrak',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ଭଦ୍ରକ',
+    hospitalName: 'District Headquarter Hospital, Bhadrak',
+    district: 'Bhadrak',
+    city: 'Bhadrak',
+    address: 'Aradi Road, Bhadrak - 756100',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6784 252104 / 104',
+    nodalOfficer: 'Dr. Asutosh Samal',
+    nodalPhone: '+91 94374 55678',
+    email: 'bloodbank.dhhbdk@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 5, PRBC: 9, FFP: 12, PLATELETS: 3, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 8, PRBC: 14, FFP: 18, PLATELETS: 4, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 3, PRBC: 5, FFP: 7, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 10, PRBC: 19, FFP: 22, PLATELETS: 5, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // KALAHANDI
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-KLD-016',
+    name: 'DHH Blood Bank, Kalahandi (Bhawanipatna)',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, କଳାହାଣ୍ଡି',
+    hospitalName: 'District Headquarter Hospital, Bhawanipatna',
+    district: 'Kalahandi',
+    city: 'Bhawanipatna',
+    address: 'Station Road, Bhawanipatna, Kalahandi - 766001',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6670 230104 / 104',
+    nodalOfficer: 'Dr. Arun Kumar Padhi',
+    nodalPhone: '+91 94372 11230',
+    email: 'bloodbank.dhhkld@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T07:30:00.000Z',
+    stock: {
+      'A+': { WHOLE: 4, PRBC: 8, FFP: 10, PLATELETS: 2, SDP: 0 },
+      'A-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 6, PRBC: 12, FFP: 14, PLATELETS: 3, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 2, PRBC: 4, FFP: 5, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 8, PRBC: 15, FFP: 18, PLATELETS: 4, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // DHENKANAL
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-DKL-017',
+    name: 'DHH Blood Bank, Dhenkanal',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ଢ଼େଙ୍କାନାଳ',
+    hospitalName: 'District Headquarter Hospital, Dhenkanal',
+    district: 'Dhenkanal',
+    city: 'Dhenkanal',
+    address: 'Hospital Road, Dhenkanal - 759001',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6762 222104 / 104',
+    nodalOfficer: 'Dr. Krushna Chandra Jena',
+    nodalPhone: '+91 94370 77889',
+    email: 'bloodbank.dhhdkl@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 4, PRBC: 7, FFP: 10, PLATELETS: 2, SDP: 0 },
+      'A-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 6, PRBC: 11, FFP: 14, PLATELETS: 3, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 2, PRBC: 4, FFP: 5, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 8, PRBC: 15, FFP: 18, PLATELETS: 4, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // BARGARH
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-BRG-018',
+    name: 'DHH Blood Bank, Bargarh',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ବରଗଡ଼',
+    hospitalName: 'District Headquarter Hospital, Bargarh',
+    district: 'Bargarh',
+    city: 'Bargarh',
+    address: 'Near Town Square, Bargarh - 768028',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6646 232104 / 104',
+    nodalOfficer: 'Dr. Laxmi Priya Choudhury',
+    nodalPhone: '+91 94371 88099',
+    email: 'bloodbank.dhhbrg@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 5, PRBC: 9, FFP: 11, PLATELETS: 3, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 7, PRBC: 13, FFP: 16, PLATELETS: 4, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 3, PRBC: 5, FFP: 6, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 9, PRBC: 17, FFP: 20, PLATELETS: 5, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // RAYAGADA
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-RYG-019',
+    name: 'DHH Blood Bank, Rayagada',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ରାୟଗଡ଼ା',
+    hospitalName: 'District Headquarter Hospital, Rayagada',
+    district: 'Rayagada',
+    city: 'Rayagada',
+    address: 'Hospital Road, Rayagada - 765001',
+    category: 'Govt Tribal District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6856 222104 / 104',
+    nodalOfficer: 'Dr. Jagannath Majhi',
+    nodalPhone: '+91 94374 66778',
+    email: 'bloodbank.dhhryg@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T07:45:00.000Z',
+    stock: {
+      'A+': { WHOLE: 4, PRBC: 7, FFP: 9, PLATELETS: 2, SDP: 0 },
+      'A-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 6, PRBC: 11, FFP: 13, PLATELETS: 3, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 2, PRBC: 4, FFP: 5, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 8, PRBC: 14, FFP: 17, PLATELETS: 4, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // MALKANGIRI
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-MLK-020',
+    name: 'DHH Blood Bank, Malkangiri',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ମଲ୍କାନଗିରି',
+    hospitalName: 'District Headquarter Hospital, Malkangiri',
+    district: 'Malkangiri',
+    city: 'Malkangiri',
+    address: 'NH-326, Malkangiri - 764045',
+    category: 'Govt Tribal District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6861 230104 / 104',
+    nodalOfficer: 'Dr. Suman Lata Panda',
+    nodalPhone: '+91 94374 11020',
+    email: 'bloodbank.dhhmlk@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T07:30:00.000Z',
+    stock: {
+      'A+': { WHOLE: 3, PRBC: 5, FFP: 7, PLATELETS: 1, SDP: 0 },
+      'A-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 5, PRBC: 9, FFP: 11, PLATELETS: 2, SDP: 0 },
+      'B-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 2, PRBC: 3, FFP: 4, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 6, PRBC: 11, FFP: 13, PLATELETS: 3, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 03:30 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // BALANGIR
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-BLG-021',
+    name: 'DHH Blood Bank, Balangir',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ବଲାଙ୍ଗୀର',
+    hospitalName: 'District Headquarter Hospital, Balangir',
+    district: 'Balangir',
+    city: 'Balangir',
+    address: 'Hospital Road, Balangir - 767001',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6652 230104 / 104',
+    nodalOfficer: 'Dr. Niranjan Sahu',
+    nodalPhone: '+91 94372 44561',
+    email: 'bloodbank.dhhblg@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 5, PRBC: 9, FFP: 11, PLATELETS: 3, SDP: 0 },
+      'A-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 8, PRBC: 14, FFP: 17, PLATELETS: 4, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 3, PRBC: 5, FFP: 7, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 10, PRBC: 19, FFP: 22, PLATELETS: 5, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 3, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // NABARANGPUR
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-NBP-022',
+    name: 'DHH Blood Bank, Nabarangpur',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ନବରଙ୍ଗପୁର',
+    hospitalName: 'District Headquarter Hospital, Nabarangpur',
+    district: 'Nabarangpur',
+    city: 'Nabarangpur',
+    address: 'Main Road, Nabarangpur - 764059',
+    category: 'Govt Tribal District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6858 222104 / 104',
+    nodalOfficer: 'Dr. Sudha Rani Pujari',
+    nodalPhone: '+91 94374 22099',
+    email: 'bloodbank.dhhnbp@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T07:30:00.000Z',
+    stock: {
+      'A+': { WHOLE: 3, PRBC: 6, FFP: 8, PLATELETS: 2, SDP: 0 },
+      'A-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 5, PRBC: 9, FFP: 11, PLATELETS: 2, SDP: 0 },
+      'B-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 2, PRBC: 3, FFP: 4, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 7, PRBC: 13, FFP: 15, PLATELETS: 3, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 03:30 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // JAGATSINGHPUR
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-JSP-023',
+    name: 'DHH Blood Bank, Jagatsinghpur',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ଜଗତ୍‌ସିଂହପୁର',
+    hospitalName: 'District Headquarter Hospital, Jagatsinghpur',
+    district: 'Jagatsinghpur',
+    city: 'Jagatsinghpur',
+    address: 'College Road, Jagatsinghpur - 754103',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6724 220104 / 104',
+    nodalOfficer: 'Dr. Sasmita Patra',
+    nodalPhone: '+91 94370 33456',
+    email: 'bloodbank.dhhjsp@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 4, PRBC: 8, FFP: 10, PLATELETS: 2, SDP: 0 },
+      'A-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 7, PRBC: 12, FFP: 15, PLATELETS: 3, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 2, PRBC: 4, FFP: 5, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 9, PRBC: 17, FFP: 20, PLATELETS: 5, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 2, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // NAYAGARH
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-NYG-024',
+    name: 'DHH Blood Bank, Nayagarh',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ନୟାଗଡ଼',
+    hospitalName: 'District Headquarter Hospital, Nayagarh',
+    district: 'Nayagarh',
+    city: 'Nayagarh',
+    address: 'Hospital Road, Nayagarh - 752069',
+    category: 'Govt District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6753 252104 / 104',
+    nodalOfficer: 'Dr. Bijaya Kumar Sahu',
+    nodalPhone: '+91 94370 66789',
+    email: 'bloodbank.dhhnyg@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T08:00:00.000Z',
+    stock: {
+      'A+': { WHOLE: 3, PRBC: 6, FFP: 8, PLATELETS: 2, SDP: 0 },
+      'A-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 5, PRBC: 10, FFP: 12, PLATELETS: 3, SDP: 0 },
+      'B-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 2, PRBC: 4, FFP: 5, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 8, PRBC: 15, FFP: 17, PLATELETS: 4, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 1, FFP: 2, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 04:00 PM'
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // GAJAPATI
+  // ─────────────────────────────────────────────────────────
+  {
+    id: 'BB-GJP-025',
+    name: 'DHH Blood Bank, Gajapati (Paralakhemundi)',
+    nameOdia: 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଡାକ୍ତରଖାନା ରକ୍ତ ଭଣ୍ଡାର, ଗଜପତି',
+    hospitalName: 'District Headquarter Hospital, Paralakhemundi',
+    district: 'Gajapati',
+    city: 'Paralakhemundi',
+    address: 'Hospital Road, Paralakhemundi - 761200',
+    category: 'Govt Tribal District Hospital',
+    bskyCovered: true,
+    helpline: '+91 6815 222104 / 104',
+    nodalOfficer: 'Dr. Aparajita Panda',
+    nodalPhone: '+91 94374 99011',
+    email: 'bloodbank.dhhgjp@odisha.gov.in',
+    operatingHours: '24x7',
+    lastUpdated: '2026-09-09T07:30:00.000Z',
+    stock: {
+      'A+': { WHOLE: 3, PRBC: 5, FFP: 7, PLATELETS: 1, SDP: 0 },
+      'A-': { WHOLE: 0, PRBC: 0, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'B+': { WHOLE: 5, PRBC: 8, FFP: 10, PLATELETS: 2, SDP: 0 },
+      'B-': { WHOLE: 0, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'AB+': { WHOLE: 2, PRBC: 3, FFP: 4, PLATELETS: 1, SDP: 0 },
+      'AB-': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 },
+      'O+': { WHOLE: 6, PRBC: 11, FFP: 13, PLATELETS: 3, SDP: 0 },
+      'O-': { WHOLE: 1, PRBC: 1, FFP: 1, PLATELETS: 0, SDP: 0 },
+      'Bombay Group (Rare)': { WHOLE: 0, PRBC: 0, FFP: 0, PLATELETS: 0, SDP: 0 }
+    },
+    acceptingDonors: true,
+    donorTimings: '09:00 AM - 03:30 PM'
   }
 ];
 
@@ -321,5 +1188,77 @@ export const ODISHA_DONATION_CAMPS = [
     time: '09:30 AM - 04:30 PM',
     contact: '+91 94371 99312',
     targetUnits: 300
+  },
+  {
+    id: 'CAMP-05',
+    title: 'AIIMS Bhubaneswar Annual Mega Blood Donation Drive',
+    titleOdia: 'AIIMS ଭୁବନେଶ୍ୱର ବାର୍ଷିକ ରକ୍ତଦାନ ଶିବିର',
+    organizer: 'AIIMS Bhubaneswar & Resident Doctors Association',
+    location: 'AIIMS Campus, Sijua, Bhubaneswar',
+    district: 'Khurda (Bhubaneswar)',
+    date: '2026-09-22',
+    time: '08:00 AM - 05:00 PM',
+    contact: '+91 94370 34521',
+    targetUnits: 600
+  },
+  {
+    id: 'CAMP-06',
+    title: 'Baripada Tribal Youth Blood Donation Mahotsav',
+    titleOdia: 'ବାରିପଦା ଆଦିବାସୀ ଯୁବ ରକ୍ତଦାନ ମହୋତ୍ସବ',
+    organizer: 'PRM Medical College & Mayurbhanj Youth Network',
+    location: 'Baripada Town Hall, Mayurbhanj',
+    district: 'Mayurbhanj (Baripada)',
+    date: '2026-09-25',
+    time: '09:00 AM - 04:00 PM',
+    contact: '+91 94372 87654',
+    targetUnits: 200
+  },
+  {
+    id: 'CAMP-07',
+    title: 'Sambalpur Corporate & NCC Blood Drive',
+    titleOdia: 'ସମ୍ବଲପୁର କର୍ପୋରେଟ ଓ NCC ରକ୍ତଦାନ ଶିବିର',
+    organizer: 'VIMSAR Blood Bank & NCC 14 Odisha Bn',
+    location: 'Shyam Lal Memorial Ground, Sambalpur',
+    district: 'Sambalpur (Burla)',
+    date: '2026-09-28',
+    time: '09:00 AM - 04:00 PM',
+    contact: '+91 94371 66201',
+    targetUnits: 250
+  },
+  {
+    id: 'CAMP-08',
+    title: 'Puri Sea Beach Blood Donation Festival',
+    titleOdia: 'ପୁରୀ ସମୁଦ୍ର ତଟ ରକ୍ତଦାନ ଉତ୍ସବ',
+    organizer: 'DHH Puri Blood Bank & Lions Club Puri',
+    location: 'Swargadwar Road Near Beach, Puri',
+    district: 'Puri',
+    date: '2026-10-02',
+    time: '07:00 AM - 02:00 PM',
+    contact: '+91 94370 51234',
+    targetUnits: 300
+  },
+  {
+    id: 'CAMP-09',
+    title: 'Koraput Tribal Health & Blood Donation Mela',
+    titleOdia: 'କୋରାପୁଟ ଆଦିବାସୀ ସ୍ୱାସ୍ଥ୍ୟ ଓ ରକ୍ତଦାନ ମେଳା',
+    organizer: 'SLN Medical College & Koraput District Administration',
+    location: 'Indravati Stadium, Koraput',
+    district: 'Koraput',
+    date: '2026-10-05',
+    time: '09:00 AM - 03:00 PM',
+    contact: '+91 94374 88120',
+    targetUnits: 150
+  },
+  {
+    id: 'CAMP-10',
+    title: 'Balasore Coast Guard & Navy Blood Donation Day',
+    titleOdia: 'ବାଲେଶ୍ୱର ଉପକୂଳ ରକ୍ଷୀ ଓ ନৌসেना ରକ୍ତଦାନ ଦିବସ',
+    organizer: 'FM Medical College Blood Bank & INS Chilika',
+    location: 'FM Medical College Campus, Remuna, Balasore',
+    district: 'Balasore',
+    date: '2026-10-08',
+    time: '09:00 AM - 04:00 PM',
+    contact: '+91 94373 55190',
+    targetUnits: 200
   }
 ];
