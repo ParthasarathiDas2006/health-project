@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   User,
   Calendar,
@@ -18,6 +18,7 @@ import {
   Video,
   Award,
   ChevronRight,
+  ChevronLeft,
   Trash2,
   Sunrise,
   Sun,
@@ -32,15 +33,17 @@ import {
   Check
 } from 'lucide-react';
 import { getBookedAppointments, saveAppointment, cancelAppointment } from '../utils/authStorage';
+import { getDoctorsList } from '../data/doctorsData';
 
 /**
  * Doctor Directory & Appointment Booking System
  * Features:
- * 1. Filterable doctor directory by specialty and facility.
+ * 1. Filterable doctor directory by specialty and facility across 60+ specialists.
  * 2. Real-time time slot selector (Morning & Afternoon shifts).
  * 3. Digital OPD token generator & confirmation modal with printable slip.
  * 4. "My Appointments" manager with cancel & re-print support.
- * 5. 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
+ * 5. High-performance client-side pagination with useMemo search caching.
+ * 6. 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
  */
 export default function DoctorBookingSystem({ currentUser, appLang, onBookedCountChange }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
@@ -50,11 +53,26 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
   const [selectedSpecialty, setSelectedSpecialty] = useState('ALL');
   const [selectedLocation, setSelectedLocation] = useState('ALL');
 
+  // Pagination states for zero-lag high-performance rendering
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [recCurrentPage, setRecCurrentPage] = useState(1);
+  const [recPageSize, setRecPageSize] = useState(10);
+
   // Smart Recommendation System States
   const [recCondition, setRecCondition] = useState('ALL');
   const [recBudget, setRecBudget] = useState('ALL'); // 'ALL', 'free', 'affordable', 'private'
   const [recPriority, setRecPriority] = useState('fame'); // 'fame', 'success', 'degree', 'speed'
   const [recLocation, setRecLocation] = useState('ALL');
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedSpecialty, selectedLocation]);
+
+  useEffect(() => {
+    setRecCurrentPage(1);
+  }, [recCondition, recBudget, recPriority, recLocation]);
 
   // Booking Modal States
   const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -106,6 +124,16 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       specialtySurgery: 'ସାଧାରଣ ଶଲ୍ୟ ଚିକିତ୍ସା (General Surgery)',
       specialtyOnco: 'କର୍କଟ ରୋଗ ଚିକିତ୍ସା (Oncology & Cancer)',
       specialtyDental: 'ଦନ୍ତ ଚିକିତ୍ସା (Dentistry & Oral Care)',
+      specialtyRheum: 'ବାତ ଓ ଇମ୍ୟୁନୋଲୋଜି (Rheumatology)',
+      specialtyHemat: 'ରକ୍ତ ରୋଗ ଓ ବୋନ୍ ମ୍ୟାରୋ (Hematology)',
+      specialtyUro: 'ୟୁରୋଲୋଜି ଓ କିଡନୀ ପଥର (Urology)',
+      showingText: 'ଦେଖାଯାଉଛି',
+      toText: 'ରୁ',
+      ofText: 'ମଧ୍ୟରୁ',
+      prevBtn: 'ପୂର୍ବବର୍ତ୍ତୀ',
+      nextBtn: 'ପରବର୍ତ୍ତୀ',
+      perPageText: 'ପ୍ରତି ପୃଷ୍ଠା:',
+      pageText: 'ପୃଷ୍ଠା',
       bookBtn: 'ଆପଏଣ୍ଟମେଣ୍ଟ ବୁକ୍ କରନ୍ତୁ',
       experience: 'ବର୍ଷର ଅଭିଜ୍ଞତା',
       reviews: 'ସମୀକ୍ଷା',
@@ -207,6 +235,16 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       specialtySurgery: 'सामान्य शल्य चिकित्सा (General Surgery)',
       specialtyOnco: 'कैंसर एवं ट्यूमर चिकित्सा (Oncology)',
       specialtyDental: 'दंत एवं मुख चिकित्सा (Dentistry)',
+      specialtyRheum: 'गठिया एवं इम्यूनोलॉजी (Rheumatology)',
+      specialtyHemat: 'रक्त रोग एवं बोन मैरो (Hematology)',
+      specialtyUro: 'यूरोलॉजी एवं मूत्र रोग (Urology)',
+      showingText: 'दिखाया जा रहा है',
+      toText: 'से',
+      ofText: 'में से',
+      prevBtn: 'पिछला',
+      nextBtn: 'अगला',
+      perPageText: 'प्रति पृष्ठ:',
+      pageText: 'पृष्ठ',
       bookBtn: 'अपॉइंटमेंट बुक करें',
       experience: 'वर्ष का अनुभव',
       reviews: 'समीक्षाएं',
@@ -308,6 +346,16 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       specialtySurgery: 'General & Laparoscopic Surgery',
       specialtyOnco: 'Oncology & Cancer Care',
       specialtyDental: 'Dentistry & Maxillofacial',
+      specialtyRheum: 'Rheumatology & Clinical Immunology',
+      specialtyHemat: 'Hematology & Bone Marrow Transplant',
+      specialtyUro: 'Urology & Kidney Care',
+      showingText: 'Showing',
+      toText: 'to',
+      ofText: 'of',
+      prevBtn: 'Previous',
+      nextBtn: 'Next',
+      perPageText: 'Per page:',
+      pageText: 'Page',
       bookBtn: 'Book Appointment',
       experience: 'yrs experience',
       reviews: 'reviews',
@@ -386,569 +434,8 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
     }
   }[lang] || {};
 
-  // Standard Verified Doctors Directory (Expanded to 20 Medical Specialists with Recommendation Metrics)
-  const doctorsList = [
-    {
-      id: 'DOC-01',
-      name: lang === 'or-IN' ? 'ଡା. ସୌମ୍ୟ ରଞ୍ଜନ ନାୟକ' : (lang === 'hi-IN' ? 'डॉ. सौम्य रंजन नायक' : 'Dr. Soumya Ranjan Nayak'),
-      specialty: 'GenMed',
-      specialtyLabel: txt.specialtyGenMed,
-      qualifications: 'MBBS, MD (General Medicine)',
-      regNo: 'OMC-2017-66431',
-      facility: lang === 'or-IN' ? 'SCB ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍, କଟକ' : (lang === 'hi-IN' ? 'एससीबी मेडिकल कॉलेज अस्पताल, कटक' : 'SCB Medical College & Hospital, Cuttack'),
-      location: 'Cuttack',
-      room: lang === 'or-IN' ? 'OPD ବ୍ଲକ୍ A, କକ୍ଷ ୧୨' : (lang === 'hi-IN' ? 'OPD ब्लॉक A, कमरा 12' : 'OPD Block A, Room 12'),
-      experience: 11,
-      rating: 4.9,
-      reviewsCount: 1240,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
-      teleAvailable: true,
-      initials: 'SN',
-      color: 'from-emerald-600 to-teal-700',
-      famousFor: lang === 'or-IN' ? 'ଜଟିଳ ରୋଗ ଚିକିତ୍ସା ଓ ସାଧାରଣ ଔଷଧ ବିଭାଗରେ ଓଡ଼ିଶାର ଶ୍ରେଷ୍ଠ ରେଫରାଲ୍ ମେଡିକାଲ୍ କଲେଜ୍' : (lang === 'hi-IN' ? 'जटिल चिकित्सा एवं सामान्य रोग विभाग में ओडिशा का शीर्ष रेफरल मेडिकल कॉलेज' : 'Apex State Referral Medical College for Critical Internal Medicine & Multisystem Care'),
-      hospitalTier: 'Apex State Referral Medical College',
-      successRate: 98.2,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: lang === 'or-IN' ? 'BSKY / ସରକାରୀ: ₹୦ (ନିଃଶୁଳ୍କ)' : (lang === 'hi-IN' ? 'आयुष्मान / सरकारी: ₹0 (निःशुल्क)' : 'BSKY / Govt: ₹0 (Free OPD)'),
-      avgWaitTime: lang === 'or-IN' ? '୩୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '30 मिनट' : '30 mins'),
-      avgWaitTimeMinutes: 30,
-      awards: 'State Apex Referral Centre'
-    },
-    {
-      id: 'DOC-02',
-      name: lang === 'or-IN' ? 'ଡା. ତନ୍ମୟୀ ମହାପାତ୍ର' : (lang === 'hi-IN' ? 'डॉ. तन्मयी महापात्र' : 'Dr. Tanmayee Mohapatra'),
-      specialty: 'ObGyn',
-      specialtyLabel: txt.specialtyObGyn,
-      qualifications: 'MBBS, MS, DGO (Obstetrics & Gynaecology)',
-      regNo: 'OMC-2015-44219',
-      facility: lang === 'or-IN' ? 'କ୍ୟାପିଟାଲ୍ ହସ୍ପିଟାଲ୍, ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'कैपिटल अस्पताल, भुवनेश्वर' : 'Capital Hospital, Bhubaneswar'),
-      location: 'Bhubaneswar',
-      room: lang === 'or-IN' ? 'ମାତୃ ଓ ଶିଶୁ ବିଭାଗ, କକ୍ଷ ୦୪' : (lang === 'hi-IN' ? 'मातृ एवं शिशु विंग, कमरा 04' : 'MCH Wing, Room 04'),
-      experience: 9,
-      rating: 4.8,
-      reviewsCount: 890,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
-      teleAvailable: true,
-      initials: 'TM',
-      color: 'from-purple-600 to-pink-700',
-      famousFor: lang === 'or-IN' ? 'ଜଟିଳ ଗର୍ଭାବସ୍ଥା, ସୁରକ୍ଷିତ ପ୍ରସବ (MCH) ଓ ମାତୃ ସୁରକ୍ଷାରେ ରାଜ୍ୟର ପ୍ରମୁଖ ବିଶେଷଜ୍ଞ କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'जटिल गर्भावस्था, सुरक्षित प्रसव एवं मातृ-शिशु स्वास्थ्य का प्रमुख विशेषज्ञ केंद्र' : 'State Premier High-Risk ANC, Institutional Delivery & Maternal Emergency Hub'),
-      hospitalTier: 'Premier Maternal & Child Care Centre',
-      successRate: 99.1,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: lang === 'or-IN' ? 'JSSK / BSKY: ₹୦ (ସମ୍ପୂର୍ଣ୍ଣ ନିଃଶୁଳ୍କ)' : (lang === 'hi-IN' ? 'JSSK / BSKY: ₹0 (पूर्णतः निःशुल्क)' : 'JSSK / BSKY: ₹0 (100% Free)'),
-      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
-      avgWaitTimeMinutes: 20,
-      awards: 'Excellence in Safe Motherhood'
-    },
-    {
-      id: 'DOC-03',
-      name: lang === 'or-IN' ? 'ଡା. ବିକାଶ ଚନ୍ଦ୍ର ଜେନା' : (lang === 'hi-IN' ? 'डॉ. बिकाश चंद्र जेना' : 'Dr. Bikash Chandra Jena'),
-      specialty: 'Cardio',
-      specialtyLabel: txt.specialtyCardio,
-      qualifications: 'MBBS, MD, DM (Cardiology - Gold Medalist)',
-      regNo: 'OMC-2012-33105',
-      facility: lang === 'or-IN' ? 'MKCG ମେଡିକାଲ୍ କଲେଜ୍, ବ୍ରହ୍ମପୁର' : (lang === 'hi-IN' ? 'एमकेसीजी मेडिकल कॉलेज, ब्रह्मपुर' : 'MKCG Medical College, Berhampur'),
-      location: 'Berhampur',
-      room: lang === 'or-IN' ? 'କାର୍ଡିଓଲୋଜି ବିଭାଗ, କକ୍ଷ ୧୮' : (lang === 'hi-IN' ? 'कार्डियोलॉजी विभाग, कमरा 18' : 'Cardiology OPD, Room 18'),
-      experience: 14,
-      rating: 4.9,
-      reviewsCount: 1580,
-      days: lang === 'or-IN' ? 'ସୋମ, ବୁଧ, ଶୁକ୍ର (Mon, Wed, Fri)' : (lang === 'hi-IN' ? 'सोम, बुध, शुक्र (Mon, Wed, Fri)' : 'Mon, Wed, Fri'),
-      teleAvailable: false,
-      initials: 'BJ',
-      color: 'from-rose-600 to-red-700',
-      famousFor: lang === 'or-IN' ? 'ଦକ୍ଷିଣ ଓଡ଼ିଶାର ପ୍ରମୁଖ ହୃଦରୋଗ କ୍ୟାଥ୍-ଲ୍ୟାବ୍ ଓ କାର୍ଡିଆକ୍ କେୟାର୍ ସେଣ୍ଟର' : (lang === 'hi-IN' ? 'दक्षिण ओडिशा का प्रमुख हृदय रोग कैथ लैब एवं कार्डियक केयर केंद्र' : 'Apex Southern Odisha Cardiac Science, 24x7 Cath Lab & Coronary Care'),
-      hospitalTier: 'Apex Regional Medical College',
-      successRate: 98.6,
-      doctorDegreeLevel: 'DM/MCh/Fellow',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: lang === 'or-IN' ? 'BSKY: ₹୦ (ନିଃଶୁଳ୍କ)' : (lang === 'hi-IN' ? 'आयुष्मान / BSKY: ₹0 (निःशुल्क)' : 'BSKY / Ayushman: ₹0 (Free)'),
-      avgWaitTime: lang === 'or-IN' ? '୨୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '25 मिनट' : '25 mins'),
-      avgWaitTimeMinutes: 25,
-      awards: 'Top Cardiac Cath Lab in Southern Odisha'
-    },
-    {
-      id: 'DOC-04',
-      name: lang === 'or-IN' ? 'ଡା. ଅନନ୍ୟା ରାୟ' : (lang === 'hi-IN' ? 'डॉ. अनन्या राय' : 'Dr. Ananya Ray'),
-      specialty: 'Pediatrics',
-      specialtyLabel: txt.specialtyPediatrics,
-      qualifications: 'MBBS, MD (Pediatrics), Fellowship in Neonatal Intensive Care (AIIMS)',
-      regNo: 'NMC-2018-99120',
-      facility: lang === 'or-IN' ? 'AIIMS ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'एम्स भुवनेश्वर' : 'AIIMS Bhubaneswar'),
-      location: 'Bhubaneswar',
-      room: lang === 'or-IN' ? 'ଶିଶୁ OPD ୱିଙ୍ଗ୍ C, କକ୍ଷ ୦୮' : (lang === 'hi-IN' ? 'शिशु OPD विंग C, कमरा 08' : 'Pediatric OPD Wing C, Room 08'),
-      experience: 8,
-      rating: 4.9,
-      reviewsCount: 940,
-      days: lang === 'or-IN' ? 'ମଙ୍ଗଳ - ରବି (Tue - Sun)' : (lang === 'hi-IN' ? 'मंगल - रवि (Tue - Sun)' : 'Tue - Sun'),
-      teleAvailable: true,
-      initials: 'AR',
-      color: 'from-amber-600 to-orange-700',
-      famousFor: lang === 'or-IN' ? 'ଶିଶୁ ଆଇସିୟୁ (NICU/PICU) ଓ ଦୁର୍ଲଭ ଶିଶୁରୋଗ ପାଇଁ ଜାତୀୟ ସ୍ତରୀୟ ଶୀର୍ଷ ସଂସ୍ଥାନ' : (lang === 'hi-IN' ? 'शिशु गहन चिकित्सा (NICU/PICU) एवं दुर्लभ बाल रोगों हेतु राष्ट्रीय शीर्ष संस्थान' : 'National Apex Academic Pediatric Super-Specialty, NICU & Rare Disease Centre'),
-      hospitalTier: 'National Institute of Excellence',
-      successRate: 98.9,
-      doctorDegreeLevel: 'DM/MCh/Fellow',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: lang === 'or-IN' ? 'AIIMS Central: ₹୦ (ସମ୍ପୂର୍ଣ୍ଣ ନିଃଶୁଳ୍କ)' : (lang === 'hi-IN' ? 'AIIMS Central: ₹0 (पूर्णतः निःशुल्क)' : 'AIIMS Central: ₹0 (Free OPD)'),
-      avgWaitTime: lang === 'or-IN' ? '୩୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '35 मिनट' : '35 mins'),
-      avgWaitTimeMinutes: 35,
-      awards: 'National Apex Institute of Eminence'
-    },
-    {
-      id: 'DOC-05',
-      name: lang === 'or-IN' ? 'ଡା. ରାଜେଶ ବର୍ମା' : (lang === 'hi-IN' ? 'डॉ. राजेश वर्मा' : 'Dr. Rajesh Verma'),
-      specialty: 'Emergency',
-      specialtyLabel: txt.specialtyEmergency,
-      qualifications: 'MBBS, MD (Emergency Medicine)',
-      regNo: 'MCI-2016-77824',
-      facility: lang === 'or-IN' ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ୱାର୍ଦ୍ଧା' : (lang === 'hi-IN' ? 'सिविल जिला अस्पताल, वर्धा' : 'Civil District Hospital, Wardha'),
-      location: 'Wardha',
-      room: lang === 'or-IN' ? 'ଟ୍ରମା ଓ ଟ୍ରାଏଜ୍ ବେ, ଡେସ୍କ ୦୧' : (lang === 'hi-IN' ? 'ट्रॉमा एवं ट्रायज बे, डेस्क 01' : 'Trauma & Triage Bay, Desk 01'),
-      experience: 12,
-      rating: 4.8,
-      reviewsCount: 1120,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
-      teleAvailable: false,
-      initials: 'RV',
-      color: 'from-blue-600 to-indigo-700',
-      famousFor: lang === 'or-IN' ? '୨୪x୭ ଜରୁରୀକାଳୀନ ଟ୍ରମା ଟ୍ରାଏଜ୍ ଓ ଜୀବନ ରକ୍ଷାକାରୀ ଚିକିତ୍ସା କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? '24x7 आपातकालीन ट्रॉमा ट्रायज एवं जीवन रक्षक चिकित्सा केंद्र' : '24x7 Emergency Resuscitation, Trauma Triage & Critical Care Centre'),
-      hospitalTier: 'District Hospital Trauma Hub',
-      successRate: 97.5,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: '₹0 (Free Govt)',
-      avgWaitTime: lang === 'or-IN' ? '୧୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '15 मिनट' : '15 mins'),
-      avgWaitTimeMinutes: 15,
-      awards: 'Rapid Response Trauma Unit'
-    },
-    {
-      id: 'DOC-06',
-      name: lang === 'or-IN' ? 'ଡା. ଶୁଭଶ୍ରୀ ଦାଶ' : (lang === 'hi-IN' ? 'डॉ. शुभश्री दाश' : 'Dr. Subhashree Dash'),
-      specialty: 'Ortho',
-      specialtyLabel: txt.specialtyOrtho,
-      qualifications: 'MBBS, MS (Orthopedic & Trauma Surgery)',
-      regNo: 'OMC-2016-51208',
-      facility: lang === 'or-IN' ? 'ରାଉରକେଲା ସରକାରୀ ହସ୍ପିଟାଲ୍ (RGH)' : (lang === 'hi-IN' ? 'राउरकेला सरकारी अस्पताल (RGH)' : 'Rourkela Government Hospital (RGH)'),
-      location: 'Rourkela',
-      room: lang === 'or-IN' ? 'ଅସ୍ଥିଶଲ୍ୟ OPD, କକ୍ଷ ୨୨' : (lang === 'hi-IN' ? 'अस्थिरोग OPD, कमरा 22' : 'Ortho OPD, Room 22'),
-      experience: 10,
-      rating: 4.7,
-      reviewsCount: 760,
-      days: lang === 'or-IN' ? 'ସୋମ, ମଙ୍ଗଳ, ଗୁରୁ, ଶୁକ୍ର' : (lang === 'hi-IN' ? 'सोम, मंगल, गुरु, शुक्र' : 'Mon, Tue, Thu, Fri'),
-      teleAvailable: true,
-      initials: 'SD',
-      color: 'from-teal-600 to-cyan-700',
-      famousFor: lang === 'or-IN' ? 'ପଶ୍ଚିମ ଓଡ଼ିଶାର ପ୍ରମୁଖ ଅସ୍ଥିଶଲ୍ୟ, ଗଣ୍ଠି ପ୍ରତିରୋପଣ (Joint Replacement) ଓ ଟ୍ରମା କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'पश्चिम ओडिशा का प्रमुख अस्थिरोग, जोड़ प्रत्यारोपण एवं ट्रॉमा सेंटर' : 'Western Odisha Premier Joint Replacement, Sports Injury & Polytrauma Centre'),
-      hospitalTier: 'Specialty Government Hospital',
-      successRate: 97.8,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'BSKY: ₹0 Free',
-      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
-      avgWaitTimeMinutes: 20,
-      awards: 'Western Odisha Ortho Centre of Excellence'
-    },
-    {
-      id: 'DOC-07',
-      name: lang === 'or-IN' ? 'ଡା. ଦେବୀ ପ୍ରସାଦ ସାହୁ' : (lang === 'hi-IN' ? 'डॉ. देबी प्रसाद साहू' : 'Dr. Debi Prasad Sahu'),
-      specialty: 'Pulmo',
-      specialtyLabel: txt.specialtyPulmo,
-      qualifications: 'MBBS, MD (Pulmonary & Critical Care)',
-      regNo: 'OMC-2014-48912',
-      facility: lang === 'or-IN' ? 'SCB ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍, କଟକ' : (lang === 'hi-IN' ? 'एससीबी मेडिकल कॉलेज अस्पताल, कटक' : 'SCB Medical College & Hospital, Cuttack'),
-      location: 'Cuttack',
-      room: lang === 'or-IN' ? 'ଛାତି ଓ ଶ୍ୱାସରୋଗ OPD, କକ୍ଷ ୧୪' : (lang === 'hi-IN' ? 'वक्ष एवं फेफड़ा OPD, कमरा 14' : 'Chest & Respiratory OPD, Room 14'),
-      experience: 13,
-      rating: 4.9,
-      reviewsCount: 1310,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
-      teleAvailable: true,
-      initials: 'DS',
-      color: 'from-cyan-600 to-blue-700',
-      famousFor: lang === 'or-IN' ? 'ଫୁସଫୁସ୍, ଆଜ୍‌ମା, ବ୍ରୋଙ୍କୋସ୍କୋପି ଓ ଶ୍ୱାସରୋଗରେ ରାଜ୍ୟସ୍ତରୀୟ ମୁଖ୍ୟ କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'फेफड़े के रोग, दमा, ब्रोंकोस्कोपी एवं श्वसन चिकित्सा का राज्य स्तरीय केंद्र' : 'State Referral for Interventional Pulmonology, Bronchoscopy & Severe Asthma'),
-      hospitalTier: 'Apex State Referral Medical College',
-      successRate: 98.1,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'BSKY: ₹0 Free',
-      avgWaitTime: lang === 'or-IN' ? '୨୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '25 मिनट' : '25 mins'),
-      avgWaitTimeMinutes: 25,
-      awards: 'Pulmonary Care Excellence'
-    },
-    {
-      id: 'DOC-08',
-      name: lang === 'or-IN' ? 'ଡା. ସ୍ନେହଲତା ପଣ୍ଡା' : (lang === 'hi-IN' ? 'डॉ. स्नेहलता पंडा' : 'Dr. Snehalata Panda'),
-      specialty: 'Derma',
-      specialtyLabel: txt.specialtyDerma,
-      qualifications: 'MBBS, MD (Dermatology, Venereology & Leprosy)',
-      regNo: 'OMC-2018-72315',
-      facility: lang === 'or-IN' ? 'କ୍ୟାପିଟାଲ୍ ହସ୍ପିଟାଲ୍, ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'कैपिटल अस्पताल, भुवनेश्वर' : 'Capital Hospital, Bhubaneswar'),
-      location: 'Bhubaneswar',
-      room: lang === 'or-IN' ? 'ଚର୍ମ ରୋଗ OPD, କକ୍ଷ ୦୭' : (lang === 'hi-IN' ? 'त्वचा रोग OPD, कमरा 07' : 'Dermatology OPD, Room 07'),
-      experience: 7,
-      rating: 4.8,
-      reviewsCount: 680,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
-      teleAvailable: true,
-      initials: 'SP',
-      color: 'from-pink-600 to-rose-700',
-      famousFor: lang === 'or-IN' ? 'ଚର୍ମ ରୋଗ, ଆଲର୍ଜି ଓ ଲେଜର ଫୋଟୋଥେରାପି ପାଇଁ ରାଜ୍ୟର ପ୍ରମୁଖ ଓପିଡି କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'त्वचा रोग, एलर्जी एवं फोटोथेरेपी हेतु प्रमुख विशेषज्ञ OPD केंद्र' : 'Comprehensive Clinical Dermatology, Allergies & Phototherapy Unit'),
-      hospitalTier: 'Premier State Hospital',
-      successRate: 98.4,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'Govt Free (₹0)',
-      avgWaitTime: lang === 'or-IN' ? '୧୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '15 मिनट' : '15 mins'),
-      avgWaitTimeMinutes: 15,
-      awards: 'Clinical Dermatology Gold Star'
-    },
-    {
-      id: 'DOC-09',
-      name: lang === 'or-IN' ? 'ଡା. ସତ୍ୟବ୍ରତ ମିଶ୍ର' : (lang === 'hi-IN' ? 'डॉ. सत्यव्रत मिश्र' : 'Dr. Satyabrata Mishra'),
-      specialty: 'Neuro',
-      specialtyLabel: txt.specialtyNeuro,
-      qualifications: 'MBBS, MD, DM (Neurology - AIIMS Delhi)',
-      regNo: 'NMC-2011-29401',
-      facility: lang === 'or-IN' ? 'AIIMS ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'एम्स भुवनेश्वर' : 'AIIMS Bhubaneswar'),
-      location: 'Bhubaneswar',
-      room: lang === 'or-IN' ? 'ନ୍ୟୁରୋଲୋଜି ସେଣ୍ଟର, କକ୍ଷ ୨୫' : (lang === 'hi-IN' ? 'न्यूरोलॉजी सेंटर, कमरा 25' : 'Neurology Center, Room 25'),
-      experience: 16,
-      rating: 4.9,
-      reviewsCount: 1620,
-      days: lang === 'or-IN' ? 'ମଙ୍ଗଳ, ଗୁରୁ, ଶନି (Tue, Thu, Sat)' : (lang === 'hi-IN' ? 'मंगल, गुरु, शनि (Tue, Thu, Sat)' : 'Tue, Thu, Sat'),
-      teleAvailable: true,
-      initials: 'SM',
-      color: 'from-indigo-600 to-violet-700',
-      famousFor: lang === 'or-IN' ? 'ଷ୍ଟ୍ରୋକ୍, ମସ୍ତିଷ୍କ ସ୍ନାୟୁ ଓ ଜଟିଳ ନ୍ୟୁରୋଲୋଜି ପାଇଁ ଜାତୀୟ ସ୍ତରୀୟ ଏକ ନମ୍ବର ସଂସ୍ଥାନ' : (lang === 'hi-IN' ? 'स्ट्रोक, मस्तिष्क तंत्रिका एवं जटिल न्यूरोलॉजी हेतु राष्ट्रीय शीर्ष संस्थान' : 'National Apex Stroke, Neuromuscular & Comprehensive Epilepsy Centre'),
-      hospitalTier: 'National Institute of Excellence',
-      successRate: 98.8,
-      doctorDegreeLevel: 'DM/MCh/Fellow',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'AIIMS Central: ₹0 Free',
-      avgWaitTime: lang === 'or-IN' ? '୩୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '35 मिनट' : '35 mins'),
-      avgWaitTimeMinutes: 35,
-      awards: 'Apex Neurosciences Research Centre'
-    },
-    {
-      id: 'DOC-10',
-      name: lang === 'or-IN' ? 'ଡା. ଅରୁଣ କୁମାର ପାଣିଗ୍ରାହୀ' : (lang === 'hi-IN' ? 'डॉ. अरुण कुमार पाणिग्राही' : 'Dr. Arun Kumar Panigrahi'),
-      specialty: 'Nephro',
-      specialtyLabel: txt.specialtyNephro,
-      qualifications: 'MBBS, MD, DM (Nephrology & Renal Transplant)',
-      regNo: 'OMC-2013-39870',
-      facility: lang === 'or-IN' ? 'SCB ମେଡିକାଲ୍ କଲେଜ୍, କଟକ' : (lang === 'hi-IN' ? 'एससीबी मेडिकल कॉलेज, कटक' : 'SCB Medical College, Cuttack'),
-      location: 'Cuttack',
-      room: lang === 'or-IN' ? 'ଡାଏଲିସିସ୍ ଓ କିଡନୀ ବିଭାଗ, କକ୍ଷ ୦୯' : (lang === 'hi-IN' ? 'डायलिसिस एवं गुर्दा विभाग, कमरा 09' : 'Dialysis & Renal OPD, Room 09'),
-      experience: 15,
-      rating: 4.9,
-      reviewsCount: 1450,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
-      teleAvailable: false,
-      initials: 'AP',
-      color: 'from-blue-700 to-teal-800',
-      famousFor: lang === 'or-IN' ? 'ବୃକ୍‌କ ପ୍ରତିରୋପଣ (Kidney Transplant) ଓ ଡାଏଲିସିସ୍ ପାଇଁ ପୂର୍ବ ଭାରତର ଅଗ୍ରଣୀ କେନ୍ଦ୍ର (୧୫୦୦+ ସଫଳ ଅସ୍ତ୍ରୋପଚାର)' : (lang === 'hi-IN' ? 'गुर्दा प्रत्यारोपण एवं डायलिसिस हेतु पूर्वी भारत का अग्रणी केंद्र (1500+ सफल सर्जरी)' : 'Eastern India Pioneer Renal Transplant Unit (1,500+ procedures) & Apex Dialysis Centre'),
-      hospitalTier: 'Apex Renal Transplant Institute',
-      successRate: 98.4,
-      doctorDegreeLevel: 'DM/MCh/Fellow',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'BSKY: ₹0 Free Dialysis & OPD',
-      avgWaitTime: lang === 'or-IN' ? '୩୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '30 मिनट' : '30 mins'),
-      avgWaitTimeMinutes: 30,
-      awards: '1500+ Successful Renal Transplants'
-    },
-    {
-      id: 'DOC-11',
-      name: lang === 'or-IN' ? 'ଡା. ମନୋରଞ୍ଜନ ମହାନ୍ତି' : (lang === 'hi-IN' ? 'डॉ. मनोरंजन महंती' : 'Dr. Manoranjan Mohanty'),
-      specialty: 'Gastro',
-      specialtyLabel: txt.specialtyGastro,
-      qualifications: 'MBBS, MD, DM (Gastroenterology & Hepatology)',
-      regNo: 'OMC-2015-46721',
-      facility: lang === 'or-IN' ? 'MKCG ମେଡିକାଲ୍ କଲେଜ୍, ବ୍ରହ୍ମପୁର' : (lang === 'hi-IN' ? 'एमकेसीजी मेडिकल कॉलेज, ब्रह्मपुर' : 'MKCG Medical College, Berhampur'),
-      location: 'Berhampur',
-      room: lang === 'or-IN' ? 'ଏଣ୍ଡୋସ୍କୋପି ଓ ପେଟରୋଗ, କକ୍ଷ ୧୧' : (lang === 'hi-IN' ? 'एंडोस्कोपी एवं गैस्ट्रो OPD, कमरा 11' : 'Gastro & Endoscopy, Room 11'),
-      experience: 11,
-      rating: 4.8,
-      reviewsCount: 830,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
-      teleAvailable: true,
-      initials: 'MM',
-      color: 'from-emerald-700 to-green-800',
-      famousFor: lang === 'or-IN' ? 'ଏଣ୍ଡୋସ୍କୋପି, ଲିଭର୍ କ୍ଲିନିକ୍ ଓ ପେଟରୋଗ ପାଇଁ ଦକ୍ଷିଣ ଓଡ଼ିଶାର ପ୍ରମୁଖ ରେଫରାଲ୍' : (lang === 'hi-IN' ? 'एंडोस्कोपी, लिवर क्लीनिक एवं पेट रोग हेतु दक्षिण ओडिशा का प्रमुख केंद्र' : 'Southern Odisha Hub for Advanced Therapeutic Endoscopy, ERCP & Hepatology'),
-      hospitalTier: 'Apex Regional Medical College',
-      successRate: 97.7,
-      doctorDegreeLevel: 'DM/MCh/Fellow',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'BSKY: ₹0 Free',
-      avgWaitTime: lang === 'or-IN' ? '୨୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '25 मिनट' : '25 mins'),
-      avgWaitTimeMinutes: 25,
-      awards: 'Therapeutic Endoscopy Milestone'
-    },
-    {
-      id: 'DOC-12',
-      name: lang === 'or-IN' ? 'ଡା. ଆଶୁତୋଷ ମହାନ୍ତି' : (lang === 'hi-IN' ? 'डॉ. आशुतोष महंती' : 'Dr. Ashutosh Mohanty'),
-      specialty: 'Ophthal',
-      specialtyLabel: txt.specialtyOphthal,
-      qualifications: 'MBBS, MS (Ophthalmology), Fellowship Vitreo-Retina & Lasik (LVPEI, Royal College UK)',
-      regNo: 'OMC-2010-22108',
-      facility: lang === 'or-IN' ? 'ନିର୍ବାଣ ଚକ୍ଷୁ ଚିକିତ୍ସାଳୟ ଓ ଲେଜର ସେଣ୍ଟର, ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'निर्वाण नेत्र चिकित्सालय एवं लेजर सेंटर, भुवनेश्वर' : 'Nirvana Eye Hospital & Laser Centre, Bhubaneswar'),
-      location: 'Bhubaneswar',
-      room: lang === 'or-IN' ? 'ସୁପର-ସ୍ପେସିଆଲିଟି ରେଟିନା ଓ ଲେସିକ୍ ସୁଇଟ୍ ୦୧' : (lang === 'hi-IN' ? 'सुपर-स्पेशियलिटी रेटिना एवं लेसिक सूट 01' : 'Super-Specialty Retina & Lasik Suite 01'),
-      experience: 16,
-      rating: 4.9,
-      reviewsCount: 2450,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
-      teleAvailable: true,
-      initials: 'AM',
-      color: 'from-teal-600 to-emerald-700',
-      famousFor: lang === 'or-IN' ? 'କାଚବିନ୍ଦୁ (Blade-Free Cataract), ରେଟିନା ଲେଜର ଓ ଲେସିକ୍ ସର୍ଜରୀ ପାଇଁ ଓଡ଼ିଶାର ସବୁଠାରୁ ପ୍ରସିଦ୍ଧ ସ୍ୱତନ୍ତ୍ର ଚକ୍ଷୁ ହସ୍ପିଟାଲ୍' : (lang === 'hi-IN' ? 'ब्लेड-रहित मोतियाबिंद, रेटिना लेजर एवं लेसिक सर्जरी हेतु ओडिशा का सर्वाधिक प्रसिद्ध नेत्र अस्पताल' : 'Odisha\'s Famous Specialty Eye Hospital for Blade-Free Cataract, Vitreo-Retina & LASIK Laser Surgery'),
-      hospitalTier: 'Dedicated Eye Super-Specialty Hospital',
-      successRate: 99.4,
-      doctorDegreeLevel: 'DM/MCh/Fellow',
-      budgetTier: 'affordable',
-      bskyAvailable: true,
-      opdFee: lang === 'or-IN' ? 'BSKY / ଆୟୁଷ୍ମାନ: ₹୦ (ନିଃଶୁଳ୍କ) | ସାଧାରଣ OPD: ₹୨୫୦' : (lang === 'hi-IN' ? 'आयुष्मान / BSKY: ₹0 (निःशुल्क) | सामान्य OPD: ₹250' : 'BSKY Free (₹0) | Gen OPD: ₹250'),
-      avgWaitTime: lang === 'or-IN' ? '୧୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '15 मिनट' : '15 mins'),
-      avgWaitTimeMinutes: 15,
-      awards: 'Odisha #1 Eye Hospital Award 2024'
-    },
-    {
-      id: 'DOC-13',
-      name: lang === 'or-IN' ? 'ଡା. ସୁରେନ୍ଦ୍ର ନାଥ ଷଡ଼ଙ୍ଗୀ' : (lang === 'hi-IN' ? 'डॉ. सुरेंद्र नाथ सारंगी' : 'Dr. Surendra Nath Sarangi'),
-      specialty: 'ENT',
-      specialtyLabel: txt.specialtyENT,
-      qualifications: 'MBBS, MS (ENT / Otorhinolaryngology)',
-      regNo: 'OMC-2012-31089',
-      facility: lang === 'or-IN' ? 'ଭିମସାର୍ (VIMSAR), ବୁର୍ଲା, ସମ୍ବଲପୁର' : (lang === 'hi-IN' ? 'विमसार (VIMSAR), बुर्ला, संबलपुर' : 'VIMSAR, Burla, Sambalpur'),
-      location: 'Burla',
-      room: lang === 'or-IN' ? 'ENT OPD କକ୍ଷ ୧୫' : (lang === 'hi-IN' ? 'ENT OPD कक्ष 15' : 'ENT OPD Room 15'),
-      experience: 15,
-      rating: 4.9,
-      reviewsCount: 1190,
-      days: lang === 'or-IN' ? 'ସୋମ, ବୁଧ, ଗୁରୁ, ଶନି' : (lang === 'hi-IN' ? 'सोम, बुध, गुरु, शनि' : 'Mon, Wed, Thu, Sat'),
-      teleAvailable: true,
-      initials: 'SS',
-      color: 'from-amber-700 to-red-800',
-      famousFor: lang === 'or-IN' ? 'କାନ ମାଇକ୍ରୋ-ସର୍ଜରୀ, ନାକ ଏଣ୍ଡୋସ୍କୋପି ଓ ଗଳାରୋଗରେ ପଶ୍ଚିମ ଓଡ଼ିଶାର ଶ୍ରେଷ୍ଠ କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'कान की माइक्रो-सर्जरी, नाक एंडोस्कोपी एवं गला रोग हेतु पश्चिम ओडिशा का शीर्ष केंद्र' : 'Western Odisha Apex Ear Micro-Surgery, Endoscopic Sinus & Throat Surgery'),
-      hospitalTier: 'Apex Regional Medical College',
-      successRate: 98.2,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'Govt Free (₹0)',
-      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
-      avgWaitTimeMinutes: 20,
-      awards: 'Western ENT Referral Leadership'
-    },
-    {
-      id: 'DOC-14',
-      name: lang === 'or-IN' ? 'ଡା. ପ୍ରୀତି ସ୍ୱରୂପା ପଟ୍ଟନାୟକ' : (lang === 'hi-IN' ? 'डॉ. प्रीति स्वरूपा पटनायक' : 'Dr. Priti Swarupa Pattnaik'),
-      specialty: 'Psych',
-      specialtyLabel: txt.specialtyPsych,
-      qualifications: 'MBBS, MD (Psychiatry & Behavioral Sciences)',
-      regNo: 'OMC-2019-81045',
-      facility: lang === 'or-IN' ? 'SCB ମେଡିକାଲ୍ କଲେଜ୍, କଟକ' : (lang === 'hi-IN' ? 'एससीबी मेडिकल कॉलेज, कटक' : 'SCB Medical College, Cuttack'),
-      location: 'Cuttack',
-      room: lang === 'or-IN' ? 'ମାନସିକ ସ୍ୱାସ୍ଥ୍ୟ ବିଭାଗ, କକ୍ଷ ୨୧' : (lang === 'hi-IN' ? 'मानसिक स्वास्थ्य विभाग, कमरा 21' : 'Mental Health OPD, Room 21'),
-      experience: 7,
-      rating: 4.9,
-      reviewsCount: 640,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
-      teleAvailable: true,
-      initials: 'PP',
-      color: 'from-violet-600 to-purple-800',
-      famousFor: lang === 'or-IN' ? 'ମାନସିକ ଚାପ, ଅବସାଦ ଓ କାଉନସେଲିଂରେ ରାଜ୍ୟର ଅଗ୍ରଣୀ ମନୋଚିକିତ୍ସା କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'तनाव, अवसाद एवं परामर्श हेतु राज्य का अग्रणी मानसिक स्वास्थ्य केंद्र' : 'State Apex Behavioral Health, Depression, Sleep & Cognitive Psychotherapy'),
-      hospitalTier: 'Apex State Referral Medical College',
-      successRate: 98.4,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'Govt Free (₹0)',
-      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
-      avgWaitTimeMinutes: 20,
-      awards: 'Behavioral Health Distinction'
-    },
-    {
-      id: 'DOC-15',
-      name: lang === 'or-IN' ? 'ଡା. ଆଲୋକ ରଞ୍ଜନ ପ୍ରଧାନ' : (lang === 'hi-IN' ? 'डॉ. आलोक रंजन प्रधान' : 'Dr. Alok Ranjan Pradhan'),
-      specialty: 'Endo',
-      specialtyLabel: txt.specialtyEndo,
-      qualifications: 'MBBS, MD, DM (Endocrinology & Diabetology)',
-      regNo: 'OMC-2016-52771',
-      facility: lang === 'or-IN' ? 'କ୍ୟାପିଟାଲ୍ ହସ୍ପିଟାଲ୍, ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'कैपिटल अस्पताल, भुवनेश्वर' : 'Capital Hospital, Bhubaneswar'),
-      location: 'Bhubaneswar',
-      room: lang === 'or-IN' ? 'ମଧୁମେହ କ୍ଲିନିକ୍, କକ୍ଷ ୦୫' : (lang === 'hi-IN' ? 'मधुमेह क्लीनिक, कमरा 05' : 'Diabetic Clinic, Room 05'),
-      experience: 10,
-      rating: 4.8,
-      reviewsCount: 950,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
-      teleAvailable: true,
-      initials: 'AP',
-      color: 'from-sky-600 to-indigo-700',
-      famousFor: lang === 'or-IN' ? 'ଡାଇବେଟିସ୍, ଥାଇରଏଡ୍ ଓ ହରମୋନ୍ ରୋଗ ନିୟନ୍ତ୍ରଣରେ ରାଜଧାନୀର ପ୍ରମୁଖ ସେଣ୍ଟର' : (lang === 'hi-IN' ? 'मधुमेह, थायरॉइड एवं हार्मोन रोगों के नियंत्रण हेतु राजधानी का प्रमुख केंद्र' : 'Comprehensive Diabetic Foot, Thyroid Disorders & Endocrine Metabolic Clinic'),
-      hospitalTier: 'Premier State Hospital',
-      successRate: 98.5,
-      doctorDegreeLevel: 'DM/MCh/Fellow',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'Govt Free (₹0)',
-      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
-      avgWaitTimeMinutes: 20,
-      awards: 'Diabetes Free Odisha Initiative'
-    },
-    {
-      id: 'DOC-16',
-      name: lang === 'or-IN' ? 'ଡା. ପ୍ରଦୀପ କୁମାର ବେହେରା' : (lang === 'hi-IN' ? 'डॉ. प्रदीप कुमार बेहेरा' : 'Dr. Pradeep Kumar Behera'),
-      specialty: 'Surgery',
-      specialtyLabel: txt.specialtySurgery,
-      qualifications: 'MBBS, MS (General & Laparoscopic Surgery)',
-      regNo: 'OMC-2014-41120',
-      facility: lang === 'or-IN' ? 'SLN ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍, କୋରାପୁଟ' : (lang === 'hi-IN' ? 'एसएलएन मेडिकल कॉलेज अस्पताल, कोरापुट' : 'SLN Medical College & Hospital, Koraput'),
-      location: 'Koraput',
-      room: lang === 'or-IN' ? 'ସର୍ଜିକାଲ୍ OPD କକ୍ଷ ୧୦' : (lang === 'hi-IN' ? 'सर्जिकल OPD कमरा 10' : 'Surgical OPD Room 10'),
-      experience: 12,
-      rating: 4.7,
-      reviewsCount: 780,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
-      teleAvailable: false,
-      initials: 'PB',
-      color: 'from-emerald-800 to-teal-900',
-      famousFor: lang === 'or-IN' ? 'ଦକ୍ଷିଣ ଓଡ଼ିଶାରେ ଲାପାରୋସ୍କୋପିକ୍ ଶଲ୍ୟ ଚିକିତ୍ସା ଓ ହର୍ଣ୍ଣିଆ ଅସ୍ତ୍ରୋପଚାର କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'दक्षिण ओडिशा में लेप्रोस्कोपिक शल्य चिकित्सा एवं हर्निया सर्जरी का प्रमुख केंद्र' : 'Southern Tribal Belt Advanced Laparoscopic, Gallbladder & General Surgery'),
-      hospitalTier: 'Government Medical College Hospital',
-      successRate: 97.4,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'BSKY: ₹0 Free',
-      avgWaitTime: lang === 'or-IN' ? '୨୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '20 मिनट' : '20 mins'),
-      avgWaitTimeMinutes: 20,
-      awards: 'Tribal Healthcare Surgical Milestone'
-    },
-    {
-      id: 'DOC-17',
-      name: lang === 'or-IN' ? 'ଡା. ମମତା ପତି' : (lang === 'hi-IN' ? 'डॉ. ममता पति' : 'Dr. Mamata Pati'),
-      specialty: 'Onco',
-      specialtyLabel: txt.specialtyOnco,
-      qualifications: 'MBBS, MD (Radiation Oncology), Fellowship Tata Memorial Centre Mumbai',
-      regNo: 'OMC-2013-37651',
-      facility: lang === 'or-IN' ? 'ଆଚାର୍ଯ୍ୟ ହରିହର କର୍କଟ କେନ୍ଦ୍ର (AHPGIC), କଟକ' : (lang === 'hi-IN' ? 'आचार्य हरिहर कैंसर संस्थान (AHPGIC), कटक' : 'Acharya Harihar Post Graduate Institute of Cancer, Cuttack'),
-      location: 'Cuttack',
-      room: lang === 'or-IN' ? 'ଅଙ୍କୋଲୋଜି OPD କକ୍ଷ ୦୬' : (lang === 'hi-IN' ? 'ऑन्कोलॉजी OPD कमरा 06' : 'Oncology OPD Room 06'),
-      experience: 14,
-      rating: 4.9,
-      reviewsCount: 1390,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶୁକ୍ର (Mon - Fri)' : (lang === 'hi-IN' ? 'सोम - शुक्र (Mon - Fri)' : 'Mon - Fri'),
-      teleAvailable: true,
-      initials: 'MP',
-      color: 'from-rose-700 to-pink-800',
-      famousFor: lang === 'or-IN' ? 'କର୍କଟ ଚିକିତ୍ସା, ରେଡିଏସନ୍ ଓ କେମୋଥେରାପିରେ ପୂର୍ବ ଭାରତର ପ୍ରସିଦ୍ଧ ସରକାରୀ ସ୍ୱୟଂଶାସିତ କର୍କଟ ପ୍ରତିଷ୍ଠାନ' : (lang === 'hi-IN' ? 'कैंसर चिकित्सा, रेडिएशन एवं कीमोथेरेपी हेतु पूर्वी भारत का प्रसिद्ध सरकारी कैंसर संस्थान' : 'Regional Autonomous Cancer Institute for Advanced Radiotherapy & Medical Oncology'),
-      hospitalTier: 'Apex Autonomous Regional Cancer Centre',
-      successRate: 96.8,
-      doctorDegreeLevel: 'DM/MCh/Fellow',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'BSKY Free Cancer Care (₹0)',
-      avgWaitTime: lang === 'or-IN' ? '୩୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '30 मिनट' : '30 mins'),
-      avgWaitTimeMinutes: 30,
-      awards: 'Apex Cancer Institute of Odisha'
-    },
-    {
-      id: 'DOC-18',
-      name: lang === 'or-IN' ? 'ଡା. ହରପ୍ରସାଦ ତ୍ରିପାଠୀ' : (lang === 'hi-IN' ? 'डॉ. हरप्रसाद त्रिपाठी' : 'Dr. Haraprasad Tripathy'),
-      specialty: 'Dental',
-      specialtyLabel: txt.specialtyDental,
-      qualifications: 'BDS, MDS (Oral & Maxillofacial Surgery)',
-      regNo: 'ODC-2016-19402',
-      facility: lang === 'or-IN' ? 'SCB ଡେଣ୍ଟାଲ୍ କଲେଜ୍, କଟକ' : (lang === 'hi-IN' ? 'एससीबी डेंटल कॉलेज, कटक' : 'SCB Dental College, Cuttack'),
-      location: 'Cuttack',
-      room: lang === 'or-IN' ? 'ଦନ୍ତ ଚିକିତ୍ସା କକ୍ଷ ୦୨' : (lang === 'hi-IN' ? 'दंत चिकित्सा कमरा 02' : 'Dental OPD Room 02'),
-      experience: 9,
-      rating: 4.8,
-      reviewsCount: 810,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
-      teleAvailable: false,
-      initials: 'HT',
-      color: 'from-teal-600 to-emerald-700',
-      famousFor: lang === 'or-IN' ? 'ମୁଖ-ମଣ୍ଡଳ ଶଲ୍ୟ ଚିକିତ୍ସା (Maxillofacial) ଓ ଦନ୍ତ ପ୍ରତିରୋପଣରେ ଓଡ଼ିଶାର ଏକମାତ୍ର ସରକାରୀ ଡେଣ୍ଟାଲ୍ ବିଶ୍ୱବିଦ୍ୟାଳୟ' : (lang === 'hi-IN' ? 'मुख-मंडल शल्य चिकित्सा एवं दंत प्रत्यारोपण में ओडिशा का एकमात्र सरकारी डेंटल कॉलेज' : 'Odisha\'s Only University Maxillofacial Trauma, Dental Implant & Oral Surgery Hub'),
-      hospitalTier: 'Apex University Dental College',
-      successRate: 98.5,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'Govt Free (₹0)',
-      avgWaitTime: lang === 'or-IN' ? '୧୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '15 मिनट' : '15 mins'),
-      avgWaitTimeMinutes: 15,
-      awards: 'Premier Oral & Maxillofacial Centre'
-    },
-    {
-      id: 'DOC-19',
-      name: lang === 'or-IN' ? 'ଡା. ଜ୍ୟୋତି ରଞ୍ଜନ ପରିଡ଼ା' : (lang === 'hi-IN' ? 'डॉ. ज्योति रंजन परिड़ा' : 'Dr. Jyoti Ranjan Parida'),
-      specialty: 'Ortho',
-      specialtyLabel: txt.specialtyOrtho,
-      qualifications: 'MBBS, MD, DM (Clinical Immunology & Rheumatology)',
-      regNo: 'NMC-2010-21894',
-      facility: lang === 'or-IN' ? 'AIIMS ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'एम्स भुवनेश्वर' : 'AIIMS Bhubaneswar'),
-      location: 'Bhubaneswar',
-      room: lang === 'or-IN' ? 'ଗଣ୍ଠିବାତ ଓ ଆର୍ଥ୍ରାଇଟିସ୍ OPD, କକ୍ଷ ୧୯' : (lang === 'hi-IN' ? 'संधिवात एवं आर्थराइटिस OPD, कमरा 19' : 'Rheumatology & Arthritis OPD, Room 19'),
-      experience: 17,
-      rating: 4.9,
-      reviewsCount: 1750,
-      days: lang === 'or-IN' ? 'ସୋମ, ବୁଧ, ଶୁକ୍ର (Mon, Wed, Fri)' : (lang === 'hi-IN' ? 'सोम, बुध, शुक्र (Mon, Wed, Fri)' : 'Mon, Wed, Fri'),
-      teleAvailable: true,
-      initials: 'JP',
-      color: 'from-orange-600 to-amber-700',
-      famousFor: lang === 'or-IN' ? 'ଗଣ୍ଠିବାତ, ଲୁପସ୍ ଓ ଅଟୋ-ଇମ୍ୟୁନ୍ ରୋଗ ପାଇଁ ଜାତୀୟ ସ୍ତରୀୟ ଇମ୍ୟୁନୋଲୋଜି କେନ୍ଦ୍ର' : (lang === 'hi-IN' ? 'संधिवात, ल्यूपस एवं ऑटो-इम्यून रोगों हेतु राष्ट्रीय स्तर का इम्यूनोलॉजी केंद्र' : 'National Clinical Immunology & Advanced Biologic Therapy for Rheumatoid Arthritis'),
-      hospitalTier: 'National Institute of Excellence',
-      successRate: 98.6,
-      doctorDegreeLevel: 'DM/MCh/Fellow',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'AIIMS Central: ₹0 Free',
-      avgWaitTime: lang === 'or-IN' ? '୩୦ ମିନିଟ୍' : (lang === 'hi-IN' ? '30 मिनट' : '30 mins'),
-      avgWaitTimeMinutes: 30,
-      awards: 'National Immunology Excellence'
-    },
-    {
-      id: 'DOC-20',
-      name: lang === 'or-IN' ? 'ଡା. ନଳିନୀ କାନ୍ତ ମହାନ୍ତି' : (lang === 'hi-IN' ? 'डॉ. नलिनी कांत महंती' : 'Dr. Nalini Kanta Mohanty'),
-      specialty: 'GenMed',
-      specialtyLabel: txt.specialtyGenMed,
-      qualifications: 'MBBS, MD (Internal & Geriatric Medicine)',
-      regNo: 'OMC-2009-18342',
-      facility: lang === 'or-IN' ? 'କ୍ୟାପିଟାଲ୍ ହସ୍ପିଟାଲ୍, ଭୁବନେଶ୍ୱର' : (lang === 'hi-IN' ? 'कैपिटल अस्पताल, भुवनेश्वर' : 'Capital Hospital, Bhubaneswar'),
-      location: 'Bhubaneswar',
-      room: lang === 'or-IN' ? 'ବରିଷ୍ଠ ନାଗରିକ ଓ ଜେରିଆଟ୍ରିକ୍ OPD, କକ୍ଷ ୦୧' : (lang === 'hi-IN' ? 'वरिष्ठ नागरिक एवं जेरियाट्रिक OPD, कमरा 01' : 'Senior Citizen & Geriatric OPD, Room 01'),
-      experience: 20,
-      rating: 4.9,
-      reviewsCount: 2100,
-      days: lang === 'or-IN' ? 'ସୋମ - ଶନି (Mon - Sat)' : (lang === 'hi-IN' ? 'सोम - शनि (Mon - Sat)' : 'Mon - Sat'),
-      teleAvailable: true,
-      initials: 'NM',
-      color: 'from-slate-700 to-emerald-800',
-      famousFor: lang === 'or-IN' ? 'ବରିଷ୍ଠ ନାଗରିକଙ୍କ ବହୁବିଧ ବାର୍ଦ୍ଧକ୍ୟଜନିତ ରୋଗ ଚିକିତ୍ସାରେ ରାଜ୍ୟର ସ୍ୱତନ୍ତ୍ର ଜେରିଆଟ୍ରିକ୍ ୟୁନିଟ୍' : (lang === 'hi-IN' ? 'वरिष्ठ नागरिकों की बहुविध वृद्धावस्था जनित बीमारियों हेतु राज्य की समर्पित जेरियाट्रिक यूनिट' : 'State Dedicated Comprehensive Senior Citizen Geriatric & Multi-Morbidity Clinic'),
-      hospitalTier: 'Premier State Hospital',
-      successRate: 98.9,
-      doctorDegreeLevel: 'MD/MS',
-      budgetTier: 'free',
-      bskyAvailable: true,
-      opdFee: 'Govt Free (₹0)',
-      avgWaitTime: lang === 'or-IN' ? '୧୫ ମିନିଟ୍' : (lang === 'hi-IN' ? '15 मिनट' : '15 mins'),
-      avgWaitTimeMinutes: 15,
-      awards: 'Elderly Care Lifetime Citation'
-    }
-  ];
+  // Standard Verified Doctors Directory (66 Medical Specialists across 28 Hospitals)
+  const doctorsList = useMemo(() => getDoctorsList(lang, txt), [lang]);
 
   // Next 7 days generator
   const getNextDays = () => {
@@ -988,19 +475,33 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
     '06:40 PM', '07:00 PM', '07:20 PM', '07:40 PM'
   ];
 
-  // Filter Doctors
-  const filteredDoctors = doctorsList.filter((doc) => {
-    const matchesSearch =
-      doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.specialtyLabel.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.facility.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSpecialty = selectedSpecialty === 'ALL' || doc.specialty === selectedSpecialty;
-    const matchesLocation = selectedLocation === 'ALL' || doc.location === selectedLocation;
-    return matchesSearch && matchesSpecialty && matchesLocation;
-  });
+  // Filter Doctors with useMemo for zero-lag instant search and filtering
+  const filteredDoctors = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return doctorsList.filter((doc) => {
+      const matchesSearch =
+        !q ||
+        doc.name.toLowerCase().includes(q) ||
+        doc.specialtyLabel.toLowerCase().includes(q) ||
+        doc.facility.toLowerCase().includes(q) ||
+        doc.location.toLowerCase().includes(q) ||
+        doc.qualifications.toLowerCase().includes(q);
+      const matchesSpecialty = selectedSpecialty === 'ALL' || doc.specialty === selectedSpecialty;
+      const matchesLocation = selectedLocation === 'ALL' || doc.location === selectedLocation;
+      return matchesSearch && matchesSpecialty && matchesLocation;
+    });
+  }, [doctorsList, searchQuery, selectedSpecialty, selectedLocation]);
 
-  // Intelligent Hospital & Doctor Recommendation Engine
-  const getRecommendations = () => {
+  // Pagination for Directory
+  const totalPages = Math.max(1, Math.ceil(filteredDoctors.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedDoctors = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * pageSize;
+    return filteredDoctors.slice(startIndex, startIndex + pageSize);
+  }, [filteredDoctors, safeCurrentPage, pageSize]);
+
+  // Intelligent Hospital & Doctor Recommendation Engine (Memoized)
+  const recommendations = useMemo(() => {
     // 1. Initial candidates filtering
     let candidates = doctorsList.filter((doc) => {
       // Condition filter
@@ -1035,14 +536,14 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       }
 
       // B. Department Fame & Specialized Hospital Recognition
-      if (doc.id === 'DOC-12') { // Nirvana Eye Hospital & Laser Centre
+      if (doc.id === 'DOC-12' || (doc.facility && doc.facility.toLowerCase().includes('nirvana'))) { // Nirvana Eye Hospital & Laser Centre
         score += 16;
         reasons.push(
           lang === 'or-IN'
             ? 'ଓଡ଼ିଶାର ଏକ ନମ୍ବର ସ୍ୱତନ୍ତ୍ର ଚକ୍ଷୁ ଚିକିତ୍ସାଳୟ (ନିର୍ବାଣ ଆଇ ହସ୍ପିଟାଲ୍) - ବ୍ଲେଡ୍-ଫ୍ରି କାଚବିନ୍ଦୁ, ରେଟିନା ଓ ଲେସିକ୍ ସର୍ଜରୀ ପାଇଁ ସର୍ବାଧିକ ପ୍ରସିଦ୍ଧ'
             : (lang === 'hi-IN'
             ? 'ओडिशा का शीर्ष प्रतिष्ठित नेत्र चिकित्सालय (निर्वाण आई हॉस्पिटल) - ब्लेड-फ्री मोतियाबिंद, रेटिना एवं लेसिक सर्जरी हेतु प्रसिद्ध'
-            : 'Odisha\'s premier specialty eye hospital (Nirvana Eye Hospital) - Renowned for blade-free cataract, retina & LASIK laser surgery')
+            : "Odisha's premier specialty eye hospital (Nirvana Eye Hospital) - Renowned for blade-free cataract, retina & LASIK laser surgery")
         );
       } else if (doc.facility.includes('SCB') || doc.facility.includes('AIIMS') || doc.facility.includes('AHPGIC')) {
         score += 12;
@@ -1128,7 +629,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
 
       // F. Priority Adjustment Bonuses
       if (recPriority === 'fame') {
-        if (doc.id === 'DOC-12' || doc.hospitalTier.includes('Apex') || doc.hospitalTier.includes('Dedicated')) {
+        if (doc.id === 'DOC-12' || (doc.facility && doc.facility.toLowerCase().includes('nirvana')) || doc.hospitalTier.includes('Apex') || doc.hospitalTier.includes('Dedicated')) {
           score += 6;
         }
       } else if (recPriority === 'success') {
@@ -1161,9 +662,15 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
     // Sort by match score descending
     scored.sort((a, b) => b.matchScore - a.matchScore);
     return scored;
-  };
+  }, [doctorsList, recCondition, recLocation, recBudget, recPriority, lang]);
 
-  const recommendations = getRecommendations();
+  // Pagination for Recommendations
+  const totalRecPages = Math.max(1, Math.ceil(recommendations.length / recPageSize));
+  const safeRecPage = Math.min(recCurrentPage, totalRecPages);
+  const paginatedRecommendations = useMemo(() => {
+    const startIndex = (safeRecPage - 1) * recPageSize;
+    return recommendations.slice(startIndex, startIndex + recPageSize);
+  }, [recommendations, safeRecPage, recPageSize]);
 
   const handleStartBooking = (doc) => {
     setSelectedDoctor(doc);
@@ -1237,10 +744,10 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             {lang === 'or-IN'
-              ? '୨୦ ଜଣ ବିଶେଷଜ୍ଞ ଚିକିତ୍ସକ • ୩୪ ଟି ସମୟ ସ୍ଲଟ୍ (ସକାଳ ୭:୩୦ ରୁ ରାତି ୮:୦୦) • BSKY / ଆୟୁଷ୍ମାନ ନିଃଶୁଳ୍କ ସେବା'
+              ? '୬୬ ଜଣ ବିଶେଷଜ୍ଞ ଚିକିତ୍ସକ • ୨୮ ଟି ଅଗ୍ରଣୀ ହସ୍ପିଟାଲ୍ • ୩୪ ଟି ସମୟ ସ୍ଲଟ୍ • BSKY / ଆୟୁଷ୍ମାନ ନିଃଶୁଳ୍କ ସେବା'
               : (lang === 'hi-IN'
-              ? '20 विशेषज्ञ चिकित्सक • 34 समय स्लॉट (सुबह 7:30 से रात 8:00) • आयुष्मान भारत / BSKY निःशुल्क परामर्श'
-              : '20 Verified Medical Specialists • 34 Daily OPD Timing Slots (07:30 AM - 08:00 PM) • BSKY / Ayushman Free')}
+              ? '66 विशेषज्ञ चिकित्सक • 28 प्रमुख अस्पताल • 34 समय स्लॉट • आयुष्मान भारत / BSKY निःशुल्क परामर्श'
+              : '66 Verified Medical Specialists • 28 Leading Hospitals • 34 Daily OPD Timing Slots • BSKY / Ayushman Free')}
           </p>
         </div>
 
@@ -1362,6 +869,9 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                 <option value="Surgery">{txt.specialtySurgery}</option>
                 <option value="Onco">{txt.specialtyOnco}</option>
                 <option value="Dental">{txt.specialtyDental}</option>
+                <option value="Rheum">{txt.specialtyRheum}</option>
+                <option value="Hemat">{txt.specialtyHemat}</option>
+                <option value="Uro">{txt.specialtyUro}</option>
               </select>
 
               <select
@@ -1376,7 +886,11 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                 <option value="Rourkela">Rourkela (ରାଉରକେଲା)</option>
                 <option value="Burla">Sambalpur / Burla (ସମ୍ବଲପୁର / ବୁର୍ଲା)</option>
                 <option value="Puri">Puri (ପୁରୀ)</option>
+                <option value="Balasore">Balasore (ବାଲେଶ୍ୱର)</option>
+                <option value="Baripada">Baripada / Mayurbhanj (ବାରିପଦା / ମୟୂରଭଞ୍ଜ)</option>
                 <option value="Koraput">Koraput (କୋରାପୁଟ)</option>
+                <option value="Balangir">Balangir (ବଲାଙ୍ଗୀର)</option>
+                <option value="Keonjhar">Keonjhar (କେନ୍ଦୁଝର)</option>
                 <option value="Wardha">Wardha (वर्धा)</option>
               </select>
 
@@ -1388,7 +902,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
 
           {/* Doctor Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredDoctors.map((doc) => (
+            {paginatedDoctors.map((doc) => (
               <div
                 key={doc.id}
                 className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-slate-200 p-5 flex flex-col justify-between"
@@ -1466,6 +980,89 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
               </div>
             ))}
           </div>
+
+          {/* Directory Pagination Controls */}
+          {filteredDoctors.length > 0 && (
+            <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-xs text-slate-600 font-medium">
+                {txt.showingText}{' '}
+                <span className="font-bold text-slate-900">
+                  {Math.min((safeCurrentPage - 1) * pageSize + 1, filteredDoctors.length)}
+                </span>{' '}
+                {txt.toText}{' '}
+                <span className="font-bold text-slate-900">
+                  {Math.min(safeCurrentPage * pageSize, filteredDoctors.length)}
+                </span>{' '}
+                {txt.ofText}{' '}
+                <span className="font-bold text-slate-900">{filteredDoctors.length}</span>{' '}
+                {txt.doctorsFound}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 mr-2">
+                  <span className="text-[11px] text-slate-500 font-medium">{txt.perPageText}:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 font-semibold text-slate-700 outline-none cursor-pointer"
+                  >
+                    <option value={6}>6</option>
+                    <option value={12}>12</option>
+                    <option value={24}>24</option>
+                    <option value={48}>48</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={safeCurrentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold text-slate-700 flex items-center gap-1 transition-all cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  {txt.prevBtn}
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 1)
+                    .map((page, idx, arr) => {
+                      const prevPage = arr[idx - 1];
+                      const showEllipsis = prevPage && page - prevPage > 1;
+                      return (
+                        <div key={page} className="flex items-center">
+                          {showEllipsis && <span className="px-1 text-slate-400 text-xs">…</span>}
+                          <button
+                            type="button"
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              page === safeCurrentPage
+                                ? 'bg-emerald-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:bg-slate-100'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <button
+                  type="button"
+                  disabled={safeCurrentPage >= totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold text-slate-700 flex items-center gap-1 transition-all cursor-pointer"
+                >
+                  {txt.nextBtn}
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1522,6 +1119,9 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                   <option value="Surgery">{txt.specialtySurgery}</option>
                   <option value="Dental">{txt.specialtyDental}</option>
                   <option value="Emergency">{txt.specialtyEmergency}</option>
+                  <option value="Rheum">{txt.specialtyRheum}</option>
+                  <option value="Hemat">{txt.specialtyHemat}</option>
+                  <option value="Uro">{txt.specialtyUro}</option>
                 </select>
               </div>
 
@@ -1577,6 +1177,12 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                   <option value="Cuttack">କଟକ (Cuttack)</option>
                   <option value="Burla">ବୁର୍ଲା / ସମ୍ବଲପୁର (Burla, Sambalpur)</option>
                   <option value="Berhampur">ବ୍ରହ୍ମପୁର (Berhampur)</option>
+                  <option value="Rourkela">ରାଉରକେଲା (Rourkela)</option>
+                  <option value="Balasore">ବାଲେଶ୍ୱର (Balasore)</option>
+                  <option value="Baripada">ବାରିପଦା / ମୟୂରଭଞ୍ଜ (Baripada)</option>
+                  <option value="Koraput">କୋରାପୁଟ (Koraput)</option>
+                  <option value="Balangir">ବଲାଙ୍ଗୀର (Balangir)</option>
+                  <option value="Keonjhar">କେନ୍ଦୁଝର (Keonjhar)</option>
                 </select>
               </div>
             </div>
@@ -1627,8 +1233,8 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
             </div>
           ) : (
             <div className="space-y-4">
-              {recommendations.map((doc, idx) => {
-                const isTop = idx === 0;
+              {paginatedRecommendations.map((doc, idx) => {
+                const isTop = safeRecPage === 1 && idx === 0;
                 return (
                   <div
                     key={doc.id}
@@ -1795,6 +1401,51 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                   </div>
                 );
               })}
+
+              {/* Recommendation Pagination Controls */}
+              {recommendations.length > 0 && (
+                <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+                  <div className="text-xs text-slate-600 font-medium">
+                    {txt.showingText}{' '}
+                    <span className="font-bold text-slate-900">
+                      {Math.min((safeRecPage - 1) * recPageSize + 1, recommendations.length)}
+                    </span>{' '}
+                    {txt.toText}{' '}
+                    <span className="font-bold text-slate-900">
+                      {Math.min(safeRecPage * recPageSize, recommendations.length)}
+                    </span>{' '}
+                    {txt.ofText}{' '}
+                    <span className="font-bold text-slate-900">{recommendations.length}</span>{' '}
+                    {lang === 'or-IN' ? 'ସୁପାରିଶ' : (lang === 'hi-IN' ? 'सिफारिशें' : 'Recommendations')}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={safeRecPage === 1}
+                      onClick={() => setRecCurrentPage((p) => Math.max(1, p - 1))}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold text-slate-700 flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      {txt.prevBtn}
+                    </button>
+
+                    <span className="text-xs font-bold text-slate-700 px-2">
+                      {txt.pageText} {safeRecPage} {txt.ofText} {totalRecPages}
+                    </span>
+
+                    <button
+                      type="button"
+                      disabled={safeRecPage >= totalRecPages}
+                      onClick={() => setRecCurrentPage((p) => Math.min(totalRecPages, p + 1))}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-xs font-bold text-slate-700 flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                      {txt.nextBtn}
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
