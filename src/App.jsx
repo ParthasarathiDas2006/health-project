@@ -3,6 +3,7 @@ import MultimodalIntakeForm from './components/MultimodalIntakeForm';
 import OcrUploader from './components/OcrUploader';
 import TriageDoctorDashboard from './components/TriageDoctorDashboard';
 import DoctorBookingSystem from './components/DoctorBookingSystem';
+import BloodBankSystem from './components/BloodBankSystem';
 import AuthPage from './components/AuthPage';
 import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments } from './utils/authStorage';
 import {
@@ -22,7 +23,8 @@ import {
   Mail,
   MapPin,
   Globe,
-  Calendar
+  Calendar,
+  Droplet
 } from 'lucide-react';
 
 export default function App() {
@@ -234,7 +236,8 @@ export default function App() {
       doctorIntakeTab: '୨. ରୋଗୀ ବିବରଣୀ',
       doctorOcrTab: '୩. ଲ୍ୟାବ୍ ରିପୋର୍ଟ ଯାଞ୍ଚ',
       doctorBookingTab: '୪. ଡାକ୍ତର ତାଲିକା ଓ ବୁକିଂ',
-      scenariosTab: '୫. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
+      bloodBankTab: '୫. ରକ୍ତ ଭଣ୍ଡାର (Blood Bank)',
+      scenariosTab: '୬. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
@@ -271,7 +274,8 @@ export default function App() {
       doctorIntakeTab: '2. मरीज विवरण',
       doctorOcrTab: '3. लैब रिपोर्ट OCR',
       doctorBookingTab: '4. डॉक्टर सूची एवं बुकिंग',
-      scenariosTab: '5. फील्ड परिदृश्य',
+      bloodBankTab: '5. ब्लड बैंक (Blood Bank)',
+      scenariosTab: '6. फील्ड परिदृश्य',
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
@@ -308,7 +312,8 @@ export default function App() {
       doctorIntakeTab: '2. Patient Intake',
       doctorOcrTab: '3. Lab Report OCR',
       doctorBookingTab: '4. Doctor Directory & Booking',
-      scenariosTab: '5. Field Scenarios',
+      bloodBankTab: '5. Blood Bank Portal',
+      scenariosTab: '6. Field Scenarios',
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
@@ -433,6 +438,18 @@ export default function App() {
                     </span>
                   )}
                 </button>
+
+                <button
+                  onClick={() => setActiveTab('bloodbank')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                    activeTab === 'bloodbank'
+                      ? 'bg-rose-700 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Droplet className="w-3.5 h-3.5 text-rose-300 fill-rose-200" />
+                  {uiText.bloodBankTab}
+                </button>
               </>
             ) : (
               <>
@@ -494,6 +511,18 @@ export default function App() {
                       {bookedCount}
                     </span>
                   )}
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('bloodbank')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                    activeTab === 'bloodbank'
+                      ? 'bg-rose-700 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Droplet className="w-3.5 h-3.5 text-rose-300 fill-rose-200" />
+                  {uiText.bloodBankTab}
                 </button>
               </>
             )}
@@ -731,7 +760,17 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: INDIA & ODISHA SCENARIOS REFERENCE */}
+        {/* TAB 5: ODISHA BLOOD BANK PORTAL */}
+        {activeTab === 'bloodbank' && (
+          <div>
+            <BloodBankSystem
+              currentUser={currentUser}
+              appLang={appLang}
+            />
+          </div>
+        )}
+
+        {/* TAB 6: INDIA & ODISHA SCENARIOS REFERENCE */}
         {activeTab === 'scenarios' && (
           <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 mb-2">
