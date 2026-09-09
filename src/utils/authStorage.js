@@ -243,3 +243,62 @@ export const cancelAppointment = (appointmentId) => {
   localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(updated));
   return updated;
 };
+
+// ─────────────────────────────────────────────
+// Ambulance Booking Storage (same pattern as appointments)
+// ─────────────────────────────────────────────
+const AMBULANCE_STORAGE_KEY = 'triage_ambulance_requests';
+
+export const getAmbulanceRequests = () => {
+  try {
+    const raw = localStorage.getItem(AMBULANCE_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Failed to read ambulance requests:', e);
+    return [];
+  }
+};
+
+export const saveAmbulanceRequest = (request) => {
+  const current = getAmbulanceRequests();
+  const updated = [request, ...current];
+  localStorage.setItem(AMBULANCE_STORAGE_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+export const cancelAmbulanceRequest = (requestId) => {
+  const current = getAmbulanceRequests();
+  const updated = current.filter((r) => r.id !== requestId);
+  localStorage.setItem(AMBULANCE_STORAGE_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+// ─────────────────────────────────────────────
+// Bed Booking Storage
+// ─────────────────────────────────────────────
+const BED_STORAGE_KEY = 'triage_bed_bookings';
+
+export const getBedBookings = () => {
+  try {
+    const raw = localStorage.getItem(BED_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Failed to read bed bookings:', e);
+    return [];
+  }
+};
+
+export const saveBedBooking = (booking) => {
+  const current = getBedBookings();
+  const updated = [booking, ...current];
+  localStorage.setItem(BED_STORAGE_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+export const cancelBedBooking = (bookingId) => {
+  const current = getBedBookings();
+  const updated = current.filter((b) => b.id !== bookingId);
+  localStorage.setItem(BED_STORAGE_KEY, JSON.stringify(updated));
+  return updated;
+};
+
