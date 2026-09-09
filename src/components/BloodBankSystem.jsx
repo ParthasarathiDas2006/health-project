@@ -298,15 +298,26 @@ export default function BloodBankSystem({ currentUser, appLang }) {
     }
   }[lang] || {};
 
+  const cleanStr = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
   // Filtered Blood Banks
   const filteredBloodBanks = ODISHA_BLOOD_BANKS.filter((bb) => {
+    const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      bb.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bb.hospitalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bb.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (bb.nameOdia && bb.nameOdia.includes(searchQuery));
+      !q ||
+      bb.name.toLowerCase().includes(q) ||
+      bb.hospitalName.toLowerCase().includes(q) ||
+      bb.city.toLowerCase().includes(q) ||
+      bb.district.toLowerCase().includes(q) ||
+      (bb.nameOdia && bb.nameOdia.includes(q));
+
+    const cSelected = cleanStr(selectedDistrict);
+    const cDistrict = cleanStr(bb.district);
     const matchesDistrict =
-      selectedDistrict === 'ALL' || bb.district.toLowerCase().includes(selectedDistrict.toLowerCase());
+      selectedDistrict === 'ALL' ||
+      cDistrict.includes(cSelected) ||
+      cSelected.includes(cDistrict);
+
     return matchesSearch && matchesDistrict;
   });
 
@@ -545,116 +556,145 @@ export default function BloodBankSystem({ currentUser, appLang }) {
           </div>
 
           {/* Blood Banks Directory Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredBloodBanks.map((bb) => {
-              const compStock =
-                bb.stock[selectedBloodGroup]?.[selectedComponent] ?? 0;
-              const wholeStock = bb.stock[selectedBloodGroup]?.WHOLE ?? 0;
+          {filteredBloodBanks.length === 0 ? (
+            <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                <Droplet className="w-6 h-6 fill-rose-500 text-rose-600" />
+              </div>
+              <h4 className="font-extrabold text-slate-800 text-sm">
+                {lang === 'or-IN'
+                  ? 'ଏହି ଜିଲ୍ଲାରେ କୌଣସି ରକ୍ତ ଭଣ୍ଡାର ଫଳାଫଳ ମିଳିଲା ନାହିଁ।'
+                  : lang === 'hi-IN'
+                  ? 'इस जिले में कोई रक्त बैंक परिणाम नहीं मिला।'
+                  : 'No blood banks found matching the criteria in this district.'}
+              </h4>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                {lang === 'or-IN'
+                  ? 'ତୁରନ୍ତ ସହାୟତା ପାଇଁ ଓଡ଼ିଶା ରାଜ୍ୟ ୨୪x୭ ରକ୍ତ ଭଣ୍ଡାର ହେଲ୍ପଲାଇନ୍ ୧୦୪ ରେ ଯୋଗାଯୋଗ କରନ୍ତୁ।'
+                  : lang === 'hi-IN'
+                  ? 'तत्काल सहायता के लिए ओडिशा राज्य 24x7 रक्त बैंक हेल्पलाइन 104 पर संपर्क करें।'
+                  : 'Contact the 24x7 Odisha Blood Helpline at 104 or 0671-2414080 for emergency arrangements.'}
+              </p>
+              <a
+                href="tel:104"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                {txt.btnCall}
+              </a>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredBloodBanks.map((bb) => {
+                const compStock =
+                  bb.stock[selectedBloodGroup]?.[selectedComponent] ?? 0;
+                const wholeStock = bb.stock[selectedBloodGroup]?.WHOLE ?? 0;
 
-              // Determine Stock Status Badge
-              let statusText = txt.statusAvailable;
-              let statusBg = 'bg-emerald-100 text-emerald-800 border-emerald-300';
-              let stockColor = 'text-emerald-700';
+                // Determine Stock Status Badge
+                let statusText = txt.statusAvailable;
+                let statusBg = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                let stockColor = 'text-emerald-700';
 
-              if (compStock === 0) {
-                statusText = txt.statusCritical;
-                statusBg = 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse';
-                stockColor = 'text-rose-700';
-              } else if (compStock < 5) {
-                statusText = txt.statusLow;
-                statusBg = 'bg-amber-100 text-amber-800 border-amber-300';
-                stockColor = 'text-amber-700';
-              }
+                if (compStock === 0) {
+                  statusText = txt.statusCritical;
+                  statusBg = 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse';
+                  stockColor = 'text-rose-700';
+                } else if (compStock < 5) {
+                  statusText = txt.statusLow;
+                  statusBg = 'bg-amber-100 text-amber-800 border-amber-300';
+                  stockColor = 'text-amber-700';
+                }
 
-              return (
-                <div
-                  key={bb.id}
-                  className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-rose-300 transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Card Header: Name & BSKY Badge */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div>
-                        <h3 className="font-extrabold text-slate-900 text-sm leading-snug">
-                          {lang === 'or-IN' && bb.nameOdia ? bb.nameOdia : bb.name}
-                        </h3>
-                        <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                          <Building2 className="w-3 h-3 text-slate-400" />
-                          {bb.category} • {bb.city}, {bb.district}
-                        </p>
+                return (
+                  <div
+                    key={bb.id}
+                    className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-rose-300 transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Card Header: Name & BSKY Badge */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div>
+                          <h3 className="font-extrabold text-slate-900 text-sm leading-snug">
+                            {lang === 'or-IN' && bb.nameOdia ? bb.nameOdia : bb.name}
+                          </h3>
+                          <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                            <Building2 className="w-3 h-3 text-slate-400" />
+                            {bb.category} • {bb.city}, {bb.district}
+                          </p>
+                        </div>
+
+                        <span className="text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                          ✓ {txt.bskyFreeLabel}
+                        </span>
                       </div>
 
-                      <span className="text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
-                        ✓ {txt.bskyFreeLabel}
-                      </span>
+                      <p className="text-[11px] text-slate-600 flex items-center gap-1 mb-3">
+                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="truncate">{bb.address}</span>
+                      </p>
+
+                      {/* Stock Status Box */}
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 flex items-center justify-between">
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            {selectedBloodGroup} ({selectedComponent})
+                          </div>
+                          <div className={`text-2xl font-black ${stockColor} leading-none mt-0.5`}>
+                            {compStock}{' '}
+                            <span className="text-xs font-semibold text-slate-500">
+                              {txt.unitsCount}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-1">
+                            Whole Blood: {wholeStock} units
+                          </div>
+                        </div>
+
+                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${statusBg}`}>
+                          {statusText}
+                        </span>
+                      </div>
+
+                      {/* Nodal Officer Contact */}
+                      <div className="text-[11px] text-slate-500 space-y-0.5 mb-4">
+                        <div>
+                          <strong>Nodal Officer:</strong> {bb.nodalOfficer}
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-600">
+                          <Phone className="w-3 h-3 text-slate-400" />
+                          <span>Helpline: {bb.helpline}</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <p className="text-[11px] text-slate-600 flex items-center gap-1 mb-3">
-                      <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                      <span className="truncate">{bb.address}</span>
-                    </p>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        onClick={() => setReservingBloodBank(bb)}
+                        disabled={compStock === 0}
+                        className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs ${
+                          compStock === 0
+                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            : 'bg-rose-600 hover:bg-rose-700 text-white'
+                        }`}
+                      >
+                        <Droplet className="w-3.5 h-3.5 text-rose-200 fill-white" />
+                        {txt.btnReserve}
+                      </button>
 
-                    {/* Stock Status Box */}
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 flex items-center justify-between">
-                      <div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          {selectedBloodGroup} ({selectedComponent})
-                        </div>
-                        <div className={`text-2xl font-black ${stockColor} leading-none mt-0.5`}>
-                          {compStock}{' '}
-                          <span className="text-xs font-semibold text-slate-500">
-                            {txt.unitsCount}
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-slate-400 mt-1">
-                          Whole Blood: {wholeStock} units
-                        </div>
-                      </div>
-
-                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${statusBg}`}>
-                        {statusText}
-                      </span>
-                    </div>
-
-                    {/* Nodal Officer Contact */}
-                    <div className="text-[11px] text-slate-500 space-y-0.5 mb-4">
-                      <div>
-                        <strong>Nodal Officer:</strong> {bb.nodalOfficer}
-                      </div>
-                      <div className="flex items-center gap-1 text-slate-600">
-                        <Phone className="w-3 h-3 text-slate-400" />
-                        <span>Helpline: {bb.helpline}</span>
-                      </div>
+                      <a
+                        href={`tel:${bb.nodalPhone || '104'}`}
+                        className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs flex items-center gap-1"
+                        title="Call Helpline"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-slate-600" />
+                      </a>
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                    <button
-                      onClick={() => setReservingBloodBank(bb)}
-                      disabled={compStock === 0}
-                      className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs ${
-                        compStock === 0
-                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'bg-rose-600 hover:bg-rose-700 text-white'
-                      }`}
-                    >
-                      <Droplet className="w-3.5 h-3.5 text-rose-200 fill-white" />
-                      {txt.btnReserve}
-                    </button>
-
-                    <a
-                      href={`tel:${bb.nodalPhone || '104'}`}
-                      className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs flex items-center gap-1"
-                      title="Call Helpline"
-                    >
-                      <Phone className="w-3.5 h-3.5 text-slate-600" />
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
