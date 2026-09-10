@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import MultimodalIntakeForm from './components/MultimodalIntakeForm';
 import OcrUploader from './components/OcrUploader';
 import TriageDoctorDashboard from './components/TriageDoctorDashboard';
@@ -35,7 +35,10 @@ import {
   Pill,
   Navigation,
   Bed,
-  Truck
+  Truck,
+  Sun,
+  Moon,
+  BookOpen
 } from 'lucide-react';
 
 export default function App() {
@@ -49,6 +52,22 @@ export default function App() {
   const [generatedTriageNote, setGeneratedTriageNote] = useState(null);
   const [isGeneratingNote, setIsGeneratingNote] = useState(false);
   const [bookedCount, setBookedCount] = useState(() => getBookedAppointments().length);
+
+  // Theme Mode: 'light', 'dark', or 'reading'
+  const [themeMode, setThemeMode] = useState(() => {
+    return localStorage.getItem('nhp_theme_mode') || 'light';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('theme-dark', 'theme-reading');
+    if (themeMode === 'dark') {
+      root.classList.add('theme-dark');
+    } else if (themeMode === 'reading') {
+      root.classList.add('theme-reading');
+    }
+    localStorage.setItem('nhp_theme_mode', themeMode);
+  }, [themeMode]);
 
   // Authentication callbacks
   const handleLoginSuccess = (user) => {
@@ -714,8 +733,48 @@ export default function App() {
             </button>
           </nav>
 
-          {/* Right Controls: Global Language Switcher & User Profile Pill */}
+          {/* Right Controls: Theme Switcher, Global Language Switcher & User Profile Pill */}
           <div className="flex items-center gap-2 self-end md:self-auto">
+            {/* Theme Mode Switcher: Light / Dark / Reading */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-300 text-xs shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setThemeMode('light')}
+                title="Light Mode"
+                className={`p-1.5 rounded-lg flex items-center gap-1 transition-all ${
+                  themeMode === 'light'
+                    ? 'bg-white text-amber-600 shadow-xs font-bold'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Sun className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setThemeMode('reading')}
+                title="Reading Mode (Warm Eye-Care)"
+                className={`p-1.5 rounded-lg flex items-center gap-1 transition-all ${
+                  themeMode === 'reading'
+                    ? 'bg-amber-100 text-amber-900 shadow-xs font-bold'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setThemeMode('dark')}
+                title="Dark Mode"
+                className={`p-1.5 rounded-lg flex items-center gap-1 transition-all ${
+                  themeMode === 'dark'
+                    ? 'bg-slate-900 text-teal-300 shadow-xs font-bold'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Moon className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
             {/* App-wide Language Switcher */}
             <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs shadow-2xs">
               <Globe className="w-3.5 h-3.5 text-emerald-700" />
