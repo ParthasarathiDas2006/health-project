@@ -369,7 +369,28 @@ export default function App() {
       scenariosTab: '୮. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
       medicineExpiryTab: '୯. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
       nearestMedicalTab: '୧୦. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
-      govTechTab: '୧୧. AI & GovTech ରାଷ୍ଟ୍ରୀୟ ସୁଇଟ୍ (20+ Features)',
+      t11_history: '୧୧. ABHA ଐତିହାସିକ ଗ୍ରାଫ୍',
+      t12_differential: '୧୨. ନିରାପଦ ଡିଫରେନ୍ସିଆଲ୍ ଟ୍ରାଏଜ୍',
+      t13_drugallergy: '୧୩. ଔଷଧ ଆଲର୍ଜି ଚେତାବନୀ',
+      t14_riskscores: '୧୪. କ୍ଲିନିକାଲ୍ ରିସ୍କ ସ୍କୋର (qSOFA/GCS)',
+      t15_followup: '୧୫. ସ୍ମାର୍ଟ ଫଲୋ-ଅପ୍ Engine',
+      t16_whatsapp_ussd: '୧୬. WhatsApp & USSD *123# Portal',
+      t17_asha_voice: '୧୭. ଆଶା ଭଏସ୍ କୋପାଇଲଟ୍',
+      t18_pain_map: '୧୮. ପେନ୍ ମ୍ୟାପ୍ ଓ ସ୍ମାଇଲି Scale',
+      t19_family_triage: '୧୯. ପରିବାର ମଲ୍ଟି-ଟ୍ରାଏଜ୍ କ୍ୟାମ୍ପ',
+      t20_opd_balancer: '୨୦. ସ୍ମାର୍ଟ OPD ଲୋଡ୍ ବାଲାନ୍ସର୍',
+      t21_counterfeit: '୨୧. ନକଲି ରିପୋର୍ଟ ସ୍କାନର୍ AI',
+      t22_kiosk: '୨୨. ଜିରୋ-ଟଚ୍ ABHA Kiosk',
+      t23_outbreak: '୨୩. IDSP ମହାମାରୀ ରାଡାର',
+      t24_inventory: '୨୪. ଔଷଧ ଷ୍ଟକ୍ ଲିଙ୍କେଜ୍',
+      t25_dpdp_consent: '୨୫. DPDP Act ଅଡିଓ Consent',
+      t26_federated: '୨୬. ଫେଡେରେଟେଡ୍ ପ୍ରାଇଭେସୀ Node',
+      t27_fairness: '୨୭. AI ନିରପେକ୍ଷତା Dashboard',
+      t28_rlhf: '୨୮. ଡାକ୍ତର ଫିଡବ୍ୟାକ୍ RLHF',
+      t29_discharge: '୨୯. ଡିଜିଟାଲ୍ ଡିସଚାର୍ଜ Summary',
+      t30_anc_maternal: '୩୦. ANC ଗର୍ଭବତୀ ମାତୃ ସୁରକ୍ଷା',
+      t31_mental_health: '୩୧. PHQ-2 ମାନସିକ ସ୍ୱାସ୍ଥ୍ୟ Screen',
+      t32_carbon_sms: '୩୨. ନାଗରିକ Carbon SMS Receipt',
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
@@ -413,7 +434,28 @@ export default function App() {
       scenariosTab: '8. फील्ड परिदृश्य',
       medicineExpiryTab: '9. दवा एक्सपायरी जांच',
       nearestMedicalTab: '10. निकटतम अस्पताल (GPS Map)',
-      govTechTab: '11. AI एवं GovTech राष्ट्रीय सूट (20+ Features)',
+      t11_history: '11. ABHA ट्रेंड ग्राफ',
+      t12_differential: '12. डिफरेंशियल ट्रायज',
+      t13_drugallergy: '13. ड्रग एलर्जी अलर्ट',
+      t14_riskscores: '14. क्लिनिकल रिस्क स्कोर (qSOFA/GCS)',
+      t15_followup: '15. स्मार्ट फॉलो-अप इंजन',
+      t16_whatsapp_ussd: '16. व्हाट्सएप एवं USSD मोड (*123#)',
+      t17_asha_voice: '17. आशा वॉइस कोपायलट',
+      t18_pain_map: '18. दर्द नक्शा एवं स्माइली स्केल',
+      t19_family_triage: '19. परिवार कैंप ट्रायज',
+      t20_opd_balancer: '20. स्मार्ट ओपीडी लोड बैलेंसर',
+      t21_counterfeit: '21. नकली रिपोर्ट डिटेक्टर AI',
+      t22_kiosk: '22. ज़ीरो-टच ABHA कियोस्क',
+      t23_outbreak: '23. IDSP आउटब्रेक रडार',
+      t24_inventory: '24. दवा स्टॉक लिंकेज',
+      t25_dpdp_consent: '25. DPDP एक्ट ऑडियो सहमति',
+      t26_federated: '26. फेडेरेटेड गोपनीयता नोड',
+      t27_fairness: '27. AI निष्पक्षता डैशबोर्ड',
+      t28_rlhf: '28. डॉक्टर फीडबैक RLHF',
+      t29_discharge: '29. डिजिटल डिस्चार्ज सारांश',
+      t30_anc_maternal: '30. मातृ स्वास्थ्य एवं ANC',
+      t31_mental_health: '31. PHQ-2 मानसिक स्वास्थ्य',
+      t32_carbon_sms: '32. नागरिक कार्बन एसएमएस',
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
@@ -457,7 +499,28 @@ export default function App() {
       scenariosTab: '8. Field Scenarios',
       medicineExpiryTab: '9. Medicine Expiry Checker',
       nearestMedicalTab: '10. Nearest Medical & GPS Map',
-      govTechTab: '11. AI & GovTech Enterprise Suite (22+ Features)',
+      t11_history: '11. ABHA History Builder',
+      t12_differential: '12. Safe Differential Triage',
+      t13_drugallergy: '13. Drug Allergy Alert',
+      t14_riskscores: '14. Clinical Risk Scores (qSOFA/GCS)',
+      t15_followup: '15. Smart Follow-Up Engine',
+      t16_whatsapp_ussd: '16. WhatsApp & USSD Mode (*123#)',
+      t17_asha_voice: '17. ASHA Copilot Voice',
+      t18_pain_map: '18. Pictorial Pain Map & Scale',
+      t19_family_triage: '19. Multi-Member Family Triage',
+      t20_opd_balancer: '20. Smart OPD Load Balancer',
+      t21_counterfeit: '21. Counterfeit Report AI Detector',
+      t22_kiosk: '22. Zero-Touch ABHA Kiosk',
+      t23_outbreak: '23. IDSP Outbreak Radar',
+      t24_inventory: '24. Drug Stock Linkage',
+      t25_dpdp_consent: '25. DPDP Act 2023 Audio Consent',
+      t26_federated: '26. Federated AI Privacy Node',
+      t27_fairness: '27. AI Bias & Fairness Audit',
+      t28_rlhf: '28. Doctor Feedback RLHF',
+      t29_discharge: '29. Digital Discharge Summary',
+      t30_anc_maternal: '30. Maternal ANC High-Risk Module',
+      t31_mental_health: '31. PHQ-2 Mental Health & NCD',
+      t32_carbon_sms: '32. Carbon Copy Citizen SMS',
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
@@ -776,19 +839,225 @@ export default function App() {
               </span>
             </button>
 
+            {/* TAB 11 to 32: STANDALONE GOVTECH ENTERPRISE FEATURES */}
             <button
-              onClick={() => setActiveTab('govtech')}
+              onClick={() => setActiveTab('t11_history')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 'govtech'
-                  ? 'bg-gradient-to-r from-indigo-700 to-blue-900 text-white shadow-xs ring-2 ring-indigo-400'
-                  : 'text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'
+                activeTab === 't11_history' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
               }`}
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
-              {uiText.govTechTab}
-              <span className="bg-amber-500 text-slate-950 text-[9px] px-1.5 py-0.2 rounded-full font-black animate-bounce">
-                22+ Enterprise
-              </span>
+              <Activity className="w-3.5 h-3.5" />
+              {uiText.t11_history}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t12_differential')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't12_differential' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              {uiText.t12_differential}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t13_drugallergy')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't13_drugallergy' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+              {uiText.t13_drugallergy}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t14_riskscores')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't14_riskscores' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              {uiText.t14_riskscores}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t15_followup')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't15_followup' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              {uiText.t15_followup}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t16_whatsapp_ussd')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't16_whatsapp_ussd' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              {uiText.t16_whatsapp_ussd}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t17_asha_voice')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't17_asha_voice' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Stethoscope className="w-3.5 h-3.5" />
+              {uiText.t17_asha_voice}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t18_pain_map')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't18_pain_map' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              {uiText.t18_pain_map}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t19_family_triage')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't19_family_triage' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Building className="w-3.5 h-3.5" />
+              {uiText.t19_family_triage}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t20_opd_balancer')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't20_opd_balancer' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              {uiText.t20_opd_balancer}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t21_counterfeit')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't21_counterfeit' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <UploadCloud className="w-3.5 h-3.5" />
+              {uiText.t21_counterfeit}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t22_kiosk')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't22_kiosk' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              {uiText.t22_kiosk}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t23_outbreak')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't23_outbreak' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+              {uiText.t23_outbreak}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t24_inventory')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't24_inventory' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Pill className="w-3.5 h-3.5" />
+              {uiText.t24_inventory}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t25_dpdp_consent')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't25_dpdp_consent' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              {uiText.t25_dpdp_consent}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t26_federated')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't26_federated' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              {uiText.t26_federated}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t27_fairness')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't27_fairness' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              {uiText.t27_fairness}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t28_rlhf')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't28_rlhf' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Stethoscope className="w-3.5 h-3.5" />
+              {uiText.t28_rlhf}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t29_discharge')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't29_discharge' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              {uiText.t29_discharge}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t30_anc_maternal')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't30_anc_maternal' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              {uiText.t30_anc_maternal}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t31_mental_health')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't31_mental_health' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Stethoscope className="w-3.5 h-3.5" />
+              {uiText.t31_mental_health}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('t32_carbon_sms')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 't32_carbon_sms' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              {uiText.t32_carbon_sms}
             </button>
           </nav>
 
@@ -1366,26 +1635,29 @@ export default function App() {
             </Suspense>
           </div>
         )}
-        {/* TAB 11: NATIONAL AI & GOVTECH ENTERPRISE SUITE */}
-        {activeTab === 'govtech' && (
-          <div className="space-y-6">
-            <Suspense
-              fallback={
-                <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
-                  <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-xs font-semibold text-slate-600 animate-pulse">
-                    {appLang === 'or-IN' ? 'AI & GovTech ସୁଇଟ୍ ଲୋଡ୍ ହେଉଛି...' : (appLang === 'hi-IN' ? 'AI एवं GovTech राष्ट्रीय सूट लोड हो रहा है...' : 'Loading National GovTech AI Suite...')}
-                  </p>
-                </div>
-              }
-            >
-              <GovtGovTechSuite
-                appLang={appLang}
-                currentUser={currentUser}
-              />
-            </Suspense>
-          </div>
-        )}
+        {/* TABS 11 THROUGH 32: STANDALONE INDIVIDUAL GOVTECH FEATURE VIEWS */}
+        {activeTab === 't11_history' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />}
+        {activeTab === 't12_differential' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="differential" />}
+        {activeTab === 't13_drugallergy' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />}
+        {activeTab === 't14_riskscores' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="scores" />}
+        {activeTab === 't15_followup' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />}
+        {activeTab === 't16_whatsapp_ussd' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
+        {activeTab === 't17_asha_voice' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
+        {activeTab === 't18_pain_map' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
+        {activeTab === 't19_family_triage' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
+        {activeTab === 't20_opd_balancer' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="outbreak" />}
+        {activeTab === 't21_counterfeit' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />}
+        {activeTab === 't22_kiosk' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
+        {activeTab === 't23_outbreak' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="outbreak" />}
+        {activeTab === 't24_inventory' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />}
+        {activeTab === 't25_dpdp_consent' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
+        {activeTab === 't26_federated' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
+        {activeTab === 't27_fairness' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
+        {activeTab === 't28_rlhf' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
+        {activeTab === 't29_discharge' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
+        {activeTab === 't30_anc_maternal' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
+        {activeTab === 't31_mental_health' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
+        {activeTab === 't32_carbon_sms' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
       </main>
 
       {/* Footer */}

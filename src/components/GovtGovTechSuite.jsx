@@ -29,9 +29,9 @@ import {
   RotateCcw
 } from 'lucide-react';
 
-export default function GovtGovTechSuite({ currentUser, appLang }) {
+export default function GovtGovTechSuite({ currentUser, appLang, initialFeature }) {
   const lang = appLang || 'or-IN';
-  const [activeSubTab, setActiveSubTab] = useState('abha_history');
+  const [activeSubTab, setActiveSubTab] = useState(initialFeature || 'abha_history');
 
   // Interactive State Demos
   const [patientAbha, setPatientAbha] = useState('91-8842-1209-7711');
