@@ -329,6 +329,8 @@ export default function App() {
   if (showAuthPage || !currentUser) {
     return (
       <AuthPage
+        themeMode={themeMode}
+        onThemeChange={(mode) => setThemeMode(mode)}
         onLoginSuccess={handleLoginSuccess}
         onCancel={currentUser ? () => setShowAuthPage(false) : null}
       />

@@ -15,7 +15,10 @@ import {
   Stethoscope,
   Sparkles,
   MapPin,
-  Globe
+  Globe,
+  Sun,
+  Moon,
+  BookOpen
 } from 'lucide-react';
 import { getStoredUsers, saveUser, verifyCredentials, setCurrentUser } from '../utils/authStorage';
 
@@ -24,7 +27,29 @@ import { getStoredUsers, saveUser, verifyCredentials, setCurrentUser } from '../
  * Designed for Indian Public Health & Clinical Triage System
  * Supports English, Hindi, and Odia (ଓଡ଼ିଆ) with instant demo credentials
  */
-export default function AuthPage({ onLoginSuccess, onCancel }) {
+export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThemeMode, onThemeChange }) {
+  const [internalTheme, setInternalTheme] = useState(() => {
+    return propThemeMode || localStorage.getItem('nhp_theme_mode') || 'light';
+  });
+
+  const activeTheme = propThemeMode || internalTheme;
+
+  const handleThemeSwitch = (newTheme) => {
+    setInternalTheme(newTheme);
+    if (onThemeChange) {
+      onThemeChange(newTheme);
+    } else {
+      const root = document.documentElement;
+      root.classList.remove('theme-dark', 'theme-reading');
+      if (newTheme === 'dark') {
+        root.classList.add('theme-dark');
+      } else if (newTheme === 'reading') {
+        root.classList.add('theme-reading');
+      }
+      localStorage.setItem('nhp_theme_mode', newTheme);
+    }
+  };
+
   const [authLang, setAuthLang] = useState('or-IN'); // Default to Odia as requested
   const [mode, setMode] = useState('signin'); // 'signin' or 'signup'
   const [errorMsg, setErrorMsg] = useState('');
@@ -322,64 +347,134 @@ export default function AuthPage({ onLoginSuccess, onCancel }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 py-8 px-4 sm:px-6 flex flex-col justify-center items-center font-sans relative overflow-hidden">
+    <div
+      className={`min-h-screen py-8 px-4 sm:px-6 flex flex-col justify-center items-center font-sans relative overflow-hidden transition-colors ${
+        activeTheme === 'reading'
+          ? 'bg-[#f4e3c3] text-[#3d2f1d]'
+          : activeTheme === 'light'
+          ? 'bg-slate-100 text-slate-900'
+          : 'bg-slate-950 text-slate-100'
+      }`}
+    >
       {/* Subtle background glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Language Switcher Bar */}
-      <div className="z-20 mb-4 flex items-center gap-2 bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-full shadow-md text-xs">
-        <Globe className="w-3.5 h-3.5 text-emerald-400" />
-        <span className="text-slate-400 font-medium">ଭାଷା / Language:</span>
-        <button
-          type="button"
-          onClick={() => setAuthLang('or-IN')}
-          className={`px-2.5 py-0.5 rounded-full font-bold transition-colors ${
-            authLang === 'or-IN'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'text-slate-300 hover:text-white'
-          }`}
-        >
-          ଓଡ଼ିଆ (Odia)
-        </button>
-        <button
-          type="button"
-          onClick={() => setAuthLang('en-IN')}
-          className={`px-2.5 py-0.5 rounded-full font-bold transition-colors ${
-            authLang === 'en-IN'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'text-slate-300 hover:text-white'
-          }`}
-        >
-          English
-        </button>
-        <button
-          type="button"
-          onClick={() => setAuthLang('hi-IN')}
-          className={`px-2.5 py-0.5 rounded-full font-bold transition-colors ${
-            authLang === 'hi-IN'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'text-slate-300 hover:text-white'
-          }`}
-        >
-          हिन्दी
-        </button>
+      {/* Top Bar: Theme Switcher & Language Switcher Bar */}
+      <div className="z-20 mb-4 flex flex-wrap items-center justify-center gap-2.5">
+        {/* Theme Mode Switcher: Light / Dark / Reading */}
+        <div className="flex items-center bg-slate-800/90 border border-slate-700 p-0.5 rounded-full shadow-md text-xs">
+          <button
+            type="button"
+            onClick={() => handleThemeSwitch('light')}
+            title="Light Mode"
+            className={`p-1.5 px-2 rounded-full flex items-center gap-1 transition-all ${
+              activeTheme === 'light'
+                ? 'bg-white text-amber-600 shadow-xs font-bold'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Sun className="w-3.5 h-3.5" />
+            <span className="text-[10px] hidden sm:inline">Light</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleThemeSwitch('reading')}
+            title="Reading Mode (Warm Eye-Care)"
+            className={`p-1.5 px-2 rounded-full flex items-center gap-1 transition-all ${
+              activeTheme === 'reading'
+                ? 'bg-amber-100 text-amber-900 shadow-xs font-bold'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span className="text-[10px] hidden sm:inline">Read</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleThemeSwitch('dark')}
+            title="Dark Mode"
+            className={`p-1.5 px-2 rounded-full flex items-center gap-1 transition-all ${
+              activeTheme === 'dark'
+                ? 'bg-slate-950 text-teal-300 shadow-xs font-bold border border-teal-500/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Moon className="w-3.5 h-3.5" />
+            <span className="text-[10px] hidden sm:inline">Dark</span>
+          </button>
+        </div>
+
+        {/* Language Switcher */}
+        <div className="flex items-center gap-2 bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-full shadow-md text-xs">
+          <Globe className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="text-slate-400 font-medium">ଭାଷା:</span>
+          <button
+            type="button"
+            onClick={() => setAuthLang('or-IN')}
+            className={`px-2.5 py-0.5 rounded-full font-bold transition-colors ${
+              authLang === 'or-IN'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            ଓଡ଼ିଆ
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthLang('en-IN')}
+            className={`px-2.5 py-0.5 rounded-full font-bold transition-colors ${
+              authLang === 'en-IN'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            English
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthLang('hi-IN')}
+            className={`px-2.5 py-0.5 rounded-full font-bold transition-colors ${
+              authLang === 'hi-IN'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            हिन्दी
+          </button>
+        </div>
       </div>
 
       {/* Brand Header */}
       <div className="text-center mb-6 z-10 max-w-xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold mb-3">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-semibold mb-3">
+          <ShieldCheck className="w-4 h-4 text-emerald-500" />
           {currentStrings.badge}
         </div>
         <div className="flex items-center justify-center gap-3 mb-2">
           <div className="bg-emerald-600 text-white p-2.5 rounded-xl shadow-lg shadow-emerald-900/40">
             <Activity className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1
+            className={`text-2xl sm:text-3xl font-black tracking-tight ${
+              activeTheme === 'reading'
+                ? 'text-[#2b1f11]'
+                : activeTheme === 'light'
+                ? 'text-slate-900'
+                : 'text-white'
+            }`}
+          >
             {currentStrings.title}
           </h1>
         </div>
-        <p className="text-xs sm:text-sm text-slate-400">
+        <p
+          className={`text-xs sm:text-sm ${
+            activeTheme === 'reading'
+              ? 'text-[#6d5b43]'
+              : activeTheme === 'light'
+              ? 'text-slate-600'
+              : 'text-slate-400'
+          }`}
+        >
           {currentStrings.subtitle}
         </p>
       </div>
