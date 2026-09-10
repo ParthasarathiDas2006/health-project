@@ -18,6 +18,7 @@ const AmbulanceBooking = lazy(() => import('./components/AmbulanceBooking'));
 const AdminPage = lazy(() => import('./components/AdminPage'));
 import {
   Activity,
+  Brain,
   FileText,
   UploadCloud,
   Stethoscope,
@@ -558,6 +559,32 @@ export default function App() {
     }
   }[appLang] || {};
 
+  // Left sidebar menu items for GovTech Features 11 through 32
+  const leftSidebarItems = [
+    { id: 't11_history', num: 11, label: uiText.t11_history || '11. ABHA Trend Analysis', icon: Activity },
+    { id: 't12_differential', num: 12, label: uiText.t12_differential || '12. Differential Triage', icon: FileText },
+    { id: 't13_drugallergy', num: 13, label: uiText.t13_drugallergy || '13. Drug-Allergy Guard', icon: AlertTriangle },
+    { id: 't14_riskscores', num: 14, label: uiText.t14_riskscores || '14. Risk Score Calculator', icon: Activity },
+    { id: 't15_followup', num: 15, label: uiText.t15_followup || '15. Smart Follow-up Engine', icon: Phone },
+    { id: 't16_whatsapp_ussd', num: 16, label: uiText.t16_whatsapp_ussd || '16. WhatsApp & USSD Triage', icon: Mail },
+    { id: 't17_asha_voice', num: 17, label: uiText.t17_asha_voice || '17. ASHA Voice Copilot', icon: Stethoscope },
+    { id: 't18_pain_map', num: 18, label: uiText.t18_pain_map || '18. Pictorial Pain Map', icon: Activity },
+    { id: 't19_family_triage', num: 19, label: uiText.t19_family_triage || '19. Family Camp Triage', icon: Building },
+    { id: 't20_opd_balancer', num: 20, label: uiText.t20_opd_balancer || '20. OPD Load Balancer', icon: Building2 },
+    { id: 't21_counterfeit', num: 21, label: uiText.t21_counterfeit || '21. Counterfeit Drug Detector', icon: UploadCloud },
+    { id: 't22_kiosk', num: 22, label: uiText.t22_kiosk || '22. Zero-Touch Kiosk', icon: ShieldCheck },
+    { id: 't23_outbreak', num: 23, label: uiText.t23_outbreak || '23. IDSP Outbreak Radar', icon: AlertTriangle },
+    { id: 't24_inventory', num: 24, label: uiText.t24_inventory || '24. Inventory Auto-Order', icon: Pill },
+    { id: 't25_dpdp_consent', num: 25, label: uiText.t25_dpdp_consent || '25. DPDP Audio Consent', icon: ShieldCheck },
+    { id: 't26_federated', num: 26, label: uiText.t26_federated || '26. Federated Privacy Model', icon: ShieldCheck },
+    { id: 't27_fairness', num: 27, label: uiText.t27_fairness || '27. AI Bias & Fairness', icon: Activity },
+    { id: 't28_rlhf', num: 28, label: uiText.t28_rlhf || '28. Doctor Feedback Loop (RLHF)', icon: Stethoscope },
+    { id: 't29_discharge', num: 29, label: uiText.t29_discharge || '29. Multilingual Discharge Summary', icon: FileText },
+    { id: 't30_anc_maternal', num: 30, label: uiText.t30_anc_maternal || '30. ANC High-Risk Pregnancy', icon: Activity },
+    { id: 't31_mental_health', num: 31, label: uiText.t31_mental_health || '31. PHQ-2 Mental Health Screener', icon: Stethoscope },
+    { id: 't32_carbon_sms', num: 32, label: uiText.t32_carbon_sms || '32. Citizen SMS Receipts', icon: Mail }
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       {/* Top Banner: Clinical Safety Mandate & Session Status */}
@@ -866,226 +893,6 @@ export default function App() {
               </span>
             </button>
 
-            {/* TAB 11 to 32: STANDALONE GOVTECH ENTERPRISE FEATURES */}
-            <button
-              onClick={() => setActiveTab('t11_history')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't11_history' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Activity className="w-3.5 h-3.5" />
-              {uiText.t11_history}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t12_differential')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't12_differential' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              {uiText.t12_differential}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t13_drugallergy')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't13_drugallergy' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-              {uiText.t13_drugallergy}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t14_riskscores')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't14_riskscores' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Activity className="w-3.5 h-3.5" />
-              {uiText.t14_riskscores}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t15_followup')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't15_followup' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Phone className="w-3.5 h-3.5" />
-              {uiText.t15_followup}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t16_whatsapp_ussd')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't16_whatsapp_ussd' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Mail className="w-3.5 h-3.5" />
-              {uiText.t16_whatsapp_ussd}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t17_asha_voice')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't17_asha_voice' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Stethoscope className="w-3.5 h-3.5" />
-              {uiText.t17_asha_voice}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t18_pain_map')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't18_pain_map' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Activity className="w-3.5 h-3.5" />
-              {uiText.t18_pain_map}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t19_family_triage')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't19_family_triage' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Building className="w-3.5 h-3.5" />
-              {uiText.t19_family_triage}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t20_opd_balancer')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't20_opd_balancer' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              {uiText.t20_opd_balancer}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t21_counterfeit')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't21_counterfeit' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <UploadCloud className="w-3.5 h-3.5" />
-              {uiText.t21_counterfeit}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t22_kiosk')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't22_kiosk' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              {uiText.t22_kiosk}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t23_outbreak')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't23_outbreak' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-              {uiText.t23_outbreak}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t24_inventory')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't24_inventory' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Pill className="w-3.5 h-3.5" />
-              {uiText.t24_inventory}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t25_dpdp_consent')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't25_dpdp_consent' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              {uiText.t25_dpdp_consent}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t26_federated')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't26_federated' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              {uiText.t26_federated}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t27_fairness')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't27_fairness' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Activity className="w-3.5 h-3.5" />
-              {uiText.t27_fairness}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t28_rlhf')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't28_rlhf' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Stethoscope className="w-3.5 h-3.5" />
-              {uiText.t28_rlhf}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t29_discharge')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't29_discharge' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              {uiText.t29_discharge}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t30_anc_maternal')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't30_anc_maternal' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Activity className="w-3.5 h-3.5" />
-              {uiText.t30_anc_maternal}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t31_mental_health')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't31_mental_health' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Stethoscope className="w-3.5 h-3.5" />
-              {uiText.t31_mental_health}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('t32_carbon_sms')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't32_carbon_sms' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <Mail className="w-3.5 h-3.5" />
-              {uiText.t32_carbon_sms}
-            </button>
           </nav>
 
           {/* Right Controls: Theme Switcher, Global Language Switcher & User Profile Pill */}
@@ -1298,8 +1105,44 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+      {/* Container with Left Sidebar for GovTech Enterprise Features 11 to 32 */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        {/* LEFT SIDEBAR BAR FOR FEATURES 11 TO 32 */}
+        <aside className="w-full md:w-64 shrink-0 bg-white border-b md:border-b-0 md:border-r border-slate-200 p-3 overflow-y-auto max-h-56 md:max-h-none flex flex-col space-y-1 shadow-2xs">
+          <div className="px-2 py-1.5 mb-1 border-b border-slate-100 flex items-center justify-between">
+            <span className="text-[11px] font-extrabold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Brain className="w-4 h-4 text-indigo-600" />
+              {appLang === 'or-IN' ? 'GovTech ଫିଚର ୧୧-୩୨' : (appLang === 'hi-IN' ? 'GovTech फीचर्स 11-32' : 'GovTech Features (11 - 32)')}
+            </span>
+            <span className="text-[10px] font-black bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
+              22 Features
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            {leftSidebarItems.map((item) => {
+              const IconComp = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-xs font-extrabold'
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <IconComp className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-indigo-600'}`} />
+                  <span className="truncate">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
         {/* TAB 0: ADMIN COMMAND PORTAL */}
         {activeTab === 'admin' && (
           <div>
@@ -1739,6 +1582,7 @@ export default function App() {
         {activeTab === 't31_mental_health' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
         {activeTab === 't32_carbon_sms' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
       </main>
+      </div>
 
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-400">
