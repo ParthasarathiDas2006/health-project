@@ -413,46 +413,46 @@ export default function HospitalTieUpSystem({ currentUser, appLang, onTransfersC
         </div>
       </div>
 
-      {/* 5-SECTION SWASTHYA MITRA NAV TABS */}
+      {/* 7-SECTION SWASTHYA MITRA NAV TABS */}
       <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
           <button
             type="button"
             onClick={() => setActiveSection('sec-directory')}
-            className={`px-3 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all ${
+            className={`px-2.5 py-2.5 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-1.5 transition-all ${
               activeSection === 'sec-directory'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
             }`}
           >
-            <Building2 className="w-4 h-4" />
-            <span>{txt.sec1}</span>
+            <Building2 className="w-3.5 h-3.5" />
+            <span>{lang === 'or-IN' ? '୧. ହସ୍ପିଟାଲ୍ ଡାଇରେକ୍ଟରୀ' : (lang === 'hi-IN' ? '1. अस्पताल निर्देशिका' : '1. Hospital Directory')}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSection('sec-bedtracker')}
-            className={`px-3 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all ${
+            className={`px-2.5 py-2.5 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-1.5 transition-all ${
               activeSection === 'sec-bedtracker'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
             }`}
           >
-            <Activity className="w-4 h-4 text-rose-400" />
-            <span>{txt.sec2}</span>
+            <Activity className="w-3.5 h-3.5 text-rose-400" />
+            <span>{lang === 'or-IN' ? '୨. ଲାଇଭ୍ ବେଡ୍ & ICU' : (lang === 'hi-IN' ? '2. लाइव बेड & ICU' : '2. Live Bed & ICU')}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSection('sec-transfers')}
-            className={`px-3 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all ${
+            className={`px-2.5 py-2.5 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-1.5 transition-all ${
               activeSection === 'sec-transfers'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
             }`}
           >
-            <FileText className="w-4 h-4 text-emerald-400" />
-            <span>{txt.sec3}</span>
+            <FileText className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{lang === 'or-IN' ? '୩. ଟ୍ରାନ୍ସଫର୍ ପାସ୍' : (lang === 'hi-IN' ? '3. ट्रांसफर पास' : '3. Digital Pass')}</span>
             {transfers.length > 0 && (
               <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                 {transfers.length}
@@ -463,27 +463,53 @@ export default function HospitalTieUpSystem({ currentUser, appLang, onTransfersC
           <button
             type="button"
             onClick={() => setActiveSection('sec-emergency')}
-            className={`px-3 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all ${
+            className={`px-2.5 py-2.5 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-1.5 transition-all ${
               activeSection === 'sec-emergency'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
             }`}
           >
-            <Ambulance className="w-4 h-4 text-amber-400" />
-            <span>{txt.sec4}</span>
+            <Ambulance className="w-3.5 h-3.5 text-amber-400" />
+            <span>{lang === 'or-IN' ? '୪. ୧୦୮ ଆମ୍ବୁଲାନ୍ସ' : (lang === 'hi-IN' ? '4. 108 एम्बुलेंस' : '4. 108 Dispatch')}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSection('sec-schemes')}
-            className={`px-3 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all ${
+            className={`px-2.5 py-2.5 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-1.5 transition-all ${
               activeSection === 'sec-schemes'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
             }`}
           >
-            <CreditCard className="w-4 h-4 text-teal-400" />
-            <span>{txt.sec5}</span>
+            <CreditCard className="w-3.5 h-3.5 text-teal-400" />
+            <span>{lang === 'or-IN' ? '୫. BSKY / PMJAY' : (lang === 'hi-IN' ? '5. BSKY / PMJAY' : '5. BSKY / PMJAY')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSection('sec-pharmacy')}
+            className={`px-2.5 py-2.5 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-1.5 transition-all ${
+              activeSection === 'sec-pharmacy'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <span>{lang === 'or-IN' ? '୬. ୨୪x୭ ଫାର୍ମାସୀ' : (lang === 'hi-IN' ? '6. 24x7 निरामय' : '6. 24x7 Pharmacy')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSection('sec-insurance')}
+            className={`px-2.5 py-2.5 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-1.5 transition-all ${
+              activeSection === 'sec-insurance'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <UserCheck className="w-3.5 h-3.5 text-indigo-300" />
+            <span>{lang === 'or-IN' ? '୭. କ୍ୟାସଲେସ୍ Desk' : (lang === 'hi-IN' ? '7. कैशलेस डेस्क' : '7. Pre-Auth Desk')}</span>
           </button>
         </div>
       </div>
@@ -626,6 +652,23 @@ export default function HospitalTieUpSystem({ currentUser, appLang, onTransfersC
                 className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all p-5 flex flex-col justify-between"
               >
                 <div>
+                  {/* Real Hospital Image Banner */}
+                  {hosp.image && (
+                    <div className="mb-3.5 rounded-xl overflow-hidden h-36 w-full relative bg-slate-100 border border-slate-100 shadow-inner group">
+                      <img
+                        src={hosp.image}
+                        alt={hosp.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent flex items-end p-2.5">
+                        <span className="text-[10px] font-black text-white bg-slate-900/70 backdrop-blur-xs px-2.5 py-0.5 rounded-md border border-white/20 flex items-center gap-1">
+                          🏢 {hosp.cityLabel} Campus
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -935,6 +978,102 @@ export default function HospitalTieUpSystem({ currentUser, appLang, onTransfersC
                   <li>• Inter-state portable coverage in AIIMS, Tata Memorial, NIMHANS & CMC Vellore.</li>
                   <li>• Pre-authorization desk directly linked at hospital admission counters.</li>
                   <li>• ABHA ID card auto-verifies cashless entitlement.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 6: NIRAMAYA 24x7 FREE MEDICINE & PHARMACY DISPATCH */}
+      {activeSection === 'sec-pharmacy' && (
+        <div className="space-y-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="p-2.5 bg-cyan-50 rounded-xl text-cyan-700">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">Niramaya Free Essential Medicine & 24x7 Emergency Pharmacy</h3>
+                <p className="text-xs text-slate-500">Government of Odisha 100% Free Prescription Drugs & Critical ICU Consumables Supply Network</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div className="p-4 rounded-xl bg-cyan-50/70 border border-cyan-200 space-y-2">
+                <h4 className="font-extrabold text-cyan-900 text-sm flex items-center gap-1.5">
+                  💊 Niramaya Essential Drug Store
+                </h4>
+                <p className="text-cyan-800 font-medium leading-relaxed">
+                  Over 570 essential medicines provided 100% free of cost across all 30 District Headquarter Hospitals, SDHs, and CHCs.
+                </p>
+                <div className="pt-2 text-[11px] font-bold text-cyan-900">
+                  ✓ Available 24 Hours • Zero Out-of-Pocket Expense
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-teal-50/70 border border-teal-200 space-y-2">
+                <h4 className="font-extrabold text-teal-900 text-sm flex items-center gap-1.5">
+                  💉 Critical Emergency Consumables
+                </h4>
+                <p className="text-teal-800 font-medium leading-relaxed">
+                  Real-time emergency dispatch for IV fluids, anti-snake venom, thrombolytics, and lifesaving ICU drugs linked directly with Swasthya Mitra.
+                </p>
+                <div className="pt-2 text-[11px] font-bold text-teal-900">
+                  ✓ Tele-Emergency Direct Allocation
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 space-y-2">
+                <h4 className="font-extrabold text-indigo-900 text-sm flex items-center gap-1.5">
+                  📋 Prescription Upload & Dispatch
+                </h4>
+                <p className="text-indigo-800 font-medium leading-relaxed">
+                  Doctors can digitally sign and push prescription requisitions straight to hospital counters during inter-facility referrals.
+                </p>
+                <div className="pt-2 text-[11px] font-bold text-indigo-900">
+                  ✓ Automated e-Hospital Integration
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 7: CASHLESS INSURANCE PRE-AUTHORIZATION HELPDESK */}
+      {activeSection === 'sec-insurance' && (
+        <div className="space-y-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="p-2.5 bg-indigo-50 rounded-xl text-indigo-700">
+                <UserCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">Digital Pre-Authorization & Cashless TPA Fast-Track Desk</h3>
+                <p className="text-xs text-slate-500">Fast-track insurance clearance for corporate, CGHS, ECHS & private health insurance policies</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                <h4 className="font-extrabold text-slate-900 text-sm flex items-center gap-1.5">
+                  🏛️ CGHS, ECHS & ESIC Portal
+                </h4>
+                <ul className="space-y-1.5 text-slate-700 font-medium">
+                  <li>• Direct fast-track approval for Central Government Health Scheme cardholders.</li>
+                  <li>• Ex-Servicemen Contributory Health Scheme (ECHS) priority ICU admission.</li>
+                  <li>• ESIC referral slips auto-verified with e-Pehchan credentials.</li>
+                </ul>
+              </div>
+
+              <div className="p-4 rounded-xl bg-indigo-50/60 border border-indigo-200 space-y-2">
+                <h4 className="font-extrabold text-indigo-900 text-sm flex items-center gap-1.5">
+                  💳 24x7 TPA Insurance Helpdesk
+                </h4>
+                <ul className="space-y-1.5 text-indigo-800 font-medium">
+                  <li>• Instant pre-authorization processing within 30 minutes of emergency admission.</li>
+                  <li>• Direct integration with Star Health, HDFC ERGO, Care, Max Bupa & Niva Bupa.</li>
+                  <li>• Swasthya Mitra coordinator assigned for cashless query resolution.</li>
                 </ul>
               </div>
             </div>

@@ -54,6 +54,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 1. BHUBANESWAR =================
     {
       id: 'HOSP-01',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଏମ୍ସ ଭୁବନେଶ୍ୱର (AIIMS Bhubaneswar)' : (isHi ? 'एम्स भुवनेश्वर (AIIMS Bhubaneswar)' : 'AIIMS Bhubaneswar'),
       tier: isOr ? 'ଜାତୀୟ ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ ସର୍ବୋଚ୍ଚ ସଂସ୍ଥା (Apex National Institute)' : (isHi ? 'राष्ट्रीय महत्व का शीर्ष संस्थान' : 'Apex Autonomous National Institute'),
       city: 'Bhubaneswar',
@@ -84,6 +85,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     },
     {
       id: 'HOSP-02',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଆପୋଲୋ ହସ୍ପିଟାଲ୍ସ (Apollo Hospitals, Bhubaneswar)' : (isHi ? 'अपोलो हॉस्पिटल्स (Apollo Hospitals, Bhubaneswar)' : 'Apollo Hospitals Enterprise Network'),
       tier: isOr ? 'JCI ଓ NABH ସ୍ୱୀକୃତିପ୍ରାପ୍ତ କ୍ୱାଟରନାରୀ କେୟାର' : (isHi ? 'JCI एवं NABH मान्यता प्राप्त चतुर्थक केंद्र' : 'JCI & NABH Quaternary Care Hub'),
       city: 'Bhubaneswar',
@@ -113,6 +115,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     },
     {
       id: 'HOSP-03',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'କିମ୍ସ ସୁପର-ସ୍ପେଶିଆଲିଟି ହସ୍ପିଟାଲ୍ (KIMS, KIIT)' : (isHi ? 'किम्स सुपर-स्पेशियलिटी अस्पताल (KIMS Bhubaneswar)' : 'KIMS Super-Specialty Hospital (KIIT)'),
       tier: isOr ? '୨,୦୦୦ ବେଡ୍ ବିଶିଷ୍ଟ ସୁପର-ସ୍ପେଶିଆଲିଟି କ୍ୟାମ୍ପସ୍' : (isHi ? '2,000 बेड सुपर-स्पेशियलिटी स्वास्थ्य परिसर' : '2,000-Bed Super-Specialty Healthcare Complex'),
       city: 'Bhubaneswar',
@@ -142,6 +145,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     },
     {
       id: 'HOSP-04',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'କ୍ୟାପିଟାଲ୍ ହସ୍ପିଟାଲ୍ ଓ PGIMER (Capital Hospital)' : (isHi ? 'कैपिटल अस्पताल एवं पीजीआईएमईआर' : 'Capital Hospital & PGIMER, Bhubaneswar'),
       tier: isOr ? 'ମୁଖ୍ୟ ଜିଲ୍ଲା ଚିକିତ୍ସାଳୟ ଓ ସ୍ନାତକୋତ୍ତର ପ୍ରତିଷ୍ଠାନ' : (isHi ? 'प्रमुख जिला अस्पताल एवं स्नातकोत्तर संस्थान' : 'Apex District Post-Graduate Medical Institute'),
       city: 'Bhubaneswar',
@@ -171,6 +175,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     },
     {
       id: 'HOSP-05',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସମ୍ ଅଲ୍ଟିମେଟ୍ ମେଡିକେୟାର / IMS & SUM (Bhubaneswar)' : (isHi ? 'सम अल्टीमेट मेडिकेयर / आईएमएस एंड सम' : 'SUM Ultimate Medicare / IMS & SUM Hospital'),
       tier: isOr ? '୧,୭୫୦ ବେଡ୍ ବିଶିଷ୍ଟ NABH ସ୍ୱୀକୃତିପ୍ରାପ୍ତ ସୁପର-ସ୍ପେଶିଆଲିଟି' : (isHi ? '1,750 बेड एनएबीएच मान्यता प्राप्त सुपर-स्पेशियलिटी' : '1,750-Bed Quaternary Care & Bone Marrow Center'),
       city: 'Bhubaneswar',
@@ -202,6 +207,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 2. CUTTACK =================
     {
       id: 'HOSP-06',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଏସ.ସି.ବି. ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍ (SCBMCH Cuttack)' : (isHi ? 'एससीबी मेडिकल कॉलेज अस्पताल (SCBMCH Cuttack)' : 'SCB Medical College & Hospital, Cuttack'),
       tier: isOr ? 'ରାଜ୍ୟ ସର୍ବୋଚ୍ଚ ରେଫରାଲ୍ ହସ୍ପିଟାଲ୍ (State Apex Referral Hub)' : (isHi ? 'राज्य शीर्ष रेफरल अस्पताल' : 'State Apex Teaching & Referral Hub'),
       city: 'Cuttack',
@@ -231,6 +237,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     },
     {
       id: 'HOSP-07',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଅଶ୍ୱିନୀ ହସ୍ପିଟାଲ୍ ଓ ଟ୍ରମା ସେଣ୍ଟର୍ (Ashwini Hospital, Cuttack)' : (isHi ? 'अश्विनी अस्पताल एवं ट्रॉमा सेंटर (Cuttack)' : 'Ashwini Hospital & Trauma Centre, Cuttack'),
       tier: isOr ? '୩୦୦ ବେଡ୍ ବିଶିଷ୍ଟ ଟେର୍ସିଆରି ଟ୍ରମା ଓ ସୁପର-ସ୍ପେଶିଆଲିଟି' : (isHi ? '300 बेड तृतीयक ट्रॉमा एवं क्रिटिकल केयर' : 'Tertiary Neurotrauma & Critical Care Hub'),
       city: 'Cuttack',
@@ -259,6 +266,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     },
     {
       id: 'HOSP-08',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଆଚାର୍ଯ୍ୟ ହରିହର କର୍କଟ ପ୍ରତିଷ୍ଠାନ (AHPGIC, Cuttack)' : (isHi ? 'आचार्य हरिहर स्नातकोत्तर कैंसर संस्थान' : 'Acharya Harihar Post Graduate Institute of Cancer (AHPGIC)'),
       tier: isOr ? 'ଓଡ଼ିଶାର ଏକମାତ୍ର ସରକାରୀ ସର୍ବୋଚ୍ଚ କର୍କଟ ହସ୍ପିଟାଲ୍' : (isHi ? 'ओडिशा का प्रमुख सरकारी कैंसर संस्थान' : 'State Apex Specialized Cancer Institute'),
       city: 'Cuttack',
@@ -290,6 +298,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 3. BERHAMPUR =================
     {
       id: 'HOSP-09',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଏମ.କେ.ସି.ଜି. ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍ (MKCG Berhampur)' : (isHi ? 'एमकेसीजी मेडिकल कॉलेज अस्पताल (MKCG Berhampur)' : 'MKCG Medical College & Hospital, Berhampur'),
       tier: isOr ? 'ଦକ୍ଷିଣ ଓଡ଼ିଶାର ସର୍ବୋଚ୍ଚ ରେଫରାଲ୍ ମେଡିକାଲ୍ କଲେଜ୍' : (isHi ? 'दक्षिण ओडिशा का शीर्ष रेफरल मेडिकल कॉलेज' : 'South Odisha Apex Medical College & Referral Hub'),
       city: 'Berhampur',
@@ -321,6 +330,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 4. ROURKELA =================
     {
       id: 'HOSP-10',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଇସ୍ପାତ ଜେନେରାଲ୍ ହସ୍ପିଟାଲ୍ ଓ ସୁପର ସ୍ପେଶିଆଲିଟି (IGH Rourkela)' : (isHi ? 'इस्पात जनरल अस्पताल एवं सुपर स्पेशियलिटी (IGH Rourkela)' : 'Ispat General Hospital (IGH) & Super Specialty Hospital'),
       tier: isOr ? 'ପଶ୍ଚିମ ଓଡ଼ିଶାର ପ୍ରମୁଖ ଶିଳ୍ପାଞ୍ଚଳ ସୁପର-ସ୍ପେଶିଆଲିଟି କେନ୍ଦ୍ର' : (isHi ? 'पश्चिम ओडिशा का प्रमुख इस्पात सुपर स्पेशियलिटी केंद्र' : 'West Odisha Premier SAIL Industrial & Tertiary Hub'),
       city: 'Rourkela',
@@ -350,6 +360,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     },
     {
       id: 'HOSP-11',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ହାଇ-ଟେକ୍ ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍ (Hi-Tech Rourkela)' : (isHi ? 'हाई-टेक मेडिकल कॉलेज अस्पताल (Hi-Tech Rourkela)' : 'Hi-Tech Medical College & Hospital, Rourkela'),
       tier: isOr ? 'ପଶ୍ଚିମ ଓଡ଼ିଶାର ଟେର୍ସିଆରି ମଲ୍ଟି-ସ୍ପେଶିଆଲିଟି' : (isHi ? 'पश्चिम ओडिशा मल्टी-स्पेशियलिटी अस्पताल' : 'Western Odisha Multi-Specialty Tertiary Hub'),
       city: 'Rourkela',
@@ -376,6 +387,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 5. SAMBALPUR / BURLA =================
     {
       id: 'HOSP-12',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଭିମ୍‌ସାର୍ (VIMSAR Burla, Sambalpur)' : (isHi ? 'विमसार बुर्ला, सम्बलपुर (VIMSAR Burla)' : 'VIMSAR (Veer Surendra Sai Institute of Medical Sciences & Research)'),
       tier: isOr ? 'ପଶ୍ଚିମ ଓଡ଼ିଶାର ସର୍ବବୃହତ ସରକାରୀ ସୁପର-ସ୍ପେଶିଆଲିଟି ସଂସ୍ଥାନ' : (isHi ? 'पश्चिम ओडिशा का शीर्ष सरकारी मेडिकल संस्थान' : 'Western Odisha Premier Apex Referral Institute'),
       city: 'Sambalpur',
@@ -407,6 +419,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 6. BALASORE =================
     {
       id: 'HOSP-13',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଫକୀର ମୋହନ ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍ (FMMCH Balasore)' : (isHi ? 'फकीर मोहन मेडिकल कॉलेज अस्पताल (Balasore)' : 'Fakir Mohan Medical College & Hospital (FMMCH)'),
       tier: isOr ? 'ଉତ୍ତର ଓଡ଼ିଶା ଉପକୂଳର ସର୍ବୋଚ୍ଚ ସରକାରୀ ହସ୍ପିଟାଲ୍' : (isHi ? 'उत्तरी ओडिशा तटीय क्षेत्र का प्रमुख मेडिकल कॉलेज' : 'North Odisha Coastal Apex Medical College'),
       city: 'Balasore',
@@ -438,6 +451,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 7. KORAPUT =================
     {
       id: 'HOSP-14',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସହିଦ ଲକ୍ଷ୍ମଣ ନାୟକ ମେଡିକାଲ୍ କଲେଜ୍ (SLNMCH Koraput)' : (isHi ? 'शहीद लक्ष्मण नायक मेडिकल कॉलेज (Koraput)' : 'Saheed Laxman Nayak Medical College & Hospital (SLNMCH)'),
       tier: isOr ? 'ଆଦିବାସୀ ବହୁଳ ଦକ୍ଷିଣ-ପଶ୍ଚିମ ଓଡ଼ିଶାର ସର୍ବୋଚ୍ଚ ହସ୍ପିଟାଲ୍' : (isHi ? 'जनजातीय दक्षिण-पश्चिम ओडिशा का शीर्ष अस्पताल' : 'South-West Tribal Belt Apex Referral Hospital'),
       city: 'Koraput',
@@ -469,6 +483,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 8. PURI =================
     {
       id: 'HOSP-15',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଶ୍ରୀ ଜଗନ୍ନାଥ ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍ (SJMCH Puri)' : (isHi ? 'श्री जगन्नाथ मेडिकल कॉलेज अस्पताल (Puri)' : 'Sri Jagannath Medical College & Hospital (SJMCH)'),
       tier: isOr ? 'ଉପକୂଳ ତୀର୍ଥକ୍ଷେତ୍ର ଟ୍ରମା ଓ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'तटीय तीर्थ क्षेत्र प्रमुख मेडिकल कॉलेज' : 'Coastal Pilgrim Center & Emergency Trauma Hub'),
       city: 'Puri',
@@ -500,6 +515,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 9. BARIPADA / MAYURBHANJ =================
     {
       id: 'HOSP-16',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ପଣ୍ଡିତ ରଘୁନାଥ ମୁର୍ମୁ ମେଡିକାଲ୍ କଲେଜ୍ (PRMMCH Baripada)' : (isHi ? 'पंडित रघुनाथ मुर्मू मेडिकल कॉलेज (Baripada)' : 'Pandit Raghunath Murmu Medical College & Hospital (PRMMCH)'),
       tier: isOr ? 'ଉତ୍ତର ଆଦିବାସୀ ଜିଲ୍ଲାର ପ୍ରମୁଖ ରେଫରାଲ୍ ହସ୍ପିଟାଲ୍' : (isHi ? 'उत्तरी जनजातीय जिले का प्रमुख रेफरल अस्पताल' : 'North Odisha Tribal Apex Medical College'),
       city: 'Baripada',
@@ -531,6 +547,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 10. BOLANGIR =================
     {
       id: 'HOSP-17',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଭୀମ ଭୋଇ ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍ (BBMCH Bolangir)' : (isHi ? 'भीम भोई मेडिकल कॉलेज अस्पताल (Bolangir)' : 'Bhima Bhoi Medical College & Hospital (BBMCH)'),
       tier: isOr ? 'କେ.ବି.କେ. କ୍ଷେତ୍ରର ପ୍ରମୁଖ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'केबीके क्षेत्र का प्रमुख मेडिकल कॉलेज' : 'KBK Region Premier Government Medical College'),
       city: 'Bolangir',
@@ -562,6 +579,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 11. KEONJHAR =================
     {
       id: 'HOSP-18',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଧରଣୀଧର ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍ (DDMCH Keonjhar)' : (isHi ? 'धरणीधर मेडिकल कॉलेज अस्पताल (Keonjhar)' : 'Dharanidhar Medical College & Hospital (DDMCH)'),
       tier: isOr ? 'ଖଣି ଅଞ୍ଚଳର ପ୍ରମୁଖ ଟ୍ରମା ଓ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'खनन क्षेत्र का प्रमुख मेडिकल कॉलेज' : 'Mining Belt Occupational & Trauma Care Hub'),
       city: 'Keonjhar',
@@ -593,6 +611,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 12. JHARSUGUDA =================
     {
       id: 'HOSP-19',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ ଓ ହାର୍ଟ ଇନଷ୍ଟିଚ୍ୟୁଟ୍ (Jharsuguda)' : (isHi ? 'जिला अस्पताल एवं हृदय संस्थान (Jharsuguda)' : 'District Headquarters Hospital & Heart Institute, Jharsuguda'),
       tier: isOr ? 'ପଶ୍ଚିମ ଶିଳ୍ପାଞ୍ଚଳ କାର୍ଡିଆକ୍ ଓ ଟ୍ରମା କେନ୍ଦ୍ର' : (isHi ? 'हृदय एवं औद्योगिक ट्रॉमा केंद्र' : 'Western Industrial Cardiac & Trauma Bay'),
       city: 'Jharsuguda',
@@ -619,6 +638,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 13. ANGUL / TALCHER =================
     {
       id: 'HOSP-20',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ତାଳଚେର ମେଡିକାଲ୍ କଲେଜ୍ ଓ ଜିନ୍ଦଲ ହସ୍ପିଟାଲ୍ (Angul/Talcher)' : (isHi ? 'तालचेर मेडिकल कॉलेज एवं जिंदल संजीवनी अस्पताल' : 'Talcher Medical College & Jindal Sanjivani Hospital, Angul'),
       tier: isOr ? 'କୋଇଲା ଓ ଇସ୍ପାତ ଶିଳ୍ପ ବେଲ୍ଟ୍ ସୁପର-ସ୍ପେଶିଆଲିଟି' : (isHi ? 'कोयला एवं इस्पात क्षेत्र सुपर स्पेशियलिटी' : 'Coal Belt Burns, Trauma & Multi-Specialty Hub'),
       city: 'Angul',
@@ -646,6 +666,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 14. BARGARH =================
     {
       id: 'HOSP-28',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ବରଗଡ଼ (DHH Bargarh)' : (isHi ? 'जिला मुख्य चिकित्सालय, बरगढ़ (DHH Bargarh)' : 'District Headquarters Hospital (DHH), Bargarh'),
       tier: isOr ? 'ଜିଲ୍ଲା ସ୍ତରୀୟ ଫାଷ୍ଟ-ଟ୍ରାକ୍ ରେଫରାଲ୍ ହସ୍ପିଟାଲ୍' : (isHi ? 'जिला स्तरीय रेफरल अस्पताल' : 'District-Level Fast-Track Referral Hospital'),
       city: 'Bargarh',
@@ -673,6 +694,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 15. BHADRAK =================
     {
       id: 'HOSP-29',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ଭଦ୍ରକ (DHH Bhadrak)' : (isHi ? 'जिला मुख्य चिकित्सालय, भद्रक (DHH Bhadrak)' : 'District Headquarters Hospital (DHH), Bhadrak'),
       tier: isOr ? 'ବନ୍ୟା ପ୍ରଭାବିତ ଜିଲ୍ଲା ଜରୁରୀକାଳୀନ ହସ୍ପିଟାଲ୍' : (isHi ? 'बाढ़ प्रभावित जिला आपातकालीन अस्पताल' : 'Flood-Prone District Emergency Hospital'),
       city: 'Bhadrak',
@@ -700,6 +722,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 16. BOUDH =================
     {
       id: 'HOSP-30',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ବୌଦ୍ଧ (DHH Boudh)' : (isHi ? 'जिला मुख्य चिकित्सालय, बौद्ध (DHH Boudh)' : 'District Headquarters Hospital (DHH), Boudh'),
       tier: isOr ? 'ଗ୍ରାମୀଣ ଜିଲ୍ଲା ହସ୍ପିଟାଲ୍ ଓ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'ग्रामीण जिला अस्पताल एवं रेफरल केंद्र' : 'Rural District Hospital & Referral Center'),
       city: 'Boudh',
@@ -727,6 +750,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 17. DEOGARH =================
     {
       id: 'HOSP-31',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ଦେଓଗଡ଼ (DHH Deogarh)' : (isHi ? 'जिला मुख्य चिकित्सालय, देवगढ़ (DHH Deogarh)' : 'District Headquarters Hospital (DHH), Deogarh'),
       tier: isOr ? 'ଆଦିବାସୀ ଜିଲ୍ଲା ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'आदिवासी जिला स्वास्थ्य रेफरल केंद्र' : 'Tribal District Health Referral Center'),
       city: 'Deogarh',
@@ -754,6 +778,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 18. DHENKANAL =================
     {
       id: 'HOSP-32',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ଢେଙ୍କାନାଳ (DHH Dhenkanal)' : (isHi ? 'जिला मुख्य चिकित्सालय, ढेंकानाल (DHH Dhenkanal)' : 'District Headquarters Hospital (DHH), Dhenkanal'),
       tier: isOr ? 'ମଧ୍ୟ ଓଡ଼ିଶା ଜିଲ୍ଲା ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'मध्य ओडिशा जिला स्वास्थ्य रेफरल केंद्र' : 'Central Odisha District Health Referral Hub'),
       city: 'Dhenkanal',
@@ -781,6 +806,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 19. GAJAPATI / PARALAKHEMUNDI =================
     {
       id: 'HOSP-33',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ପାରଳାଖେମୁଣ୍ଡି (DHH Gajapati)' : (isHi ? 'जिला मुख्य चिकित्सालय, परलाखेमुंडी (DHH Gajapati)' : 'District Headquarters Hospital (DHH), Paralakhemundi'),
       tier: isOr ? 'ଦକ୍ଷିଣ ଓଡ଼ିଶା ଆଦିବାସୀ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'दक्षिण ओडिशा आदिवासी स्वास्थ्य रेफरल केंद्र' : 'South Odisha Tribal Health Referral Center'),
       city: 'Gajapati',
@@ -808,6 +834,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 20. JAGATSINGHPUR =================
     {
       id: 'HOSP-34',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ଜଗତସିଂହପୁର (DHH Jagatsinghpur)' : (isHi ? 'जिला मुख्य चिकित्सालय, जगतसिंहपुर (DHH Jagatsinghpur)' : 'District Headquarters Hospital (DHH), Jagatsinghpur'),
       tier: isOr ? 'ଉପକୂଳ ଚକ୍ରବାତ-ପ୍ରଭାବିତ ଜିଲ୍ଲା ହସ୍ପିଟାଲ୍' : (isHi ? 'तटीय चक्रवात-प्रभावित जिला अस्पताल' : 'Coastal Cyclone-Prone District Hospital'),
       city: 'Jagatsinghpur',
@@ -835,6 +862,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 21. JAJPUR =================
     {
       id: 'HOSP-35',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ଯାଜପୁର (DHH Jajpur)' : (isHi ? 'जिला मुख्य चिकित्सालय, जाजपुर (DHH Jajpur)' : 'District Headquarters Hospital (DHH), Jajpur'),
       tier: isOr ? 'ମଧ୍ୟ ଓଡ଼ିଶା ଶିଳ୍ପ ଅଞ୍ଚଳ ଜିଲ୍ଲା ହସ୍ପିଟାଲ୍' : (isHi ? 'मध्य ओडिशा औद्योगिक क्षेत्र जिला अस्पताल' : 'Central Odisha Industrial Zone District Hospital'),
       city: 'Jajpur',
@@ -862,6 +890,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 22. KALAHANDI / BHAWANIPATNA =================
     {
       id: 'HOSP-36',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ଭବାନୀପାଟଣା (DHH Kalahandi)' : (isHi ? 'जिला मुख्य चिकित्सालय, भवानीपटना (DHH Kalahandi)' : 'District Headquarters Hospital (DHH), Bhawanipatna'),
       tier: isOr ? 'ପଶ୍ଚିମ ଓଡ଼ିଶା ଅପପୁଷ୍ଟି ନିରାକରଣ ଓ ଆଦିବାସୀ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍' : (isHi ? 'पश्चिमी ओडिशा कुपोषण एवं आदिवासी स्वास्थ्य रेफरल' : 'Western Odisha Malnutrition & Tribal Health Referral Hub'),
       city: 'Kalahandi',
@@ -889,6 +918,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 23. KANDHAMAL / PHULBANI =================
     {
       id: 'HOSP-37',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ଫୁଲବାଣୀ (DHH Kandhamal)' : (isHi ? 'जिला मुख्य चिकित्सालय, फूलबाणी (DHH Kandhamal)' : 'District Headquarters Hospital (DHH), Phulbani'),
       tier: isOr ? 'ପାର୍ବତ୍ୟ ଆଦିବାସୀ ଜିଲ୍ଲା ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'पहाड़ी आदिवासी जिला स्वास्थ्य केंद्र' : 'Hill Tribal District Health Center'),
       city: 'Kandhamal',
@@ -916,6 +946,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 24. KENDRAPARA =================
     {
       id: 'HOSP-38',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, କେନ୍ଦ୍ରାପଡ଼ା (DHH Kendrapara)' : (isHi ? 'जिला मुख्य चिकित्सालय, केंद्रापाड़ा (DHH Kendrapara)' : 'District Headquarters Hospital (DHH), Kendrapara'),
       tier: isOr ? 'ଉପକୂଳ ବନ୍ୟା-ପ୍ରଭାବିତ ଜିଲ୍ଲା ହସ୍ପିଟାଲ୍' : (isHi ? 'तटीय बाढ़-प्रभावित जिला अस्पताल' : 'Coastal Flood-Affected District Hospital'),
       city: 'Kendrapara',
@@ -943,6 +974,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 25. MALKANGIRI =================
     {
       id: 'HOSP-39',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ମାଲକାନଗିରି (DHH Malkangiri)' : (isHi ? 'जिला मुख्य चिकित्सालय, मलकानगिरी (DHH Malkangiri)' : 'District Headquarters Hospital (DHH), Malkangiri'),
       tier: isOr ? 'ଦୁର୍ଗମ ଆଦିବାସୀ ବନାଞ୍ଚଳ ଜିଲ୍ଲା ହସ୍ପିଟାଲ୍' : (isHi ? 'दुर्गम आदिवासी वनांचल जिला अस्पताल' : 'Remote Tribal Forest District Hospital'),
       city: 'Malkangiri',
@@ -970,6 +1002,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 26. NABARANGPUR =================
     {
       id: 'HOSP-40',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ନବରଙ୍ଗପୁର (DHH Nabarangpur)' : (isHi ? 'जिला मुख्य चिकित्सालय, नबरंगपुर (DHH Nabarangpur)' : 'District Headquarters Hospital (DHH), Nabarangpur'),
       tier: isOr ? 'KBK ଅଞ୍ଚଳ ଆଦିବାସୀ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'KBK क्षेत्र आदिवासी स्वास्थ्य रेफरल केंद्र' : 'KBK Region Tribal Health Referral Center'),
       city: 'Nabarangpur',
@@ -997,6 +1030,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 27. NAYAGARH =================
     {
       id: 'HOSP-41',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ନୟାଗଡ଼ (DHH Nayagarh)' : (isHi ? 'जिला मुख्य चिकित्सालय, नयागढ़ (DHH Nayagarh)' : 'District Headquarters Hospital (DHH), Nayagarh'),
       tier: isOr ? 'ମଧ୍ୟ ଓଡ଼ିଶା ଜିଲ୍ଲା ସ୍ୱାସ୍ଥ୍ୟ ହସ୍ପିଟାଲ୍' : (isHi ? 'मध्य ओडिशा जिला स्वास्थ्य अस्पताल' : 'Central Odisha District Health Hospital'),
       city: 'Nayagarh',
@@ -1024,6 +1058,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 28. NUAPADA =================
     {
       id: 'HOSP-42',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ନୂଆପଡ଼ା (DHH Nuapada)' : (isHi ? 'जिला मुख्य चिकित्सालय, नुआपाड़ा (DHH Nuapada)' : 'District Headquarters Hospital (DHH), Nuapada'),
       tier: isOr ? 'ପଶ୍ଚିମ ଓଡ଼ିଶା KBK ଅଞ୍ଚଳ ଜିଲ୍ଲା ହସ୍ପିଟାଲ୍' : (isHi ? 'पश्चिमी ओडिशा KBK क्षेत्र जिला अस्पताल' : 'Western Odisha KBK Region District Hospital'),
       city: 'Nuapada',
@@ -1051,6 +1086,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 29. RAYAGADA =================
     {
       id: 'HOSP-43',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ରାୟଗଡ଼ା (DHH Rayagada)' : (isHi ? 'जिला मुख्य चिकित्सालय, रायगड़ा (DHH Rayagada)' : 'District Headquarters Hospital (DHH), Rayagada'),
       tier: isOr ? 'ଦକ୍ଷିଣ ଓଡ଼ିଶା ଆଦିବାସୀ ସ୍ୱାସ୍ଥ୍ୟ ଜିଲ୍ଲା ହସ୍ପିଟାଲ୍' : (isHi ? 'दक्षिण ओडिशा आदिवासी स्वास्थ्य जिला अस्पताल' : 'South Odisha Tribal Health District Hospital'),
       city: 'Rayagada',
@@ -1078,6 +1114,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 30. SONEPUR / SUBARNAPUR =================
     {
       id: 'HOSP-44',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ସୋନପୁର (DHH Sonepur)' : (isHi ? 'जिला मुख्य चिकित्सालय, सोनपुर (DHH Sonepur)' : 'District Headquarters Hospital (DHH), Sonepur'),
       tier: isOr ? 'ପଶ୍ଚିମ ଓଡ଼ିଶା ଗ୍ରାମୀଣ ଜିଲ୍ଲା ହସ୍ପିଟାଲ୍' : (isHi ? 'पश्चिमी ओडिशा ग्रामीण जिला अस्पताल' : 'Western Odisha Rural District Hospital'),
       city: 'Sonepur',
@@ -1105,6 +1142,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 31. NEW DELHI (NCR) =================
     {
       id: 'HOSP-45',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଏମ୍ସ ନୂଆଦିଲ୍ଲୀ (AIIMS New Delhi)' : (isHi ? 'एम्स नई दिल्ली (AIIMS New Delhi)' : 'AIIMS New Delhi (All India Institute of Medical Sciences)'),
       tier: isOr ? 'ଭାରତର ସର୍ବୋଚ୍ଚ ଜାତୀୟ ରେଫରାଲ୍ ମେଡିକାଲ୍ ପ୍ରତିଷ୍ଠାନ' : (isHi ? 'भारत का शीर्ष राष्ट्रीय मेडिकल संस्थान' : 'India’s Apex Premier Quaternary Referral Institute'),
       city: 'New Delhi',
@@ -1134,6 +1172,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     },
     {
       id: 'HOSP-46',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସଫଦରଜଙ୍ଗ ହସ୍ପିଟାଲ୍ ଓ VMMC (Safdarjung Hospital, Delhi)' : (isHi ? 'सफदरजंग अस्पताल एवं वीएमएमसी (New Delhi)' : 'Safdarjung Hospital & VMMC, New Delhi'),
       tier: isOr ? 'କେନ୍ଦ୍ର ସରକାରଙ୍କ ସର୍ବବୃହତ ମଲ୍ଟି-ସ୍ପେଶିଆଲିଟି ସୁପର ହସ୍ପିଟାଲ୍' : (isHi ? 'केंद्र सरकार का विशाल मल्टी-स्पेशियलिटी अस्पताल' : 'Central Government Mega Multi-Specialty & Burn Hub'),
       city: 'New Delhi',
@@ -1160,6 +1199,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 32. MUMBAI =================
     {
       id: 'HOSP-47',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଟାଟା ମେମୋରିଆଲ୍ କର୍କଟ କେନ୍ଦ୍ର ଓ ACTREC (Mumbai)' : (isHi ? 'टाटा मेमोरियल कैंसर केंद्र एवं एक्ट्रेक (Mumbai)' : 'Tata Memorial Centre & ACTREC, Mumbai'),
       tier: isOr ? 'ଭାରତର ସର୍ବୋଚ୍ଚ ଜାତୀୟ କର୍କଟ ଗବେଷଣା ଓ ଚିକିତ୍ସା କେନ୍ଦ୍ର' : (isHi ? 'भारत का शीर्ष राष्ट्रीय कैंसर अनुसंधान एवं उपचार संस्थान' : 'India’s Apex Comprehensive Cancer Research & Care Hub'),
       city: 'Mumbai',
@@ -1191,6 +1231,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 33. KOLKATA =================
     {
       id: 'HOSP-48',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଆଇ.ପି.ଜି.ଏମ.ଇ.ଆର୍ ଓ ଏସ.ଏସ.କେ.ଏମ. ହସ୍ପିଟାଲ୍ (SSKM Kolkata)' : (isHi ? 'एसएसकेएम अस्पताल एवं आईपीजीएमईआर (Kolkata)' : 'IPGMER & SSKM Hospital, Kolkata'),
       tier: isOr ? 'ପୂର୍ବ ଭାରତର ସର୍ବୋଚ୍ଚ ସରକାରୀ ସୁପର-ସ୍ପେଶିଆଲିଟି ସଂସ୍ଥାନ' : (isHi ? 'पूर्वी भारत का शीर्ष सरकारी सुपर स्पेशियलिटी अस्पताल' : 'Eastern India Premier Apex Quaternary Referral Center'),
       city: 'Kolkata',
@@ -1222,6 +1263,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 34. HYDERABAD =================
     {
       id: 'HOSP-49',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ନିଜାମ୍ସ ଇନଷ୍ଟିଚ୍ୟୁଟ୍ ଅଫ୍ ମେଡିକାଲ୍ ସାଇନ୍ସେସ୍ (NIMS Hyderabad)' : (isHi ? 'निजाम्स इंस्टीट्यूट ऑफ मेडिकल साइंसेज (NIMS Hyderabad)' : 'Nizam’s Institute of Medical Sciences (NIMS)'),
       tier: isOr ? 'ଦକ୍ଷିଣ ଭାରତର ସର୍ବୋଚ୍ଚ ସ୍ୱୟଂଶାସିତ ସୁପର-ସ୍ପେଶିଆଲିଟି ସଂସ୍ଥାନ' : (isHi ? 'दक्षिण भारत का प्रमुख स्वायत्त सुपर स्पेशियलिटी संस्थान' : 'Autonomous Premier Super-Specialty Apex Medical Institute'),
       city: 'Hyderabad',
@@ -1253,6 +1295,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 35. BENGALURU =================
     {
       id: 'HOSP-50',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ନିମହାନ୍ସ ଓ ନାରାୟଣ ହେଲଥ୍ ସିଟି (NIMHANS / Narayana, Bengaluru)' : (isHi ? 'निम्हांस एवं नारायण हेल्थ सिटी (Bengaluru)' : 'NIMHANS & Narayana Health City, Bengaluru'),
       tier: isOr ? 'ଜାତୀୟ ନ୍ୟୁରୋସାଇନ୍ସ ଓ କାର୍ଡିଆକ୍ ସୁପର-ସ୍ପେଶିଆଲିଟି ସଂସ୍ଥାନ' : (isHi ? 'राष्ट्रीय न्यूरोसाइंस एवं कार्डियक सुपर स्पेशियलिटी' : 'National Apex Neurosciences & Quaternary Cardiac Care Complex'),
       city: 'Bengaluru',
@@ -1284,6 +1327,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
     // ================= 36. CHENNAI / VELLORE =================
     {
       id: 'HOSP-51',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସି.ଏମ.ସି. ଭେଲୋର ଓ ଆପୋଲୋ ଗ୍ରିମ୍ସ (CMC Vellore / Apollo Chennai)' : (isHi ? 'सीएमसी वेल्लोर एवं अपोलो ग्रीम्स (Chennai/Vellore)' : 'Christian Medical College (CMC) Vellore & Apollo Greams, Chennai'),
       tier: isOr ? 'ଭାରତର ପ୍ରମୁଖ କ୍ୱାଟରନାରୀ କ୍ଲିନିକାଲ୍ ଏକ୍ସିଲେନ୍ସ ଓ ଟ୍ରାନ୍ସପ୍ଲାଣ୍ଟ୍ ହବ୍' : (isHi ? 'भारत का शीर्ष चतुर्थक क्लिनिकल उत्कृष्टता एवं प्रत्यारोपण केंद्र' : 'India’s Legendary Quaternary Clinical Excellence & Transplant Hub'),
       city: 'Chennai',
@@ -1315,6 +1359,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-52',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Balasore)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Balasore)' : 'Sub-Divisional Hospital (SDH), Balasore'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Balasore',
@@ -1341,6 +1386,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-53',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Balasore)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Balasore)' : 'Community Health Centre (CHC Block), Balasore'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Balasore',
@@ -1367,6 +1413,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-54',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Koraput)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Koraput)' : 'Sub-Divisional Hospital (SDH), Koraput'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Koraput',
@@ -1393,6 +1440,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-55',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Koraput)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Koraput)' : 'Community Health Centre (CHC Block), Koraput'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Koraput',
@@ -1419,6 +1467,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-56',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Puri)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Puri)' : 'Sub-Divisional Hospital (SDH), Puri'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Puri',
@@ -1445,6 +1494,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-57',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Puri)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Puri)' : 'Community Health Centre (CHC Block), Puri'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Puri',
@@ -1471,6 +1521,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-58',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Baripada)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Baripada)' : 'Sub-Divisional Hospital (SDH), Baripada'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Baripada',
@@ -1497,6 +1548,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-59',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Baripada)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Baripada)' : 'Community Health Centre (CHC Block), Baripada'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Baripada',
@@ -1523,6 +1575,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-60',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Bolangir)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Bolangir)' : 'Sub-Divisional Hospital (SDH), Bolangir'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Bolangir',
@@ -1549,6 +1602,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-61',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Bolangir)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Bolangir)' : 'Community Health Centre (CHC Block), Bolangir'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Bolangir',
@@ -1575,6 +1629,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-62',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Keonjhar)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Keonjhar)' : 'Sub-Divisional Hospital (SDH), Keonjhar'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Keonjhar',
@@ -1601,6 +1656,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-63',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Keonjhar)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Keonjhar)' : 'Community Health Centre (CHC Block), Keonjhar'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Keonjhar',
@@ -1627,6 +1683,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-64',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Jharsuguda)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Jharsuguda)' : 'Sub-Divisional Hospital (SDH), Jharsuguda'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Jharsuguda',
@@ -1653,6 +1710,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-65',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Jharsuguda)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Jharsuguda)' : 'Community Health Centre (CHC Block), Jharsuguda'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Jharsuguda',
@@ -1679,6 +1737,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-66',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Angul)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Angul)' : 'Sub-Divisional Hospital (SDH), Angul'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Angul',
@@ -1705,6 +1764,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-67',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Angul)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Angul)' : 'Community Health Centre (CHC Block), Angul'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Angul',
@@ -1731,6 +1791,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-68',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Bargarh)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Bargarh)' : 'Sub-Divisional Hospital (SDH), Bargarh'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Bargarh',
@@ -1757,6 +1818,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-69',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Bargarh)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Bargarh)' : 'Community Health Centre (CHC Block), Bargarh'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Bargarh',
@@ -1783,6 +1845,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-70',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Bhadrak)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Bhadrak)' : 'Sub-Divisional Hospital (SDH), Bhadrak'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Bhadrak',
@@ -1809,6 +1872,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-71',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Bhadrak)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Bhadrak)' : 'Community Health Centre (CHC Block), Bhadrak'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Bhadrak',
@@ -1835,6 +1899,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-72',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Boudh)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Boudh)' : 'Sub-Divisional Hospital (SDH), Boudh'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Boudh',
@@ -1861,6 +1926,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-73',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Boudh)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Boudh)' : 'Community Health Centre (CHC Block), Boudh'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Boudh',
@@ -1887,6 +1953,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-74',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Deogarh)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Deogarh)' : 'Sub-Divisional Hospital (SDH), Deogarh'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Deogarh',
@@ -1913,6 +1980,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-75',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Deogarh)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Deogarh)' : 'Community Health Centre (CHC Block), Deogarh'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Deogarh',
@@ -1939,6 +2007,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-76',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Dhenkanal)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Dhenkanal)' : 'Sub-Divisional Hospital (SDH), Dhenkanal'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Dhenkanal',
@@ -1965,6 +2034,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-77',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Dhenkanal)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Dhenkanal)' : 'Community Health Centre (CHC Block), Dhenkanal'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Dhenkanal',
@@ -1991,6 +2061,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-78',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Gajapati)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Gajapati)' : 'Sub-Divisional Hospital (SDH), Gajapati'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Gajapati',
@@ -2017,6 +2088,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-79',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Gajapati)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Gajapati)' : 'Community Health Centre (CHC Block), Gajapati'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Gajapati',
@@ -2043,6 +2115,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-80',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Jagatsinghpur)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Jagatsinghpur)' : 'Sub-Divisional Hospital (SDH), Jagatsinghpur'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Jagatsinghpur',
@@ -2069,6 +2142,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-81',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Jagatsinghpur)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Jagatsinghpur)' : 'Community Health Centre (CHC Block), Jagatsinghpur'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Jagatsinghpur',
@@ -2095,6 +2169,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-82',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Jajpur)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Jajpur)' : 'Sub-Divisional Hospital (SDH), Jajpur'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Jajpur',
@@ -2121,6 +2196,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-83',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Jajpur)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Jajpur)' : 'Community Health Centre (CHC Block), Jajpur'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Jajpur',
@@ -2147,6 +2223,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-84',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Kalahandi)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Kalahandi)' : 'Sub-Divisional Hospital (SDH), Kalahandi'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Kalahandi',
@@ -2173,6 +2250,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-85',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Kalahandi)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Kalahandi)' : 'Community Health Centre (CHC Block), Kalahandi'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Kalahandi',
@@ -2199,6 +2277,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-86',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Kandhamal)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Kandhamal)' : 'Sub-Divisional Hospital (SDH), Kandhamal'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Kandhamal',
@@ -2225,6 +2304,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-87',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Kandhamal)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Kandhamal)' : 'Community Health Centre (CHC Block), Kandhamal'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Kandhamal',
@@ -2251,6 +2331,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-88',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Kendrapara)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Kendrapara)' : 'Sub-Divisional Hospital (SDH), Kendrapara'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Kendrapara',
@@ -2277,6 +2358,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-89',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Kendrapara)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Kendrapara)' : 'Community Health Centre (CHC Block), Kendrapara'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Kendrapara',
@@ -2303,6 +2385,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-90',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Malkangiri)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Malkangiri)' : 'Sub-Divisional Hospital (SDH), Malkangiri'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Malkangiri',
@@ -2329,6 +2412,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-91',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Malkangiri)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Malkangiri)' : 'Community Health Centre (CHC Block), Malkangiri'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Malkangiri',
@@ -2355,6 +2439,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-92',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Nabarangpur)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Nabarangpur)' : 'Sub-Divisional Hospital (SDH), Nabarangpur'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Nabarangpur',
@@ -2381,6 +2466,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-93',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Nabarangpur)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Nabarangpur)' : 'Community Health Centre (CHC Block), Nabarangpur'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Nabarangpur',
@@ -2407,6 +2493,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-94',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Nayagarh)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Nayagarh)' : 'Sub-Divisional Hospital (SDH), Nayagarh'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Nayagarh',
@@ -2433,6 +2520,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-95',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Nayagarh)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Nayagarh)' : 'Community Health Centre (CHC Block), Nayagarh'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Nayagarh',
@@ -2459,6 +2547,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-96',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Nuapada)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Nuapada)' : 'Sub-Divisional Hospital (SDH), Nuapada'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Nuapada',
@@ -2485,6 +2574,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-97',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Nuapada)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Nuapada)' : 'Community Health Centre (CHC Block), Nuapada'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Nuapada',
@@ -2511,6 +2601,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-98',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Rayagada)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Rayagada)' : 'Sub-Divisional Hospital (SDH), Rayagada'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Rayagada',
@@ -2537,6 +2628,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-99',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Rayagada)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Rayagada)' : 'Community Health Centre (CHC Block), Rayagada'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Rayagada',
@@ -2563,6 +2655,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-100',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଚିକିତ୍ସାଳୟ (SDH Sonepur)' : (isHi ? 'उप-मंडलीय अस्पताल (SDH Sonepur)' : 'Sub-Divisional Hospital (SDH), Sonepur'),
       tier: isOr ? 'ଉପ-ଖଣ୍ଡୀୟ ଜରୁରୀକାଳୀନ ରେଫରାଲ୍ କେନ୍ଦ୍ର' : (isHi ? 'उप-मंडलीय आपातकालीन रेफरल केंद्र' : 'Sub-Divisional Emergency Referral Center'),
       city: 'Sonepur',
@@ -2589,6 +2682,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-101',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର (CHC Block Sonepur)' : (isHi ? 'सामुदायिक स्वास्थ्य केंद्र (CHC Block Sonepur)' : 'Community Health Centre (CHC Block), Sonepur'),
       tier: isOr ? 'ଗୋଷ୍ଠୀ ସ୍ତରୀୟ ସ୍ୱାସ୍ଥ୍ୟ ରେଫରାଲ୍ ୟୁନିଟ୍' : (isHi ? 'सामुदायिक स्तरीय स्वास्थ्य रेफरल इकाई' : 'Community-Level First Referral Unit (FRU)'),
       city: 'Sonepur',
@@ -2615,6 +2709,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-102',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍- 102 (Balasore)' : (isHi ? 'स्वास्थ्य मित्र संबद्ध अस्पताल- 102 (Balasore)' : 'Swasthya Mitra Empaneled Hospital-102, Balasore'),
       tier: isOr ? 'ସହବନ୍ଧିତ ସୁପର-ସ୍ପେଶିଆଲିଟି ହସ୍ପିଟାଲ୍' : (isHi ? 'संबद्ध सुपर-स्पेशियलिटी अस्पताल' : 'Empaneled Super-Specialty Medical Center'),
       city: 'Balasore',
@@ -2641,6 +2736,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-103',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍- 103 (Koraput)' : (isHi ? 'स्वास्थ्य मित्र संबद्ध अस्पताल- 103 (Koraput)' : 'Swasthya Mitra Empaneled Hospital-103, Koraput'),
       tier: isOr ? 'ସହବନ୍ଧିତ ସୁପର-ସ୍ପେଶିଆଲିଟି ହସ୍ପିଟାଲ୍' : (isHi ? 'संबद्ध सुपर-स्पेशियलिटी अस्पताल' : 'Empaneled Super-Specialty Medical Center'),
       city: 'Koraput',
@@ -2667,6 +2763,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-104',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍- 104 (Puri)' : (isHi ? 'स्वास्थ्य मित्र संबद्ध अस्पताल- 104 (Puri)' : 'Swasthya Mitra Empaneled Hospital-104, Puri'),
       tier: isOr ? 'ସହବନ୍ଧିତ ସୁପର-ସ୍ପେଶିଆଲିଟି ହସ୍ପିଟାଲ୍' : (isHi ? 'संबद्ध सुपर-स्पेशियलिटी अस्पताल' : 'Empaneled Super-Specialty Medical Center'),
       city: 'Puri',
@@ -2693,6 +2790,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-105',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍- 105 (Baripada)' : (isHi ? 'स्वास्थ्य मित्र संबद्ध अस्पताल- 105 (Baripada)' : 'Swasthya Mitra Empaneled Hospital-105, Baripada'),
       tier: isOr ? 'ସହବନ୍ଧିତ ସୁପର-ସ୍ପେଶିଆଲିଟି ହସ୍ପିଟାଲ୍' : (isHi ? 'संबद्ध सुपर-स्पेशियलिटी अस्पताल' : 'Empaneled Super-Specialty Medical Center'),
       city: 'Baripada',
@@ -2719,6 +2817,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-106',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍- 106 (Bolangir)' : (isHi ? 'स्वास्थ्य मित्र संबद्ध अस्पताल- 106 (Bolangir)' : 'Swasthya Mitra Empaneled Hospital-106, Bolangir'),
       tier: isOr ? 'ସହବନ୍ଧିତ ସୁପର-ସ୍ପେଶିଆଲିଟି ହସ୍ପିଟାଲ୍' : (isHi ? 'संबद्ध सुपर-स्पेशियलिटी अस्पताल' : 'Empaneled Super-Specialty Medical Center'),
       city: 'Bolangir',
@@ -2745,6 +2844,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-107',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍- 107 (Keonjhar)' : (isHi ? 'स्वास्थ्य मित्र संबद्ध अस्पताल- 107 (Keonjhar)' : 'Swasthya Mitra Empaneled Hospital-107, Keonjhar'),
       tier: isOr ? 'ସହବନ୍ଧିତ ସୁପର-ସ୍ପେଶିଆଲିଟି ହସ୍ପିଟାଲ୍' : (isHi ? 'संबद्ध सुपर-स्पेशियलिटी अस्पताल' : 'Empaneled Super-Specialty Medical Center'),
       city: 'Keonjhar',
@@ -2771,6 +2871,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-108',
+      image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍- 108 (Jharsuguda)' : (isHi ? 'स्वास्थ्य मित्र संबद्ध अस्पताल- 108 (Jharsuguda)' : 'Swasthya Mitra Empaneled Hospital-108, Jharsuguda'),
       tier: isOr ? 'ସହବନ୍ଧିତ ସୁପର-ସ୍ପେଶିଆଲିଟି ହସ୍ପିଟାଲ୍' : (isHi ? 'संबद्ध सुपर-स्पेशियलिटी अस्पताल' : 'Empaneled Super-Specialty Medical Center'),
       city: 'Jharsuguda',
@@ -2797,6 +2898,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-109',
+      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍- 109 (Angul)' : (isHi ? 'स्वास्थ्य मित्र संबद्ध अस्पताल- 109 (Angul)' : 'Swasthya Mitra Empaneled Hospital-109, Angul'),
       tier: isOr ? 'ସହବନ୍ଧିତ ସୁପର-ସ୍ପେଶିଆଲିଟି ହସ୍ପିଟାଲ୍' : (isHi ? 'संबद्ध सुपर-स्पेशियलिटी अस्पताल' : 'Empaneled Super-Specialty Medical Center'),
       city: 'Angul',
@@ -2823,6 +2925,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-110',
+      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ସହବନ୍ଧିତ ହସ୍ପିଟାଲ୍- 110 (Bargarh)' : (isHi ? 'स्वास्थ्य मित्र संबद्ध अस्पताल- 110 (Bargarh)' : 'Swasthya Mitra Empaneled Hospital-110, Bargarh'),
       tier: isOr ? 'ସହବନ୍ଧିତ ସୁପର-ସ୍ପେଶିଆଲିଟି ହସ୍ପିଟାଲ୍' : (isHi ? 'संबद्ध सुपर-स्पेशियलिटी अस्पताल' : 'Empaneled Super-Specialty Medical Center'),
       city: 'Bargarh',
@@ -2850,6 +2953,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-104',
+      image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଅନୁମୋଦିତ ହସ୍ପିଟାଲ୍- 104' : (isHi ? 'स्वास्थ्य मित्र अनुमोदित अस्पताल- 104' : 'Swasthya Mitra Empaneled Hospital-104'),
       tier: isOr ? 'ଜିଲ୍ଲା ସ୍ତରୀୟ ସହବନ୍ଧିତ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'जिला स्तरीय संबद्ध स्वास्थ्य केंद्र' : 'District Empaneled Health Facility'),
       city: 'Bhubaneswar',
@@ -2876,6 +2980,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-105',
+      image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଅନୁମୋଦିତ ହସ୍ପିଟାଲ୍- 105' : (isHi ? 'स्वास्थ्य मित्र अनुमोदित अस्पताल- 105' : 'Swasthya Mitra Empaneled Hospital-105'),
       tier: isOr ? 'ଜିଲ୍ଲା ସ୍ତରୀୟ ସହବନ୍ଧିତ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'जिला स्तरीय संबद्ध स्वास्थ्य केंद्र' : 'District Empaneled Health Facility'),
       city: 'Bhubaneswar',
@@ -2902,6 +3007,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-106',
+      image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଅନୁମୋଦିତ ହସ୍ପିଟାଲ୍- 106' : (isHi ? 'स्वास्थ्य मित्र अनुमोदित अस्पताल- 106' : 'Swasthya Mitra Empaneled Hospital-106'),
       tier: isOr ? 'ଜିଲ୍ଲା ସ୍ତରୀୟ ସହବନ୍ଧିତ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'जिला स्तरीय संबद्ध स्वास्थ्य केंद्र' : 'District Empaneled Health Facility'),
       city: 'Bhubaneswar',
@@ -2928,6 +3034,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-107',
+      image: 'https://images.unsplash.com/photo-1512678080530-7760d81faba6?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଅନୁମୋଦିତ ହସ୍ପିଟାଲ୍- 107' : (isHi ? 'स्वास्थ्य मित्र अनुमोदित अस्पताल- 107' : 'Swasthya Mitra Empaneled Hospital-107'),
       tier: isOr ? 'ଜିଲ୍ଲା ସ୍ତରୀୟ ସହବନ୍ଧିତ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'जिला स्तरीय संबद्ध स्वास्थ्य केंद्र' : 'District Empaneled Health Facility'),
       city: 'Bhubaneswar',
@@ -2954,6 +3061,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-108',
+      image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଅନୁମୋଦିତ ହସ୍ପିଟାଲ୍- 108' : (isHi ? 'स्वास्थ्य मित्र अनुमोदित अस्पताल- 108' : 'Swasthya Mitra Empaneled Hospital-108'),
       tier: isOr ? 'ଜିଲ୍ଲା ସ୍ତରୀୟ ସହବନ୍ଧିତ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'जिला स्तरीय संबद्ध स्वास्थ्य केंद्र' : 'District Empaneled Health Facility'),
       city: 'Bhubaneswar',
@@ -2980,6 +3088,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-109',
+      image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଅନୁମୋଦିତ ହସ୍ପିଟାଲ୍- 109' : (isHi ? 'स्वास्थ्य मित्र अनुमोदित अस्पताल- 109' : 'Swasthya Mitra Empaneled Hospital-109'),
       tier: isOr ? 'ଜିଲ୍ଲା ସ୍ତରୀୟ ସହବନ୍ଧିତ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'जिला स्तरीय संबद्ध स्वास्थ्य केंद्र' : 'District Empaneled Health Facility'),
       city: 'Bhubaneswar',
@@ -3006,6 +3115,7 @@ export const getHospitalPartners = (lang = 'en-IN') => {
 
     {
       id: 'HOSP-110',
+      image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=800&q=80',
       name: isOr ? 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଅନୁମୋଦିତ ହସ୍ପିଟାଲ୍- 110' : (isHi ? 'स्वास्थ्य मित्र अनुमोदित अस्पताल- 110' : 'Swasthya Mitra Empaneled Hospital-110'),
       tier: isOr ? 'ଜିଲ୍ଲା ସ୍ତରୀୟ ସହବନ୍ଧିତ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର' : (isHi ? 'जिला स्तरीय संबद्ध स्वास्थ्य केंद्र' : 'District Empaneled Health Facility'),
       city: 'Bhubaneswar',
