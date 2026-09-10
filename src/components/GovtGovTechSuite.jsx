@@ -41,6 +41,79 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
 
   // Interactive State Demos
   const [patientAbha, setPatientAbha] = useState('91-8842-1209-7711');
+
+  // ABHA Mock Patient Profiles
+  const abhaPatients = {
+    '91-8842-1209-7711': {
+      name: 'Ramesh Chandra Pati',
+      age: 52,
+      gender: 'Male',
+      bloodGroup: 'O+',
+      aadhaar: 'XXXX-XXXX-4921',
+      district: 'Cuttack, Odisha',
+      emergency: '+91 94370 XXXXX (Son)',
+      primaryPhc: 'SCB Salipur Block PHC',
+      vitals: [
+        { date: '14 Nov 2025', facility: 'PHC Salipur', sugar: 126, bp: '120/80', spo2: '99%', hb: '13.5 g/dL', egfr: '92', status: 'STABLE', statusBg: 'bg-emerald-100 text-emerald-800' },
+        { date: '14 Jan 2026', facility: 'SCB Medical College OPD', sugar: 140, bp: '128/82', spo2: '98%', hb: '13.2 g/dL', egfr: '88', status: 'MILD ELEVATION', statusBg: 'bg-blue-100 text-blue-800' },
+        { date: '18 Feb 2026', facility: 'Capital Hospital PHC', sugar: 180, bp: '136/88', spo2: '96%', hb: '12.8 g/dL', egfr: '81', status: 'MODERATE ESCALATION', statusBg: 'bg-amber-200 text-amber-900' },
+        { date: '01 Mar 2026', facility: 'DHH Khordha OPD', sugar: 210, bp: '142/90', spo2: '94%', hb: '12.0 g/dL', egfr: '74', status: 'HIGH RISK', statusBg: 'bg-orange-200 text-orange-950 font-bold' },
+        { date: '10 Mar 2026 (Today)', facility: 'Active Triage Intake Desk', sugar: 240, bp: '148/94', spo2: '93%', hb: '11.4 g/dL', egfr: '68', status: '⚠️ CRITICAL ALERT', statusBg: 'bg-rose-600 text-white font-black animate-pulse' }
+      ],
+      hba1c: '9.4%',
+      microalbumin: '45 mg/g',
+      aiSummary: 'Patient glycemic control has deteriorated by 90.4% over 116 days. Rapid systolic BP spike & Hb decline observed. High DKA & early renal impairment risk.',
+      prescriptions: [
+        { date: '18 Feb 2026', doctor: 'Dr. P. K. Mohanty (Reg #38291)', meds: 'Tab. Metformin 500mg BD + Tab. Teneligliptin 20mg OD' },
+        { date: '14 Jan 2026', doctor: 'Dr. S. N. Das (Reg #29102)', meds: 'Tab. Metformin 500mg OD' }
+      ]
+    },
+    '91-4402-9912-3341': {
+      name: 'Saraswati Sahoo',
+      age: 46,
+      gender: 'Female',
+      bloodGroup: 'B+',
+      aadhaar: 'XXXX-XXXX-8812',
+      district: 'Puri, Odisha',
+      emergency: '+91 98610 XXXXX (Husband)',
+      primaryPhc: 'Gop Block PHC',
+      vitals: [
+        { date: '10 Dec 2025', facility: 'Gop PHC', sugar: 110, bp: '118/76', spo2: '99%', hb: '12.1 g/dL', egfr: '95', status: 'STABLE', statusBg: 'bg-emerald-100 text-emerald-800' },
+        { date: '15 Jan 2026', facility: 'DHH Puri OPD', sugar: 135, bp: '124/80', spo2: '98%', hb: '11.8 g/dL', egfr: '91', status: 'MONITORING', statusBg: 'bg-blue-100 text-blue-800' },
+        { date: '20 Feb 2026', facility: 'Capital Hospital', sugar: 155, bp: '130/84', spo2: '97%', hb: '11.2 g/dL', egfr: '86', status: 'MODERATE', statusBg: 'bg-amber-100 text-amber-900' },
+        { date: '10 Mar 2026 (Today)', facility: 'Puri District Camp', sugar: 195, bp: '138/88', spo2: '95%', hb: '10.8 g/dL', egfr: '80', status: '⚠️ ESCALATING TREND', statusBg: 'bg-rose-500 text-white font-bold' }
+      ],
+      hba1c: '8.2%',
+      microalbumin: '28 mg/g',
+      aiSummary: 'Moderate Glycemic escalation over 90 days. Hemoglobin indicates mild microcytic anemia. Diet counseling and ASHA follow-up advised.',
+      prescriptions: [
+        { date: '20 Feb 2026', doctor: 'Dr. Anita Mishra (Reg #41029)', meds: 'Tab. Gliclazide 40mg OD + Tab. Autrin Iron Supplement' }
+      ]
+    },
+    '91-1102-5544-8899': {
+      name: 'Prakash Rout',
+      age: 38,
+      gender: 'Male',
+      bloodGroup: 'A+',
+      aadhaar: 'XXXX-XXXX-1109',
+      district: 'Khordha, Odisha',
+      emergency: '+91 97780 XXXXX (Wife)',
+      primaryPhc: 'Jatni PHC',
+      vitals: [
+        { date: '01 Nov 2025', facility: 'Jatni PHC', sugar: 98, bp: '115/75', spo2: '99%', hb: '14.2 g/dL', egfr: '102', status: 'NORMAL', statusBg: 'bg-emerald-100 text-emerald-800' },
+        { date: '10 Jan 2026', facility: 'AIIMS Bhubaneswar', sugar: 105, bp: '118/78', spo2: '99%', hb: '14.0 g/dL', egfr: '100', status: 'NORMAL', statusBg: 'bg-emerald-100 text-emerald-800' },
+        { date: '10 Mar 2026 (Today)', facility: 'Jatni Health Camp', sugar: 112, bp: '120/80', spo2: '98%', hb: '13.9 g/dL', egfr: '98', status: 'STABLE BASELINE', statusBg: 'bg-emerald-600 text-white font-bold' }
+      ],
+      hba1c: '5.8%',
+      microalbumin: '12 mg/g',
+      aiSummary: 'Normal metabolic stability across 4 months. Glycemic & renal markers within optimal physiological baseline.',
+      prescriptions: [
+        { date: '10 Jan 2026', doctor: 'Dr. R. K. Sahoo (Reg #19201)', meds: 'Multivitamin Supplements OD' }
+      ]
+    }
+  };
+
+  const currentPatient = abhaPatients[patientAbha] || abhaPatients['91-8842-1209-7711'];
   const [painLevel, setPainLevel] = useState(6);
   const [selectedBodyPart, setSelectedBodyPart] = useState('Chest / Thorax');
   const [familyMembers, setFamilyMembers] = useState([
@@ -303,61 +376,167 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
 
       {/* Feature 1 / Tab 11: ABHA Temporal History Builder */}
       {activeSubTab === 'abha_history' && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+          {/* Top Profile & ABDM Gateway Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
-              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  🟢 Live ABDM Gateway (HIE-CM v2.1 Connected)
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                  FHIR Release 4.0 Standard
+                </span>
+              </div>
+              <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-indigo-600" />
-                {txt.t1Title || '11. ABHA Temporal History Builder (Automated Longitudinal Trend Analysis)'}
+                ABHA Longitudinal Temporal History & Vital Progression
               </h3>
-              <p className="text-xs text-slate-500">
-                {txt.t1Subtitle || 'Auto-fetches last 3 clinical visits via ABDM gateway and calculates vital progression curves.'}
+              <p className="text-xs text-slate-500 mt-0.5">
+                Automated multi-visit clinical trend analysis synced across MoHFW PHC Network & ABDM Health Records.
               </p>
             </div>
-            <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-3.5 py-1.5 rounded-full border border-indigo-200 shadow-2xs">
-              🆔 ABHA ID: {patientAbha}
-            </span>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{txt.v1 || 'Visit 1 (14 Jan)'}</span>
-                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">{txt.stable || 'Stable Baseline'}</span>
-              </div>
-              <p className="font-extrabold text-slate-900 text-sm mt-1">{txt.bs || 'Fasting Blood Sugar:'} 140 mg/dL</p>
-              <p className="text-slate-600 font-medium">BP: 128/82 mmHg • SpO2: 98% • Hb: 13.2 g/dL</p>
-              <p className="text-[11px] text-slate-400 pt-1">Facility: SCB Medical College OPD, Cuttack</p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 space-y-1.5">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider">{txt.v2 || 'Visit 2 (18 Feb)'}</span>
-                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900">{txt.mod || '⚡ Moderate Escalation'}</span>
-              </div>
-              <p className="font-extrabold text-amber-950 text-sm mt-1">{txt.bs || 'Fasting Blood Sugar:'} 180 mg/dL</p>
-              <p className="text-amber-800 font-medium">BP: 136/88 mmHg • SpO2: 96% • Hb: 12.8 g/dL</p>
-              <p className="text-[11px] text-amber-700 pt-1">Facility: Capital Hospital PHC, Bhubaneswar</p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-rose-50/80 border border-rose-200 space-y-1.5 shadow-2xs">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-extrabold text-rose-700 uppercase tracking-wider">{txt.v3 || "Today's Intake (10 Mar)"}</span>
-                <span className="inline-block text-[10px] font-black px-2.5 py-0.5 rounded bg-rose-600 text-white animate-pulse">{txt.alert || '⚠️ WORSENING TREND ALERT'}</span>
-              </div>
-              <p className="font-extrabold text-rose-950 text-base mt-1">{txt.bs || 'Fasting Blood Sugar:'} 240 mg/dL</p>
-              <p className="text-rose-900 font-medium">BP: 148/94 mmHg • SpO2: 93% • Hb: 11.4 g/dL</p>
-              <p className="text-[11px] text-rose-700 font-bold pt-1">Facility: Active Triage Intake Desk</p>
+            {/* Patient Selector */}
+            <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <label className="text-xs font-bold text-slate-700 whitespace-nowrap">Select ABHA ID:</label>
+              <select
+                value={patientAbha}
+                onChange={(e) => setPatientAbha(e.target.value)}
+                className="bg-white border border-indigo-200 text-indigo-950 font-extrabold text-xs rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+              >
+                <option value="91-8842-1209-7711">91-8842-1209-7711 (Ramesh Chandra Pati - High Risk)</option>
+                <option value="91-4402-9912-3341">91-4402-9912-3341 (Saraswati Sahoo - Moderate)</option>
+                <option value="91-1102-5544-8899">91-1102-5544-8899 (Prakash Rout - Normal)</option>
+              </select>
             </div>
           </div>
 
-          <div className="p-4 bg-indigo-50/90 border border-indigo-200 rounded-xl text-xs text-indigo-950 flex items-start gap-3 shadow-2xs">
-            <Sparkles className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+          {/* Patient Demographics Banner */}
+          <div className="bg-gradient-to-r from-indigo-900 to-slate-900 text-white p-4 rounded-2xl shadow-xs grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
             <div>
-              <p className="font-extrabold text-indigo-900">{txt.aiInsight || 'AI Longitudinal Insight for Doctor:'}</p>
-              <p className="mt-0.5 leading-relaxed text-indigo-800">
-                {txt.aiInsightTxt || "Patient's glycemic control has deteriorated by 71% over 60 days. Rapid spikes in systolic BP observed. High probability of diabetic ketoacidosis risk."}
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Patient Name</span>
+              <span className="font-extrabold text-white text-sm">{currentPatient.name}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Age / Gender / Blood</span>
+              <span className="font-bold text-slate-200">{currentPatient.age} Yrs • {currentPatient.gender} • {currentPatient.bloodGroup}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Linked Aadhaar</span>
+              <span className="font-bold text-emerald-400">✓ {currentPatient.aadhaar}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">District / State</span>
+              <span className="font-bold text-slate-200">{currentPatient.district}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Primary Nodal PHC</span>
+              <span className="font-bold text-indigo-300">{currentPatient.primaryPhc}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Emergency Contact</span>
+              <span className="font-bold text-amber-300">{currentPatient.emergency}</span>
+            </div>
+          </div>
+
+          {/* 4 Key Vital Metric Progression Summary */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div className="p-3.5 rounded-xl bg-rose-50/90 border border-rose-200 space-y-1">
+              <span className="text-[10px] font-extrabold text-rose-800 uppercase tracking-wider">Fasting Blood Sugar Trend</span>
+              <div className="flex justify-between items-baseline">
+                <span className="text-xl font-black text-rose-950">{currentPatient.vitals[currentPatient.vitals.length - 1].sugar} mg/dL</span>
+                <span className="text-xs font-bold text-rose-700 bg-rose-200 px-1.5 py-0.5 rounded">HbA1c: {currentPatient.hba1c}</span>
+              </div>
+              <p className="text-[11px] text-rose-800 font-medium">Progression: {currentPatient.vitals[0].sugar} → {currentPatient.vitals[currentPatient.vitals.length - 1].sugar} mg/dL</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-amber-50/90 border border-amber-200 space-y-1">
+              <span className="text-[10px] font-extrabold text-amber-800 uppercase tracking-wider">Blood Pressure Curve</span>
+              <div className="flex justify-between items-baseline">
+                <span className="text-xl font-black text-amber-950">{currentPatient.vitals[currentPatient.vitals.length - 1].bp} mmHg</span>
+                <span className="text-xs font-bold text-amber-800 bg-amber-200 px-1.5 py-0.5 rounded">Stage-2 HTN</span>
+              </div>
+              <p className="text-[11px] text-amber-800 font-medium">Baseline: {currentPatient.vitals[0].bp} → Today: {currentPatient.vitals[currentPatient.vitals.length - 1].bp}</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-indigo-50/90 border border-indigo-200 space-y-1">
+              <span className="text-[10px] font-extrabold text-indigo-800 uppercase tracking-wider">Hemoglobin Index</span>
+              <div className="flex justify-between items-baseline">
+                <span className="text-xl font-black text-indigo-950">{currentPatient.vitals[currentPatient.vitals.length - 1].hb}</span>
+                <span className="text-xs font-bold text-indigo-800 bg-indigo-200 px-1.5 py-0.5 rounded">Mild Anemia</span>
+              </div>
+              <p className="text-[11px] text-indigo-800 font-medium">Range: {currentPatient.vitals[0].hb} → {currentPatient.vitals[currentPatient.vitals.length - 1].hb}</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200 space-y-1">
+              <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">Renal Function eGFR</span>
+              <div className="flex justify-between items-baseline">
+                <span className="text-xl font-black text-emerald-950">{currentPatient.vitals[currentPatient.vitals.length - 1].egfr} mL/min</span>
+                <span className="text-xs font-bold text-emerald-800 bg-emerald-200 px-1.5 py-0.5 rounded">ACR: {currentPatient.microalbumin}</span>
+              </div>
+              <p className="text-[11px] text-emerald-800 font-medium">Baseline: {currentPatient.vitals[0].egfr} → Today: {currentPatient.vitals[currentPatient.vitals.length - 1].egfr}</p>
+            </div>
+          </div>
+
+          {/* Longitudinal Visit Cards (Timeline) */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <TrendingUp className="w-4 h-4 text-indigo-600" />
+              Full Temporal Visit History ({currentPatient.vitals.length} Recorded ABDM Encounters)
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
+              {currentPatient.vitals.map((v, idx) => (
+                <div key={idx} className={`p-3.5 rounded-xl border space-y-1.5 shadow-2xs ${idx === currentPatient.vitals.length - 1 ? 'bg-rose-50/90 border-rose-300 ring-2 ring-rose-400/40' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Visit #{idx + 1}</span>
+                    <span className={`text-[9px] px-2 py-0.5 rounded ${v.statusBg}`}>{v.status}</span>
+                  </div>
+                  <p className="font-extrabold text-slate-900 text-xs">{v.date}</p>
+                  <p className="text-indigo-700 font-bold text-[11px]">Sugar: {v.sugar} mg/dL</p>
+                  <p className="text-slate-600 text-[10px]">BP: {v.bp} • SpO2: {v.spo2}</p>
+                  <p className="text-slate-500 text-[10px]">Hb: {v.hb} • eGFR: {v.egfr}</p>
+                  <p className="text-[10px] text-slate-400 pt-1 border-t border-slate-200/60 truncate">{v.facility}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Clinical Insight & Diagnostic Records */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            {/* AI Insight */}
+            <div className="p-4 bg-indigo-50/90 border border-indigo-200 rounded-xl text-indigo-950 space-y-2 shadow-2xs">
+              <div className="flex items-center gap-2 font-extrabold text-indigo-900 text-sm">
+                <Sparkles className="w-5 h-5 text-indigo-600 shrink-0" />
+                AI Longitudinal Insight &amp; DKA Risk Assessment
+              </div>
+              <p className="leading-relaxed text-indigo-900 font-medium">
+                {currentPatient.aiSummary}
               </p>
+              <div className="pt-2 border-t border-indigo-200/80 flex items-center justify-between text-[11px] font-bold text-indigo-800">
+                <span>Recommended Action: Dual Anti-Diabetic + Telmisartan Escalation</span>
+                <span className="bg-indigo-600 text-white px-2 py-0.5 rounded text-[10px]">Verified Protocol</span>
+              </div>
+            </div>
+
+            {/* Past Prescriptions & Lab Reports */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 space-y-2">
+              <h5 className="font-extrabold text-slate-900 text-xs flex items-center justify-between">
+                <span>Linked ABDM Prescriptions &amp; Lab Slips</span>
+                <span className="text-[10px] text-slate-400">FHIR Encounters</span>
+              </h5>
+              <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                {currentPatient.prescriptions.map((p, i) => (
+                  <div key={i} className="p-2 bg-white rounded-lg border border-slate-200 text-[11px] space-y-0.5">
+                    <div className="flex justify-between font-bold text-slate-900">
+                      <span>{p.date}</span>
+                      <span className="text-indigo-600 text-[10px]">{p.doctor}</span>
+                    </div>
+                    <p className="text-slate-600 font-medium">{p.meds}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

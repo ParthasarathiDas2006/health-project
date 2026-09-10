@@ -843,7 +843,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t11_history')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't11_history' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't11_history' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
@@ -853,7 +853,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t12_differential')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't12_differential' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't12_differential' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
@@ -863,7 +863,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t13_drugallergy')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't13_drugallergy' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't13_drugallergy' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
@@ -873,7 +873,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t14_riskscores')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't14_riskscores' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't14_riskscores' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
@@ -883,7 +883,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t15_followup')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't15_followup' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't15_followup' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Phone className="w-3.5 h-3.5" />
@@ -893,7 +893,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t16_whatsapp_ussd')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't16_whatsapp_ussd' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't16_whatsapp_ussd' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Mail className="w-3.5 h-3.5" />
@@ -903,7 +903,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t17_asha_voice')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't17_asha_voice' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't17_asha_voice' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Stethoscope className="w-3.5 h-3.5" />
@@ -913,7 +913,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t18_pain_map')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't18_pain_map' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't18_pain_map' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
@@ -923,7 +923,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t19_family_triage')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't19_family_triage' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't19_family_triage' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Building className="w-3.5 h-3.5" />
@@ -933,7 +933,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t20_opd_balancer')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't20_opd_balancer' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't20_opd_balancer' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
@@ -943,7 +943,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t21_counterfeit')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't21_counterfeit' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't21_counterfeit' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <UploadCloud className="w-3.5 h-3.5" />
@@ -953,7 +953,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t22_kiosk')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't22_kiosk' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't22_kiosk' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -963,7 +963,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t23_outbreak')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't23_outbreak' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't23_outbreak' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
@@ -973,7 +973,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t24_inventory')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't24_inventory' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't24_inventory' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Pill className="w-3.5 h-3.5" />
@@ -983,7 +983,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t25_dpdp_consent')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't25_dpdp_consent' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't25_dpdp_consent' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -993,7 +993,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t26_federated')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't26_federated' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't26_federated' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -1003,7 +1003,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t27_fairness')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't27_fairness' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't27_fairness' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
@@ -1013,7 +1013,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t28_rlhf')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't28_rlhf' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't28_rlhf' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Stethoscope className="w-3.5 h-3.5" />
@@ -1023,7 +1023,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t29_discharge')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't29_discharge' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't29_discharge' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
@@ -1033,7 +1033,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t30_anc_maternal')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't30_anc_maternal' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't30_anc_maternal' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
@@ -1043,7 +1043,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t31_mental_health')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't31_mental_health' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't31_mental_health' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Stethoscope className="w-3.5 h-3.5" />
@@ -1053,7 +1053,7 @@ export default function App() {
             <button
               onClick={() => setActiveTab('t32_carbon_sms')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-                activeTab === 't32_carbon_sms' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                activeTab === 't32_carbon_sms' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <Mail className="w-3.5 h-3.5" />
