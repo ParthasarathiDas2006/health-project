@@ -15,6 +15,7 @@ const MedicineExpiryChecker = lazy(() => import('./components/MedicineExpiryChec
 const NearestMedicalGPS = lazy(() => import('./components/NearestMedicalGPS'));
 const BedBookingSystem = lazy(() => import('./components/BedBookingSystem'));
 const AmbulanceBooking = lazy(() => import('./components/AmbulanceBooking'));
+const AdminPage = lazy(() => import('./components/AdminPage'));
 import {
   Activity,
   FileText,
@@ -48,7 +49,11 @@ export default function App() {
   const [appLang, setAppLang] = useState(() => currentUser?.preferredLanguage || 'or-IN');
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState('beds');
+  const [activeTab, setActiveTab] = useState(() => {
+    const user = getCurrentUser();
+    if (user?.roleCategory === 'admin') return 'admin';
+    return 'beds';
+  });
   const [currentIntake, setCurrentIntake] = useState(null);
   const [currentOcr, setCurrentOcr] = useState(null);
   const [generatedTriageNote, setGeneratedTriageNote] = useState(null);
@@ -80,7 +85,9 @@ export default function App() {
     }
     setShowAuthPage(false);
     setShowProfileMenu(false);
-    if (user.roleCategory === 'patient') {
+    if (user.roleCategory === 'admin') {
+      setActiveTab('admin');
+    } else if (user.roleCategory === 'patient') {
       setActiveTab('intake');
     } else {
       setActiveTab('dashboard');
@@ -355,6 +362,7 @@ export default function App() {
       protocol: 'ଡାକ୍ତରୀ ନିଷ୍ପତ୍ତି ସହାୟକ ପୋର୍ଟାଲ୍ (Non-Diagnostic) | ଆୟୁଷ୍ମାନ ଭାରତ ଓ BSKY ଅନ୍ତର୍ଭୁକ୍ତ',
       facilityLabel: 'କେନ୍ଦ୍ର:',
       portalTag: 'ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ପୋର୍ଟାଲ୍',
+      adminTab: '୦. ରାଜ୍ୟ ପ୍ରଶାସନ ଡେସ୍କ (Admin Portal)',
       patientIntakeTab: '୧. ମୋର ଲକ୍ଷଣ ଦାଖଲ',
       patientOcrTab: '୨. ରିପୋର୍ଟ ଅପଲୋଡ୍',
       patientQueueTab: '୩. ହସ୍ପିଟାଲ୍ ଟ୍ରାଏଜ୍ ଧାଡ଼ି',
@@ -395,6 +403,7 @@ export default function App() {
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
       verifiedPatientBadge: 'ABHA ପ୍ରମାଣିତ',
+      verifiedAdminBadge: 'Super Admin',
       switchUser: 'ଖାତା ବଦଳାନ୍ତୁ',
       signOut: 'ଲଗ୍ ଆଉଟ୍',
       years: 'ବର୍ଷ',
@@ -420,6 +429,7 @@ export default function App() {
       protocol: 'क्लिनिकल निर्णय समर्थन (Non-Diagnostic) | आयुष्मान भारत एवं राष्ट्रीय स्वास्थ्य मिशन',
       facilityLabel: 'केंद्र:',
       portalTag: 'राष्ट्रीय स्वास्थ्य पोर्टल',
+      adminTab: '0. राज्य प्रशासन डेस्क (Admin Portal)',
       patientIntakeTab: '1. लक्षण दर्ज करें',
       patientOcrTab: '2. रिपोर्ट अपलोड',
       patientQueueTab: '3. अस्पताल ट्रायज कतार',
@@ -460,6 +470,7 @@ export default function App() {
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
       verifiedPatientBadge: 'ABHA सत्यापित',
+      verifiedAdminBadge: 'Super Admin',
       switchUser: 'खाता बदलें',
       signOut: 'लॉग आउट',
       years: 'वर्ष',
@@ -485,6 +496,7 @@ export default function App() {
       protocol: 'Human-in-the-Loop Decision Support (Non-Diagnostic) | MoHFW Aligned',
       facilityLabel: 'Facility:',
       portalTag: 'National Health Portal',
+      adminTab: '0. Admin Command Portal',
       patientIntakeTab: '1. My Symptom Intake',
       patientOcrTab: '2. Upload Lab Reports',
       patientQueueTab: '3. Hospital Triage Queue',
@@ -525,6 +537,7 @@ export default function App() {
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
       verifiedPatientBadge: 'ABHA Verified',
+      verifiedAdminBadge: 'Super Admin',
       switchUser: 'Switch User',
       signOut: 'Sign Out',
       years: 'yrs',
@@ -584,6 +597,20 @@ export default function App() {
 
           {/* Center Tabs */}
           <nav className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
+            {currentUser.roleCategory === 'admin' && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                  activeTab === 'admin'
+                    ? 'bg-gradient-to-r from-purple-700 to-indigo-800 text-white shadow-md ring-2 ring-purple-400/40'
+                    : 'text-purple-950 bg-purple-100 hover:bg-purple-200 border border-purple-300'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span>{uiText.adminTab}</span>
+              </button>
+            )}
+
             {currentUser.roleCategory === 'patient' ? (
               <>
                 {/* TAB 1: SYMPTOM INTAKE */}
@@ -1129,7 +1156,11 @@ export default function App() {
                     : 'border-slate-200 hover:border-emerald-500 bg-slate-50 hover:bg-white'
                 }`}
               >
-                {currentUser.roleCategory === 'doctor' ? (
+                {currentUser.roleCategory === 'admin' ? (
+                  <div className="w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-xs shadow-xs bg-gradient-to-br from-purple-700 to-indigo-800">
+                    <ShieldCheck className="w-4 h-4 text-amber-300" />
+                  </div>
+                ) : currentUser.roleCategory === 'doctor' ? (
                   <DoctorAvatar
                     doc={{
                       id: currentUser.staffId || currentUser.name,
@@ -1149,7 +1180,9 @@ export default function App() {
                 <div className="hidden sm:block">
                   <div
                     className={`text-xs font-bold leading-tight ${
-                      currentUser.roleCategory === 'patient'
+                      currentUser.roleCategory === 'admin'
+                        ? 'text-purple-950 group-hover:text-purple-700'
+                        : currentUser.roleCategory === 'patient'
                         ? 'text-amber-950 group-hover:text-amber-800'
                         : 'text-slate-900 group-hover:text-emerald-700'
                     }`}
@@ -1171,17 +1204,25 @@ export default function App() {
                       <span className="font-bold text-slate-900 text-sm">{currentUser.name}</span>
                       <span
                         className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
-                          currentUser.roleCategory === 'patient'
+                          currentUser.roleCategory === 'admin'
+                            ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                            : currentUser.roleCategory === 'patient'
                             ? 'bg-amber-100 text-amber-800'
                             : 'bg-emerald-100 text-emerald-800'
                         }`}
                       >
-                        {currentUser.roleCategory === 'patient' ? uiText.verifiedPatientBadge : uiText.verifiedDoctorBadge}
+                        {currentUser.roleCategory === 'admin'
+                          ? (uiText.verifiedAdminBadge || 'Super Admin')
+                          : currentUser.roleCategory === 'patient'
+                          ? uiText.verifiedPatientBadge
+                          : uiText.verifiedDoctorBadge}
                       </span>
                     </div>
                     <p
                       className={`text-[11px] font-medium mt-0.5 ${
-                        currentUser.roleCategory === 'patient'
+                        currentUser.roleCategory === 'admin'
+                          ? 'text-purple-700'
+                          : currentUser.roleCategory === 'patient'
                           ? 'text-amber-700'
                           : 'text-emerald-700'
                       }`}
@@ -1218,6 +1259,19 @@ export default function App() {
                   </div>
 
                   <div className="pt-2 px-2 space-y-1">
+                    {currentUser.roleCategory === 'admin' && (
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          setActiveTab('admin');
+                        }}
+                        className="w-full text-left px-3 py-2 text-purple-700 hover:bg-purple-50 rounded-lg flex items-center gap-2 font-bold cursor-pointer"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                        <span>{uiText.adminTab}</span>
+                      </button>
+                    )}
+
                     <button
                       onClick={() => {
                         setShowProfileMenu(false);
@@ -1246,6 +1300,32 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+        {/* TAB 0: ADMIN COMMAND PORTAL */}
+        {activeTab === 'admin' && (
+          <div>
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+                  <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-600 animate-pulse">
+                    {appLang === 'or-IN'
+                      ? 'ପ୍ରଶାସନିକ ପୋର୍ଟାଲ୍ ଲୋଡ୍ ହେଉଛି...'
+                      : appLang === 'hi-IN'
+                      ? 'प्रशासनिक पोर्टल लोड हो रहा है...'
+                      : 'Loading Admin Command Portal...'}
+                  </p>
+                </div>
+              }
+            >
+              <AdminPage
+                currentUser={currentUser}
+                appLang={appLang}
+                onNavigateTab={(tab) => setActiveTab(tab)}
+              />
+            </Suspense>
+          </div>
+        )}
+
         {/* TAB 1: DOCTOR DASHBOARD */}
         {activeTab === 'dashboard' && (
           <div>

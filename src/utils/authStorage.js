@@ -117,6 +117,24 @@ const DEFAULT_USERS = [
     bloodGroup: 'O+',
     preferredLanguage: 'or-IN',
     createdAt: '2026-03-08T09:00:00.000Z'
+  },
+  {
+    id: 'USR-ADM-001',
+    name: 'Sunil Kumar Dash (ସୁନୀଲ କୁମାର ଦାଶ)',
+    role: 'State Health Portal Administrator (ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ପ୍ରଶାସକ)',
+    roleCategory: 'admin',
+    staffId: 'ADMIN-OD-2026',
+    facility: 'National Health Mission (NHM) Directorate, Bhubaneswar',
+    state: 'Odisha (ଓଡ଼ିଶା)',
+    district: 'Khurda',
+    email: 'admin@health.odisha.gov.in',
+    phone: '+91 94370 99881',
+    password: 'password123',
+    department: 'State Digital Health Mission & Clinical Portal Governance',
+    shift: '24x7 System Oversight & Administrative Command',
+    qualifications: 'Chief State Portal Administrator, IT & Health Informatics',
+    preferredLanguage: 'or-IN',
+    createdAt: '2026-01-01T00:00:00.000Z'
   }
 ];
 
@@ -128,7 +146,7 @@ export const getStoredUsers = () => {
       return DEFAULT_USERS;
     }
     const parsed = JSON.parse(raw);
-    // Ensure all default demo users exist in the stored list
+    // Ensure all default demo users (including USR-ADM-001) exist in the stored list
     let updated = false;
     DEFAULT_USERS.forEach((def) => {
       if (!parsed.some((u) => u.id === def.id || u.email === def.email)) {
@@ -326,5 +344,99 @@ export const cancelHospitalTransfer = (transferId) => {
   const updated = current.filter((t) => t.id !== transferId);
   localStorage.setItem(HOSPITAL_TRANSFERS_KEY, JSON.stringify(updated));
   return updated;
+};
+
+// ─────────────────────────────────────────────
+// Admin Portal User Management & System Logs
+// ─────────────────────────────────────────────
+export const deleteStoredUser = (userId) => {
+  const users = getStoredUsers();
+  const filtered = users.filter((u) => u.id !== userId);
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(filtered));
+  logSystemEvent({
+    type: 'USER_DELETED',
+    description: `User ${userId} was deleted from database`,
+    severity: 'warning'
+  });
+  return filtered;
+};
+
+export const updateStoredUser = (userId, updatedFields) => {
+  const users = getStoredUsers();
+  const index = users.findIndex((u) => u.id === userId);
+  if (index === -1) {
+    throw new Error('User not found.');
+  }
+  users[index] = { ...users[index], ...updatedFields };
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  logSystemEvent({
+    type: 'USER_UPDATED',
+    description: `User account ${users[index].name} (${userId}) was updated`,
+    severity: 'info'
+  });
+  return users[index];
+};
+
+const AUDIT_LOGS_KEY = 'triage_system_audit_logs';
+
+const DEFAULT_AUDIT_LOGS = [
+  {
+    id: 'LOG-001',
+    timestamp: '2026-03-10T08:15:20.000Z',
+    type: 'SYSTEM_BOOT',
+    actor: 'State Portal Engine',
+    description: 'All 30 District Health Command servers synchronized. SSL/TLS AES-256 active.',
+    severity: 'success'
+  },
+  {
+    id: 'LOG-002',
+    timestamp: '2026-03-10T08:45:10.000Z',
+    type: 'ADMIN_AUTH',
+    actor: 'Sunil Kumar Dash (ADMIN-OD-2026)',
+    description: 'Super Administrator session authenticated via NHM Secure Gateway.',
+    severity: 'info'
+  },
+  {
+    id: 'LOG-003',
+    timestamp: '2026-03-10T09:12:44.000Z',
+    type: 'BED_RESERVATION',
+    actor: 'SCB Medical College & Hospital',
+    description: 'Critical ICU bed assigned to emergency coronary referral.',
+    severity: 'warning'
+  }
+];
+
+export const getSystemAuditLogs = () => {
+  try {
+    const raw = localStorage.getItem(AUDIT_LOGS_KEY);
+    if (!raw) {
+      localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(DEFAULT_AUDIT_LOGS));
+      return DEFAULT_AUDIT_LOGS;
+    }
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed to read audit logs:', e);
+    return DEFAULT_AUDIT_LOGS;
+  }
+};
+
+export const logSystemEvent = ({ type, actor = 'System Admin', description, severity = 'info' }) => {
+  try {
+    const logs = getSystemAuditLogs();
+    const newEntry = {
+      id: `LOG-${Date.now().toString().slice(-4)}`,
+      timestamp: new Date().toISOString(),
+      type,
+      actor,
+      description,
+      severity
+    };
+    const updated = [newEntry, ...logs.slice(0, 99)]; // Keep latest 100
+    localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(updated));
+    return updated;
+  } catch (e) {
+    console.error('Failed to log audit event:', e);
+    return [];
+  }
 };
 

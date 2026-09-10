@@ -59,6 +59,10 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
   const [signInIdentifier, setSignInIdentifier] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
 
+  // Dedicated Admin Sign In fields
+  const [adminIdentifier, setAdminIdentifier] = useState('admin@health.odisha.gov.in');
+  const [adminPassword, setAdminPassword] = useState('password123');
+
   // Sign Up form fields
   const [signUpData, setSignUpData] = useState({
     name: '',
@@ -76,7 +80,8 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
     gender: 'Male',
     bloodGroup: 'B+',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    adminPasskey: ''
   });
 
   const indianStates = [
@@ -133,6 +138,12 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       label: 'Campus Infirmary Medical Staff',
       defaultShift: 'Student Health Shift',
       placeholderId: 'CAMPUS-MED-404'
+    },
+    {
+      category: 'admin',
+      label: 'State Health Portal Administrator (ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ପ୍ରଶାସକ)',
+      defaultShift: '24x7 Administrative Command',
+      placeholderId: 'ADMIN-OD-2026'
     }
   ];
 
@@ -143,7 +154,15 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       subtitle: 'ଚିକିତ୍ସକ ଏବଂ ରୋଗୀଙ୍କ ପାଇଁ ବହୁଭାଷୀ ଡିଜିଟାଲ୍ ସ୍ୱାସ୍ଥ୍ୟ ଟ୍ରାଏଜ୍ ପୋର୍ଟାଲ୍ (ଓଡ଼ିଶା ସଂସ୍କରଣ)',
       badge: 'ଆୟୁଷ୍ମାନ ଭାରତ ଏବଂ ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ମିଶନ (BSKY ଅନ୍ତର୍ଭୁକ୍ତ)',
       signInTab: 'ଲଗ୍ ଇନ୍',
+      adminSignInTab: 'ପ୍ରଶାସନିକ ଲଗ୍-ଇନ୍ (Admin)',
       signUpTab: 'ନୂଆ ଖାତା ଖୋଲନ୍ତୁ',
+      adminGateTitle: 'ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ପୋର୍ଟାଲ୍ କେନ୍ଦ୍ରୀୟ ପ୍ରଶାସନିକ ପ୍ରବେଶ ପଥ',
+      adminGateSubtitle: 'କେବଳ ଅଧିକୃତ ସୁପର ଆଡମିନ୍ ଏବଂ ଜିଲ୍ଲା ସ୍ୱାସ୍ଥ୍ୟ ନିର୍ଦ୍ଦେଶକଙ୍କ ପାଇଁ ସୁରକ୍ଷିତ ଲଗ୍-ଇନ୍',
+      adminIdLabel: 'ଅଫିସିଆଲ୍ ଆଡମିନ୍ ଇମେଲ୍ / ପ୍ରଶାସକ ID *',
+      adminIdPlaceholder: 'admin@health.odisha.gov.in କିମ୍ବା ADMIN-OD-2026',
+      adminLoginBtn: 'କେନ୍ଦ୍ରୀୟ ପ୍ରଶାସନିକ ଡେସ୍କରେ ପ୍ରବେଶ କରନ୍ତୁ',
+      adminPasskeyLabel: 'ପ୍ରଶାସକ ସୁରକ୍ଷା କୋଡ଼ (Admin Passkey) *',
+      adminPasskeyHint: '* ଆଡମିନ୍ ପଞ୍ଜୀକରଣ ପାଇଁ ଅଧିକୃତ ସୁରକ୍ଷା କୋଡ଼: sunil123',
       idLabel: 'ଇମେଲ୍ ଆଇଡି / ଷ୍ଟାଫ୍ ଆଇଡି / ABHA ଆଇଡି / ଫୋନ୍',
       idPlaceholder: 'dr.soumya@scbmch.odisha.gov.in କିମ୍ବା ABHA ଆଇଡି',
       passwordLabel: 'ପାସୱାର୍ଡ',
@@ -167,7 +186,15 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       subtitle: 'चिकित्सकों एवं नागरिकों के लिए सुरक्षित बहुभाषी डिजिटल ट्रायज पोर्टल',
       badge: 'आयुष्मान भारत एवं राष्ट्रीय स्वास्थ्य मिशन',
       signInTab: 'साइन इन',
+      adminSignInTab: 'एडमिन पोर्टल (Admin)',
       signUpTab: 'नया खाता बनाएं',
+      adminGateTitle: 'राज्य स्वास्थ्य पोर्टल केंद्रीय प्रशासनिक प्रवेश द्वार',
+      adminGateSubtitle: 'केवल अधिकृत सुपर एडमिन एवं स्वास्थ्य निदेशकों हेतु सुरक्षित लॉगिन',
+      adminIdLabel: 'आधिकारिक एडमिन ईमेल / स्टाफ ID *',
+      adminIdPlaceholder: 'admin@health.odisha.gov.in या ADMIN-OD-2026',
+      adminLoginBtn: 'केंद्रीय प्रशासनिक डेस्क में प्रवेश करें',
+      adminPasskeyLabel: 'प्रशासक सुरक्षा पासकी (Admin Passkey) *',
+      adminPasskeyHint: '* एडमिन पंजीकरण हेतु अधिकृत पासकी: sunil123',
       idLabel: 'ईमेल आईडी / मेडिकल पंजीकरण / ABHA आईडी',
       idPlaceholder: 'dr.rajesh@civilhosp.gov.in या ABHA ID',
       passwordLabel: 'पासवर्ड',
@@ -190,8 +217,16 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       title: 'National Healthcare Triage Desk',
       subtitle: 'Multimodal Decision-Support & Clinical Intake Portal for Medical Staff & Citizens',
       badge: 'Ayushman Arogya Mandir & National Health Mission',
-      signInTab: 'Sign In',
+      signInTab: 'Citizen / Staff Sign In',
+      adminSignInTab: 'Admin Portal Sign In',
       signUpTab: 'Create Account',
+      adminGateTitle: 'State Health Mission Central Administrator Gateway',
+      adminGateSubtitle: 'Restricted high-clearance access for Super Administrators & Health Directors',
+      adminIdLabel: 'Official Admin Email / Administrator ID *',
+      adminIdPlaceholder: 'admin@health.odisha.gov.in or ADMIN-OD-2026',
+      adminLoginBtn: 'Access State Admin Command Center',
+      adminPasskeyLabel: 'Admin Authorization Security Passkey *',
+      adminPasskeyHint: '* Administrator registration requires secret passkey: sunil123',
       idLabel: 'Official Email ID / Medical Reg ID / ABHA ID / Phone',
       idPlaceholder: 'e.g. dr.soumya@scbmch.odisha.gov.in or ABHA ID',
       passwordLabel: 'Password',
@@ -273,6 +308,45 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
     }
   };
 
+  // Submit Dedicated Admin Sign In
+  const handleAdminSignInSubmit = (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    if (!adminIdentifier.trim() || !adminPassword.trim()) {
+      setErrorMsg(
+        authLang === 'or-IN'
+          ? 'ଦୟାକରି ଆଡମିନ୍ ଇମେଲ୍ / ଆଇଡି ଏବଂ ପାସୱାର୍ଡ ପ୍ରଦାନ କରନ୍ତୁ।'
+          : 'Please provide both Admin Official Email/ID and Password.'
+      );
+      return;
+    }
+
+    try {
+      const authenticatedUser = verifyCredentials(adminIdentifier, adminPassword);
+      if (authenticatedUser.roleCategory !== 'admin') {
+        setErrorMsg(
+          authLang === 'or-IN'
+            ? 'ଏହି ଖାତା ପ୍ରଶାସକ (Admin) ନୁହେଁ। ଦୟାକରି ସାଧାରଣ ନାଗରିକ/ଡାକ୍ତର ଲଗ୍-ଇନ୍ ଟ୍ୟାବ୍ ବ୍ୟବହାର କରନ୍ତୁ।'
+            : 'This account does not have Administrative clearance. Please use the Citizen/Staff Sign In tab.'
+        );
+        return;
+      }
+      setCurrentUser(authenticatedUser);
+      setSuccessMsg(
+        authLang === 'or-IN'
+          ? `ପ୍ରଶାସନିକ ପ୍ରମାଣୀକରଣ ସଫଳ! ସ୍ୱାଗତମ୍, ${authenticatedUser.name}।`
+          : `Admin authentication successful! Welcome, ${authenticatedUser.name}.`
+      );
+      setTimeout(() => {
+        onLoginSuccess(authenticatedUser);
+      }, 500);
+    } catch (err) {
+      setErrorMsg(err.message || 'Admin authentication failed. Please verify credentials.');
+    }
+  };
+
   // Submit Sign Up / Create Account
   const handleSignUpSubmit = (e) => {
     e.preventDefault();
@@ -283,6 +357,21 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       setErrorMsg(authLang === 'or-IN' ? 'ପୂରା ନାମ ଆବଶ୍ୟକ।' : 'Full Name is required.');
       return;
     }
+
+    // Enforce Secret Passkey sunil123 for Administrator signup
+    if (signUpData.roleCategory === 'admin') {
+      if (!signUpData.adminPasskey || signUpData.adminPasskey.trim() !== 'sunil123') {
+        setErrorMsg(
+          authLang === 'or-IN'
+            ? 'ଅବୈଧ ପ୍ରଶାସକ ପାସକୋଡ୍! ଆଡମିନ୍ ପଞ୍ଜୀକରଣ ପାଇଁ ଗୁପ୍ତ କୋଡ୍ sunil123 ଆବଶ୍ୟକ।'
+            : authLang === 'hi-IN'
+            ? 'अवैध एडमिन पासकी! एडमिन पंजीकरण के लिए पासवर्ड sunil123 आवश्यक है।'
+            : 'Invalid Admin Security Key! Administrator registration strictly requires the passkey: sunil123'
+        );
+        return;
+      }
+    }
+
     if (!signUpData.facility.trim()) {
       setErrorMsg(
         authLang === 'or-IN'
@@ -482,7 +571,7 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       {/* Main Container Card */}
       <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-10 transition-all">
         {/* Tab Switcher */}
-        <div className="grid grid-cols-2 bg-slate-100 border-b border-slate-200 text-xs sm:text-sm font-bold">
+        <div className="grid grid-cols-3 bg-slate-100 border-b border-slate-200 text-xs sm:text-sm font-bold">
           <button
             type="button"
             onClick={() => {
@@ -490,14 +579,30 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
               setErrorMsg('');
               setSuccessMsg('');
             }}
-            className={`py-3.5 flex items-center justify-center gap-2 transition-all ${
+            className={`py-3.5 flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               mode === 'signin'
                 ? 'bg-white text-emerald-700 border-b-2 border-emerald-600 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <LogIn className="w-4 h-4" />
-            {currentStrings.signInTab}
+            <LogIn className="w-3.5 h-3.5" />
+            <span className="truncate">{currentStrings.signInTab}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMode('admin');
+              setErrorMsg('');
+              setSuccessMsg('');
+            }}
+            className={`py-3.5 flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              mode === 'admin'
+                ? 'bg-white text-purple-700 border-b-2 border-purple-600 shadow-xs'
+                : 'text-slate-500 hover:text-purple-700'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+            <span className="truncate">{currentStrings.adminSignInTab}</span>
           </button>
           <button
             type="button"
@@ -506,14 +611,14 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
               setErrorMsg('');
               setSuccessMsg('');
             }}
-            className={`py-3.5 flex items-center justify-center gap-2 transition-all ${
+            className={`py-3.5 flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               mode === 'signup'
                 ? 'bg-white text-emerald-700 border-b-2 border-emerald-600 shadow-xs'
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <UserPlus className="w-4 h-4" />
-            {currentStrings.signUpTab}
+            <UserPlus className="w-3.5 h-3.5" />
+            <span className="truncate">{currentStrings.signUpTab}</span>
           </button>
         </div>
 
@@ -696,7 +801,116 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
           </div>
         )}
 
-        {/* MODE 2: CREATE ACCOUNT */}
+        {/* MODE 2: DEDICATED ADMIN PORTAL SIGN IN */}
+        {mode === 'admin' && (
+          <div className="px-6 pb-6 pt-2">
+            {/* Super Admin Access Security Notice */}
+            <div className="p-3.5 mb-4 bg-purple-50 border border-purple-200 rounded-xl text-xs text-purple-900 flex items-start gap-2.5">
+              <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+              <div>
+                <strong className="block text-purple-950 font-bold">{currentStrings.adminGateTitle}</strong>
+                <span className="text-purple-700 text-[11px]">{currentStrings.adminGateSubtitle}</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleAdminSignInSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  {currentStrings.adminIdLabel}
+                </label>
+                <div className="relative">
+                  <ShieldCheck className="w-4 h-4 text-purple-500 absolute left-3.5 top-3.5" />
+                  <input
+                    type="text"
+                    required
+                    value={adminIdentifier}
+                    onChange={(e) => setAdminIdentifier(e.target.value)}
+                    placeholder={currentStrings.adminIdPlaceholder}
+                    className="w-full pl-10 pr-4 py-2.5 bg-purple-50/40 text-sm rounded-xl border border-purple-200 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all text-slate-800 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    {currentStrings.passwordLabel}
+                  </label>
+                  <span className="text-[11px] text-purple-700 hover:underline cursor-pointer">
+                    Demo: password123
+                  </span>
+                </div>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <input
+                    type="password"
+                    required
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-4 py-2.5 bg-purple-50/40 text-sm rounded-xl border border-purple-200 focus:bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
+                <span className="inline-flex items-center gap-1 text-[11px] text-purple-800 font-semibold">
+                  <Lock className="w-3.5 h-3.5 text-purple-600" />
+                  SSL/TLS 256-Bit Encrypted Portal
+                </span>
+                <span className="text-slate-400 text-[11px]">IP & Audit Logged</span>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 hover:from-purple-800 hover:to-indigo-800 text-white font-extrabold rounded-xl shadow-lg shadow-purple-900/20 transition-all flex items-center justify-center gap-2 text-sm mt-2 cursor-pointer"
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-300" />
+                {currentStrings.adminLoginBtn}
+              </button>
+            </form>
+
+            {/* Quick 1-Click Super Admin Login */}
+            <div className="mt-5 pt-4 border-t border-slate-200">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1 mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                {authLang === 'or-IN' ? '୧-କ୍ଲିକ୍ ତୁରନ୍ତ ଆଡମିନ୍ ଲଗ୍-ଇନ୍:' : '1-Click Instant Admin Sign-In:'}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => handleQuickDemoLogin('USR-ADM-001')}
+                className="w-full p-3 bg-purple-50 hover:bg-purple-100/80 border border-purple-300 rounded-xl text-left transition-all group flex items-center justify-between cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                    SD
+                  </div>
+                  <div>
+                    <div className="font-bold text-purple-950 text-xs sm:text-sm flex items-center gap-1.5">
+                      <span>Sunil Kumar Dash (ସୁନୀଲ କୁମାର ଦାଶ)</span>
+                      <span className="text-[10px] bg-purple-200 text-purple-900 px-1.5 py-0.2 rounded-full font-black">
+                        SUPER ADMIN
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-purple-800 font-semibold mt-0.5">
+                      National Health Mission (NHM) Directorate, Bhubaneswar
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-mono">
+                      ADMIN-OD-2026 • admin@health.odisha.gov.in
+                    </p>
+                  </div>
+                </div>
+                <div className="text-purple-700 font-bold text-xs shrink-0 flex items-center gap-1">
+                  <span>Enter</span>
+                  <LogIn className="w-3.5 h-3.5" />
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* MODE 3: CREATE ACCOUNT */}
         {mode === 'signup' && (
           <div className="px-6 pb-6 pt-2">
             <form onSubmit={handleSignUpSubmit} className="space-y-4">
@@ -740,6 +954,36 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                   </select>
                 </div>
               </div>
+
+              {/* Conditional Secret Passkey for Admin registration */}
+              {signUpData.roleCategory === 'admin' && (
+                <div className="p-3.5 bg-purple-50 rounded-xl border border-purple-300 space-y-1.5 animate-fadeIn">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-black text-purple-900 uppercase tracking-wider">
+                      {currentStrings.adminPasskeyLabel}
+                    </label>
+                    <span className="text-[10px] bg-purple-200 text-purple-800 font-bold px-2 py-0.5 rounded-full">
+                      Required
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Key className="w-4 h-4 text-purple-600 absolute left-3 top-3" />
+                    <input
+                      type="password"
+                      required
+                      value={signUpData.adminPasskey}
+                      onChange={(e) =>
+                        setSignUpData({ ...signUpData, adminPasskey: e.target.value })
+                      }
+                      placeholder="Enter passkey: sunil123"
+                      className="w-full pl-9 pr-3 py-2 bg-white text-xs font-mono font-bold rounded-xl border border-purple-400 focus:ring-2 focus:ring-purple-600 outline-none text-purple-950"
+                    />
+                  </div>
+                  <p className="text-[11px] text-purple-700 font-bold">
+                    {currentStrings.adminPasskeyHint}
+                  </p>
+                </div>
+              )}
 
               {/* Patient-specific Age, Gender & Blood Group Row */}
               {signUpData.roleCategory === 'patient' && (
