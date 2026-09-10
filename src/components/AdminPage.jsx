@@ -36,10 +36,13 @@ import {
   cancelBedBooking,
   getAmbulanceRequests,
   cancelAmbulanceRequest,
+  updateAmbulanceStatus,
   getBookedAppointments,
+  cancelAppointment,
   getHospitalTransfers,
   getSystemAuditLogs,
-  logSystemEvent
+  logSystemEvent,
+  resetSystemToDefaults
 } from '../utils/authStorage';
 
 /**
@@ -48,7 +51,7 @@ import {
  * Supports Odia, Hindi, English and Light/Dark/Reading theme modes
  */
 export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTab }) {
-  const [activeSubTab, setActiveSubTab] = useState('users'); // 'users' | 'beds' | 'ambulance' | 'transfers' | 'audit'
+  const [activeSubTab, setActiveSubTab] = useState('users'); // 'users' | 'beds' | 'ambulance' | 'appointments' | 'transfers' | 'audit'
   const [usersList, setUsersList] = useState([]);
   const [bedBookings, setBedBookings] = useState([]);
   const [ambulanceList, setAmbulanceList] = useState([]);
@@ -62,6 +65,18 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
   const [userToDelete, setUserToDelete] = useState(null);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState('');
+
+  // Bed filter states
+  const [bedSearch, setBedSearch] = useState('');
+  const [bedTypeFilter, setBedTypeFilter] = useState('all');
+
+  // Ambulance filter states
+  const [ambSearch, setAmbSearch] = useState('');
+  const [ambTypeFilter, setAmbTypeFilter] = useState('all');
+
+  // Appointment filter states
+  const [aptSearch, setAptSearch] = useState('');
+  const [aptDeptFilter, setAptDeptFilter] = useState('all');
 
   // Add user form state
   const [newUserData, setNewUserData] = useState({
@@ -101,6 +116,59 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
         : appLang === 'hi-IN'
         ? 'प्रशासनिक डेटा सफलतापूर्वक रिफ्रेश किया गया।'
         : 'Administrative data successfully refreshed.'
+    );
+    setTimeout(() => setActionSuccessMsg(''), 3000);
+  };
+
+  const handleResetDefaultsConfirm = () => {
+    if (
+      window.confirm(
+        appLang === 'or-IN'
+          ? 'ଆପଣ ସମସ୍ତ ସରକାରୀ ଟେଲିମେଟ୍ରି, ୨୬+ ବ୍ୟବହାରକାରୀ, ୧୦ ଟି ବେଡ୍ ଏବଂ ୮ ଟି ଆମ୍ବୁଲାନ୍ସ ରେକର୍ଡକୁ ପୁନଃସ୍ଥାପନ କରିବାକୁ ଚାହାଁନ୍ତି କି?'
+          : 'Restore all official state health records (26+ registered staff/citizens, 10 bed reservations, 8 ambulance dispatches, 8 appointments)?'
+      )
+    ) {
+      resetSystemToDefaults();
+      loadAdminData();
+      setActionSuccessMsg(
+        appLang === 'or-IN'
+          ? 'ସମସ୍ତ ସରକାରୀ ରେକର୍ଡ ସଫଳତାର ସହ ପୁନଃସ୍ଥାପନ କରାଗଲା।'
+          : 'All official state records have been restored successfully.'
+      );
+      setTimeout(() => setActionSuccessMsg(''), 3000);
+    }
+  };
+
+  const handleExportCensus = () => {
+    const csvRows = [];
+    csvRows.push(['RECORD_TYPE', 'IDENTIFIER', 'NAME_OR_PATIENT', 'ROLE_OR_SPECIALTY_OR_TYPE', 'FACILITY_OR_DESTINATION', 'PHONE_CONTACT', 'STATUS']);
+
+    usersList.forEach((u) => {
+      csvRows.push(['USER', u.staffId || u.id, `"${u.name}"`, u.roleCategory, `"${u.facility}"`, u.phone, 'ACTIVE']);
+    });
+    bedBookings.forEach((b) => {
+      csvRows.push(['BED', b.id, `"${b.patientName}"`, `"${b.wardName || b.bedTypeName}"`, `"${b.hospitalName}"`, b.patientPhone || b.contact, b.status || 'CONFIRMED']);
+    });
+    ambulanceList.forEach((a) => {
+      csvRows.push(['AMBULANCE', a.id, `"${a.patientName}"`, `"${a.vehicleNo} (${a.ambulanceType})"`, `"${a.destination}"`, a.contact || a.phone, a.status]);
+    });
+    appointments.forEach((ap) => {
+      csvRows.push(['APPOINTMENT', ap.id, `"${ap.patientName}"`, `"${ap.department}"`, `"${ap.facility}"`, ap.patientPhone, ap.status]);
+    });
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + csvRows.map((e) => e.join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Odisha_State_Health_Census_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setActionSuccessMsg(
+      appLang === 'or-IN'
+        ? 'ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ସେନ୍ସସ୍ CSV ଡାଉନଲୋଡ୍ ହୋଇଛି।'
+        : 'State Health Census CSV successfully downloaded.'
     );
     setTimeout(() => setActionSuccessMsg(''), 3000);
   };
@@ -150,6 +218,42 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       severity: 'warning'
     });
     setAuditLogs(getSystemAuditLogs());
+  };
+
+  const handleUpdateAmbStatus = (reqId, newStatus) => {
+    const updated = updateAmbulanceStatus(reqId, newStatus);
+    setAmbulanceList(updated);
+    logSystemEvent({
+      type: 'AMBULANCE_STATUS_UPDATE',
+      actor: currentUser?.name || 'Administrator',
+      description: `Ambulance dispatch ${reqId} status changed to ${newStatus}`,
+      severity: 'info'
+    });
+    setAuditLogs(getSystemAuditLogs());
+    setActionSuccessMsg(
+      appLang === 'or-IN'
+        ? `ଆମ୍ବୁଲାନ୍ସ ${reqId} ର ସ୍ଥିତି ${newStatus} କୁ ପରିବର୍ତ୍ତନ ହୋଇଛି।`
+        : `Ambulance dispatch ${reqId} updated to ${newStatus}.`
+    );
+    setTimeout(() => setActionSuccessMsg(''), 3000);
+  };
+
+  const handleCancelAppointmentConfirm = (aptId) => {
+    const updated = cancelAppointment(aptId);
+    setAppointments(updated);
+    logSystemEvent({
+      type: 'APPOINTMENT_CANCELLED',
+      actor: currentUser?.name || 'Administrator',
+      description: `Outpatient appointment ${aptId} was cancelled by Admin`,
+      severity: 'warning'
+    });
+    setAuditLogs(getSystemAuditLogs());
+    setActionSuccessMsg(
+      appLang === 'or-IN'
+        ? `ପରାମର୍ଶ ବୁକିଂ (${aptId}) ବାତିଲ୍ କରାଗଲା।`
+        : `Appointment (${aptId}) was cancelled.`
+    );
+    setTimeout(() => setActionSuccessMsg(''), 3000);
   };
 
   const handleCreateUserSubmit = (e) => {
@@ -234,6 +338,8 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       badge: 'ଜାତୀୟ ସ୍ୱାସ୍ଥ୍ୟ ମିଶନ (NHM) • ସର୍ବୋଚ୍ଚ ପ୍ରଶାସନିକ କମାଣ୍ଡ',
       refreshBtn: 'ତଥ୍ୟ ନବୀକରଣ',
       addUserBtn: 'ନୂଆ କର୍ମଚାରୀ / ଡାକ୍ତର ଯୋଡ଼ନ୍ତୁ',
+      exportCensusBtn: 'ସେନ୍ସସ୍ ଏକ୍ସପୋର୍ଟ (CSV)',
+      restoreBtn: 'ସରକାରୀ ତଥ୍ୟ ପୁନଃସ୍ଥାପନ',
       totalUsers: 'ମୋଟ ପଞ୍ଜୀକୃତ ବ୍ୟବହାରକାରୀ',
       totalBeds: 'ସକ୍ରିୟ ବେଡ୍ ବୁକିଂ',
       totalAmbulance: 'ଜରୁରୀ ଆମ୍ବୁଲାନ୍ସ ଅନୁରୋଧ',
@@ -242,8 +348,9 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       tabUsers: '୧. ବ୍ୟବହାରକାରୀ ଓ ଷ୍ଟାଫ୍ ପରିଚାଳନା',
       tabBeds: '୨. ହସ୍ପିଟାଲ୍ ବେଡ୍ କମାଣ୍ଡ',
       tabAmbulance: '୩. ଆମ୍ବୁଲାନ୍ସ ଡିସପାଚ୍',
-      tabTransfers: '୪. ହସ୍ପିଟାଲ୍ ରେଫରାଲ୍ ସ୍ଲିପ୍',
-      tabAudit: '୫. ସିଷ୍ଟମ୍ ସୁରକ୍ଷା ଓ ଅଡିଟ୍ ଲଗ୍',
+      tabAppointments: '୪. ଡାକ୍ତର ପରାମର୍ଶ କମାଣ୍ଡ',
+      tabTransfers: '୫. ହସ୍ପିଟାଲ୍ ରେଫରାଲ୍ ସ୍ଲିପ୍',
+      tabAudit: '୬. ସିଷ୍ଟମ୍ ସୁରକ୍ଷା ଓ ଅଡିଟ୍ ଲଗ୍',
       searchPlaceholder: 'ନାମ, ଇମେଲ୍, ରେଗ୍ ଆଇଡି କିମ୍ବା ଡାକ୍ତରଖାନା ଖୋଜନ୍ତୁ...',
       allRoles: 'ସମସ୍ତ ଭୂମିକା',
       doctors: 'ଡାକ୍ତର (Doctors)',
@@ -273,6 +380,8 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       badge: 'राष्ट्रीय स्वास्थ्य मिशन (NHM) • सर्वोच्च प्रशासनिक कमान',
       refreshBtn: 'डेटा रीफ्रेश',
       addUserBtn: 'नया स्टाफ / डॉक्टर जोड़ें',
+      exportCensusBtn: 'डेटा निर्यात (CSV)',
+      restoreBtn: 'आधिकारिक डेटा रीसेट',
       totalUsers: 'कुल पंजीकृत उपयोगकर्ता',
       totalBeds: 'सक्रिय बेड बुकिंग',
       totalAmbulance: 'आपातकालीन एम्बुलेंस अनुरोध',
@@ -281,8 +390,9 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       tabUsers: '1. उपयोगकर्ता एवं स्टाफ प्रबंधन',
       tabBeds: '2. अस्पताल बेड कमान',
       tabAmbulance: '3. एम्बुलेंस प्रेषण',
-      tabTransfers: '4. अस्पताल रेफरल पर्ची',
-      tabAudit: '5. सिस्टम सुरक्षा एवं ऑडिट लॉग',
+      tabAppointments: '4. डॉक्टर परामर्श कमान',
+      tabTransfers: '5. अस्पताल रेफरल पर्ची',
+      tabAudit: '6. सिस्टम सुरक्षा एवं ऑडिट लॉग',
       searchPlaceholder: 'नाम, ईमेल, रजिस्ट्रेशन आईडी या अस्पताल खोजें...',
       allRoles: 'सभी भूमिकाएं',
       doctors: 'चिकित्सक (Doctors)',
@@ -312,6 +422,8 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       badge: 'National Health Mission (NHM) • Supreme Administrative Command',
       refreshBtn: 'Refresh Telemetry',
       addUserBtn: 'Register New Staff / Officer',
+      exportCensusBtn: 'Export Census (CSV)',
+      restoreBtn: 'Restore State Telemetry',
       totalUsers: 'Registered Users & Staff',
       totalBeds: 'Active Bed Bookings',
       totalAmbulance: 'Emergency Ambulance Dispatches',
@@ -320,8 +432,9 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       tabUsers: '1. User & Staff Management',
       tabBeds: '2. Live Bed Command',
       tabAmbulance: '3. Ambulance Dispatch Control',
-      tabTransfers: '4. Inter-Hospital Transfer Slips',
-      tabAudit: '5. System Security & Audit Trail',
+      tabAppointments: '4. Scheduled Consultations',
+      tabTransfers: '5. Inter-Hospital Transfer Slips',
+      tabAudit: '6. System Security & Audit Trail',
       searchPlaceholder: 'Search by name, email, registration ID or facility...',
       allRoles: 'All Roles',
       doctors: 'Doctors (RMP)',
@@ -359,6 +472,50 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       u.facility?.toLowerCase().includes(q) ||
       u.district?.toLowerCase().includes(q);
     return matchesRole && matchesSearch;
+  });
+
+  // Filter beds by search and bed type
+  const filteredBeds = bedBookings.filter((b) => {
+    const matchesType = bedTypeFilter === 'all' || b.bedTypeId === bedTypeFilter;
+    const q = bedSearch.toLowerCase();
+    const matchesSearch =
+      !q ||
+      b.patientName?.toLowerCase().includes(q) ||
+      b.hospitalName?.toLowerCase().includes(q) ||
+      b.wardName?.toLowerCase().includes(q) ||
+      b.bedNumber?.toLowerCase().includes(q) ||
+      b.referralReason?.toLowerCase().includes(q);
+    return matchesType && matchesSearch;
+  });
+
+  // Filter ambulances by search and type
+  const filteredAmbulances = ambulanceList.filter((a) => {
+    const matchesType = ambTypeFilter === 'all' || a.ambulanceTypeId === ambTypeFilter;
+    const q = ambSearch.toLowerCase();
+    const matchesSearch =
+      !q ||
+      a.patientName?.toLowerCase().includes(q) ||
+      a.vehicleNo?.toLowerCase().includes(q) ||
+      a.paramedic?.toLowerCase().includes(q) ||
+      a.destination?.toLowerCase().includes(q) ||
+      a.location?.toLowerCase().includes(q) ||
+      a.emergencyType?.toLowerCase().includes(q);
+    return matchesType && matchesSearch;
+  });
+
+  // Filter appointments by search and department
+  const filteredAppointments = appointments.filter((ap) => {
+    const q = aptSearch.toLowerCase();
+    const docName = typeof ap.doctorName === 'object' ? Object.values(ap.doctorName).join(' ') : (ap.doctorName || '');
+    const matchesDept = aptDeptFilter === 'all' || ap.department?.toLowerCase().includes(aptDeptFilter.toLowerCase());
+    const matchesSearch =
+      !q ||
+      ap.patientName?.toLowerCase().includes(q) ||
+      docName.toLowerCase().includes(q) ||
+      ap.department?.toLowerCase().includes(q) ||
+      ap.facility?.toLowerCase().includes(q) ||
+      ap.reason?.toLowerCase().includes(q);
+    return matchesDept && matchesSearch;
   });
 
   const getRoleBadge = (category) => {
@@ -433,15 +590,35 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportCensus}
+                className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                title="Download CSV Census"
+              >
+                <Download className="w-4 h-4 text-teal-400" />
+                <span className="hidden sm:inline">{t.exportCensusBtn}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleRefresh}
-                className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
                 title="Refresh Live Data"
               >
                 <RefreshCw className="w-4 h-4 text-emerald-400" />
                 <span className="hidden sm:inline">{t.refreshBtn}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetDefaultsConfirm}
+                className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                title="Restore State Defaults"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span className="hidden sm:inline">{t.restoreBtn}</span>
               </button>
 
               <button
@@ -552,10 +729,12 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
         </div>
 
         <div
-          onClick={() => {
-            if (onNavigateTab) onNavigateTab('booking');
-          }}
-          className="p-4 rounded-xl border bg-white border-slate-200 hover:border-teal-300 hover:shadow-md transition-all cursor-pointer shadow-xs"
+          onClick={() => setActiveSubTab('appointments')}
+          className={`p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
+            activeSubTab === 'appointments'
+              ? 'bg-teal-500/10 border-teal-500 ring-2 ring-teal-500/20'
+              : 'bg-white border-slate-200 hover:border-teal-300 hover:shadow-md'
+          }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t.totalAppointments}</span>
@@ -637,6 +816,22 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
           <span>{t.tabAmbulance}</span>
           <span className="bg-rose-900/40 text-rose-100 text-[10px] px-1.5 py-0.2 rounded-full">
             {ambulanceList.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('appointments')}
+          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+            activeSubTab === 'appointments'
+              ? 'bg-teal-700 text-white shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          <span>{t.tabAppointments}</span>
+          <span className="bg-teal-900/40 text-teal-100 text-[10px] px-1.5 py-0.2 rounded-full">
+            {appointments.length}
           </span>
         </button>
 
@@ -882,69 +1077,174 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       {/* SUB-VIEW 2: LIVE BED COMMAND                                  */}
       {/* ───────────────────────────────────────────────────────────── */}
       {activeSubTab === 'beds' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
             <div>
               <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                 <Bed className="w-5 h-5 text-emerald-600" />
-                {appLang === 'or-IN' ? 'ହସ୍ପିଟାଲ୍ ବେଡ୍ ବୁକିଂ ନିୟନ୍ତ୍ରଣ' : 'Live Hospital Bed Reservations'}
+                {appLang === 'or-IN' ? 'ହସ୍ପିଟାଲ୍ ବେଡ୍ ବୁକିଂ ନିୟନ୍ତ୍ରଣ' : 'Live Hospital Bed Command & Reservations'}
               </h2>
               <p className="text-xs text-slate-500">
                 {appLang === 'or-IN'
-                  ? 'ରାଜ୍ୟର ବିଭିନ୍ନ ଡାକ୍ତରଖାନାରେ ନାଗରିକ ଓ ରେଫରାଲ୍ ରୋଗୀଙ୍କ ବେଡ୍ ଆବଣ୍ଟନ ତାଲିକା'
-                  : 'Live bed reservations across Odisha District Hospitals, Medical Colleges, and CHCs'}
+                  ? 'ରାଜ୍ୟର ସମସ୍ତ ମେଡିକାଲ୍ କଲେଜ୍ ଏବଂ ଜିଲ୍ଲା ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟରେ ବେଡ୍ ଆବଣ୍ଟନ'
+                  : 'Live bed reservations across Odisha District Hospitals, Apex Medical Colleges & CHCs'}
               </p>
             </div>
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-full">
-              {bedBookings.length} Active Bookings
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-full">
+                {bedBookings.length} Active Admissions
+              </span>
+            </div>
           </div>
 
-          {bedBookings.length === 0 ? (
+          {/* Bed Fleet Telemetry Census Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-3 text-xs">
+            <div>
+              <span className="text-[10px] text-emerald-700 font-bold uppercase block">CRITICAL ICU & BURN</span>
+              <span className="text-lg font-black text-emerald-950">
+                {bedBookings.filter((b) => b.bedTypeId === 'icu' || b.bedTypeId === 'burn' || b.bedTypeId === 'trauma').length} Beds
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] text-emerald-700 font-bold uppercase block">HDU OXYGEN & RENAL</span>
+              <span className="text-lg font-black text-emerald-950">
+                {bedBookings.filter((b) => b.bedTypeId === 'hdu' || b.bedTypeId === 'surgical' || b.bedTypeId === 'renal').length} Beds
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] text-emerald-700 font-bold uppercase block">MATERNAL & PEDIATRIC</span>
+              <span className="text-lg font-black text-emerald-950">
+                {bedBookings.filter((b) => b.bedTypeId === 'maternity' || b.bedTypeId === 'pediatric').length} Beds
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] text-emerald-700 font-bold uppercase block">STATE BED OCCUPANCY</span>
+              <span className="text-lg font-black text-emerald-950">
+                78.4% Capacity
+              </span>
+            </div>
+          </div>
+
+          {/* Search & Category Filter Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                value={bedSearch}
+                onChange={(e) => setBedSearch(e.target.value)}
+                placeholder="Search bed reservations by patient, hospital, ward, bed number..."
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 text-xs font-semibold">
+              {[
+                { id: 'all', label: 'All Beds' },
+                { id: 'icu', label: 'ICU Ventilator' },
+                { id: 'hdu', label: 'HDU Oxygen' },
+                { id: 'trauma', label: 'Trauma Bay' },
+                { id: 'maternity', label: 'Maternity' },
+                { id: 'pediatric', label: 'Pediatric' },
+                { id: 'general', label: 'General' }
+              ].map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setBedTypeFilter(filter.id)}
+                  className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap cursor-pointer transition-all ${
+                    bedTypeFilter === filter.id
+                      ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filteredBeds.length === 0 ? (
             <div className="text-center py-12 text-slate-500">
               <Bed className="w-12 h-12 mx-auto text-slate-300 mb-2" />
-              <p className="font-bold text-sm">No Active Bed Bookings In System</p>
-              <p className="text-xs text-slate-400 mt-1">Bed reservations created by citizens or doctors will appear here in real-time.</p>
+              <p className="font-bold text-sm">No Bed Reservations Match Your Filter</p>
+              <p className="text-xs text-slate-400 mt-1">Try resetting the filter or search query.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {bedBookings.map((b) => (
+              {filteredBeds.map((b) => (
                 <div key={b.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all space-y-3 shadow-xs">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded">
-                        {b.id}
-                      </span>
-                      <h3 className="font-extrabold text-slate-900 text-sm mt-1">{b.hospitalName}</h3>
-                      <div className="text-xs text-slate-600 font-semibold">{b.ward || 'General Medical Ward'} • {b.bedType || 'Oxygen Supported Bed'}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded border border-emerald-200">
+                          {b.id}
+                        </span>
+                        {b.bedNumber && (
+                          <span className="font-mono text-[10px] font-black px-2 py-0.5 bg-slate-200 text-slate-800 rounded">
+                            {b.bedNumber}
+                          </span>
+                        )}
+                        {b.urgency && (
+                          <span
+                            className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
+                              b.urgency === 'CRITICAL'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                : 'bg-amber-100 text-amber-800 border border-amber-300'
+                            }`}
+                          >
+                            {b.urgency}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-extrabold text-slate-900 text-sm mt-1.5">{b.hospitalName}</h3>
+                      <div className="text-xs text-emerald-900 font-semibold mt-0.5">
+                        {b.wardName || b.ward || 'General Medical Ward'} • {b.bedTypeName || b.bedType || 'Oxygen Bed'}
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleCancelBed(b.id)}
-                      className="text-xs text-rose-600 hover:text-rose-800 font-bold px-2.5 py-1 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 transition-colors cursor-pointer"
+                      className="text-xs text-rose-600 hover:text-rose-800 font-bold px-2.5 py-1 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 transition-colors cursor-pointer shrink-0"
                     >
                       Release Bed
                     </button>
                   </div>
 
+                  {b.referralReason && (
+                    <div className="text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">Clinical Indication:</span>
+                      <p className="font-medium text-slate-800">{b.referralReason}</p>
+                    </div>
+                  )}
+
                   <div className="pt-2 border-t border-slate-200 grid grid-cols-2 gap-2 text-xs text-slate-600">
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-bold">PATIENT NAME</span>
-                      <span className="font-bold text-slate-800">{b.patientName}</span>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">PATIENT PROFILE</span>
+                      <span className="font-bold text-slate-900">{b.patientName}</span>
+                      <span className="text-[11px] text-slate-500 block">
+                        {b.patientAge ? `${b.patientAge}y` : ''} {b.patientGender || ''} • {b.patientAbha || 'ABHA Active'}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-bold">CONTACT</span>
-                      <span className="font-medium text-slate-700">{b.contact || b.phone || '+91 94370 11223'}</span>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">CONTACT & ATTENDANT</span>
+                      <span className="font-medium text-slate-800">{b.patientPhone || b.contact || '+91 94370 11223'}</span>
+                      {b.attendantContact && (
+                        <span className="text-[10px] text-slate-500 block truncate" title={b.attendantContact}>
+                          Attendant: {b.attendantContact}
+                        </span>
+                      )}
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-bold">DATE / TIME</span>
-                      <span className="font-medium text-slate-600">{b.timestamp ? new Date(b.timestamp).toLocaleString() : 'Recent Booking'}</span>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">ADMISSION TIME</span>
+                      <span className="font-medium text-slate-600">
+                        {b.timestamp ? new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '08:30 AM'} • {b.timestamp ? new Date(b.timestamp).toLocaleDateString() : 'Today'}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-bold">STATUS</span>
-                      <span className="inline-flex items-center gap-1 font-bold text-emerald-700 text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        Confirmed & Reserved
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">HEALTH SCHEME</span>
+                      <span className="font-bold text-emerald-700 text-[11px] truncate block">
+                        {b.scheme || 'Biju Swasthya Kalyan (BSKY)'}
                       </span>
                     </div>
                   </div>
@@ -959,70 +1259,198 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       {/* SUB-VIEW 3: AMBULANCE DISPATCH                                */}
       {/* ───────────────────────────────────────────────────────────── */}
       {activeSubTab === 'ambulance' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
             <div>
               <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                 <Truck className="w-5 h-5 text-rose-600" />
-                {appLang === 'or-IN' ? 'ଜରୁରୀ ଆମ୍ବୁଲାନ୍ସ ଡିସପାଚ୍ କଣ୍ଟ୍ରୋଲ୍' : 'Emergency Ambulance Dispatch Control'}
+                {appLang === 'or-IN' ? 'ଜରୁରୀ ଆମ୍ବୁଲାନ୍ସ ଡିସପାଚ୍ କଣ୍ଟ୍ରୋଲ୍' : '108 / 102 Emergency Ambulance Dispatch Command'}
               </h2>
               <p className="text-xs text-slate-500">
                 {appLang === 'or-IN'
-                  ? '୧୦୮ / ୧୦୨ ଜରୁରୀ ଆମ୍ବୁଲାନ୍ସ ଅନୁରୋଧ ଏବଂ ରୋଗୀ ପରିବହନ ସ୍ଥିତି'
-                  : 'State 108 / 102 Emergency Ambulance dispatch requests & live transit monitoring'}
+                  ? 'ରାଜ୍ୟ ୧୦୮ ଓ ୧୦୨ ଆମ୍ବୁଲାନ୍ସ ନେଟୱାର୍କର ଲାଇଭ୍ GPS ଟ୍ରାକିଂ ଏବଂ ଡିସପାଚ୍'
+                  : 'State 108 / 102 Emergency Ambulance GPS dispatch network, live transit & EMT monitoring'}
               </p>
             </div>
             <span className="px-3 py-1 bg-rose-100 text-rose-800 font-extrabold text-xs rounded-full">
-              {ambulanceList.length} Dispatches Logged
+              {ambulanceList.length} Active Dispatches
             </span>
           </div>
 
-          {ambulanceList.length === 0 ? (
+          {/* Fleet Telemetry Status Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-rose-50/60 border border-rose-200/80 rounded-xl p-3 text-xs">
+            <div>
+              <span className="text-[10px] text-rose-700 font-bold uppercase block">108 ADVANCED LIFE SUPPORT</span>
+              <span className="text-lg font-black text-rose-950">
+                {ambulanceList.filter((a) => a.ambulanceTypeId === 'ALS').length} Units Active
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] text-rose-700 font-bold uppercase block">108 BASIC LIFE SUPPORT</span>
+              <span className="text-lg font-black text-rose-950">
+                {ambulanceList.filter((a) => a.ambulanceTypeId === 'BLS').length} Units Active
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] text-rose-700 font-bold uppercase block">102 JANANI SHISHU EXPRESS</span>
+              <span className="text-lg font-black text-rose-950">
+                {ambulanceList.filter((a) => a.ambulanceTypeId === '102_JANANI').length} Units Active
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] text-rose-700 font-bold uppercase block">AVG RESPONSE TIME</span>
+              <span className="text-lg font-black text-rose-950">
+                8.6 Minutes
+              </span>
+            </div>
+          </div>
+
+          {/* Search & Type Filter Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                value={ambSearch}
+                onChange={(e) => setAmbSearch(e.target.value)}
+                placeholder="Search dispatches by patient, vehicle number, pickup, paramedic, hospital..."
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 text-xs font-semibold">
+              {[
+                { id: 'all', label: 'All Fleet' },
+                { id: 'ALS', label: '108 ALS' },
+                { id: 'BLS', label: '108 BLS' },
+                { id: '102_JANANI', label: '102 Janani' }
+              ].map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setAmbTypeFilter(filter.id)}
+                  className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap cursor-pointer transition-all ${
+                    ambTypeFilter === filter.id
+                      ? 'bg-rose-600 text-white font-bold shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filteredAmbulances.length === 0 ? (
             <div className="text-center py-12 text-slate-500">
               <Truck className="w-12 h-12 mx-auto text-slate-300 mb-2" />
-              <p className="font-bold text-sm">No Active Ambulance Dispatches</p>
-              <p className="text-xs text-slate-400 mt-1">Emergency requests initiated by citizens or clinics will display here immediately.</p>
+              <p className="font-bold text-sm">No Ambulance Dispatches Match Your Filter</p>
+              <p className="text-xs text-slate-400 mt-1">Try resetting the filter or search query.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {ambulanceList.map((req) => (
+              {filteredAmbulances.map((req) => (
                 <div key={req.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all space-y-3 shadow-xs">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-rose-100 text-rose-800 rounded">
-                        {req.id}
-                      </span>
-                      <h3 className="font-extrabold text-slate-900 text-sm mt-1">{req.patientName || 'Emergency Patient'}</h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-rose-100 text-rose-800 rounded border border-rose-200">
+                          {req.id}
+                        </span>
+                        {req.vehicleNo && (
+                          <span className="font-mono text-[10px] font-black px-2 py-0.5 bg-slate-900 text-amber-400 rounded">
+                            {req.vehicleNo}
+                          </span>
+                        )}
+                        {req.eta && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-50 text-rose-700 rounded border border-rose-200 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-rose-500" />
+                            ETA: {req.eta}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-extrabold text-slate-900 text-sm mt-1.5">
+                        {req.patientName || req.patient?.name || 'Emergency Patient'}
+                      </h3>
                       <div className="text-xs text-rose-700 font-bold flex items-center gap-1 mt-0.5">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        {req.urgency || 'HIGH PRIORITY 108 EMERGENCY'}
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{req.urgency || req.emergencyType || 'HIGH PRIORITY 108 EMERGENCY'}</span>
                       </div>
                     </div>
+
                     <button
                       type="button"
                       onClick={() => handleCancelAmbulance(req.id)}
-                      className="text-xs text-slate-600 hover:text-slate-800 font-bold px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-300 transition-colors cursor-pointer"
+                      className="text-xs text-slate-600 hover:text-slate-800 font-bold px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-300 transition-colors cursor-pointer shrink-0"
                     >
                       Dismiss
                     </button>
                   </div>
 
+                  {/* Status Pills & Fast Status Update Controls */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Live Status:</span>
+                      <span
+                        className={`font-black text-[10px] px-2 py-0.5 rounded-full ${
+                          req.status === 'ARRIVED_HOSPITAL'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : req.status === 'PATIENT_ON_BOARD'
+                            ? 'bg-blue-100 text-blue-800'
+                            : req.status === 'TRANSIT_TO_APEX'
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-amber-100 text-amber-800 animate-pulse'
+                        }`}
+                      >
+                        {req.status?.replace(/_/g, ' ') || 'DISPATCHED'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateAmbStatus(req.id, 'PATIENT_ON_BOARD')}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 hover:bg-blue-100 hover:text-blue-800 text-slate-700 transition-colors cursor-pointer"
+                        title="Mark Patient on Board"
+                      >
+                        Boarded
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateAmbStatus(req.id, 'TRANSIT_TO_APEX')}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 hover:bg-purple-100 hover:text-purple-800 text-slate-700 transition-colors cursor-pointer"
+                        title="Mark In Transit"
+                      >
+                        In Transit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateAmbStatus(req.id, 'ARRIVED_HOSPITAL')}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-800 transition-colors cursor-pointer"
+                        title="Mark Arrived at Hospital"
+                      >
+                        Arrived
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="pt-2 border-t border-slate-200 grid grid-cols-2 gap-2 text-xs text-slate-600">
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-bold">PICKUP ADDRESS</span>
-                      <span className="font-semibold text-slate-800 line-clamp-1">{req.location || 'Local PHC / Village'}</span>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">GPS PICKUP ORIGIN</span>
+                      <span className="font-semibold text-slate-800 line-clamp-1">{req.pickup || req.location || 'Local PHC / Village'}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-bold">DESTINATION HOSPITAL</span>
-                      <span className="font-semibold text-slate-800 line-clamp-1">{req.destination || 'District Headquarter Hospital'}</span>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">APEX DESTINATION</span>
+                      <span className="font-semibold text-slate-800 line-clamp-1">{req.destination || 'District Headquarters Hospital'}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-bold">CONTACT NUMBER</span>
-                      <span className="font-medium text-slate-700">{req.contact || req.phone || '+91 94370 00108'}</span>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">PARAMEDIC / EMT</span>
+                      <span className="font-medium text-slate-700 line-clamp-1">{req.paramedic || 'State EMT Officer'}</span>
+                      {req.driver && <span className="text-[10px] text-slate-500 block truncate">Driver: {req.driver}</span>}
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-bold">AMBULANCE TYPE</span>
-                      <span className="font-bold text-slate-800">{req.ambulanceType || 'Advanced Life Support (ALS)'}</span>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">CALLER / EMERGENCY CONTACT</span>
+                      <span className="font-bold text-slate-900">{req.contact || req.phone || req.patient?.phone || '+91 94370 00108'}</span>
                     </div>
                   </div>
                 </div>
@@ -1033,7 +1461,136 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* SUB-VIEW 4: INTER-HOSPITAL TRANSFERS                          */}
+      {/* SUB-VIEW 4: SCHEDULED DOCTOR CONSULTATIONS                   */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {activeSubTab === 'appointments' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-teal-600" />
+                {appLang === 'or-IN' ? 'ଡାକ୍ତର ପରାମର୍ଶ କମାଣ୍ଡ' : 'Scheduled Outpatient Consultations Command'}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {appLang === 'or-IN'
+                  ? 'ରାଜ୍ୟର ସମସ୍ତ ବିଶେଷଜ୍ଞ ଡାକ୍ତରଙ୍କ ସହିତ ନାଗରିକଙ୍କ ପରାମର୍ଶ ତଥ୍ୟ'
+                  : 'Central command of specialist outpatient & tele-consultations across 30 Odisha Districts'}
+              </p>
+            </div>
+            <span className="px-3 py-1 bg-teal-100 text-teal-800 font-extrabold text-xs rounded-full">
+              {appointments.length} Consultations Booked
+            </span>
+          </div>
+
+          {/* Search & Department Filter */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                value={aptSearch}
+                onChange={(e) => setAptSearch(e.target.value)}
+                placeholder="Search appointments by doctor, patient, specialty, facility, reason..."
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 text-xs font-semibold">
+              {[
+                { id: 'all', label: 'All Specialties' },
+                { id: 'cardio', label: 'Cardiology' },
+                { id: 'neuro', label: 'Neurology' },
+                { id: 'pediatric', label: 'Pediatrics' },
+                { id: 'ortho', label: 'Orthopedics' },
+                { id: 'medicine', label: 'Medicine' }
+              ].map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setAptDeptFilter(filter.id)}
+                  className={`px-2.5 py-1.5 rounded-lg whitespace-nowrap cursor-pointer transition-all ${
+                    aptDeptFilter === filter.id
+                      ? 'bg-teal-600 text-white font-bold shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filteredAppointments.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              <Calendar className="w-12 h-12 mx-auto text-slate-300 mb-2" />
+              <p className="font-bold text-sm">No Appointments Found</p>
+              <p className="text-xs text-slate-400 mt-1">Try resetting the filter or search query.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredAppointments.map((ap) => {
+                const docName = typeof ap.doctorName === 'object' ? (ap.doctorName[appLang] || ap.doctorName['en-IN']) : (ap.doctorName || 'Consultant Specialist');
+                return (
+                  <div key={ap.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all space-y-3 shadow-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-teal-100 text-teal-800 rounded border border-teal-200">
+                            {ap.id}
+                          </span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200">
+                            {ap.consultType || 'In-Person'}
+                          </span>
+                        </div>
+                        <h3 className="font-extrabold text-slate-900 text-sm mt-1.5 flex items-center gap-1.5">
+                          <Stethoscope className="w-4 h-4 text-teal-600" />
+                          <span>{docName}</span>
+                        </h3>
+                        <div className="text-xs text-slate-600 font-semibold mt-0.5">
+                          {ap.department} • {ap.facility}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCancelAppointmentConfirm(ap.id)}
+                        className="text-xs text-rose-600 hover:text-rose-800 font-bold px-2 py-1 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 transition-colors cursor-pointer shrink-0"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+
+                    {ap.reason && (
+                      <div className="text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase block mb-0.5">Consultation Purpose:</span>
+                        <p className="font-medium text-slate-800">{ap.reason}</p>
+                      </div>
+                    )}
+
+                    <div className="pt-2 border-t border-slate-200 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-bold uppercase">PATIENT DETAILS</span>
+                        <span className="font-bold text-slate-900">{ap.patientName}</span>
+                        <span className="text-[11px] text-slate-500 block">
+                          {ap.patientAge ? `${ap.patientAge}y` : ''} {ap.patientGender || ''} • {ap.patientPhone}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-bold uppercase">SCHEDULED SLOT</span>
+                        <span className="font-bold text-teal-800">{ap.date} at {ap.timeSlot}</span>
+                        <span className="text-[10px] text-slate-500 block">{ap.room || 'General OPD'}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* SUB-VIEW 5: INTER-HOSPITAL TRANSFERS                          */}
       {/* ───────────────────────────────────────────────────────────── */}
       {activeSubTab === 'transfers' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-4">
@@ -1104,7 +1661,7 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* SUB-VIEW 5: SYSTEM SECURITY & AUDIT TRAIL                     */}
+      {/* SUB-VIEW 6: SYSTEM SECURITY & AUDIT TRAIL                     */}
       {/* ───────────────────────────────────────────────────────────── */}
       {activeSubTab === 'audit' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-6">
