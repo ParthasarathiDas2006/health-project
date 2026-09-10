@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Mic,
   MicOff,
@@ -369,66 +370,73 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
   const recognitionRef = useRef(null);
   const baseTextRef = useRef('');
   const transcriptRef = useRef('');
+  const translateTimerRef = useRef(null);
 
   useEffect(() => {
     transcriptRef.current = transcript;
   }, [transcript]);
 
-  // Clinical dictionary translator for Indian healthcare complaints (Hindi & Odia)
+  // Compiled dictionary for clinical translation (cached statically)
+  const CLINICAL_DICT = useRef([
+    // Odia clinical phrases
+    { pattern: /ପ୍ରବଳ ଜ୍ୱର|ଜ୍ବର|ଜ୍ୱର/gi, en: 'high grade fever' },
+    { pattern: /ଥଣ୍ଡା ଲାଗିବା|ଥଣ୍ଡା/gi, en: 'chills / rigor' },
+    { pattern: /ବାନ୍ତି ହେବା|ବାନ୍ତି/gi, en: 'vomiting' },
+    { pattern: /ଝାଡ଼ା|ପେଟ ଖରାପ/gi, en: 'diarrhea / loose watery stools' },
+    { pattern: /ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ|ନିଶ୍ୱାସ କଷ୍ଟ/gi, en: 'severe dyspnea / shortness of breath' },
+    { pattern: /ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା|ମୁଣ୍ଡ ବିନ୍ଧା|ମୁଣ୍ଡ ଯନ୍ତ୍ରଣା/gi, en: 'severe headache' },
+    { pattern: /ଛାତି ଭାରୀ ଲାଗିବା|ଛାତି ଯନ୍ତ୍ରଣା|ଛାତି ବିନ୍ଧା/gi, en: 'chest pain / heaviness' },
+    { pattern: /ପେଟ ଯନ୍ତ୍ରଣା|ପେଟ ବିନ୍ଧା/gi, en: 'acute abdominal pain' },
+    { pattern: /ମୁଣ୍ଡ ବୁଲାଇବା/gi, en: 'dizziness / vertigo' },
+    { pattern: /କଫ ସହ କାଶ|କାଶ|କଫ/gi, en: 'cough with expectoration' },
+    { pattern: /ଦେହ ହାତ ବିନ୍ଧା|ଅଣ୍ଟା ବିନ୍ଧା|ଦେହ ଯନ୍ତ୍ରଣା/gi, en: 'generalized body ache / myalgia' },
+    { pattern: /ଅତ୍ୟଧିକ ଦୁର୍ବଳତା|ଦୁର୍ବଳ/gi, en: 'severe weakness / asthenia' },
+    { pattern: /୩ ଦିନ|୩ଦିନ|3 ଦିନ/gi, en: 'duration 3 days' },
+    { pattern: /୨ ଦିନ|୨ଦିନ|2 ଦିନ/gi, en: 'duration 2 days' },
+    { pattern: /୪ ଦିନ|୪ଦିନ|4 ଦିନ/gi, en: 'duration 4 days' },
+    { pattern: /୫ ଦିନ|୫ଦିନ|5 ଦିନ/gi, en: 'duration 5 days' },
+    { pattern: /୧ ସପ୍ତାହ|୧ସପ୍ତାହ/gi, en: 'duration 1 week' },
+
+    // Hindi clinical phrases
+    { pattern: /तेज़ बुखार|तेज बुखार|बुखार/gi, en: 'high fever' },
+    { pattern: /ठंड लग रही|ठंड/gi, en: 'chills' },
+    { pattern: /उल्टी हो रही|उल्टी/gi, en: 'vomiting' },
+    { pattern: /दस्त|पेट खराब/gi, en: 'diarrhea / loose motions' },
+    { pattern: /सांस लेने में तकलीफ|सांस फूल रही/gi, en: 'shortness of breath (dyspnea)' },
+    { pattern: /सिर में तेज़ दर्द|सिर दर्द|सर दर्द/gi, en: 'severe headache' },
+    { pattern: /छाती में भारीपन|छाती में दर्द/gi, en: 'chest heaviness / retrosternal pain' },
+    { pattern: /पेट में दर्द|पेट दर्द/gi, en: 'abdominal pain' },
+    { pattern: /चक्कर आना|चक्कर/gi, en: 'dizziness / syncope' },
+    { pattern: /खांसी|बलगम/gi, en: 'cough with phlegm' },
+    { pattern: /शरीर में दर्द|बदन दर्द/gi, en: 'generalized body ache' },
+    { pattern: /कमजोरी/gi, en: 'severe asthenia / fatigue' },
+    { pattern: /3 दिन|तीन दिन/gi, en: 'duration 3 days' },
+    { pattern: /2 दिन|दो दिन/gi, en: 'duration 2 days' },
+    { pattern: /4 दिन|चार दिन/gi, en: 'duration 4 days' },
+    { pattern: /5 दिन|पांच दिन/gi, en: 'duration 5 days' },
+    { pattern: /1 हफ्ता|एक हफ्ता/gi, en: 'duration 1 week' }
+  ]).current;
+
+  // Clean debounced clinical translator
   const translateClinicalText = (text) => {
+    if (translateTimerRef.current) {
+      clearTimeout(translateTimerRef.current);
+    }
+
     if (!text || !text.trim()) {
       setTranslatedText('');
+      setIsTranslating(false);
       return;
     }
 
     setIsTranslating(true);
-    setTimeout(() => {
+    translateTimerRef.current = setTimeout(() => {
       if (language === 'en-IN') {
         setTranslatedText(text);
       } else {
         let translated = text;
-        const dict = [
-          // Odia clinical phrases
-          { pattern: /ପ୍ରବଳ ଜ୍ୱର|ଜ୍ବର|ଜ୍ୱର/gi, en: 'high grade fever' },
-          { pattern: /ଥଣ୍ଡା ଲାଗିବା|ଥଣ୍ଡା/gi, en: 'chills / rigor' },
-          { pattern: /ବାନ୍ତି ହେବା|ବାନ୍ତି/gi, en: 'vomiting' },
-          { pattern: /ଝାଡ଼ା|ପେଟ ଖରାପ/gi, en: 'diarrhea / loose watery stools' },
-          { pattern: /ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ|ନିଶ୍ୱାସ କଷ୍ଟ/gi, en: 'severe dyspnea / shortness of breath' },
-          { pattern: /ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା|ମୁଣ୍ଡ ବିନ୍ଧା|ମୁଣ୍ଡ ଯନ୍ତ୍ରଣା/gi, en: 'severe headache' },
-          { pattern: /ଛାତି ଭାରୀ ଲାଗିବା|ଛାତି ଯନ୍ତ୍ରଣା|ଛାତି ବିନ୍ଧା/gi, en: 'chest pain / heaviness' },
-          { pattern: /ପେଟ ଯନ୍ତ୍ରଣା|ପେଟ ବିନ୍ଧା/gi, en: 'acute abdominal pain' },
-          { pattern: /ମୁଣ୍ଡ ବୁଲାଇବା/gi, en: 'dizziness / vertigo' },
-          { pattern: /କଫ ସହ କାଶ|କାଶ|କଫ/gi, en: 'cough with expectoration' },
-          { pattern: /ଦେହ ହାତ ବିନ୍ଧା|ଅଣ୍ଟା ବିନ୍ଧା|ଦେହ ଯନ୍ତ୍ରଣା/gi, en: 'generalized body ache / myalgia' },
-          { pattern: /ଅତ୍ୟଧିକ ଦୁର୍ବଳତା|ଦୁର୍ବଳ/gi, en: 'severe weakness / asthenia' },
-          { pattern: /୩ ଦିନ|୩ଦିନ|3 ଦିନ/gi, en: 'duration 3 days' },
-          { pattern: /୨ ଦିନ|୨ଦିନ|2 ଦିନ/gi, en: 'duration 2 days' },
-          { pattern: /୪ ଦିନ|୪ଦିନ|4 ଦିନ/gi, en: 'duration 4 days' },
-          { pattern: /୫ ଦିନ|୫ଦିନ|5 ଦିନ/gi, en: 'duration 5 days' },
-          { pattern: /୧ ସପ୍ତାହ|୧ସପ୍ତାହ/gi, en: 'duration 1 week' },
-
-          // Hindi clinical phrases
-          { pattern: /तेज़ बुखार|तेज बुखार|बुखार/gi, en: 'high fever' },
-          { pattern: /ठंड लग रही|ठंड/gi, en: 'chills' },
-          { pattern: /उल्टी हो रही|उल्टी/gi, en: 'vomiting' },
-          { pattern: /दस्त|पेट खराब/gi, en: 'diarrhea / loose motions' },
-          { pattern: /सांस लेने में तकलीफ|सांस फूल रही/gi, en: 'shortness of breath (dyspnea)' },
-          { pattern: /सिर में तेज़ दर्द|सिर दर्द|सर दर्द/gi, en: 'severe headache' },
-          { pattern: /छाती में भारीपन|छाती में दर्द/gi, en: 'chest heaviness / retrosternal pain' },
-          { pattern: /पेट में दर्द|पेट दर्द/gi, en: 'abdominal pain' },
-          { pattern: /चक्कर आना|चक्कर/gi, en: 'dizziness / syncope' },
-          { pattern: /खांसी|बलगम/gi, en: 'cough with phlegm' },
-          { pattern: /शरीर में दर्द|बदन दर्द/gi, en: 'generalized body ache' },
-          { pattern: /कमजोरी/gi, en: 'severe asthenia / fatigue' },
-          { pattern: /3 दिन|तीन दिन/gi, en: 'duration 3 days' },
-          { pattern: /2 दिन|दो दिन/gi, en: 'duration 2 days' },
-          { pattern: /4 दिन|चार दिन/gi, en: 'duration 4 days' },
-          { pattern: /5 दिन|पांच दिन/gi, en: 'duration 5 days' },
-          { pattern: /1 हफ्ता|एक हफ्ता/gi, en: 'duration 1 week' }
-        ];
-
         let matched = false;
-        dict.forEach(({ pattern, en }) => {
+        CLINICAL_DICT.forEach(({ pattern, en }) => {
           if (pattern.test(translated)) {
             matched = true;
             translated = translated.replace(pattern, en);
@@ -442,14 +450,15 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
         }
       }
       setIsTranslating(false);
-    }, 200);
+    }, 350);
   };
 
   // Initialize Web Speech Recognition
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
     if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
+      recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = language;
@@ -480,7 +489,6 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
       };
 
       recognition.onerror = (err) => {
-        console.warn('Speech recognition notice:', err.error);
         if (err.error !== 'no-speech') {
           setIsListening(false);
         }
@@ -494,6 +502,17 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
 
       recognitionRef.current = recognition;
     }
+
+    return () => {
+      if (translateTimerRef.current) {
+        clearTimeout(translateTimerRef.current);
+      }
+      if (recognition) {
+        try {
+          recognition.stop();
+        } catch {}
+      }
+    };
   }, [language]);
 
   const toggleListening = () => {
