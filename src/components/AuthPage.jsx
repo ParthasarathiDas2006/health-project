@@ -59,9 +59,9 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
   const [signInIdentifier, setSignInIdentifier] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
 
-  // Dedicated Admin Sign In fields
-  const [adminIdentifier, setAdminIdentifier] = useState('admin@health.odisha.gov.in');
-  const [adminPassword, setAdminPassword] = useState('password123');
+  // Dedicated Admin Sign In fields (keep empty, confidential)
+  const [adminIdentifier, setAdminIdentifier] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
 
   // Sign Up form fields
   const [signUpData, setSignUpData] = useState({
@@ -159,10 +159,10 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       adminGateTitle: 'ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ପୋର୍ଟାଲ୍ କେନ୍ଦ୍ରୀୟ ପ୍ରଶାସନିକ ପ୍ରବେଶ ପଥ',
       adminGateSubtitle: 'କେବଳ ଅଧିକୃତ ସୁପର ଆଡମିନ୍ ଏବଂ ଜିଲ୍ଲା ସ୍ୱାସ୍ଥ୍ୟ ନିର୍ଦ୍ଦେଶକଙ୍କ ପାଇଁ ସୁରକ୍ଷିତ ଲଗ୍-ଇନ୍',
       adminIdLabel: 'ଅଫିସିଆଲ୍ ଆଡମିନ୍ ଇମେଲ୍ / ପ୍ରଶାସକ ID *',
-      adminIdPlaceholder: 'admin@health.odisha.gov.in କିମ୍ବା ADMIN-OD-2026',
+      adminIdPlaceholder: 'ଅଫିସିଆଲ୍ ଆଡମିନ୍ ଇମେଲ୍ କିମ୍ବା ଷ୍ଟାଫ୍ ଆଇଡି',
       adminLoginBtn: 'କେନ୍ଦ୍ରୀୟ ପ୍ରଶାସନିକ ଡେସ୍କରେ ପ୍ରବେଶ କରନ୍ତୁ',
       adminPasskeyLabel: 'ପ୍ରଶାସକ ସୁରକ୍ଷା କୋଡ଼ (Admin Passkey) *',
-      adminPasskeyHint: '* ଆଡମିନ୍ ପଞ୍ଜୀକରଣ ପାଇଁ ଅଧିକୃତ ସୁରକ୍ଷା କୋଡ଼: sunil123',
+      adminPasskeyHint: '* ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ପ୍ରଶାସନ ଦ୍ୱାରା ପ୍ରଦତ୍ତ ଅଧିକୃତ ସୁରକ୍ଷା କୋଡ଼ ଆବଶ୍ୟକ',
       idLabel: 'ଇମେଲ୍ ଆଇଡି / ଷ୍ଟାଫ୍ ଆଇଡି / ABHA ଆଇଡି / ଫୋନ୍',
       idPlaceholder: 'dr.soumya@scbmch.odisha.gov.in କିମ୍ବା ABHA ଆଇଡି',
       passwordLabel: 'ପାସୱାର୍ଡ',
@@ -191,10 +191,10 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       adminGateTitle: 'राज्य स्वास्थ्य पोर्टल केंद्रीय प्रशासनिक प्रवेश द्वार',
       adminGateSubtitle: 'केवल अधिकृत सुपर एडमिन एवं स्वास्थ्य निदेशकों हेतु सुरक्षित लॉगिन',
       adminIdLabel: 'आधिकारिक एडमिन ईमेल / स्टाफ ID *',
-      adminIdPlaceholder: 'admin@health.odisha.gov.in या ADMIN-OD-2026',
+      adminIdPlaceholder: 'आधिकारिक एडमिन ईमेल या स्टाफ आईडी',
       adminLoginBtn: 'केंद्रीय प्रशासनिक डेस्क में प्रवेश करें',
       adminPasskeyLabel: 'प्रशासक सुरक्षा पासकी (Admin Passkey) *',
-      adminPasskeyHint: '* एडमिन पंजीकरण हेतु अधिकृत पासकी: sunil123',
+      adminPasskeyHint: '* राज्य स्वास्थ्य प्रशासन द्वारा जारी अधिकृत सुरक्षा पासकी आवश्यक है',
       idLabel: 'ईमेल आईडी / मेडिकल पंजीकरण / ABHA आईडी',
       idPlaceholder: 'dr.rajesh@civilhosp.gov.in या ABHA ID',
       passwordLabel: 'पासवर्ड',
@@ -223,10 +223,10 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       adminGateTitle: 'State Health Mission Central Administrator Gateway',
       adminGateSubtitle: 'Restricted high-clearance access for Super Administrators & Health Directors',
       adminIdLabel: 'Official Admin Email / Administrator ID *',
-      adminIdPlaceholder: 'admin@health.odisha.gov.in or ADMIN-OD-2026',
+      adminIdPlaceholder: 'Official Admin Email or Staff ID',
       adminLoginBtn: 'Access State Admin Command Center',
       adminPasskeyLabel: 'Admin Authorization Security Passkey *',
-      adminPasskeyHint: '* Administrator registration requires secret passkey: sunil123',
+      adminPasskeyHint: '* Requires authorized security passkey issued by State Health Directorate',
       idLabel: 'Official Email ID / Medical Reg ID / ABHA ID / Phone',
       idPlaceholder: 'e.g. dr.soumya@scbmch.odisha.gov.in or ABHA ID',
       passwordLabel: 'Password',
@@ -363,10 +363,10 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       if (!signUpData.adminPasskey || signUpData.adminPasskey.trim() !== 'sunil123') {
         setErrorMsg(
           authLang === 'or-IN'
-            ? 'ଅବୈଧ ପ୍ରଶାସକ ପାସକୋଡ୍! ଆଡମିନ୍ ପଞ୍ଜୀକରଣ ପାଇଁ ଗୁପ୍ତ କୋଡ୍ sunil123 ଆବଶ୍ୟକ।'
+            ? 'ଅବୈଧ ପ୍ରଶାସକ ସୁରକ୍ଷା କୋଡ଼! ଦୟାକରି ସଠିକ୍ ପାସକୋଡ୍ ପ୍ରଦାନ କରନ୍ତୁ କିମ୍ବା ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ନିର୍ଦ୍ଦେଶାଳୟ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ।'
             : authLang === 'hi-IN'
-            ? 'अवैध एडमिन पासकी! एडमिन पंजीकरण के लिए पासवर्ड sunil123 आवश्यक है।'
-            : 'Invalid Admin Security Key! Administrator registration strictly requires the passkey: sunil123'
+            ? 'अवैध एडमिन सुरक्षा पासकी! कृपया सही पासकी दर्ज करें अथवा राज्य स्वास्थ्य प्रशासन से संपर्क करें।'
+            : 'Invalid Admin Security Key! Please enter the authorized security passkey or contact the State Health Directorate.'
         );
         return;
       }
@@ -836,9 +836,6 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     {currentStrings.passwordLabel}
                   </label>
-                  <span className="text-[11px] text-purple-700 hover:underline cursor-pointer">
-                    Demo: password123
-                  </span>
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -869,44 +866,6 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                 {currentStrings.adminLoginBtn}
               </button>
             </form>
-
-            {/* Quick 1-Click Super Admin Login */}
-            <div className="mt-5 pt-4 border-t border-slate-200">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1 mb-2">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                {authLang === 'or-IN' ? '୧-କ୍ଲିକ୍ ତୁରନ୍ତ ଆଡମିନ୍ ଲଗ୍-ଇନ୍:' : '1-Click Instant Admin Sign-In:'}
-              </span>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('USR-ADM-001')}
-                className="w-full p-3 bg-purple-50 hover:bg-purple-100/80 border border-purple-300 rounded-xl text-left transition-all group flex items-center justify-between cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
-                    SD
-                  </div>
-                  <div>
-                    <div className="font-bold text-purple-950 text-xs sm:text-sm flex items-center gap-1.5">
-                      <span>Sunil Kumar Dash (ସୁନୀଲ କୁମାର ଦାଶ)</span>
-                      <span className="text-[10px] bg-purple-200 text-purple-900 px-1.5 py-0.2 rounded-full font-black">
-                        SUPER ADMIN
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-purple-800 font-semibold mt-0.5">
-                      National Health Mission (NHM) Directorate, Bhubaneswar
-                    </p>
-                    <p className="text-[10px] text-slate-500 font-mono">
-                      ADMIN-OD-2026 • admin@health.odisha.gov.in
-                    </p>
-                  </div>
-                </div>
-                <div className="text-purple-700 font-bold text-xs shrink-0 flex items-center gap-1">
-                  <span>Enter</span>
-                  <LogIn className="w-3.5 h-3.5" />
-                </div>
-              </button>
-            </div>
           </div>
         )}
 
@@ -975,7 +934,7 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                       onChange={(e) =>
                         setSignUpData({ ...signUpData, adminPasskey: e.target.value })
                       }
-                      placeholder="Enter passkey: sunil123"
+                      placeholder="Enter authorized admin security passkey"
                       className="w-full pl-9 pr-3 py-2 bg-white text-xs font-mono font-bold rounded-xl border border-purple-400 focus:ring-2 focus:ring-purple-600 outline-none text-purple-950"
                     />
                   </div>

@@ -169,8 +169,8 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       if (!newUserData.adminPasskey || newUserData.adminPasskey.trim() !== 'sunil123') {
         setAddUserError(
           appLang === 'or-IN'
-            ? 'ଅବୈଧ ପ୍ରଶାସକ ପାସକୋଡ୍! ଆଡମିନ୍ ପଞ୍ଜୀକରଣ ପାଇଁ ଗୁପ୍ତ କୋଡ୍ sunil123 ଆବଶ୍ୟକ।'
-            : 'Invalid Admin Security Key! Administrator accounts require passkey: sunil123'
+            ? 'ଅବୈଧ ପ୍ରଶାସକ ସୁରକ୍ଷା କୋଡ଼! ଦୟାକରି ଅନୁମୋଦିତ ପ୍ରଶାସକ ପାସକୋଡ୍ ପ୍ରଦାନ କରନ୍ତୁ।'
+            : 'Invalid Admin Security Key! Please enter the authorized administrator passkey.'
         );
         return;
       }
@@ -1247,12 +1247,12 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
                     type="password"
                     value={newUserData.adminPasskey}
                     onChange={(e) => setNewUserData({ ...newUserData, adminPasskey: e.target.value })}
-                    placeholder="Enter passkey: sunil123"
+                    placeholder="Enter authorized security passkey"
                     className="w-full px-3 py-2 rounded-xl border border-purple-400 bg-white text-xs font-mono font-bold outline-none"
                     required
                   />
                   <p className="text-[10px] text-purple-700 font-semibold">
-                    * Administrator accounts require authorized security passkey <span className="font-mono font-bold bg-purple-200 px-1 rounded">sunil123</span>
+                    * Administrator accounts require authorized security passkey issued by the State Directorate.
                   </p>
                 </div>
               )}

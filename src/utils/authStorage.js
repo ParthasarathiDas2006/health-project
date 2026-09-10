@@ -392,7 +392,7 @@ const DEFAULT_AUDIT_LOGS = [
     id: 'LOG-002',
     timestamp: '2026-03-10T08:45:10.000Z',
     type: 'ADMIN_AUTH',
-    actor: 'Sunil Kumar Dash (ADMIN-OD-2026)',
+    actor: 'State Portal Super Administrator',
     description: 'Super Administrator session authenticated via NHM Secure Gateway.',
     severity: 'info'
   },
