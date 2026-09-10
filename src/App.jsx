@@ -14,6 +14,7 @@ const MedicineExpiryChecker = lazy(() => import('./components/MedicineExpiryChec
 const NearestMedicalGPS = lazy(() => import('./components/NearestMedicalGPS'));
 const BedBookingSystem = lazy(() => import('./components/BedBookingSystem'));
 const AmbulanceBooking = lazy(() => import('./components/AmbulanceBooking'));
+const GovtGovTechSuite = lazy(() => import('./components/GovtGovTechSuite'));
 import {
   Activity,
   FileText,
@@ -368,6 +369,7 @@ export default function App() {
       scenariosTab: '୮. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
       medicineExpiryTab: '୯. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
       nearestMedicalTab: '୧୦. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
+      govTechTab: '୧୧. AI & GovTech ରାଷ୍ଟ୍ରୀୟ ସୁଇଟ୍ (20+ Features)',
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
@@ -411,6 +413,7 @@ export default function App() {
       scenariosTab: '8. फील्ड परिदृश्य',
       medicineExpiryTab: '9. दवा एक्सपायरी जांच',
       nearestMedicalTab: '10. निकटतम अस्पताल (GPS Map)',
+      govTechTab: '11. AI एवं GovTech राष्ट्रीय सूट (20+ Features)',
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
@@ -454,6 +457,7 @@ export default function App() {
       scenariosTab: '8. Field Scenarios',
       medicineExpiryTab: '9. Medicine Expiry Checker',
       nearestMedicalTab: '10. Nearest Medical & GPS Map',
+      govTechTab: '11. AI & GovTech Enterprise Suite (22+ Features)',
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
@@ -769,6 +773,21 @@ export default function App() {
               {uiText.nearestMedicalTab}
               <span className="bg-rose-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
                 GPS
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('govtech')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'govtech'
+                  ? 'bg-gradient-to-r from-indigo-700 to-blue-900 text-white shadow-xs ring-2 ring-indigo-400'
+                  : 'text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+              {uiText.govTechTab}
+              <span className="bg-amber-500 text-slate-950 text-[9px] px-1.5 py-0.2 rounded-full font-black animate-bounce">
+                22+ Enterprise
               </span>
             </button>
           </nav>
@@ -1343,6 +1362,26 @@ export default function App() {
               <NearestMedicalGPS
                 currentUser={currentUser}
                 appLang={appLang}
+              />
+            </Suspense>
+          </div>
+        )}
+        {/* TAB 11: NATIONAL AI & GOVTECH ENTERPRISE SUITE */}
+        {activeTab === 'govtech' && (
+          <div className="space-y-6">
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+                  <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-600 animate-pulse">
+                    {appLang === 'or-IN' ? 'AI & GovTech ସୁଇଟ୍ ଲୋଡ୍ ହେଉଛି...' : (appLang === 'hi-IN' ? 'AI एवं GovTech राष्ट्रीय सूट लोड हो रहा है...' : 'Loading National GovTech AI Suite...')}
+                  </p>
+                </div>
+              }
+            >
+              <GovtGovTechSuite
+                appLang={appLang}
+                currentUser={currentUser}
               />
             </Suspense>
           </div>
