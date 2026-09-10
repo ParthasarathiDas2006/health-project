@@ -120,7 +120,7 @@ const DEFAULT_USERS = [
   },
   {
     id: 'USR-ADM-001',
-    name: 'Sunil Kumar Dash (ସୁନୀଲ କୁମାର ଦାଶ)',
+    name: 'Sunil Biswal (ସୁନୀଲ ବିଶ୍ୱାଳ)',
     role: 'State Health Portal Administrator (ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ପ୍ରଶାସକ)',
     roleCategory: 'admin',
     staffId: 'ADMIN-OD-2026',
@@ -146,11 +146,15 @@ export const getStoredUsers = () => {
       return DEFAULT_USERS;
     }
     const parsed = JSON.parse(raw);
-    // Ensure all default demo users (including USR-ADM-001) exist in the stored list
+    // Ensure all default demo users (including USR-ADM-001) exist in the stored list and sync updated fields
     let updated = false;
     DEFAULT_USERS.forEach((def) => {
-      if (!parsed.some((u) => u.id === def.id || u.email === def.email)) {
+      const existingIdx = parsed.findIndex((u) => u.id === def.id || u.email === def.email);
+      if (existingIdx === -1) {
         parsed.push(def);
+        updated = true;
+      } else if (def.id === 'USR-ADM-001' && parsed[existingIdx].name !== def.name) {
+        parsed[existingIdx].name = def.name;
         updated = true;
       }
     });
@@ -217,7 +221,12 @@ export const getCurrentUser = () => {
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(DEFAULT_USERS[0]));
       return DEFAULT_USERS[0];
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.id === 'USR-ADM-001' && parsed.name && parsed.name.includes('Dash')) {
+      parsed.name = 'Sunil Biswal (ସୁନୀଲ ବିଶ୍ୱାଳ)';
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(parsed));
+    }
+    return parsed;
   } catch (e) {
     console.error('Failed to read current user:', e);
     return DEFAULT_USERS[0];
