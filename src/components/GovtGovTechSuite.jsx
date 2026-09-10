@@ -61,6 +61,141 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
   // Counterfeit Detector
   const [labFileStatus, setLabFileStatus] = useState(null);
 
+  const txt = {
+    'or-IN': {
+      headerBadge: '🇮🇳 ମୋହଫୱ୍ ଓ ABDM ସ୍ୱୀକୃତିପ୍ରାପ୍ତ • ଜାତୀୟ GovTech ମାନକ',
+      featureCountBadge: '୨୨ଟି ଉନ୍ନତ ଏଣ୍ଟରପ୍ରାଇଜ୍ ଫିଚର',
+      headerTitle: 'ରାଷ୍ଟ୍ରୀୟ ସ୍ୱାସ୍ଥ୍ୟ AI ଏବଂ ଅପରେସନ୍ ସୁଇଟ୍',
+      headerSubtitle: 'କ୍ଲିନିକାଲ୍ ନିଷ୍ପତ୍ତି ସହାୟକ, ଆଶା ଭଏସ୍ କୋପାଇଲଟ୍, ଜିରୋ-ଟଚ୍ କିଓସ୍କ, IDSP ମହାମାରୀ ରାଡାର ଓ DPDP ସମ୍ମତି।',
+      humanLoop: 'ଡାକ୍ତରୀ ନିଷ୍ପତ୍ତି ସହାୟକ',
+      nonDiag: 'Non-Diagnostic ସୁରକ୍ଷିତ',
+      
+      t1Title: '୧. ABHA ଐତିହାସିକ ଗ୍ରାଫ୍ (Longitudinal Trend Analysis)',
+      t1Subtitle: 'ABDM ଗେଟୱେ ମାଧ୍ୟମରେ ରୋଗୀଙ୍କ ଗତ ୩ଟି ଡାକ୍ତରୀ ଗସ୍ତର ସ୍ୱାସ୍ଥ୍ୟ ସୂଚକ ଏବଂ ରକ୍ତ ଶର୍କରା ଟ୍ରେଣ୍ଡ୍ ବିଶ୍ଲେଷଣ।',
+      v1: 'ଗସ୍ତ ୧ (୧୪ ଜାନୁଆରୀ)',
+      v2: 'ଗସ୍ତ ୨ (୧୮ ଫେବୃଆରୀ)',
+      v3: 'ଆଜିର ଲକ୍ଷଣ (୧୦ ମାର୍ଚ୍ଚ)',
+      bs: 'ରକ୍ତ ଶର୍କରା:',
+      stable: 'ସ୍ଥିର Baseline',
+      mod: '⚡ ମଧ୍ୟମ ବୃଦ୍ଧି',
+      alert: '⚠️ ଅବନତି ସଙ୍କେତ ALERT',
+      aiInsight: 'ଡାକ୍ତରଙ୍କ ପାଇଁ AI ଲଙ୍ଗିଚ୍ୟୁଡିନାଲ୍ ଅନୁଧ୍ୟାନ:',
+      aiInsightTxt: 'ଗତ ୬୦ ଦିନରେ ରୋଗୀଙ୍କ ରକ୍ତ ଶର୍କରା ୭୧% ବୃଦ୍ଧି ପାଇଛି। ରକ୍ତଚାପ ବୃଦ୍ଧି ପାଉଥିବାରୁ ଡାଇବେଟିକ୍ କିଟୋଏସିଡୋସିସ୍ ରିସ୍କ ରହିଛି।',
+
+      t2Title: '୨. ନିରାପଦ ଡିଫରେନ୍ସିଆଲ୍ ଟ୍ରାଏଜ୍ (Human-in-the-Loop)',
+      t2Subtitle: 'ଚୂଡ଼ାନ୍ତ ରୋଗ ନିରୂପଣ ବଦଳରେ ଡାକ୍ତରଙ୍କ ପରୀକ୍ଷା ପାଇଁ ସମ୍ଭାବ୍ୟ କ୍ଲିନିକାଲ୍ ତାଲିକା ଏବଂ ପ୍ରଶ୍ନାବଳୀ।',
+      probTitle: 'ଡାକ୍ତରଙ୍କ ସମୀକ୍ଷା ପାଇଁ ସମ୍ଭାବ୍ୟ କ୍ଲିନିକାଲ୍ ସମ୍ଭାବନା:',
+      sugQuest: '💡 ଡାକ୍ତର / ଆଶା କର୍ମୀଙ୍କ ପାଇଁ ପରାମର୍ଶିତ ପ୍ରଶ୍ନ:',
+
+      t3Title: '୩. ଔଷଧ-ଔଷଧ ଏବଂ ଆଲର୍ଜି ଚେତାବନୀ ସିଷ୍ଟମ୍',
+      t3Subtitle: 'ABHA ପ୍ରୋଫାଇଲରେ ଥିବା ଆଲର୍ଜି ରେକର୍ଡ ସହ ଅପଲୋଡ୍ ଔଷଧ ସ୍ଲିପ୍‌ର ସ୍ୱୟଂଚାଳିତ ଯାଞ୍ଚ।',
+      critAlert: 'ଡାକ୍ତରଙ୍କ ପାଇଁ ଗୁରୁତର ଔଷଧ ଆଲର୍ଜି ALERT',
+
+      t4Title: '୪. କ୍ଲିନିକାଲ୍ ରିସ୍କ ସ୍କୋର କାଲକୁଲେଟର୍',
+      t4Subtitle: 'ଜୀବନ ସୂଚକରୁ qSOFA (ସେପ୍ସିସ୍), GCS (ମୁଣ୍ଡ ଆଘାତ), APGAR (ନବଜାତ ଶିଶୁ) ଏବଂ MME ସ୍କୋର।',
+
+      t6Title: '୬-୯. ଆଶା ଭଏସ୍ କୋପାଇଲଟ୍, ପେନ୍ ମ୍ୟାପ୍ ଓ ପରିବାର ଟ୍ରାଏଜ୍',
+      t6Subtitle: 'ଗ୍ରାମୀଣ ଆଶା କର୍ମୀଙ୍କ ପାଇଁ ବିନା ଟାଇପିଂରେ କଣ୍ଠସ୍ୱର ମାଧ୍ୟମରେ ଲକ୍ଷଣ ଗ୍ରହଣ ଏବଂ ଶିବିର ଟ୍ରାଏଜ୍।',
+
+      t13Title: '୧୩. IDSP ମହାମାରୀ ରାଡାର (ଜିଲ୍ଲା ସ୍ୱାସ୍ଥ୍ୟ ନଜର)',
+      t13Subtitle: 'ଓଡ଼ିଶାର ୩୦ଟି ଜିଲ୍ଲାରେ ସଂକ୍ରାମକ ରୋଗର ହଠାତ୍ ବୃଦ୍ଧି ଉପରେ ୨୪x୭ ନଜର।',
+
+      t15Title: '୧୫-୧୮. DPDP Act ୨୦୨୩ ଅଡିଓ Consent ଓ AI ନିରପେକ୍ଷତା',
+      t15Subtitle: 'ଆଞ୍ଚଳିକ ଭାଷାରେ ୫ ସେକେଣ୍ଡ୍ ଅଡିଓ ସମ୍ମତି ଏବଂ ଡାକ୍ତର ଫିଡବ୍ୟାକ୍ ଶିକ୍ଷଣ।',
+
+      t20Title: '୨୦-୨୨. ANC ଗର୍ଭବତୀ ମାତୃ ସୁରକ୍ଷା ଓ SMS ରସିଦ୍',
+      t20Subtitle: 'ଉଚ୍ଚ-ପ୍ରାଥମିକତା ଗର୍ଭବତୀ ମାତୃ ପରୀକ୍ଷା ଏବଂ ନାଗରିକ ମୋବାଇଲ୍ SMS ଟୋକନ୍।'
+    },
+    'hi-IN': {
+      headerBadge: '🇮🇳 MoHFW एवं ABDM स्वीकृत • राष्ट्रीय GovTech मानक',
+      featureCountBadge: '22 उन्नत एंटरप्राइज फीचर्स',
+      headerTitle: 'राष्ट्रीय स्वास्थ्य AI एवं ऑपरेशन्स सूट',
+      headerSubtitle: 'क्लिनिकल निर्णय समर्थन, आशा वॉइस कोपायलट, ज़ीरो-टच कियोस्क, IDSP आउटब्रेक रडार एवं DPDP अनुपालन।',
+      humanLoop: 'डॉक्टर निर्णय सहायता',
+      nonDiag: 'Non-Diagnostic सुरक्षित',
+      
+      t1Title: '1. ABHA ट्रेंड ग्राफ (Longitudinal Trend Analysis)',
+      t1Subtitle: 'ABDM गेटवे से मरीज के पिछले 3 दौरों के स्वास्थ्य मापदंडों का स्वचालित विश्लेषण।',
+      v1: 'दौरा 1 (14 जनवरी)',
+      v2: 'दौरा 2 (18 फरवरी)',
+      v3: 'आज का विवरण (10 मार्च)',
+      bs: 'ब्लड शुगर:',
+      stable: 'स्थिर Baseline',
+      mod: '⚡ मध्यम वृद्धि',
+      alert: '⚠️ गंभीर स्थिति ALERT',
+      aiInsight: 'डॉक्टर के लिए AI क्लिनिकल इनसाइट:',
+      aiInsightTxt: 'पिछले 60 दिनों में ब्लड शुगर 71% बढ़ा है। रक्तचाप बढ़ने से डायबिटिक कीटोएसिडोसिस का जोखिम है।',
+
+      t2Title: '2. सुरक्षित डिफरेंशियल ट्रायज (Human-in-the-Loop)',
+      t2Subtitle: 'निश्चित निदान के बजाय डॉक्टर के परीक्षण के लिए संभावित क्लिनिकल सूची एवं प्रश्न।',
+      probTitle: 'डॉक्टर समीक्षा हेतु संभावित क्लिनिकल संभावनाएं:',
+      sugQuest: '💡 डॉक्टर / आशा कार्यकर्ता हेतु अनुशंसित प्रश्न:',
+
+      t3Title: '3. दवा-दवा एवं एलर्जी चेतावनी सिस्टम',
+      t3Subtitle: 'ABHA प्रोफाइल में मौजूद एलर्जी रिकॉर्ड के साथ पर्चे का स्वचालित मिलान।',
+      critAlert: 'डॉक्टर के लिए गंभीर दवा एलर्जी ALERT',
+
+      t4Title: '4. क्लिनिकल रिस्क स्कोर कैलकुलेटर',
+      t4Subtitle: 'वाइटल्स से qSOFA (सेप्सिस), GCS (सिर की चोट), APGAR (नवजात) एवं MME स्कोर।',
+
+      t6Title: '6-9. आशा वॉइस कोपायलट, पेन मैप एवं परिवार ट्रायज',
+      t6Subtitle: 'बिना टाइप किए आवाज द्वारा लक्षण दर्ज करने की सुविधा एवं कैंप ट्रायज।',
+
+      t13Title: '13. IDSP आउटब्रेक रडार (जिला महामारी निगरानी)',
+      t13Subtitle: 'ओडिशा के 30 जिलों में संक्रामक रोगों की वृद्धि पर 24x7 निगरानी।',
+
+      t15Title: '15-18. DPDP Act 2023 ऑडियो सहमति एवं AI निष्पक्षता',
+      t15Subtitle: 'क्षेत्रीय भाषा में 5 सेकंड ऑडियो सहमति एवं डॉक्टर फीडबैक लर्निंग।',
+
+      t20Title: '20-22. ANC गर्भवती मातृ सुरक्षा एवं SMS रसीद',
+      t20Subtitle: 'उच्च-जोखिम गर्भावस्था जांच एवं नागरिक मोबाइल SMS टोकन।'
+    },
+    'en-IN': {
+      headerBadge: '🇮🇳 MoHFW & ABDM Aligned • National GovTech Hackathon Standard',
+      featureCountBadge: '22 Advanced Enterprise Features',
+      headerTitle: 'National Health GovTech AI & Operations Suite',
+      headerSubtitle: 'Clinical decision support, low-literacy ASHA voice copilot, zero-touch kiosks, IDSP outbreak radar, DPDP consent compliance, and federated privacy architecture.',
+      humanLoop: 'Human-in-the-Loop',
+      nonDiag: 'Non-Diagnostic Certified',
+      
+      t1Title: '1. ABHA Temporal History Builder (Automated Longitudinal Trend Analysis)',
+      t1Subtitle: 'Auto-fetches last 3 clinical visits via ABDM gateway and calculates vital progression curves.',
+      v1: 'Visit 1 (14 Jan)',
+      v2: 'Visit 2 (18 Feb)',
+      v3: "Today's Intake (10 Mar)",
+      bs: 'Fasting Blood Sugar:',
+      stable: 'Stable Baseline',
+      mod: '⚡ Moderate Escalation',
+      alert: '⚠️ WORSENING TREND ALERT',
+      aiInsight: 'AI Longitudinal Insight for Doctor:',
+      aiInsightTxt: "Patient's glycemic control has deteriorated by 71% over 60 days. Rapid spikes in systolic BP observed. High probability of diabetic ketoacidosis risk.",
+
+      t2Title: '2. Safe Non-Diagnostic Differential Triage (Human-in-the-Loop)',
+      t2Subtitle: 'Instead of definitive diagnosis, AI outputs structured clinical possibilities and targeted history questions.',
+      probTitle: 'Clinical Differential Possibilities for Qualified Doctor Review:',
+      sugQuest: '💡 Suggested Targeted Questions for Attending Doctor / ASHA:',
+
+      t3Title: '3. Automated Drug-Drug & Allergy Contraindication Guard',
+      t3Subtitle: 'Cross-analyzes uploaded prescriptions against known patient drug allergy records in ABHA profile.',
+      critAlert: 'CRITICAL CONTRAINDICATION ALERT TO DOCTOR',
+
+      t4Title: '4. Automated Standardized Clinical Risk Calculator Suite',
+      t4Subtitle: 'Calculates qSOFA for Sepsis, GCS for Head Trauma, APGAR for Neonates, and MME for Maternal Risk directly from vitals.',
+
+      t6Title: '6-9. ASHA Low-Literacy Voice Copilot & Multi-Member Camp Triage',
+      t6Subtitle: 'Voice-first handsfree intake for community health workers, pictorial pain scales, and family camp batch processing.',
+
+      t13Title: '13. IDSP Outbreak Radar (Automated District Epidemic Surveillance)',
+      t13Subtitle: 'Monitors cluster symptom spikes across 30 Odisha blocks in real-time.',
+
+      t15Title: '15-18. DPDP Act 2023 Digital Consent, AI Fairness & RLHF Dashboard',
+      t15Subtitle: 'Legal data protection compliance, local language audio consent, and doctor feedback reinforcement learning.',
+
+      t20Title: '20-22. Maternal ANC Module & Citizen Carbon Copy SMS Receipts',
+      t20Subtitle: 'Specialized high-risk pregnancy screening and zero-internet SMS token dispatch.'
+    }
+  }[lang] || {};
+
   // Quick Pain Smileys
   const smileys = ['😊 Zero', '😐 Mild', '😣 Moderate', '😫 Severe', '😱 Extreme'];
 
@@ -72,25 +207,25 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-amber-400/30 tracking-wider">
-                🇮🇳 MoHFW & ABDM Aligned • National GovTech Hackathon Standard
+                {txt.headerBadge}
               </span>
               <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30">
-                22 Advanced Enterprise Features
+                {txt.featureCountBadge}
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
               <Brain className="w-6 h-6 text-indigo-400" />
-              National Health GovTech AI & Operations Suite
+              {txt.headerTitle}
             </h2>
             <p className="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
-              Clinical decision support, low-literacy ASHA voice copilot, zero-touch kiosks, IDSP outbreak radar, DPDP consent compliance, and federated privacy architecture.
+              {txt.headerSubtitle}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0 bg-white/10 p-2 rounded-2xl border border-white/10 backdrop-blur-xs">
             <ShieldAlert className="w-5 h-5 text-amber-400" />
             <div className="text-xs">
-              <p className="font-extrabold text-white">Human-in-the-Loop</p>
-              <p className="text-[10px] text-slate-300">Non-Diagnostic Safety Certified</p>
+              <p className="font-extrabold text-white">{txt.humanLoop}</p>
+              <p className="text-[10px] text-slate-300">{txt.nonDiag}</p>
             </div>
           </div>
         </div>
