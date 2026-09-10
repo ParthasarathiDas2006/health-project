@@ -201,103 +201,105 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white p-6 rounded-3xl shadow-lg border border-indigo-900/50">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-amber-400/30 tracking-wider">
-                {txt.headerBadge}
-              </span>
-              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30">
-                {txt.featureCountBadge}
-              </span>
+      {/* Header Banner & Navigation Pills - ONLY rendered when used as a full combined suite without initialFeature */}
+      {!initialFeature && (
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white p-6 rounded-3xl shadow-lg border border-indigo-900/50">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-amber-400/30 tracking-wider">
+                  {txt.headerBadge}
+                </span>
+                <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30">
+                  {txt.featureCountBadge}
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                <Brain className="w-6 h-6 text-indigo-400" />
+                {txt.headerTitle}
+              </h2>
+              <p className="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
+                {txt.headerSubtitle}
+              </p>
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-              <Brain className="w-6 h-6 text-indigo-400" />
-              {txt.headerTitle}
-            </h2>
-            <p className="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
-              {txt.headerSubtitle}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0 bg-white/10 p-2 rounded-2xl border border-white/10 backdrop-blur-xs">
-            <ShieldAlert className="w-5 h-5 text-amber-400" />
-            <div className="text-xs">
-              <p className="font-extrabold text-white">{txt.humanLoop}</p>
-              <p className="text-[10px] text-slate-300">{txt.nonDiag}</p>
+            <div className="flex items-center gap-2 shrink-0 bg-white/10 p-2 rounded-2xl border border-white/10 backdrop-blur-xs">
+              <ShieldAlert className="w-5 h-5 text-amber-400" />
+              <div className="text-xs">
+                <p className="font-extrabold text-white">{txt.humanLoop}</p>
+                <p className="text-[10px] text-slate-300">{txt.nonDiag}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Category Navigation Pills */}
-        <div className="mt-6 pt-4 border-t border-indigo-900/60 flex flex-wrap gap-2 text-xs font-bold">
-          <button
-            onClick={() => setActiveSubTab('abha_history')}
-            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubTab === 'abha_history' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
-            }`}
-          >
-            <TrendingUp className="w-3.5 h-3.5" /> 1. Temporal History (ABHA)
-          </button>
-          <button
-            onClick={() => setActiveSubTab('differential')}
-            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubTab === 'differential' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
-            }`}
-          >
-            <Brain className="w-3.5 h-3.5" /> 2. Safe Differential Triage
-          </button>
-          <button
-            onClick={() => setActiveSubTab('drug_safety')}
-            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubTab === 'drug_safety' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5" /> 3. Drug-Allergy Alerts
-          </button>
-          <button
-            onClick={() => setActiveSubTab('scores')}
-            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubTab === 'scores' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5" /> 4. Clinical Risk Scores
-          </button>
-          <button
-            onClick={() => setActiveSubTab('asha_copilot')}
-            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubTab === 'asha_copilot' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
-            }`}
-          >
-            <Mic className="w-3.5 h-3.5 text-amber-300" /> 6-8. ASHA Voice & Pain Map
-          </button>
-          <button
-            onClick={() => setActiveSubTab('outbreak')}
-            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubTab === 'outbreak' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
-            }`}
-          >
-            <Radar className="w-3.5 h-3.5 text-rose-300" /> 13. IDSP Outbreak Radar
-          </button>
-          <button
-            onClick={() => setActiveSubTab('compliance')}
-            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubTab === 'compliance' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
-            }`}
-          >
-            <Lock className="w-3.5 h-3.5 text-emerald-300" /> 15-18. DPDP & AI Fairness
-          </button>
-          <button
-            onClick={() => setActiveSubTab('maternal')}
-            className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
-              activeSubTab === 'maternal' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
-            }`}
-          >
-            <Baby className="w-3.5 h-3.5 text-pink-300" /> 20-22. ANC & Citizen SMS
-          </button>
+          {/* Category Navigation Pills */}
+          <div className="mt-6 pt-4 border-t border-indigo-900/60 flex flex-wrap gap-2 text-xs font-bold">
+            <button
+              onClick={() => setActiveSubTab('abha_history')}
+              className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+                activeSubTab === 'abha_history' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5" /> 1. Temporal History (ABHA)
+            </button>
+            <button
+              onClick={() => setActiveSubTab('differential')}
+              className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+                activeSubTab === 'differential' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              }`}
+            >
+              <Brain className="w-3.5 h-3.5" /> 2. Safe Differential Triage
+            </button>
+            <button
+              onClick={() => setActiveSubTab('drug_safety')}
+              className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+                activeSubTab === 'drug_safety' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5" /> 3. Drug-Allergy Alerts
+            </button>
+            <button
+              onClick={() => setActiveSubTab('scores')}
+              className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+                activeSubTab === 'scores' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" /> 4. Clinical Risk Scores
+            </button>
+            <button
+              onClick={() => setActiveSubTab('asha_copilot')}
+              className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+                activeSubTab === 'asha_copilot' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              }`}
+            >
+              <Mic className="w-3.5 h-3.5 text-amber-300" /> 6-8. ASHA Voice & Pain Map
+            </button>
+            <button
+              onClick={() => setActiveSubTab('outbreak')}
+              className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+                activeSubTab === 'outbreak' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              }`}
+            >
+              <Radar className="w-3.5 h-3.5 text-rose-300" /> 13. IDSP Outbreak Radar
+            </button>
+            <button
+              onClick={() => setActiveSubTab('compliance')}
+              className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+                activeSubTab === 'compliance' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              }`}
+            >
+              <Lock className="w-3.5 h-3.5 text-emerald-300" /> 15-18. DPDP & AI Fairness
+            </button>
+            <button
+              onClick={() => setActiveSubTab('maternal')}
+              className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+                activeSubTab === 'maternal' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              }`}
+            >
+              <Baby className="w-3.5 h-3.5 text-pink-300" /> 20-22. ANC & Citizen SMS
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Feature 1 / Tab 11: ABHA Temporal History Builder */}
       {activeSubTab === 'abha_history' && (
