@@ -299,50 +299,64 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
         </div>
       </div>
 
-      {/* Feature 1: Temporal History Builder */}
+      {/* Feature 1 / Tab 11: ABHA Temporal History Builder */}
       {activeSubTab === 'abha_history' && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-indigo-600" />
-                1. ABHA Temporal History Builder (Automated Longitudinal Trend Analysis)
+                {txt.t1Title || '11. ABHA Temporal History Builder (Automated Longitudinal Trend Analysis)'}
               </h3>
-              <p className="text-xs text-slate-500">Auto-fetches last 3 clinical visits via ABDM gateway and calculates vital progression curves.</p>
+              <p className="text-xs text-slate-500">
+                {txt.t1Subtitle || 'Auto-fetches last 3 clinical visits via ABDM gateway and calculates vital progression curves.'}
+              </p>
             </div>
-            <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
-              ABHA: {patientAbha}
+            <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-3.5 py-1.5 rounded-full border border-indigo-200 shadow-2xs">
+              🆔 ABHA ID: {patientAbha}
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Visit 1 (14 Jan 2026)</span>
-              <p className="font-extrabold text-slate-800">Fasting Blood Sugar: 140 mg/dL</p>
-              <p className="text-slate-500">BP: 128/82 mmHg • SpO2: 98%</p>
-              <span className="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Stable Baseline</span>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{txt.v1 || 'Visit 1 (14 Jan)'}</span>
+                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">{txt.stable || 'Stable Baseline'}</span>
+              </div>
+              <p className="font-extrabold text-slate-900 text-sm mt-1">{txt.bs || 'Fasting Blood Sugar:'} 140 mg/dL</p>
+              <p className="text-slate-600 font-medium">BP: 128/82 mmHg • SpO2: 98% • Hb: 13.2 g/dL</p>
+              <p className="text-[11px] text-slate-400 pt-1">Facility: SCB Medical College OPD, Cuttack</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
-              <span className="text-[10px] font-bold text-amber-700 uppercase">Visit 2 (18 Feb 2026)</span>
-              <p className="font-extrabold text-amber-900">Fasting Blood Sugar: 180 mg/dL</p>
-              <p className="text-amber-800">BP: 136/88 mmHg • SpO2: 96%</p>
-              <span className="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900">⚡ Moderate Escalation</span>
+            <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider">{txt.v2 || 'Visit 2 (18 Feb)'}</span>
+                <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900">{txt.mod || '⚡ Moderate Escalation'}</span>
+              </div>
+              <p className="font-extrabold text-amber-950 text-sm mt-1">{txt.bs || 'Fasting Blood Sugar:'} 180 mg/dL</p>
+              <p className="text-amber-800 font-medium">BP: 136/88 mmHg • SpO2: 96% • Hb: 12.8 g/dL</p>
+              <p className="text-[11px] text-amber-700 pt-1">Facility: Capital Hospital PHC, Bhubaneswar</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-1">
-              <span className="text-[10px] font-bold text-rose-700 uppercase">Today's Intake (10 Mar 2026)</span>
-              <p className="font-extrabold text-rose-900 text-sm">Fasting Blood Sugar: 240 mg/dL</p>
-              <p className="text-rose-800">BP: 148/94 mmHg • SpO2: 93%</p>
-              <span className="inline-block mt-2 text-[10px] font-black px-2.5 py-0.5 rounded bg-rose-600 text-white animate-pulse">⚠️ WORSENING TREND ALERT</span>
+            <div className="p-4 rounded-xl bg-rose-50/80 border border-rose-200 space-y-1.5 shadow-2xs">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-extrabold text-rose-700 uppercase tracking-wider">{txt.v3 || "Today's Intake (10 Mar)"}</span>
+                <span className="inline-block text-[10px] font-black px-2.5 py-0.5 rounded bg-rose-600 text-white animate-pulse">{txt.alert || '⚠️ WORSENING TREND ALERT'}</span>
+              </div>
+              <p className="font-extrabold text-rose-950 text-base mt-1">{txt.bs || 'Fasting Blood Sugar:'} 240 mg/dL</p>
+              <p className="text-rose-900 font-medium">BP: 148/94 mmHg • SpO2: 93% • Hb: 11.4 g/dL</p>
+              <p className="text-[11px] text-rose-700 font-bold pt-1">Facility: Active Triage Intake Desk</p>
             </div>
           </div>
 
-          <div className="p-3 bg-indigo-50/80 border border-indigo-200 rounded-xl text-xs text-indigo-900 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
-            <p>
-              <strong>AI Longitudinal Insight for Doctor:</strong> "Patient's glycemic control has deteriorated by 71% over 60 days. Rapid spikes in systolic BP observed. High probability of diabetic ketoacidosis risk."
-            </p>
+          <div className="p-4 bg-indigo-50/90 border border-indigo-200 rounded-xl text-xs text-indigo-950 flex items-start gap-3 shadow-2xs">
+            <Sparkles className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-extrabold text-indigo-900">{txt.aiInsight || 'AI Longitudinal Insight for Doctor:'}</p>
+              <p className="mt-0.5 leading-relaxed text-indigo-800">
+                {txt.aiInsightTxt || "Patient's glycemic control has deteriorated by 71% over 60 days. Rapid spikes in systolic BP observed. High probability of diabetic ketoacidosis risk."}
+              </p>
+            </div>
           </div>
         </div>
       )}
