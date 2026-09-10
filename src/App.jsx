@@ -172,6 +172,97 @@ export default function App() {
         });
       }
 
+      // Check targeted clinical inquiries from adaptive intake
+      const answers = currentIntake?.targetedAnswers || {};
+      if (answers.bleeding === 'gum_bleed') {
+        urgency = 'RED';
+        score = Math.max(score, 94);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'ଜରୁରୀ ରକ୍ତସ୍ରାବ ସତର୍କତା: ଚର୍ମରେ ନାଲି ଦାଗ କିମ୍ବା ମାଢ଼ିରୁ ରକ୍ତସ୍ରାବ (ହେମୋରେଜିକ୍ ବିପଦ)'
+            : (appLang === 'hi-IN'
+            ? 'गंभीर रक्तस्राव चेतावनी: मसूड़ों से खून अथवा त्वचा पर चकत्ते (हेमरेजिक लक्षण)'
+            : 'Hemorrhagic Alert: Active gum bleeding / petechial spots reported')
+        );
+      }
+      if (answers.rigors === 'yes') {
+        if (urgency !== 'RED') urgency = 'YELLOW';
+        score = Math.max(score, 65);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'କମ୍ପ ଜ୍ୱର ସୂଚନା: ଥଣ୍ଡା ଲାଗି କମ୍ପ ସହିତ ଜ୍ୱର (ପାରାସାଇଟ୍/ବ୍ୟାକ୍ଟେରିଆଲ୍ ସଂକ୍ରମଣ ଆଶଙ୍କା)'
+            : (appLang === 'hi-IN'
+            ? 'कंपकंपी के साथ बुखार: तेज ठंड लगकर बुखार (मलेरिया/गंभीर संक्रमण संभावना)'
+            : 'Febrile Rigors: High fever with shaking chills reported')
+        );
+      }
+      if (answers.hydration === 'poor') {
+        if (urgency !== 'RED') urgency = 'YELLOW';
+        score = Math.max(score, 60);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'ଶରୀରରେ ଜଳୀୟ ଅଂଶ ହ୍ରାସ: କମ୍ ପାଣି ପିଇବା ଓ କମ ପରିସ୍ରା'
+            : (appLang === 'hi-IN'
+            ? 'निर्जलीकरण चेतावनी: तरल पदार्थ का कम सेवन एवं गहरा पेशाब'
+            : 'Dehydration Risk: Inadequate fluid intake with reduced urine output')
+        );
+      }
+      if (answers.breath_speech === 'broken_words') {
+        urgency = 'RED';
+        score = Math.max(score, 95);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'ତୀବ୍ର ନିଶ୍ୱାସ କଷ୍ଟ: ରୋଗୀ ଗୋଟିଏ ଶବ୍ଦ କହିଲା ବେଳେ ଅଣନିଶ୍ୱାସୀ ହେଉଛନ୍ତି'
+            : (appLang === 'hi-IN'
+            ? 'तीव्र श्वसन संकट: बोलने पर सांस फूल रही है (रेस्पिरेटरी डिस्ट्रेस)'
+            : 'Severe Respiratory Distress: Inability to speak in full sentences')
+        );
+      }
+      if (answers.cough_type === 'blood_stained') {
+        urgency = 'RED';
+        score = Math.max(score, 90);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'କଫରେ ରକ୍ତ ଛିଟା: ତୀବ୍ର ଫୁସଫୁସ ସଂକ୍ରମଣ ବା ହିମୋପ୍ଟିସିସ୍ ଆଶଙ୍କା'
+            : (appLang === 'hi-IN'
+            ? 'बलगम में रक्त: हेमोप्टाइसिस / गंभीर फेफड़े के संक्रमण का संदेह'
+            : 'Hemoptysis: Blood traces detected in expectorated sputum')
+        );
+      }
+      if (answers.chest_spread === 'yes_arm') {
+        urgency = 'RED';
+        score = Math.max(score, 96);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'କରୋନାରୀ ସିଣ୍ଡ୍ରୋମ୍ ବିପଦ: ଛାତି ଯନ୍ତ୍ରଣା ବାମ ହାତ ଓ ମାଢ଼ି ଆଡ଼କୁ ବ୍ୟାପୁଛି'
+            : (appLang === 'hi-IN'
+            ? 'तीव्र कोरोनरी सिंड्रोम अलर्ट: सीने का दर्द बाएं हाथ/जबड़े तक फैल रहा है'
+            : 'Acute Coronary Syndrome Alert: Retrosternal pain radiating to left arm/jaw')
+        );
+      }
+      if (answers.headache_type === 'thunderclap') {
+        urgency = 'RED';
+        score = Math.max(score, 93);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'ପ୍ରଚଣ୍ଡ ମୁଣ୍ଡବିନ୍ଧା ସଙ୍କେତ: ହଠାତ୍ ଜୀବନର ସବୁଠୁ ତୀବ୍ର ମୁଣ୍ଡବିନ୍ଧା (ସବଆରାକନଏଡ୍ ହେମୋରେଜ୍ ଆଶଙ୍କା)'
+            : (appLang === 'hi-IN'
+            ? 'थंडरक्लैप सिरदर्द: अचानक तीव्रतम सिरदर्द (न्यूरोलॉजिकल इमरजेंसी)'
+            : 'Thunderclap Headache: Sudden onset worst headache of life')
+        );
+      }
+      if (answers.diarrhea_freq === 'more_than_6') {
+        urgency = 'RED';
+        score = Math.max(score, 88);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'ଅତ୍ୟଧିକ ଝାଡ଼ା/ବାନ୍ତି: ଗତ ୧୨ ଘଣ୍ଟାରେ ୬ ରୁ ଅଧିକ ଥର (ହାଇପୋଭୋଲେମିକ୍ ସକ୍ ଆଶଙ୍କା)'
+            : (appLang === 'hi-IN'
+            ? 'अत्यधिक दस्त/उल्टी: 12 घंटे में 6+ बार (हाइपोवोलेमिक शॉक का खतरा)'
+            : 'Profuse Gastroenteritis: >6 episodes in 12h, high hypovolemic dehydration risk')
+        );
+      }
+
       const note = {
         id: `TRG-${Math.floor(1000 + Math.random() * 9000)}`,
         patientName: currentIntake?.patientName || currentUser?.name || (appLang === 'or-IN' ? 'ରୋଗୀ' : (appLang === 'hi-IN' ? 'मरीज' : 'Intake Patient')),

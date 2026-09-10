@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useRef } from 'react';
 import {
   Mic,
   MicOff,
@@ -8,8 +7,223 @@ import {
   FileText,
   CheckCircle2,
   RefreshCw,
-  Trash2
+  Trash2,
+  Thermometer,
+  Wind,
+  HeartPulse,
+  Stethoscope,
+  Activity,
+  ChevronDown,
+  ChevronUp,
+  HelpCircle
 } from 'lucide-react';
+
+/**
+ * Condition-Specific Intake Protocols
+ * Tailors questions & required vitals based on primary complaint category.
+ */
+export const CONDITION_PROTOCOLS = {
+  fever: {
+    id: 'fever',
+    icon: Thermometer,
+    name: { en: 'Fever & Infection', hi: 'बुखार एवं संक्रमण', or: 'ଜ୍ୱର ଓ ସଂକ୍ରମଣ' },
+    keywords: ['fever', 'temp', 'temperature', 'बुखार', 'तापमान', 'ଜ୍ୱର', 'ତାପମାତ୍ରା'],
+    primaryVitals: ['temperature', 'durationDays'],
+    questions: [
+      {
+        id: 'rigors',
+        text: {
+          en: 'Are you having chills or severe shivering (rigors)?',
+          hi: 'क्या आपको ठंड लगकर कंपकंपी के साथ बुखार आता है?',
+          or: 'ଆପଣଙ୍କୁ କଣ ଥଣ୍ଡା ଲାଗି କମ୍ପ ସହିତ ଜ୍ୱର ଆସୁଛି (କମ୍ପ ଜ୍ୱର)?'
+        },
+        options: [
+          { val: 'yes', en: 'Yes, with shivering', hi: 'हाँ, कंपकंपी के साथ', or: 'ହଁ, କମ୍ପ ସହିତ' },
+          { val: 'no', en: 'No shivering', hi: 'नहीं, सामान्य बुखार', or: 'ନାହିଁ, ସାଧାରଣ ଜ୍ୱର' }
+        ]
+      },
+      {
+        id: 'bleeding',
+        text: {
+          en: 'Any red spots on skin, nose bleeding, or gum bleeding?',
+          hi: 'क्या त्वचा पर लाल चकत्ते, नाक या मसूड़ों से खून आ रहा है?',
+          or: 'ଚର୍ମରେ ନାଲି ଦାଗ, ନାକ କିମ୍ବା ମାଢ଼ିରୁ ରକ୍ତସ୍ରାବ ହେଉଛି କି?'
+        },
+        options: [
+          { val: 'none', en: 'None', hi: 'कोई नहीं', or: 'କିଛି ନାହିଁ' },
+          { val: 'gum_bleed', en: 'Gum bleeding / red spots (Urgent)', hi: 'मसूड़ों से खून / चकत्ते (तत्काल)', or: 'ମାଢ଼ିରୁ ରକ୍ତ / ନାଲି ଦାଗ (ଜରୁରୀ)' }
+        ]
+      },
+      {
+        id: 'hydration',
+        text: {
+          en: 'Able to drink water/ORS and passing urine normally?',
+          hi: 'क्या पानी/ओआरएस पी पा रहे हैं और पेशाब सामान्य हो रहा है?',
+          or: 'ପାଣି/ଓଆରଏସ୍ ପିଇପାରୁଛନ୍ତି ଓ ପରିସ୍ରା ସ୍ୱାଭାବିକ ଭାବେ ହେଉଛି କି?'
+        },
+        options: [
+          { val: 'good', en: 'Drinking well & normal urine', hi: 'सामान्य रूप से पी रहे हैं', or: 'ସ୍ୱାଭାବିକ ପିଉଛନ୍ତି ଓ ପରିସ୍ରା ହେଉଛି' },
+          { val: 'poor', en: 'Poor intake / dark decreased urine', hi: 'कम पानी / गहरा पेशाब', or: 'କମ ପାଣି ପିଉଛନ୍ତି / କମ ପରିସ୍ରା' }
+        ]
+      }
+    ]
+  },
+  respiratory: {
+    id: 'respiratory',
+    icon: Wind,
+    name: { en: 'Cough & Breathing', hi: 'खांसी एवं सांस', or: 'କାଶ ଓ ନିଶ୍ୱାସ' },
+    keywords: ['cough', 'breath', 'shortness of breath', 'phlegm', 'wheezing', 'खांसी', 'सांस', 'दम', 'କାଶ', 'କଫ', 'ନିଶ୍ୱାସ'],
+    primaryVitals: ['spo2', 'durationDays'],
+    questions: [
+      {
+        id: 'breath_speech',
+        text: {
+          en: 'Can the patient speak a full sentence without pausing for breath?',
+          hi: 'क्या मरीज बिना सांस फूले एक पूरा वाक्य बोल पा रहे हैं?',
+          or: 'ରୋଗୀ ଅଣନିଶ୍ୱାସୀ ନହୋଇ ଗୋଟିଏ ପୂରା ବାକ୍ୟ କହିପାରୁଛନ୍ତି କି?'
+        },
+        options: [
+          { val: 'full_sentences', en: 'Yes, speaks full sentences', hi: 'हाँ, पूरा वाक्य बोल पा रहे हैं', or: 'ହଁ, ପୂରା ବାକ୍ୟ କହିପାରୁଛନ୍ତି' },
+          { val: 'broken_words', en: 'No, breathless on single words (Alert)', hi: 'नहीं, एक-एक शब्द में सांस फूल रही है', or: 'ନାହିଁ, କଥା କହିଲା ବେଳେ ଅଣନିଶ୍ୱାସୀ ହେଉଛନ୍ତି' }
+        ]
+      },
+      {
+        id: 'cough_type',
+        text: {
+          en: 'Type of cough and phlegm color:',
+          hi: 'खांसी का प्रकार एवं बलगम का रंग:',
+          or: 'କାଶର ପ୍ରକାର ଓ କଫର ରଙ୍ଗ:'
+        },
+        options: [
+          { val: 'dry', en: 'Dry irritating cough', hi: 'सूखी खांसी', or: 'ଶୁଖିଲା କାଶ' },
+          { val: 'yellow_phlegm', en: 'Thick yellow/green phlegm', hi: 'गाढ़ा पीला/हरा बलगम', or: 'ହଳଦିଆ/ଶାଗୁଆ କଫ' },
+          { val: 'blood_stained', en: 'Blood traces in phlegm (Urgent)', hi: 'बलगम में खून (तत्काल)', or: 'କଫରେ ରକ୍ତ ଛିଟା (ଜରୁରୀ)' }
+        ]
+      }
+    ]
+  },
+  chest: {
+    id: 'chest',
+    icon: HeartPulse,
+    name: { en: 'Chest Pain / Heart', hi: 'छाती में दर्द / हृदय', or: 'ଛାତି ଯନ୍ତ୍ରଣା / ହୃଦୟ' },
+    keywords: ['chest', 'heart', 'heaviness', 'छाती', 'सीने', 'ଛାତି'],
+    primaryVitals: ['pulse', 'durationDays'],
+    questions: [
+      {
+        id: 'chest_spread',
+        text: {
+          en: 'Does chest pain/pressure spread to left arm, neck, or jaw?',
+          hi: 'क्या दर्द बाएं हाथ, गर्दन या जबड़े की तरफ फैल रहा है?',
+          or: 'ଯନ୍ତ୍ରଣା ବାମ ହାତ, ବେକ କିମ୍ବା ମୁଖଗହ୍ୱର/ହନୁ ହାଡ଼ ଆଡ଼କୁ ବ୍ୟାପୁଛି କି?'
+        },
+        options: [
+          { val: 'no', en: 'No, localized only', hi: 'नहीं, केवल सीने में', or: 'ନାହିଁ, କେବଳ ଛାତିରେ' },
+          { val: 'yes_arm', en: 'Yes, radiates to arm/jaw (High Urgency)', hi: 'हाँ, बाएं हाथ/जबड़े में फैल रहा है', or: 'ହଁ, ବାମ ହାତ/ମାଢ଼ି ଆଡ଼କୁ ବ୍ୟାପୁଛି (ଅତ୍ୟନ୍ତ ଜରୁରୀ)' }
+        ]
+      },
+      {
+        id: 'cold_sweat',
+        text: {
+          en: 'Accompanied by cold sweating, dizziness, or nausea?',
+          hi: 'क्या साथ में ठंडा पसीना, घबराहट या चक्कर आ रहे हैं?',
+          or: 'ସାଙ୍ଗରେ ଥଣ୍ଡା ଝାଳ ବୋହିବା, ଛାତି ଧଡ଼ପଡ଼ ବା ମୁଣ୍ଡ ବୁଲାଇବା ହେଉଛି କି?'
+        },
+        options: [
+          { val: 'no', en: 'No cold sweating', hi: 'नहीं', or: 'ନାହିଁ' },
+          { val: 'sweating', en: 'Yes, cold sweating & dizziness (Alert)', hi: 'हाँ, ठंडा पसीना व घबराहट', or: 'ହଁ, ଥଣ୍ଡା ଝାଳ ଓ ମୁଣ୍ଡ ବୁଲାଇବା (ସତର୍କ)' }
+        ]
+      }
+    ]
+  },
+  gastro: {
+    id: 'gastro',
+    icon: Activity,
+    name: { en: 'Stomach & Vomiting', hi: 'पेट दर्द एवं दस्त', or: 'ପେଟ ଓ ଝାଡ଼ା/ବାନ୍ତି' },
+    keywords: ['abdominal', 'stomach', 'diarrhea', 'motions', 'vomit', 'vomiting', 'पेट', 'दस्त', 'उल्टी', 'ପେଟ', 'ଝାଡ଼ା', 'ବାନ୍ତି'],
+    primaryVitals: ['durationDays'],
+    questions: [
+      {
+        id: 'diarrhea_freq',
+        text: {
+          en: 'Episodes of loose motions/vomiting in last 12 hours:',
+          hi: 'पिछले 12 घंटों में दस्त या उल्टी के दौरों की संख्या:',
+          or: 'ଗତ ୧୨ ଘଣ୍ଟାରେ କେତେ ଥର ଝାଡ଼ା କିମ୍ବା ବାନ୍ତି ହୋଇଛି:'
+        },
+        options: [
+          { val: '1_to_3', en: '1 to 3 times (Mild)', hi: '1 से 3 बार (हल्का)', or: '୧ ରୁ ୩ ଥର (ସାମାନ୍ୟ)' },
+          { val: '4_to_6', en: '4 to 6 times (Moderate)', hi: '4 से 6 बार (मध्यम)', or: '୪ ରୁ ୬ ଥର (ମଧ୍ୟମ)' },
+          { val: 'more_than_6', en: 'More than 6 times / watery rice stool (Urgent)', hi: '6 से अधिक बार / चावल के पानी जैसा दस्त (तत्काल)', or: '୬ ରୁ ଅଧିକ ଥର / ଚାଉଳ ଧୁଆ ପାଣି ପରି ଝାଡ଼ା (ଜରୁରୀ)' }
+        ]
+      },
+      {
+        id: 'blood_stool',
+        text: {
+          en: 'Any blood in stool or black colored stool?',
+          hi: 'क्या मल में खून या काला मल आ रहा है?',
+          or: 'ଝାଡ଼ାରେ ରକ୍ତ କିମ୍ବା କଳା ଝାଡ଼ା ହେଉଛି କି?'
+        },
+        options: [
+          { val: 'no', en: 'No blood', hi: 'नहीं', or: 'ନାହିଁ' },
+          { val: 'yes_blood', en: 'Yes, visible blood or black stool', hi: 'हाँ, मल में खून या काला रंग', or: 'ହଁ, ରକ୍ତ କିମ୍ବା କଳା ଝାଡ଼ା' }
+        ]
+      }
+    ]
+  },
+  neuro: {
+    id: 'neuro',
+    icon: Stethoscope,
+    name: { en: 'Headache & Neuro', hi: 'सिरदर्द एवं चक्कर', or: 'ମୁଣ୍ଡବିନ୍ଧା ଓ ଚକ୍କର' },
+    keywords: ['headache', 'head', 'dizziness', 'vertigo', 'सिरदर्द', 'सिर', 'चक्कर', 'ମୁଣ୍ଡ', 'ବିନ୍ଧା', 'ବୁଲାଇବା'],
+    primaryVitals: ['durationDays'],
+    questions: [
+      {
+        id: 'headache_type',
+        text: {
+          en: 'Nature of headache onset:',
+          hi: 'सिरदर्द शुरू होने का प्रकार:',
+          or: 'ମୁଣ୍ଡବିନ୍ଧା କିପରି ଭାବରେ ଆରମ୍ଭ ହେଲା:'
+        },
+        options: [
+          { val: 'gradual', en: 'Gradual / regular tension', hi: 'धीरे-धीरे शुरू हुआ', or: 'ଧୀରେ ଧୀରେ ଆରମ୍ଭ ହୋଇଛି' },
+          { val: 'thunderclap', en: 'Sudden severe "worst headache of life" (Red Flag)', hi: 'अचानक तीव्र "जीवन का सबसे तेज सिरदर्द"', or: 'ହଠାତ୍ ପ୍ରଚଣ୍ଡ ମୁଣ୍ଡବିନ୍ଧା (ବିପଦ ସଙ୍କେତ)' }
+        ]
+      },
+      {
+        id: 'neck_stiffness',
+        text: {
+          en: 'Any stiffness in neck or discomfort looking at bright lights?',
+          hi: 'क्या गर्दन में अकड़न या रोशनी से आंखों में दर्द हो रहा है?',
+          or: 'ବେକ ଟାଣ ଲାଗିବା କିମ୍ବା ଆଲୁଅକୁ ଚାହିଁଲେ କଷ୍ଟ ହେଉଛି କି?'
+        },
+        options: [
+          { val: 'no', en: 'No neck stiffness', hi: 'नहीं', or: 'ନାହିଁ' },
+          { val: 'stiff', en: 'Yes, neck stiffness with fever (Urgent)', hi: 'हाँ, गर्दन अकड़न व बुखार (तत्काल)', or: 'ହଁ, ବେକ ଟାଣ ଓ ଜ୍ୱର (ଜରୁରୀ)' }
+        ]
+      }
+    ]
+  },
+  general: {
+    id: 'general',
+    icon: FileText,
+    name: { en: 'General / Other', hi: 'अन्य सामान्य लक्षण', or: 'ଅନ୍ୟାନ୍ୟ ସାଧାରଣ ଲକ୍ଷଣ' },
+    keywords: [],
+    primaryVitals: ['durationDays'],
+    questions: [
+      {
+        id: 'daily_activity',
+        text: {
+          en: 'How is this illness affecting your daily activities?',
+          hi: 'यह बीमारी आपकी दैनिक गतिविधियों को कैसे प्रभावित कर रही है?',
+          or: 'ଏହି ଅସୁସ୍ଥତା ଆପଣଙ୍କ ଦୈନନ୍ଦିନ କାର୍ଯ୍ୟକୁ କିପରି ପ୍ରଭାବିତ କରୁଛି:'
+        },
+        options: [
+          { val: 'mild', en: 'Mild, able to do routine work', hi: 'हल्का, सामान्य काम कर पा रहे हैं', or: 'ସାମାନ୍ୟ, ସାଧାରଣ କାମ କରିପାରୁଛନ୍ତି' },
+          { val: 'bedridden', en: 'Severe weakness, unable to get out of bed', hi: 'गंभीर कमजोरी, बिस्तर से उठना कठिन', or: 'ଅତ୍ୟଧିକ ଦୁର୍ବଳତା, ଶଯ୍ୟାଶାୟୀ' }
+        ]
+      }
+    ]
+  }
+};
 
 /**
  * Multimodal Intake Form
@@ -23,6 +237,11 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
   const [transcript, setTranscript] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
+
+  // Condition category & adaptive questions state
+  const [activeCategory, setActiveCategory] = useState('fever');
+  const [targetedAnswers, setTargetedAnswers] = useState({});
+  const [showExtraVitals, setShowExtraVitals] = useState(false);
 
   // Sync internal language with appLang prop whenever it changes
   useEffect(() => {
@@ -43,14 +262,14 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
 
   // Common quick chips for Indian PHC/Camp settings
   const commonSymptoms = [
-    { en: 'High Fever', hi: 'तेज़ बुखार', or: 'ପ୍ରବଳ ଜ୍ୱର' },
-    { en: 'Cough with Phlegm', hi: 'बलगम वाली खांसी', or: 'କଫ ସହ କାଶ' },
-    { en: 'Shortness of Breath', hi: 'सांस लेने में तकलीफ', or: 'ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ' },
-    { en: 'Severe Headache', hi: 'सिर में तेज़ दर्द', or: 'ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା' },
-    { en: 'Abdominal Pain', hi: 'पेट में दर्द', or: 'ପେଟ ଯନ୍ତ୍ରଣା' },
-    { en: 'Loose Motions / Diarrhea', hi: 'दस्त / उल्टी', or: 'ଝାଡ଼ା / ବାନ୍ତି' },
-    { en: 'Chest Heaviness', hi: 'छाती में भारीपन', or: 'ଛାତି ଭାରୀ ଲାଗିବା' },
-    { en: 'Dizziness / Vertigo', hi: 'चक्कर आना', or: 'ମୁଣ୍ଡ ବୁଲାଇବା' },
+    { en: 'High Fever', hi: 'तेज़ बुखार', or: 'ପ୍ରବଳ ଜ୍ୱର', category: 'fever' },
+    { en: 'Cough with Phlegm', hi: 'बलगम वाली खांसी', or: 'କଫ ସହ କାଶ', category: 'respiratory' },
+    { en: 'Shortness of Breath', hi: 'सांस लेने में तकलीफ', or: 'ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ', category: 'respiratory' },
+    { en: 'Severe Headache', hi: 'सिर में तेज़ दर्द', or: 'ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା', category: 'neuro' },
+    { en: 'Abdominal Pain', hi: 'पेट में दर्द', or: 'ପେଟ ଯନ୍ତ୍ରଣା', category: 'gastro' },
+    { en: 'Loose Motions / Diarrhea', hi: 'दस्त / उल्टी', or: 'ଝାଡ଼ା / ବାନ୍ତି', category: 'gastro' },
+    { en: 'Chest Heaviness', hi: 'छाती में भारीपन', or: 'ଛାତି ଭାରୀ ଲାଗିବା', category: 'chest' },
+    { en: 'Dizziness / Vertigo', hi: 'चक्कर आना', or: 'ମୁଣ୍ଡ ବୁଲାଇବା', category: 'neuro' },
   ];
 
   // Pure UI Text Dictionary
@@ -68,13 +287,18 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
       micStop: 'ରିକର୍ଡିଂ ବନ୍ଦ କରନ୍ତୁ',
       micStart: 'ଭଏସ୍ ଇନପୁଟ୍ ଆରମ୍ଭ କରନ୍ତୁ',
       quickAdd: 'ଶୀଘ୍ର ଯୋଡ଼ନ୍ତୁ:',
+      categorySelect: 'ମୁଖ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ସମସ୍ୟା ଚୟନ କରନ୍ତୁ:',
+      targetedTitle: 'ସମ୍ବନ୍ଧିତ ପ୍ରାଥମିକ ପ୍ରଶ୍ନାବଳୀ (ଡାକ୍ତରୀ ଆକଳନ)',
+      vitalsTitle: 'ଆବଶ୍ୟକ ଜୀବନ ସୂଚକ',
+      extraVitalsToggleOpen: '+ ଅତିରିକ୍ତ ଯାଞ୍ଚ ଯୋଡ଼ନ୍ତୁ (ରକ୍ତଚାପ / ଅମ୍ଳଜାନ SpO2 / ନାଡ଼ି)',
+      extraVitalsToggleClose: '- ଅତିରିକ୍ତ ଯାଞ୍ଚ ଲୁଚାନ୍ତୁ',
+      optionalNotice: 'ଯଦି ଘରେ ବ୍ଲଡପ୍ରେସର କିମ୍ବା ପଲ୍ସ ଅକ୍ସିମିଟର ଥାଏ, ତେବେ ଲେଖନ୍ତୁ (ବାଧ୍ୟତାମୂଳକ ନୁହେଁ)',
       scribeTitle: 'ପ୍ରମାଣିତ ଇଂରାଜୀ ସାରାଂଶ:',
-      vitalsTitle: 'ମୁଖ୍ୟ ଜୀବନ ସୂଚକ ଓ ସମୟ ଅବଧି',
       temp: 'ତାପମାତ୍ରା (°F)',
       pulse: 'ନାଡ଼ି ସ୍ପନ୍ଦନ (BPM)',
       spo2: 'ଅକ୍ସିଜେନ୍ SpO2 (%)',
-      systolic: 'ରକ୍ତଚାପ ସିଷ୍ଟୋଲିକ୍',
-      diastolic: 'ରକ୍ତଚାପ ଡାୟାଷ୍ଟୋଲିକ୍',
+      systolic: 'ରକ୍ତଚାପ ସିଷ୍ଟୋଲିକ୍ (SBP)',
+      diastolic: 'ରକ୍ତଚାପ ଡାୟାଷ୍ଟୋଲିକ୍ (DBP)',
       duration: 'ଅସୁସ୍ଥତା ଅବଧି (ଦିନ)',
       disclaimer: 'ସୁରକ୍ଷା ନିୟମ: ଏହି ପୋର୍ଟାଲ୍ ରୋଗୀଙ୍କ ଲକ୍ଷଣ ସଜାଡ଼ି ଜରୁରୀ ସ୍ତର ଚିହ୍ନଟ କରେ। ଏହା କୌଣସି ଚିକିତ୍ସା କିମ୍ବା ଔଷଧ ନିର୍ଦ୍ଦେଶ ଦିଏ ନାହିଁ। ଚୂଡ଼ାନ୍ତ ନିଷ୍ପତ୍ତି ପଞ୍ଜୀକୃତ ଡାକ୍ତରଙ୍କ ଦ୍ୱାରା ନିଆଯାଏ।',
       submitBtn: 'ଲ୍ୟାବ୍ ରିପୋର୍ଟ ଓ ଟ୍ରାଏଜ୍ ନୋଟ୍ ପ୍ରସ୍ତୁତି ପାଇଁ ଆଗକୁ ବଢ଼ନ୍ତୁ',
@@ -93,13 +317,18 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
       micStop: 'रिकॉर्डिंग बंद करें',
       micStart: 'वॉइस इनपुट शुरू करें',
       quickAdd: 'त्वरित जोड़ें:',
+      categorySelect: 'मुख्य स्वास्थ्य समस्या चुनें:',
+      targetedTitle: 'संबंधित प्राथमिक प्रश्न (क्लिनिकल मूल्यांकन)',
+      vitalsTitle: 'प्राथमिक आवश्यक वाइटल्स',
+      extraVitalsToggleOpen: '+ अतिरिक्त जांच दर्ज करें (ब्लड प्रेशर / SpO2 / पल्स)',
+      extraVitalsToggleClose: '- अतिरिक्त जांच छिपाएं',
+      optionalNotice: 'यदि घर पर बीपी मशीन या पल्स ऑक्सीमीटर है तो दर्ज करें (अनिवार्य नहीं)',
       scribeTitle: 'प्रमाणित क्लिनिकल सारांश (English):',
-      vitalsTitle: 'मुख्य जीवन सूचक एवं समय-क्रम',
       temp: 'तापमान (°F)',
       pulse: 'नाड़ी दर (BPM)',
       spo2: 'ऑक्सीजन SpO2 (%)',
-      systolic: 'रक्तचाप सिस्टोलिक',
-      diastolic: 'रक्तचाप डायस्टोलिक',
+      systolic: 'रक्तचाप सिस्टोलिक (SBP)',
+      diastolic: 'रक्तचाप डायस्टोलिक (DBP)',
       duration: 'बीमारी की अवधि (दिन)',
       disclaimer: 'सुरक्षा निर्देश: यह प्रणाली केवल लक्षणों को व्यवस्थित कर तात्कालिकता का स्तर दर्शाती है। यह कोई प्रत्यक्ष निदान या दवा निर्धारित नहीं करती। अंतिम निर्णय उपस्थित चिकित्सक द्वारा लिया जाता है।',
       submitBtn: 'लैब रिपोर्ट एवं ट्रायज नोट के लिए आगे बढ़ें',
@@ -118,13 +347,18 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
       micStop: 'Stop Recording',
       micStart: 'Start Voice Input',
       quickAdd: 'Quick add:',
+      categorySelect: 'Select Primary Condition:',
+      targetedTitle: 'Focused Clinical Inquiries',
+      vitalsTitle: 'Primary Required Vitals',
+      extraVitalsToggleOpen: '+ Add Home Device Vitals (BP / SpO2 / Pulse)',
+      extraVitalsToggleClose: '- Hide Optional Home Vitals',
+      optionalNotice: 'Optional: Enter home BP or Pulse Oximeter readings if available',
       scribeTitle: 'Normalized Clinical Scribe (English):',
-      vitalsTitle: 'Key Vitals & Timeline',
       temp: 'Temp (°F)',
       pulse: 'Pulse (BPM)',
       spo2: 'SpO2 (%)',
-      systolic: 'BP Systolic',
-      diastolic: 'BP Diastolic',
+      systolic: 'BP Systolic (SBP)',
+      diastolic: 'BP Diastolic (DBP)',
       duration: 'Duration (Days)',
       disclaimer: 'Triage Non-Diagnostic Notice: This intake organizes symptoms and highlights urgency factors. It does not formulate diagnoses or prescribe medication. Final triage level is determined by the attending clinician.',
       submitBtn: 'Proceed to Lab Report & Triage Note Generation',
@@ -322,6 +556,9 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
         : language === 'hi-IN'
         ? symptom.hi
         : symptom.en;
+    if (symptom.category && CONDITION_PROTOCOLS[symptom.category]) {
+      setActiveCategory(symptom.category);
+    }
     setTranscript((prev) => {
       const updated = prev && prev.trim() ? `${prev.trim()}, ${addition}` : addition;
       transcriptRef.current = updated;
@@ -329,6 +566,13 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
       translateClinicalText(updated);
       return updated;
     });
+  };
+
+  const handleSelectAnswer = (questionId, optionValue) => {
+    setTargetedAnswers((prev) => ({
+      ...prev,
+      [questionId]: optionValue
+    }));
   };
 
   const handleLanguageChange = (newLang) => {
@@ -344,7 +588,8 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!transcript && !vitals.temperature && !vitals.spo2) {
+    const hasAnyTargeted = Object.keys(targetedAnswers).length > 0;
+    if (!transcript && !vitals.temperature && !vitals.spo2 && !hasAnyTargeted) {
       alert(ui.alertValidation);
       return;
     }
@@ -353,6 +598,8 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
       language,
       rawSpeech: transcript,
       translatedSummary: translatedText || transcript,
+      selectedCategory: activeCategory,
+      targetedAnswers,
       vitals,
       timestamp: new Date().toISOString(),
     });
@@ -519,65 +766,101 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
           )}
         </div>
 
-        {/* Basic Vitals Input Grid */}
+        {/* 1. Condition Selector Tabs */}
         <div className="border-t pt-4">
-          <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-1.5">
-            {ui.vitalsTitle}
-          </h3>
+          <label className="text-xs font-bold text-slate-700 block mb-2">
+            {ui.categorySelect}
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {Object.values(CONDITION_PROTOCOLS).map((proto) => {
+              const IconComponent = proto.icon;
+              const isSelected = activeCategory === proto.id;
+              const protoName = language === 'or-IN' ? proto.name.or : (language === 'hi-IN' ? proto.name.hi : proto.name.en);
+              return (
+                <button
+                  key={proto.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveCategory(proto.id);
+                  }}
+                  className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-semibold transition-all text-left ${
+                    isSelected
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-900 shadow-sm ring-1 ring-emerald-500'
+                      : 'border-slate-200 bg-slate-50/60 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <IconComponent className={`w-4 h-4 shrink-0 ${isSelected ? 'text-emerald-700' : 'text-slate-500'}`} />
+                  <span className="truncate">{protoName}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 2. Targeted Clinical Questions (Adaptive for Selected Condition) */}
+        {CONDITION_PROTOCOLS[activeCategory]?.questions?.length > 0 && (
+          <div className="p-4 bg-emerald-50/40 rounded-xl border border-emerald-200/80 space-y-3.5">
+            <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
+              <HelpCircle className="w-4 h-4 text-emerald-700" />
+              <span>{ui.targetedTitle}</span>
+            </div>
+
+            <div className="space-y-3">
+              {CONDITION_PROTOCOLS[activeCategory].questions.map((q) => {
+                const questionText = language === 'or-IN' ? q.text.or : (language === 'hi-IN' ? q.text.hi : q.text.en);
+                const currentAnswer = targetedAnswers[q.id];
+
+                return (
+                  <div key={q.id} className="bg-white p-3 rounded-lg border border-emerald-100 shadow-2xs">
+                    <p className="text-xs font-semibold text-slate-800 mb-2">{questionText}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {q.options.map((opt) => {
+                        const optLabel = language === 'or-IN' ? opt.or : (language === 'hi-IN' ? opt.hi : opt.en);
+                        const isChosen = currentAnswer === opt.val;
+                        const isAlert = opt.val.includes('bleed') || opt.val.includes('broken') || opt.val.includes('arm') || opt.val.includes('more_than_6') || opt.val.includes('thunderclap') || opt.val.includes('stiff') || opt.val.includes('bedridden');
+
+                        return (
+                          <button
+                            key={opt.val}
+                            type="button"
+                            onClick={() => handleSelectAnswer(q.id, opt.val)}
+                            className={`text-xs px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 font-medium ${
+                              isChosen
+                                ? (isAlert
+                                    ? 'bg-rose-50 border-rose-500 text-rose-800 font-bold ring-1 ring-rose-400'
+                                    : 'bg-emerald-600 border-emerald-600 text-white font-semibold shadow-xs')
+                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <span className={`w-2 h-2 rounded-full ${isChosen ? (isAlert ? 'bg-rose-500' : 'bg-white') : 'bg-slate-300'}`} />
+                            {optLabel}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 3. Primary Required Vitals (Focused on Active Condition) */}
+        <div className="border-t pt-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+              <Activity className="w-4 h-4 text-emerald-600" />
+              {ui.vitalsTitle}
+            </h3>
+            <span className="text-[11px] text-slate-500">
+              {activeCategory === 'fever' ? 'Fever focused' : (activeCategory === 'respiratory' ? 'Oxygen & Respiratory' : 'Condition specific')}
+            </span>
+          </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {/* Always show durationDays */}
             <div>
-              <label className="text-xs text-slate-600 font-medium">{ui.temp}</label>
-              <input
-                type="number"
-                step="0.1"
-                placeholder="98.6"
-                value={vitals.temperature}
-                onChange={(e) => setVitals({ ...vitals, temperature: e.target.value })}
-                className="w-full mt-1 p-2 text-sm rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-slate-600 font-medium">{ui.pulse}</label>
-              <input
-                type="number"
-                placeholder="78"
-                value={vitals.pulse}
-                onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
-                className="w-full mt-1 p-2 text-sm rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-slate-600 font-medium">{ui.spo2}</label>
-              <input
-                type="number"
-                placeholder="98"
-                value={vitals.spo2}
-                onChange={(e) => setVitals({ ...vitals, spo2: e.target.value })}
-                className="w-full mt-1 p-2 text-sm rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-slate-600 font-medium">{ui.systolic}</label>
-              <input
-                type="number"
-                placeholder="120"
-                value={vitals.systolic}
-                onChange={(e) => setVitals({ ...vitals, systolic: e.target.value })}
-                className="w-full mt-1 p-2 text-sm rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-slate-600 font-medium">{ui.diastolic}</label>
-              <input
-                type="number"
-                placeholder="80"
-                value={vitals.diastolic}
-                onChange={(e) => setVitals({ ...vitals, diastolic: e.target.value })}
-                className="w-full mt-1 p-2 text-sm rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-slate-600 font-medium">{ui.duration}</label>
+              <label className="text-xs text-slate-700 font-medium">{ui.duration}</label>
               <input
                 type="number"
                 value={vitals.durationDays}
@@ -585,6 +868,133 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                 className="w-full mt-1 p-2 text-sm rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none"
               />
             </div>
+
+            {/* If condition requires temperature (e.g. fever) */}
+            {CONDITION_PROTOCOLS[activeCategory]?.primaryVitals?.includes('temperature') && (
+              <div>
+                <label className="text-xs text-slate-700 font-medium flex items-center gap-1">
+                  <Thermometer className="w-3.5 h-3.5 text-rose-500" />
+                  {ui.temp}
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="98.6"
+                  value={vitals.temperature}
+                  onChange={(e) => setVitals({ ...vitals, temperature: e.target.value })}
+                  className="w-full mt-1 p-2 text-sm rounded border border-emerald-400 focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-900 bg-emerald-50/20"
+                />
+              </div>
+            )}
+
+            {/* If condition requires spo2 (e.g. respiratory) */}
+            {CONDITION_PROTOCOLS[activeCategory]?.primaryVitals?.includes('spo2') && (
+              <div>
+                <label className="text-xs text-slate-700 font-medium flex items-center gap-1">
+                  <Wind className="w-3.5 h-3.5 text-sky-500" />
+                  {ui.spo2}
+                </label>
+                <input
+                  type="number"
+                  placeholder="98"
+                  value={vitals.spo2}
+                  onChange={(e) => setVitals({ ...vitals, spo2: e.target.value })}
+                  className="w-full mt-1 p-2 text-sm rounded border border-sky-400 focus:ring-2 focus:ring-sky-500 outline-none font-medium text-slate-900 bg-sky-50/20"
+                />
+              </div>
+            )}
+
+            {/* If condition requires pulse (e.g. chest) */}
+            {CONDITION_PROTOCOLS[activeCategory]?.primaryVitals?.includes('pulse') && (
+              <div>
+                <label className="text-xs text-slate-700 font-medium flex items-center gap-1">
+                  <HeartPulse className="w-3.5 h-3.5 text-rose-600" />
+                  {ui.pulse}
+                </label>
+                <input
+                  type="number"
+                  placeholder="78"
+                  value={vitals.pulse}
+                  onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
+                  className="w-full mt-1 p-2 text-sm rounded border border-rose-300 focus:ring-2 focus:ring-rose-500 outline-none font-medium text-slate-900"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* 4. Expandable Home Vitals Drawer (Optional) */}
+          <div className="mt-4 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setShowExtraVitals(!showExtraVitals)}
+              className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 focus:outline-none"
+            >
+              {showExtraVitals ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {showExtraVitals ? ui.extraVitalsToggleClose : ui.extraVitalsToggleOpen}
+            </button>
+            <p className="text-[11px] text-slate-400 mt-1">{ui.optionalNotice}</p>
+
+            {showExtraVitals && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg animate-fadeIn">
+                {!CONDITION_PROTOCOLS[activeCategory]?.primaryVitals?.includes('temperature') && (
+                  <div>
+                    <label className="text-xs text-slate-600 font-medium">{ui.temp}</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="98.6"
+                      value={vitals.temperature}
+                      onChange={(e) => setVitals({ ...vitals, temperature: e.target.value })}
+                      className="w-full mt-1 p-2 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                    />
+                  </div>
+                )}
+                {!CONDITION_PROTOCOLS[activeCategory]?.primaryVitals?.includes('pulse') && (
+                  <div>
+                    <label className="text-xs text-slate-600 font-medium">{ui.pulse}</label>
+                    <input
+                      type="number"
+                      placeholder="78"
+                      value={vitals.pulse}
+                      onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
+                      className="w-full mt-1 p-2 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                    />
+                  </div>
+                )}
+                {!CONDITION_PROTOCOLS[activeCategory]?.primaryVitals?.includes('spo2') && (
+                  <div>
+                    <label className="text-xs text-slate-600 font-medium">{ui.spo2}</label>
+                    <input
+                      type="number"
+                      placeholder="98"
+                      value={vitals.spo2}
+                      onChange={(e) => setVitals({ ...vitals, spo2: e.target.value })}
+                      className="w-full mt-1 p-2 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="text-xs text-slate-600 font-medium">{ui.systolic}</label>
+                  <input
+                    type="number"
+                    placeholder="120"
+                    value={vitals.systolic}
+                    onChange={(e) => setVitals({ ...vitals, systolic: e.target.value })}
+                    className="w-full mt-1 p-2 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-600 font-medium">{ui.diastolic}</label>
+                  <input
+                    type="number"
+                    placeholder="80"
+                    value={vitals.diastolic}
+                    onChange={(e) => setVitals({ ...vitals, diastolic: e.target.value })}
+                    className="w-full mt-1 p-2 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
