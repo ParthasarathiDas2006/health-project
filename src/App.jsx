@@ -357,7 +357,7 @@ export default function App() {
   // 100% Pure Multilingual UI Text
   const uiText = {
     'or-IN': {
-      title: 'ବହୁମୁଖୀ ସ୍ୱାସ୍ଥ୍ୟ ଟ୍ରାଏଜ୍ ସହାୟକ',
+      title: 'SwasthyaMitra',
       subtitle: 'AI ସ୍କ୍ରାଇବ୍, ଲ୍ୟାବ୍ OCR ଓ କ୍ଲିନିକାଲ୍ ଟ୍ରାଏଜ୍ (ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ଓ ପରିବାର କଲ୍ୟାଣ ବିଭାଗ)',
       safetyLabel: 'ସୁରକ୍ଷା ନିୟମ:',
       protocol: 'ଡାକ୍ତରୀ ନିଷ୍ପତ୍ତି ସହାୟକ ପୋର୍ଟାଲ୍ (Non-Diagnostic) | ଆୟୁଷ୍ମାନ ଭାରତ ଓ BSKY ଅନ୍ତର୍ଭୁକ୍ତ',
@@ -421,10 +421,10 @@ export default function App() {
       btnGenerateNote: 'ସଂରଚିତ ଟ୍ରାଏଜ୍ ନୋଟ୍ ପ୍ରସ୍ତୁତ କରନ୍ତୁ ଏବଂ ଡାକ୍ତର ଧାଡ଼ିକୁ ପଠାନ୍ତୁ',
       scenariosHeading: 'ଭାରତୀୟ ଓ ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ରରେ କ୍ଲିନିକାଲ୍ ଟ୍ରାଏଜ୍ ନିୟମାବଳୀ',
       scenariosSubheading: '୭ ଟି କାର୍ଯ୍ୟକ୍ଷମ ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ରର ପରୀକ୍ଷିତ ଲାଲ୍ ସଙ୍କେତ ଓ ରେଫରାଲ୍ ପ୍ରୋଟୋକଲ୍:',
-      footerText: 'ବହୁମୁଖୀ ସ୍ୱାସ୍ଥ୍ୟ ଟ୍ରାଏଜ୍ ସହାୟକ • ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ପୋର୍ଟାଲ୍ • ଡାକ୍ତରୀ ନିଷ୍ପତ୍ତି ସହାୟକ (Non-Diagnostic)'
+      footerText: 'SwasthyaMitra • ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ପୋର୍ଟାଲ୍ • ଡାକ୍ତରୀ ନିଷ୍ପତ୍ତି ସହାୟକ (Non-Diagnostic)'
     },
     'hi-IN': {
-      title: 'मल्टीमॉडल हेल्थकेयर ट्रायज सहायक',
+      title: 'SwasthyaMitra',
       subtitle: 'AI स्क्राइब, लैब OCR एवं क्लिनिकल ट्रायज (राष्ट्रीय स्वास्थ्य मिशन)',
       safetyLabel: 'सुरक्षा नियम:',
       protocol: 'क्लिनिकल निर्णय समर्थन (Non-Diagnostic) | आयुष्मान भारत एवं राष्ट्रीय स्वास्थ्य मिशन',
@@ -488,10 +488,10 @@ export default function App() {
       btnGenerateNote: 'संरचित ट्रायज नोट तैयार करें और डॉक्टर कतार में भेजें',
       scenariosHeading: 'भारतीय स्वास्थ्य सेवा क्षेत्रों में क्लिनिकल ट्रायज प्रोटोकॉल',
       scenariosSubheading: '7 परिचालन स्वास्थ्य परिवेशों में परीक्षित खतरे के लक्षण एवं रेफरल दिशा-निर्देश:',
-      footerText: 'मल्टीमॉडल हेल्थकेयर ट्रायज सहायक • राष्ट्रीय स्वास्थ्य पोर्टल • गैर-निदान निर्णय समर्थन'
+      footerText: 'SwasthyaMitra • राष्ट्रीय स्वास्थ्य पोर्टल • गैर-निदान निर्णय समर्थन'
     },
     'en-IN': {
-      title: 'Multimodal Healthcare Triage Assistant',
+      title: 'SwasthyaMitra',
       subtitle: 'AI Scribe, Lab OCR & Clinical Urgency Prioritizer (National Health Mission)',
       safetyLabel: 'Safety Mandate:',
       protocol: 'Human-in-the-Loop Decision Support (Non-Diagnostic) | MoHFW Aligned',
@@ -555,7 +555,7 @@ export default function App() {
       btnGenerateNote: 'Generate Structured Triage Note & Send to Doctor Queue',
       scenariosHeading: 'Field Triage Protocols Across Indian & Odisha Healthcare Contexts',
       scenariosSubheading: 'Tested clinical triggers, red flags, and referral pipelines across 7 operational healthcare environments:',
-      footerText: 'Multimodal Healthcare Triage Assistant • National Health Mission • Non-Diagnostic Decision Support'
+      footerText: 'SwasthyaMitra • National Health Mission • Non-Diagnostic Decision Support'
     }
   }[appLang] || {};
 

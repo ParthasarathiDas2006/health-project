@@ -215,7 +215,7 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
     },
     'en-IN': {
       title: 'National Healthcare Triage Desk',
-      subtitle: 'Multimodal Decision-Support & Clinical Intake Portal for Medical Staff & Citizens',
+      subtitle: 'SwasthyaMitra — Clinical Decision-Support & Intake Portal for Medical Staff & Citizens',
       badge: 'Ayushman Arogya Mandir & National Health Mission',
       signInTab: 'Citizen / Staff Sign In',
       adminSignInTab: 'Admin Portal Sign In',
