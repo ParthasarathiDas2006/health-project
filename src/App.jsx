@@ -7,6 +7,7 @@ import AuthPage from './components/AuthPage';
 import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments, getHospitalTransfers } from './utils/authStorage';
 import { DoctorAvatar } from './utils/doctorPhotos';
 
+import GovtGovTechSuite from './components/GovtGovTechSuite';
 // Code-split heavy components to load on demand for instant initial site loading
 const DoctorBookingSystem = lazy(() => import('./components/DoctorBookingSystem'));
 const BloodBankSystem = lazy(() => import('./components/BloodBankSystem'));
@@ -14,7 +15,6 @@ const MedicineExpiryChecker = lazy(() => import('./components/MedicineExpiryChec
 const NearestMedicalGPS = lazy(() => import('./components/NearestMedicalGPS'));
 const BedBookingSystem = lazy(() => import('./components/BedBookingSystem'));
 const AmbulanceBooking = lazy(() => import('./components/AmbulanceBooking'));
-const GovtGovTechSuite = lazy(() => import('./components/GovtGovTechSuite'));
 import {
   Activity,
   FileText,

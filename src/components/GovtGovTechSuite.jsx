@@ -33,6 +33,12 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
   const lang = appLang || 'or-IN';
   const [activeSubTab, setActiveSubTab] = useState(initialFeature || 'abha_history');
 
+  React.useEffect(() => {
+    if (initialFeature) {
+      setActiveSubTab(initialFeature);
+    }
+  }, [initialFeature]);
+
   // Interactive State Demos
   const [patientAbha, setPatientAbha] = useState('91-8842-1209-7711');
   const [painLevel, setPainLevel] = useState(6);
