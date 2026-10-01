@@ -1,14 +1,14 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import MultimodalIntakeForm from './components/MultimodalIntakeForm';
-import OcrUploader from './components/OcrUploader';
-import TriageDoctorDashboard from './components/TriageDoctorDashboard';
-import HospitalTieUpSystem from './components/HospitalTieUpSystem';
-import AuthPage from './components/AuthPage';
 import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments, getHospitalTransfers } from './utils/authStorage';
 import { DoctorAvatar } from './utils/doctorPhotos';
 
-import GovtGovTechSuite from './components/GovtGovTechSuite';
-// Code-split heavy components to load on demand for instant initial site loading
+// Code-split heavy & secondary components to load on demand for instant initial site loading
+const GovtGovTechSuite = lazy(() => import('./components/GovtGovTechSuite'));
+const HospitalTieUpSystem = lazy(() => import('./components/HospitalTieUpSystem'));
+const TriageDoctorDashboard = lazy(() => import('./components/TriageDoctorDashboard'));
+const OcrUploader = lazy(() => import('./components/OcrUploader'));
+const AuthPage = lazy(() => import('./components/AuthPage'));
 const DoctorBookingSystem = lazy(() => import('./components/DoctorBookingSystem'));
 const BloodBankSystem = lazy(() => import('./components/BloodBankSystem'));
 const MedicineExpiryChecker = lazy(() => import('./components/MedicineExpiryChecker'));
@@ -54,7 +54,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(() => {
     const user = getCurrentUser();
     if (user?.roleCategory === 'admin') return 'admin';
-    return 'beds';
+    // Default to 1st module: 1. My Symptom Intake & Clinical Triage
+    return 'intake';
   });
   const [currentIntake, setCurrentIntake] = useState(null);
   const [currentOcr, setCurrentOcr] = useState(null);
@@ -1187,11 +1188,13 @@ export default function App() {
                 </span>
               </div>
             )}
-            <TriageDoctorDashboard
-              currentUser={{ ...currentUser, preferredLanguage: appLang }}
-              appLang={appLang}
-              onSwitchUser={() => setShowAuthPage(true)}
-            />
+            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Doctor Dashboard...</div>}>
+              <TriageDoctorDashboard
+                currentUser={{ ...currentUser, preferredLanguage: appLang }}
+                appLang={appLang}
+                onSwitchUser={() => setShowAuthPage(true)}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -1220,7 +1223,9 @@ export default function App() {
               </div>
             )}
 
-            <OcrUploader appLang={appLang} onOcrComplete={handleOcrComplete} />
+            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading OCR Uploader...</div>}>
+              <OcrUploader appLang={appLang} onOcrComplete={handleOcrComplete} />
+            </Suspense>
 
             <div className="max-w-2xl mx-auto mt-6 text-center">
               <button
@@ -1309,11 +1314,13 @@ export default function App() {
         {/* TAB 7: APEX HOSPITAL TIE-UPS & BED TRACKER */}
         {activeTab === 'hospitals' && (
           <div>
-            <HospitalTieUpSystem
-              currentUser={currentUser}
-              appLang={appLang}
-              onTransfersCountChange={(cnt) => setTransfersCount(cnt)}
-            />
+            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Hospitals...</div>}>
+              <HospitalTieUpSystem
+                currentUser={currentUser}
+                appLang={appLang}
+                onTransfersCountChange={(cnt) => setTransfersCount(cnt)}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -1560,48 +1567,35 @@ export default function App() {
           </div>
         )}
         {/* TABS 11 THROUGH 32: STANDALONE INDIVIDUAL GOVTECH FEATURE VIEWS */}
-        {activeTab === 't11_history' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />}
-        {activeTab === 't12_differential' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="differential" />}
-        {activeTab === 't13_drugallergy' && (
-          <Suspense
-            fallback={
-              <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
-                <div className="w-10 h-10 border-4 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-xs font-semibold text-slate-600 animate-pulse">
-                  {appLang === 'or-IN'
-                    ? 'ଔଷଧ ଆଲର୍ଜି ଓ ସୁରକ୍ଷା ଗାର୍ଡ ଲୋଡ୍ ହେଉଛି...'
-                    : appLang === 'hi-IN'
-                    ? 'दवा एलर्जी एवं सुरक्षा गार्ड लोड हो रहा है...'
-                    : 'Loading Drug & Allergy Safety Guard (Module 13)...'}
-                </p>
-              </div>
-            }
-          >
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading GovTech Module...</div>}>
+          {activeTab === 't11_history' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />}
+          {activeTab === 't12_differential' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="differential" />}
+          {activeTab === 't13_drugallergy' && (
             <DrugAllergySafetyGuard
               currentUser={currentUser}
               appLang={appLang}
             />
-          </Suspense>
-        )}
-        {activeTab === 't14_riskscores' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="scores" />}
-        {activeTab === 't15_followup' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />}
-        {activeTab === 't16_whatsapp_ussd' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
-        {activeTab === 't17_asha_voice' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
-        {activeTab === 't18_pain_map' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
-        {activeTab === 't19_family_triage' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
-        {activeTab === 't20_opd_balancer' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="outbreak" />}
-        {activeTab === 't21_counterfeit' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />}
-        {activeTab === 't22_kiosk' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
-        {activeTab === 't23_outbreak' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="outbreak" />}
-        {activeTab === 't24_inventory' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />}
-        {activeTab === 't25_dpdp_consent' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
-        {activeTab === 't26_federated' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
-        {activeTab === 't27_fairness' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
-        {activeTab === 't28_rlhf' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
-        {activeTab === 't29_discharge' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
-        {activeTab === 't30_anc_maternal' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
-        {activeTab === 't31_mental_health' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
-        {activeTab === 't32_carbon_sms' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
+          )}
+          {activeTab === 't14_riskscores' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="scores" />}
+          {activeTab === 't15_followup' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />}
+          {activeTab === 't16_whatsapp_ussd' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
+          {activeTab === 't17_asha_voice' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
+          {activeTab === 't18_pain_map' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
+          {activeTab === 't19_family_triage' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
+          {activeTab === 't20_opd_balancer' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="outbreak" />}
+          {activeTab === 't21_counterfeit' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />}
+          {activeTab === 't22_kiosk' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
+          {activeTab === 't23_outbreak' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="outbreak" />}
+          {activeTab === 't24_inventory' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />}
+          {activeTab === 't25_dpdp_consent' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
+          {activeTab === 't26_federated' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
+          {activeTab === 't27_fairness' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
+          {activeTab === 't28_rlhf' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
+          {activeTab === 't29_discharge' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
+          {activeTab === 't30_anc_maternal' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
+          {activeTab === 't31_mental_health' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
+          {activeTab === 't32_carbon_sms' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
+        </Suspense>
       </main>
       </div>
 
@@ -1609,6 +1603,16 @@ export default function App() {
       <footer className="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-400">
         {uiText.footerText}
       </footer>
+
+      {/* Auth / Switch User Modal */}
+      {showAuthPage && (
+        <Suspense fallback={null}>
+          <AuthPage
+            onLoginSuccess={handleLoginSuccess}
+            onClose={() => setShowAuthPage(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

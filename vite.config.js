@@ -15,6 +15,12 @@ export default defineConfig({
           if (id.includes('doctorsData')) {
             return 'doctors-data';
           }
+          if (id.includes('hospitalPartners')) {
+            return 'hospital-partners-data';
+          }
+          if (id.includes('drugSafetyData')) {
+            return 'drug-safety-data';
+          }
           if (id.includes('bloodBankData')) {
             return 'bloodbank-data';
           }
