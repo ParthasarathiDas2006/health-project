@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Phone,
   MapPin,
@@ -9,52 +9,69 @@ import {
   X,
   Trash2,
   User,
-  Navigation
+  Navigation,
+  Activity,
+  Radio,
+  Volume2,
+  VolumeX,
+  ShieldCheck,
+  Hospital,
+  ChevronRight,
+  Crosshair,
+  ExternalLink,
+  LocateFixed,
+  Flame,
+  ArrowRight
 } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { getAmbulanceRequests, saveAmbulanceRequest, cancelAmbulanceRequest } from '../utils/authStorage';
+import { ODISHA_MEDICAL_FACILITIES, ODISHA_LOCATIONS, calculateDistanceKm } from '../utils/nearestMedicalData';
 
-/**
- * Ambulance Booking System
- * Features:
- * 1. Emergency type quick-tiles (Cardiac, Trauma, Maternity, Stroke, Respiratory, Other).
- * 2. Ambulance type selector: BLS / ALS / Patient Transport.
- * 3. Patient form pre-filled from currentUser profile.
- * 4. Printable Dispatch Slip with booking ID, ETA, and 108 helpline.
- * 5. "My Requests" manager with cancel & re-print support.
- * 6. 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
- */
 export default function AmbulanceBooking({ currentUser, appLang }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
-  const [activeSubTab, setActiveSubTab] = useState('book');
-  const [selectedEmergency, setSelectedEmergency] = useState('');
-  const [ambulanceType, setAmbulanceType] = useState('BLS');
+  const [activeSubTab, setActiveSubTab] = useState('book'); // 'book' | 'track' | 'my-requests'
+  const [selectedEmergency, setSelectedEmergency] = useState('cardiac');
+  const [ambulanceType, setAmbulanceType] = useState('ALS');
   const [patientName, setPatientName] = useState(currentUser?.name || '');
   const [patientPhone, setPatientPhone] = useState(currentUser?.phone || '');
-  const [patientAbha, setPatientAbha] = useState(currentUser?.staffId || '');
-  const [patientAge, setPatientAge] = useState(currentUser?.age || '');
+  const [patientAbha, setPatientAbha] = useState(currentUser?.staffId || '91-4829-1029-4821');
+  const [patientAge, setPatientAge] = useState(currentUser?.age || '48');
   const [patientGender, setPatientGender] = useState(currentUser?.gender || 'Male');
-  const [pickupAddress, setPickupAddress] = useState('');
-  const [pickupDistrict, setPickupDistrict] = useState(currentUser?.district || '');
-  const [pickupState, setPickupState] = useState(currentUser?.state || '');
-  const [destinationHospital, setDestinationHospital] = useState('');
+  const [pickupAddress, setPickupAddress] = useState('Master Canteen Square, Station Link');
+  const [pickupDistrict, setPickupDistrict] = useState(currentUser?.district || 'Khordha');
+  const [pickupState, setPickupState] = useState(currentUser?.state || 'Odisha');
+  const [destinationHospital, setDestinationHospital] = useState('Capital Hospital & Trauma Care');
   const [attendants, setAttendants] = useState('1');
-  const [additionalNotes, setAdditionalNotes] = useState('');
-  const [confirmedSlip, setConfirmedSlip] = useState(null);
+  const [additionalNotes, setAdditionalNotes] = useState('Patient experiencing crushing chest pain, cold sweating, SpO2 93%');
   const [formError, setFormError] = useState('');
+
+  // Active tracked mission state
+  const [activeMission, setActiveMission] = useState(null);
+  const [missionStage, setMissionStage] = useState(1); // 1: Dispatched, 2: En Route, 3: Arrived, 4: Transporting
+  const [sirenActive, setSirenActive] = useState(true);
+  const [confirmedSlip, setConfirmedSlip] = useState(null);
   const [requests, setRequests] = useState(() => getAmbulanceRequests());
 
-  // ─── Localization Dictionary ────────────────────────────────────────────────
+  // Leaflet map container for live tracking
+  const trackMapRef = useRef(null);
+  const trackMapInstanceRef = useRef(null);
+  const ambMarkerRef = useRef(null);
+  const routeLineRef = useRef(null);
+
+  // Localization Dictionary
   const txt = {
     'or-IN': {
       tabBook: '🚑 ଆମ୍ବୁଲାନ୍ସ ଡାକନ୍ତୁ',
+      tabTrack: '📡 ଲାଇଭ୍ ଟ୍ରାକର୍ (Live Mission)',
       tabMyRequests: '📋 ମୋର ଅନୁରୋଧ',
-      pageTitle: 'ଜରୁରୀ ଆମ୍ବୁଲାନ୍ସ ସେବା',
-      pageSubtitle: 'NHM 108 ଆମ୍ବୁଲାନ୍ସ | BSKY ଅନ୍ତର୍ଭୁକ୍ତ | ତୁରନ୍ତ ଡିସ୍ପ୍ୟାଚ୍',
-      helplineBanner: '📞 ଜାତୀୟ ଜରୁରୀ ଆମ୍ବୁଲାନ୍ସ ସେବା: 108',
-      emergencyTypeLabel: '1. ଜରୁରୀ ଅବସ୍ଥାର ପ୍ରକାର ବାଛନ୍ତୁ:',
-      ambulanceTypeLabel: '2. ଆମ୍ବୁଲାନ୍ସ ପ୍ରକାର:',
-      patientDetailsLabel: '3. ରୋଗୀ ଓ ସ୍ଥାନ ବିବରଣୀ:',
+      pageTitle: '୧୦୮ / ୧୦୨ ଜରୁରୀକାଳୀନ ଆମ୍ବୁଲାନ୍ସ ସେବା',
+      pageSubtitle: 'ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ମିଶନ (NHM) • BSKY ଅନ୍ତର୍ଭୁକ୍ତ • ତୁରନ୍ତ GPS ଡିସ୍ପ୍ୟାଚ୍',
+      helplineBanner: '📞 ୧୦୮ ଟୋଲ୍-ଫ୍ରି କଲ୍',
+      emergencyTypeLabel: '୧. ଜରୁରୀ ସ୍ୱାସ୍ଥ୍ୟ ସମସ୍ୟା ବାଛନ୍ତୁ:',
+      ambulanceTypeLabel: '୨. ଆମ୍ବୁଲାନ୍ସ ପ୍ରକାର ବାଛନ୍ତୁ:',
+      patientDetailsLabel: '୩. ରୋଗୀ ଓ ଲୋକେସନ୍ ବିବରଣୀ:',
       nameLabel: 'ରୋଗୀଙ୍କ ନାମ *',
       phoneLabel: 'ମୋବାଇଲ୍ ନମ୍ବର *',
       abhaLabel: 'ABHA ଆଇଡି / ପରିଚୟ ପତ୍ର',
@@ -62,51 +79,51 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
       genderLabel: 'ଲିଙ୍ଗ',
       male: 'ପୁରୁଷ',
       female: 'ମହିଳା',
-      pickupLabel: 'ପିକ୍‌ଅପ୍ ଠିକଣା *',
-      pickupPlaceholder: 'ଘର ନମ୍ବର, ଗ୍ରାମ / ୱାର୍ଡ, ଲ୍ୟାଣ୍ଡମାର୍କ...',
+      pickupLabel: 'ପିକ୍‌ଅପ୍ ଠିକଣା ଓ ଲ୍ୟାଣ୍ଡମାର୍କ *',
+      pickupPlaceholder: 'ଘର ନମ୍ବର, ଛକ, ମୁଖ୍ୟ ଲ୍ୟାଣ୍ଡମାର୍କ...',
       districtLabel: 'ଜିଲ୍ଲା *',
       stateLabel: 'ରାଜ୍ୟ *',
       destinationLabel: 'ଗନ୍ତବ୍ୟ ହସ୍ପିଟାଲ *',
       destinationPlaceholder: 'ନିକଟସ୍ଥ ଜିଲ୍ଲା / ମେଡ଼ିକାଲ କଲେଜ ହସ୍ପିଟାଲ...',
       attendantsLabel: 'ସ୍ୱଜନ ସଂଖ୍ୟା (ଆମ୍ବୁଲାନ୍ସରେ)',
-      notesLabel: 'ଅତିରିକ୍ତ ସୂଚନା (ପ୍ୟାରାମେଡ଼ିକ ପାଇଁ)',
-      notesPlaceholder: 'ଉଦା: ଡ଼ାୟବେଟିକ ରୋଗୀ, ଗର୍ଭ ୮ ମାସ, ଅଚ୍ଛ ନ ଥିବା ଆଘାତ ସ୍ଥଳ...',
-      dispatchBtn: '🚨 ଆମ୍ବୁଲାନ୍ସ ଡ଼ିସ୍ପ୍ୟାଚ୍ ନିଶ୍ଚିତ କରନ୍ତୁ',
+      notesLabel: 'ପ୍ୟାରାମେଡ଼ିକଙ୍କ ପାଇଁ ଜରୁରୀ ସୂଚନା',
+      notesPlaceholder: 'ଉଦା: ଡାଇବେଟିସ୍, ରକ୍ତଚାପ, ଅମ୍ଳଜାନ ଅଭାବ...',
+      dispatchBtn: '🚨 ୧୦୮ ଆମ୍ବୁଲାନ୍ସ ତୁରନ୍ତ ଡାକନ୍ତୁ (Dispatch Now)',
       cancelBtn: 'ବାତିଲ୍ କରନ୍ତୁ',
-      slipTitle: 'ଆମ୍ବୁଲାନ୍ସ ଡ଼ିସ୍ପ୍ୟାଚ୍ ନିଶ୍ଚିତ ସ୍ଲିପ୍',
-      slipSubtitle: 'NHM 108 ଆମ୍ବୁଲାନ୍ସ ସେବା | ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ବିଭାଗ',
+      slipTitle: '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ଡିସ୍ପ୍ୟାଚ୍ ସ୍ଲିପ୍',
+      slipSubtitle: 'NHM 108 Emergency Ambulance Service • Govt of Odisha',
       bookingId: 'ବୁକିଂ ID:',
       emergencyType: 'ଜରୁରୀ ପ୍ରକାର:',
       ambulanceTypeLbl: 'ଆମ୍ବୁଲାନ୍ସ ପ୍ରକାର:',
-      vehicleNo: 'ଯାନ ସଂଖ୍ୟା:',
-      paramedic: 'ପ୍ୟାରାମେଡ଼ିକ ଯୋଗାଯୋଗ:',
-      estimatedEta: 'ଆନୁମାନିକ ଆଗମନ ସମୟ:',
+      vehicleNo: 'ଗାଡ଼ି ନମ୍ବର:',
+      paramedic: 'ପ୍ୟାରାମେଡ଼ିକ ଫୋନ୍:',
+      estimatedEta: 'ଆନୁମାନିକ ପହଞ୍ଚିବା ସମୟ:',
       statusDispatched: '✓ ଡ଼ିସ୍ପ୍ୟାଚ୍ ହୋଇଛି',
-      helpline108: 'ଜାତୀୟ ହେଲ୍‌ଲାଇନ୍: 108',
-      printSlip: 'ଡ଼ିସ୍ପ୍ୟାଚ୍ ସ୍ଲିପ୍ ପ୍ରିଣ୍ଟ୍ କରନ୍ତୁ',
+      helpline108: 'ଜାତୀୟ ହେଲ୍‌ଲାଇନ୍: ୧୦୮',
+      printSlip: 'ଡିସ୍ପ୍ୟାଚ୍ ସ୍ଲିପ୍ ପ୍ରିଣ୍ଟ୍ କରନ୍ତୁ',
       closeBtn: 'ବନ୍ଦ କରନ୍ତୁ',
-      noRequests: 'ବର୍ତ୍ତମାନ କୌଣସି ଆମ୍ବୁଲାନ୍ସ ଅନୁରୋଧ ନାହିଁ।',
+      noRequests: 'ବର୍ତ୍ତମାନ କୌଣସି ସକ୍ରିୟ ଆମ୍ବୁଲାନ୍ସ ଅନୁରୋଧ ନାହିଁ।',
       cancelRequestConfirm: 'ଆପଣ ଏହି ଆମ୍ବୁଲାନ୍ସ ଅନୁରୋଧ ବାତିଲ୍ କରିବାକୁ ଚାହୁଁଛନ୍ତି କି?',
-      errorFields: 'ଦୟାକରି ସମସ୍ତ ଆବଶ୍ୟକ ସ୍ଥାନ ପୂରଣ କରନ୍ତୁ।',
-      errorEmergency: 'ଦୟାକରି ଜରୁରୀ ଅବସ୍ଥାର ପ୍ରକାର ଚୟନ କରନ୍ତୁ।',
-      blsLabel: 'BLS — ମୂଳ ଜୀବନ ସହାୟତା (NHM 108)',
-      alsLabel: 'ALS — ଉନ୍ନତ ଜୀବନ ସହାୟତା (ICU ଯାନ)',
-      transportLabel: 'ରୋଗୀ ପରିବହନ (ଅଜରୁରୀ ସ୍ଥାନାନ୍ତର)',
-      pickupLocation: 'ପିକ୍‌ଅପ୍ ସ୍ଥାନ:',
-      destination: 'ଗନ୍ତବ୍ୟ:',
-      patient: 'ରୋଗୀ:',
-      requestedOn: 'ଅନୁରୋଧ ତାରିଖ:',
-      cancelRequest: 'ଅନୁରୋଧ ବାତିଲ'
+      errorFields: 'ଦୟାକରି ସମସ୍ତ ଆବଶ୍ୟକ ତଥ୍ୟ ପୂରଣ କରନ୍ତୁ।',
+      errorEmergency: 'ଦୟାକରି ଜରୁରୀ ଅବସ୍ଥା ବାଛନ୍ତୁ।',
+      blsLabel: 'BLS — ବେସିକ୍ ଲାଇଫ୍ ସପୋର୍ଟ (NHM 108)',
+      alsLabel: 'ALS — ଉନ୍ନତ ଆଇସିୟୁ ଆମ୍ବୁଲାନ୍ସ (ଭେଣ୍ଟିଲେଟର୍ ସହ)',
+      transportLabel: 'ରୋଗୀ ପରିବହନ (ସ୍ଥାନାନ୍ତରଣ)',
+      stage1: '୧. ଡିସ୍ପ୍ୟାଚ୍ ହେଲା',
+      stage2: '୨. ରାସ୍ତାରେ ଅଛି (En Route)',
+      stage3: '୩. ପହଞ୍ଚିଗଲା (Arrived)',
+      stage4: '୪. ହସ୍ପିଟାଲ୍ ଯାତ୍ରା (Transporting)'
     },
     'hi-IN': {
       tabBook: '🚑 एम्बुलेंस बुलाएं',
+      tabTrack: '📡 लाइव ट्रैकर (Live Mission)',
       tabMyRequests: '📋 मेरे अनुरोध',
-      pageTitle: 'आपातकालीन एम्बुलेंस सेवा',
-      pageSubtitle: 'NHM 108 एम्बुलेंस | आयुष्मान भारत | त्वरित प्रेषण',
-      helplineBanner: '📞 राष्ट्रीय आपातकालीन एम्बुलेंस सेवा: 108',
-      emergencyTypeLabel: '1. आपात स्थिति का प्रकार चुनें:',
-      ambulanceTypeLabel: '2. एम्बुलेंस प्रकार:',
-      patientDetailsLabel: '3. मरीज एवं स्थान का विवरण:',
+      pageTitle: '108 / 102 आपातकालीन एम्बुलेंस सेवा',
+      pageSubtitle: 'राष्ट्रीय स्वास्थ्य मिशन (NHM) • आयुष्मान/BSKY • त्वरित जीपीएस प्रेषण',
+      helplineBanner: '📞 108 टोल-फ्री कॉल',
+      emergencyTypeLabel: '1. आपातकालीन स्थिति चुनें:',
+      ambulanceTypeLabel: '2. एम्बुलेंस प्रकार चुनें:',
+      patientDetailsLabel: '3. मरीज एवं स्थान विवरण:',
       nameLabel: 'मरीज का नाम *',
       phoneLabel: 'मोबाइल नंबर *',
       abhaLabel: 'ABHA आईडी / पहचान पत्र',
@@ -114,241 +131,614 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
       genderLabel: 'लिंग',
       male: 'पुरुष',
       female: 'महिला',
-      pickupLabel: 'पिकअप पता *',
-      pickupPlaceholder: 'मकान नंबर, मोहल्ला / गाँव, लैंडमार्क...',
+      pickupLabel: 'पिकअप पता एवं लैंडमार्क *',
+      pickupPlaceholder: 'मकान संख्या, चौराहा, मुख्य लैंडमार्क...',
       districtLabel: 'जिला *',
       stateLabel: 'राज्य *',
       destinationLabel: 'गंतव्य अस्पताल *',
       destinationPlaceholder: 'नजदीकी जिला / मेडिकल कॉलेज अस्पताल...',
       attendantsLabel: 'साथ जाने वाले (एम्बुलेंस में)',
-      notesLabel: 'अतिरिक्त जानकारी (पैरामेडिक के लिए)',
-      notesPlaceholder: 'जैसे: मधुमेह का मरीज, 8 माह की गर्भवती, बेहोश चोट...',
-      dispatchBtn: '🚨 एम्बुलेंस डिस्पैच कन्फर्म करें',
+      notesLabel: 'पैरामेडिक के लिए विशेष जानकारी',
+      notesPlaceholder: 'उदा: मधुमेह, उच्च रक्तचाप, ऑक्सीजन कमी...',
+      dispatchBtn: '🚨 108 एम्बुलेंस तुरंत बुलाएं (Dispatch Now)',
       cancelBtn: 'रद्द करें',
-      slipTitle: 'एम्बुलेंस डिस्पैच पुष्टि पर्ची',
-      slipSubtitle: 'NHM 108 एम्बुलेंस सेवा | राष्ट्रीय स्वास्थ्य मिशन',
+      slipTitle: '108 एम्बुलेंस डिस्पैच पर्ची',
+      slipSubtitle: 'NHM 108 Emergency Ambulance Service • Odisha Health',
       bookingId: 'बुकिंग ID:',
       emergencyType: 'आपात प्रकार:',
       ambulanceTypeLbl: 'एम्बुलेंस प्रकार:',
       vehicleNo: 'वाहन संख्या:',
       paramedic: 'पैरामेडिक संपर्क:',
       estimatedEta: 'अनुमानित आगमन समय:',
-      statusDispatched: '✓ डिस्पैच हो गया',
+      statusDispatched: '✓ रवाना हो चुकी है',
       helpline108: 'राष्ट्रीय हेल्पलाइन: 108',
       printSlip: 'डिस्पैच पर्ची प्रिंट करें',
       closeBtn: 'बंद करें',
-      noRequests: 'वर्तमान में कोई एम्बुलेंस अनुरोध नहीं है।',
+      noRequests: 'वर्तमान में कोई सक्रिय एम्बुलेंस अनुरोध नहीं है।',
       cancelRequestConfirm: 'क्या आप इस एम्बुलेंस अनुरोध को रद्द करना चाहते हैं?',
       errorFields: 'कृपया सभी अनिवार्य फ़ील्ड भरें।',
       errorEmergency: 'कृपया आपात स्थिति का प्रकार चुनें।',
       blsLabel: 'BLS — बेसिक लाइफ सपोर्ट (NHM 108)',
-      alsLabel: 'ALS — एडवांस्ड लाइफ सपोर्ट (ICU वाहन)',
-      transportLabel: 'रोगी परिवहन (गैर-आपातकालीन)',
-      pickupLocation: 'पिकअप स्थान:',
-      destination: 'गंतव्य:',
-      patient: 'मरीज:',
-      requestedOn: 'अनुरोध दिनांक:',
-      cancelRequest: 'अनुरोध रद्द करें'
+      alsLabel: 'ALS — एडवांस्ड आईसीयू एम्बुलेंस (वेंटिलेटर युक्त)',
+      transportLabel: 'रोगी परिवहन (स्थानांतरण)',
+      stage1: '1. डिस्पैच हुई',
+      stage2: '2. रास्ते में है (En Route)',
+      stage3: '3. पहुंच चुकी है (Arrived)',
+      stage4: '4. अस्पताल यात्रा (Transporting)'
     },
     'en-IN': {
       tabBook: '🚑 Book Ambulance',
+      tabTrack: '📡 Live Mission Tracker',
       tabMyRequests: '📋 My Requests',
-      pageTitle: 'Emergency Ambulance Service',
-      pageSubtitle: 'NHM 108 Ambulance | Ayushman Bharat | Immediate Dispatch',
-      helplineBanner: '📞 National Emergency Ambulance Helpline: 108',
-      emergencyTypeLabel: '1. Select Emergency Type:',
-      ambulanceTypeLabel: '2. Ambulance Type:',
+      pageTitle: '108 / 102 Emergency Ambulance Service',
+      pageSubtitle: 'National Health Mission • BSKY Empaneled • Instant GPS Green Corridor Dispatch',
+      helplineBanner: '📞 Dial 108 Toll-Free',
+      emergencyTypeLabel: '1. Select Emergency Medical Condition:',
+      ambulanceTypeLabel: '2. Select Ambulance Configuration:',
       patientDetailsLabel: '3. Patient & Location Details:',
-      nameLabel: 'Patient Name *',
-      phoneLabel: 'Mobile Number *',
+      nameLabel: 'Patient Full Name *',
+      phoneLabel: 'Caller Mobile Number *',
       abhaLabel: 'ABHA ID / Identity Card',
       ageLabel: 'Age',
       genderLabel: 'Gender',
       male: 'Male',
       female: 'Female',
-      pickupLabel: 'Pickup Address *',
-      pickupPlaceholder: 'House no., Colony / Village, Landmark...',
+      pickupLabel: 'Pickup Address & Landmark *',
+      pickupPlaceholder: 'Plot / House No, Street, Main Landmark...',
       districtLabel: 'District *',
       stateLabel: 'State *',
       destinationLabel: 'Destination Hospital *',
-      destinationPlaceholder: 'Nearest District / Medical College Hospital...',
-      attendantsLabel: 'Attendants (in ambulance)',
-      notesLabel: 'Additional Notes (for paramedic)',
-      notesPlaceholder: 'e.g., Diabetic patient, 8-month pregnant, unconscious with head injury...',
-      dispatchBtn: '🚨 Confirm Ambulance Dispatch',
+      destinationPlaceholder: 'Select or type destination apex hospital...',
+      attendantsLabel: 'Number of Attendants',
+      notesLabel: 'Clinical Notes for Paramedic Pilot',
+      notesPlaceholder: 'e.g. Severe chest pain, cold sweating, SpO2 92% on room air...',
+      dispatchBtn: '🚨 Confirm 108 Emergency Dispatch',
       cancelBtn: 'Cancel',
-      slipTitle: 'Ambulance Dispatch Confirmation Slip',
-      slipSubtitle: 'NHM 108 Ambulance Service | National Health Mission',
+      slipTitle: 'Odisha 108 Emergency Dispatch Slip',
+      slipSubtitle: 'NHM 108 Emergency Ambulance Service • Govt of Odisha',
       bookingId: 'Booking ID:',
       emergencyType: 'Emergency Type:',
       ambulanceTypeLbl: 'Ambulance Type:',
-      vehicleNo: 'Vehicle No.:',
-      paramedic: 'Paramedic Contact:',
-      estimatedEta: 'Estimated Arrival:',
-      statusDispatched: 'Dispatched',
-      helpline108: 'National Helpline: 108',
-      printSlip: 'Print Dispatch Slip',
+      vehicleNo: 'Vehicle Registration:',
+      paramedic: 'Paramedic Pilot Contact:',
+      estimatedEta: 'Estimated Time of Arrival (ETA):',
+      statusDispatched: '✓ Dispatched & En Route',
+      helpline108: 'National Emergency Helpline: 108',
+      printSlip: 'Print Official Dispatch Slip',
       closeBtn: 'Close',
       noRequests: 'No active ambulance requests found.',
       cancelRequestConfirm: 'Are you sure you want to cancel this ambulance request?',
-      errorFields: 'Please fill in all required fields.',
+      errorFields: 'Please fill in all mandatory fields.',
       errorEmergency: 'Please select an emergency type.',
-      blsLabel: 'BLS — Basic Life Support (NHM 108)',
-      alsLabel: 'ALS — Advanced Life Support (ICU vehicle)',
-      transportLabel: 'Patient Transport (Non-emergency transfer)',
-      pickupLocation: 'Pickup:',
-      destination: 'Destination:',
-      patient: 'Patient:',
-      requestedOn: 'Requested On:',
-      cancelRequest: 'Cancel Request'
+      blsLabel: 'BLS — Basic Life Support (NHM 108 Fleet)',
+      alsLabel: 'ALS — Advanced Cardiac ICU (With Ventilator & Defibrillator)',
+      transportLabel: 'Patient Transport Vehicle (Inter-hospital Transfer)',
+      stage1: '1. Dispatched',
+      stage2: '2. En Route (Siren Active)',
+      stage3: '3. Arrived at Scene',
+      stage4: '4. Transporting to Hospital'
     }
-  };
+  }[lang] || {};
 
-  const t = txt[lang] || txt['en-IN'];
-
-  // ─── Emergency Type Quick-Tiles ──────────────────────────────────────────────
+  // Emergency Condition Types
   const emergencyTypes = [
-    { id: 'cardiac',     icon: '🫀', label: { 'or-IN': 'ହୃଦ ଜରୁରୀ',          'hi-IN': 'हृदय आपात',       'en-IN': 'Cardiac' },             color: 'border-rose-400 bg-rose-50 text-rose-800' },
-    { id: 'trauma',      icon: '🩸', label: { 'or-IN': 'ଆଘାତ / ଦୁର୍ଘଟଣା',   'hi-IN': 'ट्रॉमा / चोट',    'en-IN': 'Trauma / Accident' },    color: 'border-orange-400 bg-orange-50 text-orange-800' },
-    { id: 'maternity',   icon: '🤱', label: { 'or-IN': 'ପ୍ରସବ ଜରୁରୀ',        'hi-IN': 'प्रसव आपात',      'en-IN': 'Maternity' },            color: 'border-pink-400 bg-pink-50 text-pink-800' },
-    { id: 'stroke',      icon: '🧠', label: { 'or-IN': 'ଷ୍ଟ୍ରୋକ / ଅଚ୍ଛ',   'hi-IN': 'स्ट्रोक / बेहोशी','en-IN': 'Stroke / Unconscious' }, color: 'border-purple-400 bg-purple-50 text-purple-800' },
-    { id: 'respiratory', icon: '🫁', label: { 'or-IN': 'ଶ୍ୱାସ ଜରୁରୀ',        'hi-IN': 'सांस की तकलीफ',   'en-IN': 'Respiratory' },          color: 'border-blue-400 bg-blue-50 text-blue-800' },
-    { id: 'other',       icon: '🏥', label: { 'or-IN': 'ଅନ୍ୟ ଜରୁରୀ',         'hi-IN': 'अन्य आपात',       'en-IN': 'Other Emergency' },      color: 'border-slate-400 bg-slate-50 text-slate-800' }
+    { id: 'cardiac', icon: '🫀', label: { 'or-IN': 'ହୃଦ୍‌ରୋଗ / ଛାତି ଯନ୍ତ୍ରଣା', 'hi-IN': 'हृदय घात / सीने में दर्द', 'en-IN': 'Cardiac / Severe Chest Pain' }, color: 'border-rose-400 bg-rose-50 text-rose-800' },
+    { id: 'trauma', icon: '🩸', label: { 'or-IN': 'ସଡ଼କ ଦୁର୍ଘଟଣା / ଆଘାତ', 'hi-IN': 'सड़क दुर्घटना / गंभीर चोट', 'en-IN': 'Polytrauma / Highway Accident' }, color: 'border-orange-400 bg-orange-50 text-orange-800' },
+    { id: 'maternity', icon: '🤱', label: { 'or-IN': 'ପ୍ରସବକାଳୀନ ଜରୁରୀ', 'hi-IN': 'प्रसव आपातकाल (102 Janani)', 'en-IN': 'Maternity / Labor Pain (102)' }, color: 'border-pink-400 bg-pink-50 text-pink-800' },
+    { id: 'stroke', icon: '🧠', label: { 'or-IN': 'ଷ୍ଟ୍ରୋକ୍ / ଅଚେତ ଅବସ୍ଥା', 'hi-IN': 'स्ट्रोक / अचानक बेहोशी', 'en-IN': 'Stroke / Unconscious State' }, color: 'border-purple-400 bg-purple-50 text-purple-800' },
+    { id: 'respiratory', icon: '🫁', label: { 'or-IN': 'ଅମ୍ଳଜାନ ହ୍ରାସ / ଶ୍ୱାସକଷ୍ଟ', 'hi-IN': 'सांस लेने में भारी तकलीफ', 'en-IN': 'Respiratory Distress / Hypoxia' }, color: 'border-blue-400 bg-blue-50 text-blue-800' },
+    { id: 'burns', icon: '🔥', label: { 'or-IN': 'ପୋଡ଼ିଯିବା / ବିଷକ୍ରିୟା', 'hi-IN': 'जलना / विषैला दंश', 'en-IN': 'Severe Burns / Snakebite' }, color: 'border-amber-400 bg-amber-50 text-amber-800' }
   ];
 
-  // ─── Ambulance Type Options ──────────────────────────────────────────────────
+  // Ambulance Types
   const ambulanceTypeOptions = [
-    { id: 'BLS',       icon: '🚑', badge: 'NHM 108',  label: t.blsLabel,       badgeColor: 'bg-emerald-600', selectedBorder: 'border-emerald-500 bg-emerald-50' },
-    { id: 'ALS',       icon: '🚑', badge: 'ICU',      label: t.alsLabel,       badgeColor: 'bg-rose-600',    selectedBorder: 'border-rose-500 bg-rose-50' },
-    { id: 'Transport', icon: '🚐', badge: 'Transfer', label: t.transportLabel, badgeColor: 'bg-slate-600',   selectedBorder: 'border-slate-400 bg-slate-50' }
+    { id: 'ALS', icon: '🚑', badge: 'CRITICAL ICU', label: txt.alsLabel, badgeColor: 'bg-rose-600', selectedBorder: 'border-rose-500 bg-rose-50' },
+    { id: 'BLS', icon: '🚑', badge: '108 RAPID', label: txt.blsLabel, badgeColor: 'bg-emerald-600', selectedBorder: 'border-emerald-500 bg-emerald-50' },
+    { id: 'Transport', icon: '🚐', badge: 'TRANSFER', label: txt.transportLabel, badgeColor: 'bg-slate-600', selectedBorder: 'border-slate-400 bg-slate-50' }
   ];
 
-  // ─── Simulated vehicle / paramedic data ─────────────────────────────────────
-  const vehiclePool = ['OD-02-AM-1108', 'MH-12-AM-5566', 'UP-32-AM-7741', 'KA-04-AM-3392', 'TN-09-AM-8812'];
-  const paramedics  = ['+91 97800 10800', '+91 98450 10800', '+91 94430 10800'];
-
-  const ambBadgeColor = { BLS: 'bg-emerald-600', ALS: 'bg-rose-600', Transport: 'bg-slate-600' };
-
-  // ─── Dispatch Handler ────────────────────────────────────────────────────────
-  const handleDispatch = () => {
-    setFormError('');
-    if (!selectedEmergency) { setFormError(t.errorEmergency); return; }
-    if (!patientName.trim() || !patientPhone.trim() || !pickupAddress.trim() || !pickupDistrict.trim() || !pickupState.trim() || !destinationHospital.trim()) {
-      setFormError(t.errorFields); return;
+  // Preload first request as active mission if exists
+  useEffect(() => {
+    if (requests && requests.length > 0 && !activeMission) {
+      setActiveMission(requests[0]);
     }
-    const etaMinutes   = ambulanceType === 'ALS' ? '12–18' : '8–12';
-    const vehicle      = vehiclePool[Math.floor(Math.random() * vehiclePool.length)];
-    const paramedic    = paramedics[Math.floor(Math.random() * paramedics.length)];
-    const emergLabel   = emergencyTypes.find(e => e.id === selectedEmergency)?.label[lang] || selectedEmergency;
-    const ambOpt       = ambulanceTypeOptions.find(a => a.id === ambulanceType);
+  }, [requests]);
 
-    const slip = {
-      id: `AMB-${Math.floor(1000 + Math.random() * 9000)}-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`,
-      emergencyType:   emergLabel,
-      ambulanceType:   ambOpt ? `${ambulanceType} — ${ambOpt.label}` : ambulanceType,
-      ambulanceTypeId: ambulanceType,
-      vehicleNo: vehicle,
-      paramedic,
-      eta: `${etaMinutes} min`,
-      patient: { name: patientName, phone: patientPhone, abha: patientAbha, age: patientAge, gender: patientGender },
+  // Handle Dispatch Form Submit
+  const handleDispatch = (e) => {
+    if (e) e.preventDefault();
+    setFormError('');
+
+    if (!patientName.trim() || !patientPhone.trim() || !pickupAddress.trim()) {
+      setFormError(txt.errorFields);
+      return;
+    }
+
+    const vehiclePool = [
+      { no: 'OD-02-AB-1081', pilot: 'Sanjay Kumar Barik', phone: '+91 94371 10801', base: 'Master Canteen Emergency Bay' },
+      { no: 'OD-02-CB-1084', pilot: 'Bikram Keshari Rout', phone: '+91 94371 10804', base: 'Baramunda Fire Station Stand' },
+      { no: 'OD-05-AB-1082', pilot: 'Ranjit Sahoo', phone: '+91 94371 10812', base: 'SCB Medical College Gate 1' },
+      { no: 'OD-33-ICU-9901', pilot: 'Debendra Pradhan', phone: '+91 94373 99011', base: 'AIIMS Bhubaneswar Emergency Terminal' }
+    ];
+
+    const chosenVehicle = vehiclePool[Math.floor(Math.random() * vehiclePool.length)];
+    const emergItem = emergencyTypes.find((et) => et.id === selectedEmergency);
+    const emergLabel = emergItem ? emergItem.label[lang] || emergItem.label['en-IN'] : selectedEmergency;
+
+    const newSlip = {
+      id: `OD-108-${Math.floor(100000 + Math.random() * 900000)}`,
+      emergencyType: emergLabel,
+      emergencyId: selectedEmergency,
+      ambulanceType: ambulanceType,
+      vehicleNo: chosenVehicle.no,
+      driverName: chosenVehicle.pilot,
+      paramedicPhone: chosenVehicle.phone,
+      baseStation: chosenVehicle.base,
+      etaMins: ambulanceType === 'ALS' ? 7 : 5,
+      speedKmh: 54,
+      distanceRemainingKm: 3.2,
+      patient: {
+        name: patientName,
+        phone: patientPhone,
+        abha: patientAbha,
+        age: patientAge,
+        gender: patientGender
+      },
       pickup: `${pickupAddress}, ${pickupDistrict}, ${pickupState}`,
       destination: destinationHospital,
-      attendants,
+      attendants: attendants,
       notes: additionalNotes,
+      status: 'DISPATCHED_EN_ROUTE',
       requestedAt: new Date().toLocaleString('en-IN'),
-      status: 'DISPATCHED'
+      startCoords: { lat: 20.2640, lng: 85.8390 }, // Ambulance location
+      pickupCoords: { lat: 20.2710, lng: 85.8440 }, // Patient pickup
+      hospCoords: { lat: 20.2640, lng: 85.8235 } // Capital Hospital
     };
 
-    const updated = saveAmbulanceRequest(slip);
+    const updated = saveAmbulanceRequest(newSlip);
     setRequests(updated);
-    setConfirmedSlip(slip);
+    setActiveMission(newSlip);
+    setConfirmedSlip(newSlip);
+    setActiveSubTab('track');
+    setMissionStage(2); // En route immediately
   };
 
+  // Cancel Request
   const handleCancelRequest = (id) => {
-    if (!window.confirm(t.cancelRequestConfirm)) return;
-    setRequests(cancelAmbulanceRequest(id));
+    if (!window.confirm(txt.cancelRequestConfirm)) return;
+    const updated = cancelAmbulanceRequest(id);
+    setRequests(updated);
+    if (activeMission?.id === id) {
+      setActiveMission(updated[0] || null);
+    }
   };
 
-  // ════════════════════════════════════════════════════════════════════════════
-  return (
-    <div className="max-w-5xl mx-auto">
+  // Simulate Live Movement of the Dispatched Ambulance on Mission Tracker
+  useEffect(() => {
+    if (activeSubTab !== 'track' || !activeMission) return;
 
-      {/* ── Page Header ────────────────────────────────────────────────────── */}
-      <div className="mb-5 p-4 bg-gradient-to-r from-rose-600 to-orange-500 rounded-2xl text-white shadow-lg">
+    const interval = setInterval(() => {
+      setActiveMission((prev) => {
+        if (!prev) return prev;
+        const currentDist = prev.distanceRemainingKm || 3.0;
+        if (currentDist > 0.3) {
+          return {
+            ...prev,
+            distanceRemainingKm: parseFloat((currentDist - 0.2).toFixed(1)),
+            etaMins: Math.max(1, Math.round(((currentDist - 0.2) / 45) * 60)),
+            speedKmh: Math.floor(48 + Math.random() * 12)
+          };
+        } else {
+          setMissionStage(3); // Arrived at scene!
+          return {
+            ...prev,
+            distanceRemainingKm: 0.1,
+            etaMins: 1,
+            speedKmh: 10
+          };
+        }
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [activeSubTab, activeMission]);
+
+  // Leaflet Live Mission Map Renderer
+  useEffect(() => {
+    if (activeSubTab !== 'track' || !trackMapRef.current || !activeMission) return;
+
+    if (trackMapInstanceRef.current) {
+      trackMapInstanceRef.current.remove();
+      trackMapInstanceRef.current = null;
+    }
+
+    const ambLat = activeMission.startCoords?.lat || 20.2668;
+    const ambLng = activeMission.startCoords?.lng || 85.8398;
+    const pickupLat = activeMission.pickupCoords?.lat || 20.2720;
+    const pickupLng = activeMission.pickupCoords?.lng || 85.8450;
+
+    const map = L.map(trackMapRef.current, {
+      center: [(ambLat + pickupLat) / 2, (ambLng + pickupLng) / 2],
+      zoom: 14,
+      zoomControl: false,
+      attributionControl: false
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    // Patient Marker
+    const patientIcon = L.divIcon({
+      className: 'patient-marker',
+      html: `
+        <div class="relative flex items-center justify-center">
+          <span class="absolute w-8 h-8 rounded-full bg-blue-500/30 animate-ping"></span>
+          <div class="w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-lg flex items-center justify-center text-white text-xs">
+            📍
+          </div>
+          <div class="absolute -bottom-4 whitespace-nowrap bg-blue-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+            Patient Pickup
+          </div>
+        </div>
+      `,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    });
+    L.marker([pickupLat, pickupLng], { icon: patientIcon }).addTo(map);
+
+    // Ambulance Marker
+    const ambIcon = L.divIcon({
+      className: 'live-amb-marker',
+      html: `
+        <div class="relative flex items-center justify-center">
+          <span class="absolute -inset-2 rounded-full bg-rose-500/40 animate-ping"></span>
+          <div class="w-10 h-10 rounded-full bg-rose-600 border-2 border-white shadow-2xl flex items-center justify-center text-white text-base">
+            🚑
+          </div>
+          <div class="absolute -bottom-4 whitespace-nowrap bg-rose-950 text-rose-200 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow">
+            108 Active Siren
+          </div>
+        </div>
+      `,
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
+    });
+    ambMarkerRef.current = L.marker([ambLat, ambLng], { icon: ambIcon, zIndexOffset: 1000 }).addTo(map);
+
+    // Connecting Route Line
+    const latlngs = [
+      [ambLat, ambLng],
+      [(ambLat + pickupLat) / 2 + 0.002, (ambLng + pickupLng) / 2 - 0.002],
+      [pickupLat, pickupLng]
+    ];
+    routeLineRef.current = L.polyline(latlngs, {
+      color: '#e11d48',
+      weight: 5,
+      dashArray: '8, 8',
+      opacity: 0.85
+    }).addTo(map);
+
+    map.fitBounds(L.latLngBounds([[ambLat, ambLng], [pickupLat, pickupLng]]), { padding: [40, 40] });
+
+    trackMapInstanceRef.current = map;
+
+    return () => {
+      map.remove();
+      trackMapInstanceRef.current = null;
+    };
+  }, [activeSubTab, activeMission?.id]);
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-5">
+      {/* ── Page Header Banner ────────────────────────────────────────────── */}
+      <div className="p-5 bg-gradient-to-r from-rose-700 via-red-600 to-amber-600 rounded-2xl text-white shadow-lg border border-rose-500/40">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-extrabold flex items-center gap-2">
-              <span className="text-2xl">🚑</span>
-              {t.pageTitle}
-            </h2>
-            <p className="text-rose-100 text-xs mt-0.5">{t.pageSubtitle}</p>
+          <div className="flex items-center gap-3.5">
+            <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-xs border border-white/20 relative">
+              <span className="text-3xl animate-pulse">🚑</span>
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-ping"></span>
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white flex items-center gap-2">
+                {txt.pageTitle}
+              </h2>
+              <p className="text-rose-100 text-xs mt-0.5 font-medium">{txt.pageSubtitle}</p>
+            </div>
           </div>
           <a
             href="tel:108"
-            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 transition px-4 py-2 rounded-xl border border-white/30 font-bold text-sm whitespace-nowrap"
+            className="flex items-center gap-2 bg-white text-rose-700 hover:bg-rose-50 font-black px-4 py-2.5 rounded-xl shadow transition text-xs whitespace-nowrap self-start sm:self-auto cursor-pointer"
           >
-            <Phone className="w-4 h-4" />
-            {t.helplineBanner}
+            <Phone className="w-4 h-4 text-rose-600 fill-rose-600" />
+            <span>{txt.helplineBanner}</span>
           </a>
         </div>
       </div>
 
-      {/* ── Sub-Tabs ────────────────────────────────────────────────────────── */}
-      <div className="flex gap-2 mb-5">
-        {[
-          { id: 'book',        label: t.tabBook },
-          { id: 'my-requests', label: `${t.tabMyRequests}${requests.length > 0 ? ` (${requests.length})` : ''}` }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveSubTab(tab.id)}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              activeSubTab === tab.id
-                ? 'bg-rose-600 text-white shadow-md'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-rose-50 hover:text-rose-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* ── Sub-Tabs Bar ────────────────────────────────────────────── */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveSubTab('book')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeSubTab === 'book'
+              ? 'bg-rose-600 text-white shadow-md'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-rose-50'
+          }`}
+        >
+          {txt.tabBook}
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('track')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeSubTab === 'track'
+              ? 'bg-slate-900 text-white shadow-md'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <Radio className={`w-3.5 h-3.5 ${activeMission ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`} />
+          <span>{txt.tabTrack}</span>
+          {activeMission && (
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping ml-0.5"></span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('my-requests')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            activeSubTab === 'my-requests'
+              ? 'bg-rose-600 text-white shadow-md'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-rose-50'
+          }`}
+        >
+          <span>{txt.tabMyRequests}</span>
+          {requests.length > 0 && (
+            <span className="bg-rose-100 text-rose-800 text-[10px] px-1.5 rounded-full font-black">
+              {requests.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          BOOKING FORM TAB
+          TAB 1: LIVE MISSION TRACKER
+      ══════════════════════════════════════════════════════════════════════ */}
+      {activeSubTab === 'track' && (
+        <div className="space-y-5">
+          {!activeMission ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500 shadow-sm space-y-3">
+              <span className="text-5xl block animate-bounce">🚑</span>
+              <h4 className="text-base font-bold text-slate-800">No Active 108 Emergency Mission</h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                No ambulance is currently dispatched. Use the Book tab to request an emergency ambulance with live telemetry tracking.
+              </p>
+              <button
+                onClick={() => setActiveSubTab('book')}
+                className="mt-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer"
+              >
+                Book 108 Ambulance Now
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-5 p-5 sm:p-6">
+              {/* Mission Header Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-rose-600 text-white text-[10px] font-mono font-black px-2 py-0.5 rounded animate-pulse">
+                      ACTIVE EMERGENCY MISSION
+                    </span>
+                    <span className="text-xs font-mono font-bold text-slate-700">
+                      #{activeMission.id}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-black text-slate-900 mt-1">
+                    {activeMission.emergencyType} • {activeMission.ambulanceType}
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Siren Sound Toggle */}
+                  <button
+                    onClick={() => setSirenActive(!sirenActive)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      sirenActive
+                        ? 'bg-rose-100 text-rose-700 border border-rose-300 animate-pulse'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {sirenActive ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+                    <span>Siren {sirenActive ? 'Active' : 'Muted'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setConfirmedSlip(activeMission)}
+                    className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Print Slip</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 4-Stage Mission Progress Stepper */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+                  {[
+                    { num: 1, label: txt.stage1, active: missionStage >= 1, done: missionStage > 1 },
+                    { num: 2, label: txt.stage2, active: missionStage >= 2, done: missionStage > 2 },
+                    { num: 3, label: txt.stage3, active: missionStage >= 3, done: missionStage > 3 },
+                    { num: 4, label: txt.stage4, active: missionStage >= 4, done: missionStage > 4 }
+                  ].map((st) => (
+                    <div
+                      key={st.num}
+                      className={`p-2.5 rounded-xl border transition-all ${
+                        st.active
+                          ? 'bg-white border-rose-300 shadow-xs font-bold text-rose-900'
+                          : 'bg-slate-100/60 border-slate-200 text-slate-400'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <span
+                          className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center ${
+                            st.done
+                              ? 'bg-emerald-600 text-white'
+                              : st.active
+                              ? 'bg-rose-600 text-white animate-pulse'
+                              : 'bg-slate-300 text-slate-600'
+                          }`}
+                        >
+                          {st.done ? '✓' : st.num}
+                        </span>
+                      </div>
+                      <span className="text-[11px] leading-tight block">{st.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Telemetry Dashboard: ETA, Speed, Distance */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-rose-50 p-3.5 rounded-xl border border-rose-200 text-center">
+                  <div className="text-[10px] text-rose-700 font-bold uppercase tracking-wider">Estimated Arrival</div>
+                  <div className="text-2xl font-black text-rose-950 font-mono mt-0.5">
+                    ~{activeMission.etaMins} <span className="text-xs font-semibold">mins</span>
+                  </div>
+                  <div className="text-[10px] text-rose-600 font-medium">⚡ Priority Green Signal</div>
+                </div>
+
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Remaining Distance</div>
+                  <div className="text-2xl font-black text-slate-900 font-mono mt-0.5">
+                    {activeMission.distanceRemainingKm} <span className="text-xs font-semibold">km</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-medium">Direct Highway Track</div>
+                </div>
+
+                <div className="bg-blue-50 p-3.5 rounded-xl border border-blue-200 text-center">
+                  <div className="text-[10px] text-blue-700 font-bold uppercase tracking-wider">Vehicle Speed</div>
+                  <div className="text-2xl font-black text-blue-950 font-mono mt-0.5">
+                    {activeMission.speedKmh} <span className="text-xs font-semibold">km/h</span>
+                  </div>
+                  <div className="text-[10px] text-blue-600 font-medium">Live Telemetry Link</div>
+                </div>
+
+                <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 text-center">
+                  <div className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">Hospital Desk</div>
+                  <div className="text-sm font-extrabold text-emerald-950 mt-1 truncate">
+                    Emergency Bay Alerted
+                  </div>
+                  <div className="text-[10px] text-emerald-600 font-medium">Trauma Team Standby</div>
+                </div>
+              </div>
+
+              {/* Real Interactive Leaflet Live Tracking Map */}
+              <div className="relative w-full h-[360px] sm:h-[420px] rounded-2xl overflow-hidden border border-slate-300 shadow-inner">
+                <div ref={trackMapRef} className="w-full h-full bg-slate-100 z-0" />
+
+                {/* Map Floating Status Card */}
+                <div className="absolute top-3 left-3 z-10 bg-slate-950/90 backdrop-blur-md px-3 py-2 rounded-xl border border-white/20 text-white text-xs font-bold shadow-lg flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+                  <span>Ambulance Vehicle: {activeMission.vehicleNo}</span>
+                  <span className="bg-rose-500/40 text-rose-200 text-[10px] px-1.5 py-0.2 rounded font-mono">
+                    SIREN ON
+                  </span>
+                </div>
+              </div>
+
+              {/* Pilot & Paramedic Dossier Card */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                      <User className="w-4 h-4 text-rose-600" />
+                      Pilot & Paramedic Crew
+                    </span>
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      ✓ EMT-Certified
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-slate-700">
+                    <div>Pilot Name: <strong>{activeMission.driverName}</strong></div>
+                    <div>Base Station: <strong>{activeMission.baseStation}</strong></div>
+                    <div>Vehicle: <strong>{activeMission.vehicleNo}</strong> ({activeMission.ambulanceType})</div>
+                  </div>
+                  <a
+                    href={`tel:${activeMission.paramedicPhone}`}
+                    className="mt-2 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition cursor-pointer"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Call Pilot: {activeMission.paramedicPhone}</span>
+                  </a>
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                      <Hospital className="w-4 h-4 text-blue-600" />
+                      Destination & Patient
+                    </span>
+                    <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      BSKY Covered
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-slate-700">
+                    <div>Patient: <strong>{activeMission.patient.name}</strong> ({activeMission.patient.age} yrs, {activeMission.patient.gender})</div>
+                    <div>Pickup: <strong>{activeMission.pickup}</strong></div>
+                    <div>Target Hospital: <strong>{activeMission.destination}</strong></div>
+                  </div>
+                  <div className="text-[11px] text-slate-500 pt-1">
+                    ABHA Linkage: <strong className="font-mono">{activeMission.patient.abha}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          TAB 2: BOOKING FORM
       ══════════════════════════════════════════════════════════════════════ */}
       {activeSubTab === 'book' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-7">
-
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-6">
           {/* Step 1 — Emergency Type Quick-Tiles */}
           <div>
-            <p className="text-sm font-bold text-slate-800 mb-3">{t.emergencyTypeLabel}</p>
+            <p className="text-sm font-bold text-slate-800 mb-3">{txt.emergencyTypeLabel}</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {emergencyTypes.map((et) => (
                 <button
+                  type="button"
                   key={et.id}
                   onClick={() => setSelectedEmergency(et.id)}
-                  className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+                  className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer ${
                     selectedEmergency === et.id
-                      ? et.color + ' ring-2 ring-offset-1 ring-rose-400 scale-[1.03] shadow-md'
+                      ? et.color + ' ring-2 ring-offset-1 ring-rose-400 scale-[1.02] shadow-md'
                       : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-slate-100'
                   }`}
                 >
                   <span className="text-2xl">{et.icon}</span>
-                  <span className="text-center leading-tight text-xs">{et.label[lang]}</span>
+                  <span className="text-center leading-tight text-xs font-bold">
+                    {et.label[lang] || et.label['en-IN']}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Step 2 — Ambulance Type */}
+          {/* Step 2 — Ambulance Configuration */}
           <div>
-            <p className="text-sm font-bold text-slate-800 mb-3">{t.ambulanceTypeLabel}</p>
+            <p className="text-sm font-bold text-slate-800 mb-3">{txt.ambulanceTypeLabel}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {ambulanceTypeOptions.map((at) => (
                 <button
+                  type="button"
                   key={at.id}
                   onClick={() => setAmbulanceType(at.id)}
-                  className={`text-left p-3.5 rounded-xl border-2 transition-all ${
+                  className={`text-left p-3.5 rounded-xl border-2 transition-all cursor-pointer ${
                     ambulanceType === at.id
                       ? at.selectedBorder + ' ring-2 ring-offset-1 ring-rose-400 shadow-md'
                       : 'border-slate-200 bg-white hover:bg-slate-50'
@@ -356,7 +746,7 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xl">{at.icon}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${at.badgeColor}`}>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full text-white ${at.badgeColor}`}>
                       {at.badge}
                     </span>
                   </div>
@@ -368,72 +758,136 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
 
           {/* Step 3 — Patient & Location Details */}
           <div>
-            <p className="text-sm font-bold text-slate-800 mb-3">{t.patientDetailsLabel}</p>
+            <p className="text-sm font-bold text-slate-800 mb-3">{txt.patientDetailsLabel}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.nameLabel}</label>
-                <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" />
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.nameLabel}</label>
+                <input
+                  type="text"
+                  required
+                  value={patientName}
+                  onChange={(e) => setPatientName(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                />
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.phoneLabel}</label>
-                <input type="tel" value={patientPhone} onChange={(e) => setPatientPhone(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" />
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.phoneLabel}</label>
+                <input
+                  type="tel"
+                  required
+                  value={patientPhone}
+                  onChange={(e) => setPatientPhone(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                />
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.abhaLabel}</label>
-                <input type="text" value={patientAbha} onChange={(e) => setPatientAbha(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" />
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.abhaLabel}</label>
+                <input
+                  type="text"
+                  value={patientAbha}
+                  onChange={(e) => setPatientAbha(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                />
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t.ageLabel}</label>
-                  <input type="number" min="0" max="120" value={patientAge} onChange={(e) => setPatientAge(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" />
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.ageLabel}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="120"
+                    value={patientAge}
+                    onChange={(e) => setPatientAge(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">{t.genderLabel}</label>
-                  <select value={patientGender} onChange={(e) => setPatientGender(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white">
-                    <option value="Male">{t.male}</option>
-                    <option value="Female">{t.female}</option>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.genderLabel}</label>
+                  <select
+                    value={patientGender}
+                    onChange={(e) => setPatientGender(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white"
+                  >
+                    <option value="Male">{txt.male}</option>
+                    <option value="Female">{txt.female}</option>
                   </select>
                 </div>
               </div>
+
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.pickupLabel}</label>
-                <textarea rows={2} value={pickupAddress} onChange={(e) => setPickupAddress(e.target.value)}
-                  placeholder={t.pickupPlaceholder}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none" />
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.pickupLabel}</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={pickupAddress}
+                  onChange={(e) => setPickupAddress(e.target.value)}
+                  placeholder={txt.pickupPlaceholder}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none"
+                />
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.districtLabel}</label>
-                <input type="text" value={pickupDistrict} onChange={(e) => setPickupDistrict(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" />
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.districtLabel}</label>
+                <input
+                  type="text"
+                  required
+                  value={pickupDistrict}
+                  onChange={(e) => setPickupDistrict(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                />
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.stateLabel}</label>
-                <input type="text" value={pickupState} onChange={(e) => setPickupState(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" />
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.stateLabel}</label>
+                <input
+                  type="text"
+                  required
+                  value={pickupState}
+                  onChange={(e) => setPickupState(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                />
               </div>
+
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.destinationLabel}</label>
-                <input type="text" value={destinationHospital} onChange={(e) => setDestinationHospital(e.target.value)}
-                  placeholder={t.destinationPlaceholder}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.attendantsLabel}</label>
-                <select value={attendants} onChange={(e) => setAttendants(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white">
-                  {['0','1','2','3'].map(n => <option key={n} value={n}>{n}</option>)}
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.destinationLabel}</label>
+                <select
+                  value={destinationHospital}
+                  onChange={(e) => setDestinationHospital(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white"
+                >
+                  {ODISHA_MEDICAL_FACILITIES.map((h) => (
+                    <option key={h.id} value={h.name}>
+                      {h.name} ({h.city} • {h.traumaLevel?.split(' ')[0]} {h.traumaLevel?.split(' ')[1]})
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.attendantsLabel}</label>
+                <select
+                  value={attendants}
+                  onChange={(e) => setAttendants(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white"
+                >
+                  {['0', '1', '2', '3'].map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{t.notesLabel}</label>
-                <textarea rows={2} value={additionalNotes} onChange={(e) => setAdditionalNotes(e.target.value)}
-                  placeholder={t.notesPlaceholder}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none" />
+                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.notesLabel}</label>
+                <textarea
+                  rows={2}
+                  value={additionalNotes}
+                  onChange={(e) => setAdditionalNotes(e.target.value)}
+                  placeholder={txt.notesPlaceholder}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none"
+                />
               </div>
             </div>
           </div>
@@ -442,30 +896,31 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
           {formError && (
             <div className="flex items-center gap-2 bg-rose-50 border border-rose-300 text-rose-800 rounded-lg px-4 py-2.5 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0" />
-              {formError}
+              <span>{formError}</span>
             </div>
           )}
 
           {/* Dispatch Button */}
           <button
+            type="button"
             onClick={handleDispatch}
-            className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm"
+            className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
           >
             <Phone className="w-4 h-4" />
-            {t.dispatchBtn}
+            <span>{txt.dispatchBtn}</span>
           </button>
         </div>
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          MY REQUESTS TAB
+          TAB 3: MY REQUESTS
       ══════════════════════════════════════════════════════════════════════ */}
       {activeSubTab === 'my-requests' && (
         <div className="space-y-4">
           {requests.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-500 text-sm shadow-sm">
               <span className="text-4xl block mb-3">🚑</span>
-              {t.noRequests}
+              <p>{txt.noRequests}</p>
             </div>
           ) : (
             requests.map((req) => (
@@ -475,44 +930,63 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
                     <span className="text-2xl">🚑</span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-slate-600">{req.id}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${ambBadgeColor[req.ambulanceTypeId] || 'bg-slate-600'}`}>
-                          {req.ambulanceTypeId}
+                        <span className="text-xs font-mono font-bold text-slate-700">{req.id}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white bg-rose-600">
+                          {req.ambulanceType}
                         </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                           ✓ {req.status}
                         </span>
                       </div>
                       <p className="text-xs text-rose-700 font-semibold mt-0.5">{req.emergencyType}</p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-1.5">
-                    <button onClick={() => setConfirmedSlip(req)} title="Re-print slip"
-                      className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-slate-700 transition">
+                    <button
+                      onClick={() => {
+                        setActiveMission(req);
+                        setActiveSubTab('track');
+                      }}
+                      title="Open Live Tracker"
+                      className="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Radio className="w-3.5 h-3.5" />
+                      <span>Track</span>
+                    </button>
+                    <button
+                      onClick={() => setConfirmedSlip(req)}
+                      title="Re-print slip"
+                      className="p-2 hover:bg-white rounded-lg text-slate-500 hover:text-slate-700 transition cursor-pointer"
+                    >
                       <Printer className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleCancelRequest(req.id)} title={t.cancelRequest}
-                      className="p-2 hover:bg-rose-100 rounded-lg text-slate-400 hover:text-rose-600 transition">
+                    <button
+                      onClick={() => handleCancelRequest(req.id)}
+                      title="Cancel Request"
+                      className="p-2 hover:bg-rose-100 rounded-lg text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
+
                 <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
                   <div className="flex items-start gap-1.5">
                     <User className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                    <span><strong>{t.patient}</strong> {req.patient.name} | {req.patient.phone}</span>
+                    <span><strong>Patient:</strong> {req.patient?.name} | {req.patient?.phone}</span>
                   </div>
                   <div className="flex items-start gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                    <span><strong>{t.pickupLocation}</strong> {req.pickup}</span>
+                    <span><strong>Pickup:</strong> {req.pickup}</span>
                   </div>
                   <div className="flex items-start gap-1.5">
                     <Navigation className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                    <span><strong>{t.destination}</strong> {req.destination}</span>
+                    <span><strong>Destination:</strong> {req.destination}</span>
                   </div>
                   <div className="flex items-start gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                    <span><strong>{t.requestedOn}</strong> {req.requestedAt}</span>
+                    <span><strong>Time:</strong> {req.requestedAt}</span>
                   </div>
                 </div>
               </div>
@@ -525,34 +999,36 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
           DISPATCH CONFIRMATION SLIP MODAL
       ══════════════════════════════════════════════════════════════════════ */}
       {confirmedSlip && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full my-4">
             <div className="flex items-center justify-between p-5 border-b border-slate-100">
               <div>
-                <h3 className="font-extrabold text-slate-900 text-base">{t.slipTitle}</h3>
-                <p className="text-xs text-slate-500">{t.slipSubtitle}</p>
+                <h3 className="font-extrabold text-slate-900 text-base">{txt.slipTitle}</h3>
+                <p className="text-xs text-slate-500">{txt.slipSubtitle}</p>
               </div>
-              <button onClick={() => setConfirmedSlip(null)} className="p-1.5 hover:bg-slate-100 rounded-lg">
+              <button onClick={() => setConfirmedSlip(null)} className="p-1.5 hover:bg-slate-100 rounded-lg cursor-pointer">
                 <X className="w-4 h-4 text-slate-400" />
               </button>
             </div>
+
             <div className="p-5 space-y-4">
               <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                 <div>
-                  <p className="text-sm font-bold text-emerald-800">✓ {t.statusDispatched}</p>
-                  <p className="text-xs text-emerald-600">{t.estimatedEta} <strong>{confirmedSlip.eta}</strong></p>
+                  <p className="text-sm font-bold text-emerald-800">✓ {txt.statusDispatched}</p>
+                  <p className="text-xs text-emerald-600">{txt.estimatedEta} <strong>{confirmedSlip.etaMins} mins</strong></p>
                 </div>
               </div>
+
               <div className="space-y-2 text-sm">
                 {[
-                  { label: t.bookingId,       value: confirmedSlip.id,             mono: true },
-                  { label: t.emergencyType,    value: confirmedSlip.emergencyType,  mono: false },
-                  { label: t.ambulanceTypeLbl, value: confirmedSlip.ambulanceTypeId,mono: false },
-                  { label: t.vehicleNo,        value: confirmedSlip.vehicleNo,      mono: true },
-                  { label: t.paramedic,        value: confirmedSlip.paramedic,      mono: true },
-                  { label: t.pickupLocation,   value: confirmedSlip.pickup,         mono: false },
-                  { label: t.destination,      value: confirmedSlip.destination,    mono: false }
+                  { label: txt.bookingId, value: confirmedSlip.id, mono: true },
+                  { label: txt.emergencyType, value: confirmedSlip.emergencyType, mono: false },
+                  { label: txt.ambulanceTypeLbl, value: confirmedSlip.ambulanceType, mono: false },
+                  { label: txt.vehicleNo, value: confirmedSlip.vehicleNo, mono: true },
+                  { label: txt.paramedic, value: confirmedSlip.paramedicPhone, mono: true },
+                  { label: 'Pickup Location', value: confirmedSlip.pickup, mono: false },
+                  { label: 'Destination', value: confirmedSlip.destination, mono: false }
                 ].map(({ label, value, mono }) => (
                   <div key={label} className="flex justify-between items-start gap-2 pb-1.5 border-b border-slate-100 last:border-0">
                     <span className="text-xs text-slate-500 shrink-0">{label}</span>
@@ -560,21 +1036,29 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
                   </div>
                 ))}
               </div>
-              <a href="tel:108"
-                className="flex items-center justify-center gap-2 w-full bg-rose-600 hover:bg-rose-700 text-white font-extrabold py-3 rounded-xl transition text-sm">
+
+              <a
+                href="tel:108"
+                className="flex items-center justify-center gap-2 w-full bg-rose-600 hover:bg-rose-700 text-white font-extrabold py-3 rounded-xl transition text-sm cursor-pointer"
+              >
                 <Phone className="w-4 h-4" />
-                {t.helpline108}
+                <span>{txt.helpline108}</span>
               </a>
             </div>
+
             <div className="flex gap-2 px-5 pb-5">
-              <button onClick={() => window.print()}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-black text-white font-bold py-2.5 rounded-xl text-xs transition">
+              <button
+                onClick={() => window.print()}
+                className="flex-1 flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-black text-white font-bold py-2.5 rounded-xl text-xs transition cursor-pointer"
+              >
                 <Printer className="w-3.5 h-3.5" />
-                {t.printSlip}
+                <span>{txt.printSlip}</span>
               </button>
-              <button onClick={() => setConfirmedSlip(null)}
-                className="flex-1 border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold py-2.5 rounded-xl text-xs transition">
-                {t.closeBtn}
+              <button
+                onClick={() => setConfirmedSlip(null)}
+                className="flex-1 border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer"
+              >
+                {txt.closeBtn}
               </button>
             </div>
           </div>
