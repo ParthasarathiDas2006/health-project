@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Brain, Scan, FileText, ShieldAlert, Camera, RefreshCw, X, Upload, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Brain, Scan, FileText, ShieldAlert, Camera, RefreshCw, X, Upload, CheckCircle2, AlertTriangle, Trash2 } from 'lucide-react';
 
 const SAMPLE_XRAYS = [
   {
@@ -302,14 +302,15 @@ export default function XRayScanner() {
           }
           const stdDev = Math.sqrt(variance / totalPixels);
 
-          // ── VALIDATION: Verify if image is a legitimate Thoracic Radiograph ──────────
-          // Invalid conditions:
-          // 1. High Color Saturation (e.g., photo of room, furniture, outdoor, colorful graphic)
-          // 2. Pure Black / Blank / Solid White (meanLum < 12 or meanLum > 242)
-          // 3. Flat image / zero contrast texture (stdDev < 14)
-          const isTooColorful = avgSaturation > 20 || coloredRatio > 25;
-          const isBlankOrExtreme = meanLum < 12 || meanLum > 242;
-          const isLackingThoracicTexture = stdDev < 14;
+          // ── VALIDATION: Strict Thoracic Radiograph & Body Part Check ────────────────
+          // True X-Rays are grayscale transmission radiographs of internal bones/tissues.
+          // Invalid:
+          // 1. Color photos (selfies, rooms, objects, landscapes): avgSaturation > 14 or coloredRatio > 12%
+          // 2. Pure black, pitch dark or overexposed white screens: meanLum < 18 or meanLum > 238
+          // 3. Flat solid colors or out-of-focus blur: stdDev < 16
+          const isTooColorful = avgSaturation > 14 || coloredRatio > 12;
+          const isBlankOrExtreme = meanLum < 18 || meanLum > 238;
+          const isLackingThoracicTexture = stdDev < 16;
 
           if (isTooColorful || isBlankOrExtreme || isLackingThoracicTexture) {
             resolve({
@@ -317,18 +318,18 @@ export default function XRayScanner() {
               aiConfidence: { tb: 0, pneumonia: 0, normal: 0 },
               findings: [
                 isTooColorful
-                  ? 'High chromatic saturation detected (' + Math.round(avgSaturation) + '% sat) — Radiographs are monochromatic grayscale films'
+                  ? 'High color saturation detected (' + Math.round(avgSaturation) + '% chroma) — Human X-Ray films are monochromatic black & white radiographs'
                   : 'Insufficient radiodensity / contrast dynamic range (σ: ' + Math.round(stdDev) + ')',
-                'No identifiable thoracic skeletal architecture (ribcage/clavicle/spine)',
-                'No anatomical lung field or mediastinal borders detected',
-                'Uploaded media does not match human anatomical radiograph profile',
+                'No human anatomical skeletal contours or pulmonary thoracic boundaries detected',
+                'Uploaded photo appears to be a regular camera photo, non-body object, or non-radiological media',
+                'Diagnostic model requires an authentic human anatomical X-Ray film to generate findings',
               ],
               urgency: 'invalid',
               impression: 'IMAGE NOT VALID — Non-Radiological / Non-Anatomical Image Detected.',
               recommendation:
-                'REJECTED: Please upload or capture an actual human Chest X-Ray film (black & white radiograph) or align camera with viewbox.',
+                'REJECTED: Please upload or capture an authentic human Chest X-Ray radiograph film. Align camera directly with an illuminated X-Ray viewbox.',
               doctorNote:
-                'AI Triage Notice: Upload rejected by automated computer vision anatomical gatekeeper. Input is not a valid radiological scan.',
+                'Automated Quality Control Gatekeeper: Image rejected. Non-anatomical / non-radiograph media provided. No clinical analysis performed.',
               metrics: {
                 meanLum: Math.round(meanLum),
                 stdDev: Math.round(stdDev),
@@ -412,31 +413,32 @@ export default function XRayScanner() {
             },
           });
         } catch (e) {
-          console.warn('Canvas pixel analysis error, falling back:', e);
+          console.warn('Canvas pixel analysis error, falling back to invalid:', e);
           resolve({
-            aiConfidence: { tb: 12, pneumonia: 18, normal: 70 },
+            isValidXray: false,
+            aiConfidence: { tb: 0, pneumonia: 0, normal: 0 },
             findings: [
-              'Image processed with standard edge-detection filter',
-              'Bilateral lung symmetry within normal boundaries',
-              'No dense radiopaque consolidation flagged',
+              'Unable to decode radiological pixel grid from image source',
+              'Image format or dimensions do not match standard radiograph specifications',
             ],
-            urgency: 'low',
-            impression: 'Screening unremarkable — Clinical correlation recommended.',
-            recommendation: 'Evaluate patient vital signs and correlate with symptoms at PHC.',
-            doctorNote: 'AI Radiograph Screen: Standard baseline. No acute opacity flagged. Doctor examination advised.',
-            metrics: { meanLum: 120, stdDev: 25, asymmetry: 5 },
+            urgency: 'invalid',
+            impression: 'IMAGE NOT VALID — Processing Failed.',
+            recommendation: 'Please upload or capture a standard JPEG or PNG X-Ray film.',
+            doctorNote: 'Automated QC: Image parsing error. Unrecognized file data.',
+            metrics: { meanLum: 0, stdDev: 0, asymmetry: 0, saturation: 0 },
           });
         }
       };
       img.onerror = () => {
         resolve({
-          aiConfidence: { tb: 15, pneumonia: 25, normal: 60 },
-          findings: ['Image loaded and preprocessed', 'Doctor verification recommended'],
-          urgency: 'low',
-          impression: 'Screening completed.',
-          recommendation: 'Correlate with clinical signs.',
-          doctorNote: 'Clinical review recommended.',
-          metrics: { meanLum: 120, stdDev: 20, asymmetry: 5 },
+          isValidXray: false,
+          aiConfidence: { tb: 0, pneumonia: 0, normal: 0 },
+          findings: ['Image file could not be rendered or decoded by browser'],
+          urgency: 'invalid',
+          impression: 'IMAGE NOT VALID — File Unreadable.',
+          recommendation: 'Please select a valid image file (JPG, PNG).',
+          doctorNote: 'Automated QC: File unreadable.',
+          metrics: { meanLum: 0, stdDev: 0, asymmetry: 0, saturation: 0 },
         });
       };
       img.src = imageSrc;
@@ -634,18 +636,42 @@ export default function XRayScanner() {
                   alt="Uploaded X-Ray"
                   className="w-full h-auto object-contain bg-black"
                 />
-                <div className="bg-slate-800 px-3 py-2">
-                  <p className="text-[11px] text-slate-300 font-mono">{uploadedFile.name}</p>
+                <div className="bg-slate-800 px-3 py-2 flex items-center justify-between">
+                  <p className="text-[11px] text-slate-300 font-mono truncate max-w-xs">{uploadedFile.name}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadedFile(null);
+                      setResult(null);
+                    }}
+                    className="text-[11px] text-rose-300 hover:text-rose-100 flex items-center gap-1 font-semibold transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Cancel Image</span>
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={runUploadScan}
-                disabled={scanning}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white py-3 rounded-xl font-bold text-sm transition-all"
-              >
-                <Brain className="w-4 h-4" />
-                {scanning ? 'AI Scanning...' : 'Run AI X-Ray Analysis'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadedFile(null);
+                    setResult(null);
+                  }}
+                  className="px-4 py-3 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition-all flex items-center justify-center gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Cancel</span>
+                </button>
+                <button
+                  onClick={runUploadScan}
+                  disabled={scanning}
+                  className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-sm"
+                >
+                  <Brain className="w-4 h-4" />
+                  {scanning ? 'AI Scanning...' : 'Run AI X-Ray Analysis'}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -758,13 +784,26 @@ export default function XRayScanner() {
                   <p className="text-[11px] text-emerald-400 font-mono font-bold">
                     Captured from Live Camera
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => startCamera(cameraFacing)}
-                    className="text-[10px] text-slate-300 hover:text-white underline"
-                  >
-                    Retake Photo
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => startCamera(cameraFacing)}
+                      className="text-[11px] text-slate-300 hover:text-white underline font-medium"
+                    >
+                      Retake Photo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUploadedFile(null);
+                        setResult(null);
+                      }}
+                      className="text-[11px] text-rose-300 hover:text-rose-100 flex items-center gap-1 font-semibold"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Cancel</span>
+                    </button>
+                  </div>
                 </div>
                 <img
                   src={uploadedFile.url}
@@ -773,14 +812,27 @@ export default function XRayScanner() {
                 />
               </div>
 
-              <button
-                onClick={runUploadScan}
-                disabled={scanning}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-sm"
-              >
-                <Brain className="w-4 h-4" />
-                {scanning ? 'AI Scanning Captured Film...' : 'Analyze Captured Patient Scan'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadedFile(null);
+                    setResult(null);
+                  }}
+                  className="px-4 py-3 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition-all flex items-center justify-center gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Cancel Image</span>
+                </button>
+                <button
+                  onClick={runUploadScan}
+                  disabled={scanning}
+                  className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-sm"
+                >
+                  <Brain className="w-4 h-4" />
+                  {scanning ? 'AI Scanning Captured Film...' : 'Analyze Captured Patient Scan'}
+                </button>
+              </div>
             </div>
           )}
         </div>
