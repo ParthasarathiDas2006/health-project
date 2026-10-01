@@ -29,6 +29,8 @@ import {
   RotateCcw
 } from 'lucide-react';
 
+const DrugAllergySafetyGuard = React.lazy(() => import('./DrugAllergySafetyGuard'));
+
 export default function GovtGovTechSuite({ currentUser, appLang, initialFeature }) {
   const lang = appLang || 'or-IN';
   const [activeSubTab, setActiveSubTab] = useState(initialFeature || 'abha_history');
@@ -591,52 +593,11 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
         </div>
       )}
 
-      {/* Feature 3: Drug Allergy Alert */}
+      {/* Feature 3 / Module 13: Drug Allergy Alert */}
       {activeSubTab === 'drug_safety' && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-rose-600" />
-              3. Automated Drug-Drug & Allergy Contraindication Guard
-            </h3>
-            <p className="text-xs text-slate-500">Cross-analyzes uploaded prescriptions against known patient drug allergy records in ABHA profile.</p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-rose-50 border-2 border-rose-300 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-rose-600 text-white rounded-xl shadow-md">
-                <AlertTriangle className="w-6 h-6 animate-pulse" />
-              </div>
-              <div>
-                <h4 className="text-sm font-black text-rose-900 uppercase tracking-wide">
-                  CRITICAL CONTRAINDICATION ALERT TO DOCTOR
-                </h4>
-                <p className="text-xs text-rose-800">Prescription OCR scan detected potential severe adverse drug reaction.</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-              <div className="bg-white p-3.5 rounded-xl border border-rose-200">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase">Known ABHA Allergy Profile</span>
-                <p className="font-black text-rose-700 text-sm mt-0.5">Penicillin / Beta-Lactam Class Allergy</p>
-                <p className="text-slate-500 text-[11px]">Severity: Severe Anaphylaxis Risk</p>
-              </div>
-
-              <div className="bg-white p-3.5 rounded-xl border border-rose-200">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase">Prescription OCR Drug Detected</span>
-                <p className="font-black text-slate-900 text-sm mt-0.5">Tab. Amoxicillin + Clavulanic Acid 625mg</p>
-                <p className="text-rose-600 text-[11px] font-bold">⚠️ Direct Cross-Allergy (Beta-lactam ring)</p>
-              </div>
-            </div>
-
-            <div className="pt-2 flex items-center justify-between text-xs border-t border-rose-200">
-              <span className="font-bold text-rose-900">Recommended Alternative: Tab. Azithromycin 500mg or Ciprofloxacin</span>
-              <button className="px-3 py-1.5 bg-rose-600 text-white rounded-lg font-bold shadow-xs hover:bg-rose-700">
-                Flag to Doctor &amp; Block Order
-              </button>
-            </div>
-          </div>
-        </div>
+        <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Module 13...</div>}>
+          <DrugAllergySafetyGuard appLang={lang} currentUser={currentUser} />
+        </React.Suspense>
       )}
 
       {/* Feature 4: Risk Scores */}

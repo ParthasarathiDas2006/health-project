@@ -16,6 +16,7 @@ const NearestMedicalGPS = lazy(() => import('./components/NearestMedicalGPS'));
 const BedBookingSystem = lazy(() => import('./components/BedBookingSystem'));
 const AmbulanceBooking = lazy(() => import('./components/AmbulanceBooking'));
 const AdminPage = lazy(() => import('./components/AdminPage'));
+const DrugAllergySafetyGuard = lazy(() => import('./components/DrugAllergySafetyGuard'));
 import {
   Activity,
   Brain,
@@ -1561,7 +1562,27 @@ export default function App() {
         {/* TABS 11 THROUGH 32: STANDALONE INDIVIDUAL GOVTECH FEATURE VIEWS */}
         {activeTab === 't11_history' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />}
         {activeTab === 't12_differential' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="differential" />}
-        {activeTab === 't13_drugallergy' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />}
+        {activeTab === 't13_drugallergy' && (
+          <Suspense
+            fallback={
+              <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+                <div className="w-10 h-10 border-4 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-xs font-semibold text-slate-600 animate-pulse">
+                  {appLang === 'or-IN'
+                    ? 'ଔଷଧ ଆଲର୍ଜି ଓ ସୁରକ୍ଷା ଗାର୍ଡ ଲୋଡ୍ ହେଉଛି...'
+                    : appLang === 'hi-IN'
+                    ? 'दवा एलर्जी एवं सुरक्षा गार्ड लोड हो रहा है...'
+                    : 'Loading Drug & Allergy Safety Guard (Module 13)...'}
+                </p>
+              </div>
+            }
+          >
+            <DrugAllergySafetyGuard
+              currentUser={currentUser}
+              appLang={appLang}
+            />
+          </Suspense>
+        )}
         {activeTab === 't14_riskscores' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="scores" />}
         {activeTab === 't15_followup' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />}
         {activeTab === 't16_whatsapp_ussd' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />}
