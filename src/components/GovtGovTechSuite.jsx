@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import XRayScanner from './XRayScanner';
 import {
   Brain,
   ShieldAlert,
@@ -28,6 +29,7 @@ import {
   TrendingUp,
   RotateCcw
 } from 'lucide-react';
+import ClinicalRiskScoreSuite from './ClinicalRiskScoreSuite';
 
 const DrugAllergySafetyGuard = React.lazy(() => import('./DrugAllergySafetyGuard'));
 // ─── Differential Triage Module (Feature 12) ────────────────────────────────
@@ -138,6 +140,7 @@ function DifferentialTriageModule() {
   const [resultReady, setResultReady] = useState(true);
   const [expandedCard, setExpandedCard] = useState(0);
   const [doctorNoteGenerated, setDoctorNoteGenerated] = useState(false);
+  const [activeModuleTab, setActiveModuleTab] = useState('differential'); // 'differential' | 'xray'
 
   const runAnalysis = () => {
     setAnalysing(true);
@@ -165,7 +168,7 @@ function DifferentialTriageModule() {
     <div className="space-y-5">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 rounded-2xl p-5 text-white">
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Brain className="w-5 h-5 text-indigo-200" />
@@ -180,11 +183,38 @@ function DifferentialTriageModule() {
             <span className="text-[10px] bg-amber-500/20 border border-amber-400/40 text-amber-300 px-2 py-1 rounded-lg">ICD-10 Coded</span>
           </div>
         </div>
+
+        {/* Tab Switcher inside header */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveModuleTab('differential')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              activeModuleTab === 'differential'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            <Brain className="w-4 h-4" /> Symptom Differential
+          </button>
+          <button
+            onClick={() => setActiveModuleTab('xray')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              activeModuleTab === 'xray'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            <Scan className="w-4 h-4" /> X-Ray AI Scanner
+            <span className="text-[9px] bg-emerald-400 text-slate-900 font-bold px-1.5 py-0.5 rounded-full ml-1">NEW</span>
+          </button>
+        </div>
       </div>
 
-      {/* Scenario Selector */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Select Clinical Scenario</p>
+      {activeModuleTab === 'differential' && (
+        <>
+          {/* Scenario Selector */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Select Clinical Scenario</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {SYMPTOM_PRESETS.map((p) => (
             <button
@@ -405,11 +435,16 @@ function DifferentialTriageModule() {
           <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl p-3">
             <ShieldAlert className="w-5 h-5 text-indigo-500 flex-shrink-0" />
             <p className="text-[11px] text-indigo-700">
-              <strong>Legal & Safety Notice:</strong> This module provides clinical decision support only. AI outputs are non-diagnostic and do not replace qualified medical judgment. Compliant with MoHFW Digital Health Policy 2023 and DPDP Act 2023. All data is session-only and not stored.
+              <strong>Legal &amp; Safety Notice:</strong> This module provides clinical decision support only. AI outputs are non-diagnostic and do not replace qualified medical judgment. Compliant with MoHFW Digital Health Policy 2023 and DPDP Act 2023. All data is session-only and not stored.
             </p>
           </div>
-        </div>
+            </div>
+          )}
+        </>
       )}
+
+      {/* X-Ray Scanner Sub-Module */}
+      {activeModuleTab === 'xray' && <XRayScanner />}
     </div>
   );
 }
@@ -940,75 +975,9 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
         </React.Suspense>
       )}
 
-      {/* Feature 4: Risk Scores */}
+      {/* Feature 4 / Tab 14: Automated Clinical Risk Scores */}
       {activeSubTab === 'scores' && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-indigo-600" />
-              4. Automated Standardized Clinical Risk Calculator Suite
-            </h3>
-            <p className="text-xs text-slate-500">Calculates qSOFA for Sepsis, GCS for Head Trauma, APGAR for Neonates, and MME for Maternal Risk directly from vitals.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            {/* qSOFA */}
-            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-extrabold text-rose-900 text-sm">qSOFA Sepsis Score</span>
-                <span className="px-2 py-0.5 bg-rose-600 text-white text-[10px] font-black rounded-md">HIGH RISK</span>
-              </div>
-              <p className="text-2xl font-black text-rose-700">2 / 3</p>
-              <ul className="text-[11px] text-rose-800 space-y-1">
-                <li>✓ RR ≥ 22/min (Present: 26)</li>
-                <li>✓ Altered Mental Status (GCS 13)</li>
-                <li>✗ Systolic BP ≤ 100 (Present: 110)</li>
-              </ul>
-            </div>
-
-            {/* GCS */}
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-extrabold text-amber-900 text-sm">Glasgow Coma Scale</span>
-                <span className="px-2 py-0.5 bg-amber-600 text-white text-[10px] font-black rounded-md">MODERATE</span>
-              </div>
-              <p className="text-2xl font-black text-amber-800">12 / 15</p>
-              <ul className="text-[11px] text-amber-900 space-y-1">
-                <li>• Eye Opening: E3 (To Voice)</li>
-                <li>• Verbal: V4 (Confused)</li>
-                <li>• Motor: M5 (Localizes Pain)</li>
-              </ul>
-            </div>
-
-            {/* APGAR */}
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-extrabold text-emerald-900 text-sm">Neonatal APGAR</span>
-                <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-black rounded-md">NORMAL</span>
-              </div>
-              <p className="text-2xl font-black text-emerald-700">9 / 10</p>
-              <ul className="text-[11px] text-emerald-800 space-y-1">
-                <li>• Heart Rate &gt; 100 bpm (2)</li>
-                <li>• Strong Cry &amp; Breathing (2)</li>
-                <li>• Good Muscle Tone (2)</li>
-              </ul>
-            </div>
-
-            {/* MME Maternal Risk */}
-            <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-extrabold text-indigo-900 text-sm">Maternal Risk (ANC)</span>
-                <span className="px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-black rounded-md">ELEVATED</span>
-              </div>
-              <p className="text-2xl font-black text-indigo-800">High Risk (HRP)</p>
-              <ul className="text-[11px] text-indigo-900 space-y-1">
-                <li>• Hb: 8.4 g/dL (Moderate Anemia)</li>
-                <li>• BP: 142/90 (Preeclampsia Risk)</li>
-                <li>• EDD: 24 Oct 2026</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <ClinicalRiskScoreSuite appLang={lang} currentUser={currentUser} />
       )}
 
       {/* Feature 6-9: ASHA Voice, Pain Map & Family Triage */}
