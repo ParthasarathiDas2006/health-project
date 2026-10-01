@@ -35,6 +35,8 @@ const SYMPTOM_PRESETS = [
     id: 'resp',
     label: 'Respiratory',
     emoji: '🫁',
+    image: '/images/respiratory_triage.jpg',
+    imageCaption: 'Chest X-Ray: TB Cavitation, Hilar Lymphadenopathy & Pulmonary Infiltration',
     symptoms: 'Productive cough 3 weeks, low-grade evening fever, mild breathlessness, night sweats',
     age: 34, gender: 'Male',
     spo2: 94, rr: 22, temp: 99.4, hr: 96,
@@ -57,6 +59,8 @@ const SYMPTOM_PRESETS = [
     id: 'cardiac',
     label: 'Cardiac',
     emoji: '❤️',
+    image: '/images/cardiac_triage.jpg',
+    imageCaption: 'Cardiac Anatomy: Occluded LAD Artery (STEMI site) & ST-Elevation on ECG',
     symptoms: 'Chest tightness, radiating left arm pain, diaphoresis, nausea since 1 hour',
     age: 58, gender: 'Male',
     spo2: 96, rr: 18, temp: 98.6, hr: 110,
@@ -79,6 +83,8 @@ const SYMPTOM_PRESETS = [
     id: 'maternal',
     label: 'Maternal',
     emoji: '🤰',
+    image: '/images/maternal_triage.jpg',
+    imageCaption: 'ANC Monitoring: BP Reading & Pre-eclampsia Warning Signs (Headache, Oedema, Visual Disturbance)',
     symptoms: 'Severe headache, visual disturbance, swollen feet, 34 weeks pregnant',
     age: 26, gender: 'Female',
     spo2: 98, rr: 16, temp: 99.0, hr: 88,
@@ -101,6 +107,8 @@ const SYMPTOM_PRESETS = [
     id: 'pediatric',
     label: 'Paediatric',
     emoji: '👶',
+    image: '/images/pediatric_triage.jpg',
+    imageCaption: 'Paediatric Meningitis: Neck Stiffness (Nuchal Rigidity), Kernig\'s Sign & Petechial Rash',
     symptoms: 'Child 3 years, high fever 104°F, neck stiffness, photophobia, rash on trunk',
     age: 3, gender: 'Male',
     spo2: 97, rr: 28, temp: 104.0, hr: 130,
@@ -218,6 +226,22 @@ function DifferentialTriageModule() {
             </div>
           ))}
         </div>
+
+        {/* Clinical Reference Image */}
+        {active.image && (
+          <div className="mt-3 rounded-xl overflow-hidden border border-slate-200">
+            <img
+              src={active.image}
+              alt={active.imageCaption}
+              className="w-full object-cover max-h-64"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+            <div className="bg-slate-800 px-3 py-2 flex items-center justify-between gap-2">
+              <p className="text-[11px] text-slate-300 italic">{active.imageCaption}</p>
+              <span className="text-[9px] bg-indigo-700 text-indigo-200 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Clinical Ref</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* AI Analysis Button */}
