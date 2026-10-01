@@ -227,18 +227,28 @@ function DifferentialTriageModule() {
           ))}
         </div>
 
-        {/* Clinical Reference Image */}
+        {/* Clinical Reference Image — Full Display */}
         {active.image && (
-          <div className="mt-3 rounded-xl overflow-hidden border border-slate-200">
-            <img
-              src={active.image}
-              alt={active.imageCaption}
-              className="w-full object-cover max-h-64"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-            <div className="bg-slate-800 px-3 py-2 flex items-center justify-between gap-2">
-              <p className="text-[11px] text-slate-300 italic">{active.imageCaption}</p>
-              <span className="text-[9px] bg-indigo-700 text-indigo-200 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">Clinical Ref</span>
+          <div className="mt-4 rounded-2xl overflow-hidden border-2 border-indigo-100 shadow-sm">
+            {/* Image Header */}
+            <div className="bg-indigo-50 border-b border-indigo-100 px-4 py-2 flex items-center gap-2">
+              <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide">📋 Clinical Reference Diagram</span>
+              <span className="ml-auto text-[9px] bg-indigo-100 text-indigo-600 border border-indigo-200 px-2 py-0.5 rounded-full font-mono">Educational Use Only</span>
+            </div>
+            {/* Full Image — no cropping */}
+            <div className="bg-white p-2">
+              <img
+                src={active.image}
+                alt={active.imageCaption}
+                className="w-full h-auto object-contain rounded-lg"
+                style={{ display: 'block' }}
+                onError={(e) => { e.target.parentElement.parentElement.style.display = 'none'; }}
+              />
+            </div>
+            {/* Caption Bar */}
+            <div className="bg-slate-800 px-4 py-2.5 flex items-start justify-between gap-3">
+              <p className="text-[11px] text-slate-300 italic leading-relaxed">{active.imageCaption}</p>
+              <span className="text-[9px] bg-indigo-600 text-white px-2 py-1 rounded-lg whitespace-nowrap flex-shrink-0 font-semibold">Clinical Ref</span>
             </div>
           </div>
         )}
