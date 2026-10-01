@@ -1066,6 +1066,7 @@ const DEFAULT_AMBULANCE_REQUESTS = [
 const DEFAULT_APPOINTMENTS = [
   {
     id: 'APT-OD-2026-01',
+    tokenNo: 'OPD-12',
     doctorName: {
       'or-IN': 'ଡା. ସୌମ୍ୟରଞ୍ଜନ ନାୟକ',
       'hi-IN': 'डॉ. सौम्य रंजन नायक',
@@ -1091,6 +1092,7 @@ const DEFAULT_APPOINTMENTS = [
   },
   {
     id: 'APT-OD-2026-02',
+    tokenNo: 'OPD-15',
     doctorName: {
       'or-IN': 'ଡା. ଲିପ୍ସା ରଥ',
       'hi-IN': 'डॉ. लिप्सा रथ',
@@ -1116,6 +1118,7 @@ const DEFAULT_APPOINTMENTS = [
   },
   {
     id: 'APT-OD-2026-03',
+    tokenNo: 'OPD-18',
     doctorName: {
       'or-IN': 'ଡା. ମନୋଜ କୁମାର ମହାପାତ୍ର',
       'hi-IN': 'डॉ. मनोज कुमार महापात्र',
@@ -1141,6 +1144,7 @@ const DEFAULT_APPOINTMENTS = [
   },
   {
     id: 'APT-OD-2026-04',
+    tokenNo: 'OPD-21',
     doctorName: {
       'or-IN': 'ଡା. ସ୍ନେହଲତା ଜେନା',
       'hi-IN': 'डॉ. स्नेहलता जेना',
@@ -1166,6 +1170,7 @@ const DEFAULT_APPOINTMENTS = [
   },
   {
     id: 'APT-OD-2026-05',
+    tokenNo: 'OPD-24',
     doctorName: {
       'or-IN': 'ଡା. ବିଭୂତି ଭୂଷଣ ନାୟକ',
       'hi-IN': 'डॉ. विभूति भूषण नायक',
@@ -1191,6 +1196,7 @@ const DEFAULT_APPOINTMENTS = [
   },
   {
     id: 'APT-OD-2026-06',
+    tokenNo: 'OPD-27',
     doctorName: {
       'or-IN': 'ଡା. ଜୟନ୍ତ କୁମାର ପଣ୍ଡା',
       'hi-IN': 'डॉ. जयंत कुमार पंडा',
@@ -1216,6 +1222,7 @@ const DEFAULT_APPOINTMENTS = [
   },
   {
     id: 'APT-OD-2026-07',
+    tokenNo: 'OPD-30',
     doctorName: {
       'or-IN': 'ଡା. ମଧୁସ୍ମିତା ବେହେରା',
       'hi-IN': 'डॉ. मधुस्मिता बेहेरा',
@@ -1241,6 +1248,7 @@ const DEFAULT_APPOINTMENTS = [
   },
   {
     id: 'APT-OD-2026-08',
+    tokenNo: 'OPD-33',
     doctorName: {
       'or-IN': 'ଡା. ଆଲୋକ ରଞ୍ଜନ ସାହୁ',
       'hi-IN': 'डॉ. आलोक रंजन साहु',
@@ -1382,11 +1390,29 @@ const APPOINTMENTS_STORAGE_KEY = 'triage_booked_appointments';
 export const getBookedAppointments = () => {
   try {
     const raw = localStorage.getItem(APPOINTMENTS_STORAGE_KEY);
-    if (!raw || JSON.parse(raw).length === 0) {
+    let list = [];
+    if (!raw) {
+      list = DEFAULT_APPOINTMENTS;
       localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(DEFAULT_APPOINTMENTS));
-      return DEFAULT_APPOINTMENTS;
+    } else {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        list = DEFAULT_APPOINTMENTS;
+        localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(DEFAULT_APPOINTMENTS));
+      } else {
+        list = parsed;
+      }
     }
-    return JSON.parse(raw);
+
+    // Sanitize any existing or default records so tokenNo and status are 100% guaranteed
+    return list.map((apt, index) => {
+      const token = apt.tokenNo || `OPD-${String(10 + (index * 3)).padStart(2, '0')}`;
+      return {
+        ...apt,
+        tokenNo: token,
+        status: apt.status || 'Confirmed'
+      };
+    });
   } catch (e) {
     console.error('Failed to read appointments:', e);
     return DEFAULT_APPOINTMENTS;

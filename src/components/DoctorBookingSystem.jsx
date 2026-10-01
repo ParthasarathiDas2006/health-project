@@ -1579,75 +1579,104 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
             </div>
           ) : (
             <div className="space-y-4">
-              {bookings.map((b) => (
-                <div
-                  key={b.id}
-                  className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col md:flex-row md:items-center justify-between gap-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex flex-col items-center justify-center shrink-0 shadow-2xs">
-                      <span className="text-[10px] font-bold uppercase">Token</span>
-                      <span className="text-sm font-extrabold leading-none">{b.tokenNo.split('-')[1]}</span>
-                    </div>
+              {bookings.map((b) => {
+                const tokenNum = b.tokenNo
+                  ? (b.tokenNo.includes('-') ? b.tokenNo.split('-')[1] : b.tokenNo)
+                  : (b.id ? b.id.replace(/\D/g, '').slice(-2) || '01' : '01');
+                const docName = typeof b.doctorName === 'object'
+                  ? (b.doctorName[lang] || b.doctorName['en-IN'] || b.doctorName['or-IN'] || 'Doctor')
+                  : (b.doctorName || 'Doctor');
+                const facilityName = typeof b.facility === 'object'
+                  ? (b.facility[lang] || b.facility['en-IN'] || '')
+                  : (b.facility || '');
+                const deptName = typeof b.department === 'object'
+                  ? (b.department[lang] || b.department['en-IN'] || '')
+                  : (b.department || '');
+                const roomName = typeof b.room === 'object'
+                  ? (b.room[lang] || b.room['en-IN'] || '')
+                  : (b.room || '');
 
-                    <DoctorAvatar
-                      doc={{
-                        id: b.doctorId || b.id,
-                        name: b.doctorName,
-                        initials: b.doctorInitials || 'DR',
-                        color: b.doctorColor || 'from-teal-600 to-emerald-800'
-                      }}
-                      size="sm"
-                    />
-
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-bold text-slate-500">{b.id}</span>
-                        <h3 className="text-sm font-bold text-slate-900">{b.doctorName}</h3>
-                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.2 rounded-full">
-                          {b.status}
-                        </span>
+                return (
+                  <div
+                    key={b.id}
+                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex flex-col items-center justify-center shrink-0 shadow-2xs">
+                        <span className="text-[10px] font-bold uppercase">Token</span>
+                        <span className="text-sm font-extrabold leading-none">{tokenNum}</span>
                       </div>
 
-                      <p className="text-xs text-emerald-700 font-medium">{b.department} • {b.facility}</p>
+                      <DoctorAvatar
+                        doc={{
+                          id: b.doctorId || b.id,
+                          name: docName,
+                          initials: b.doctorInitials || 'DR',
+                          color: b.doctorColor || 'from-teal-600 to-emerald-800'
+                        }}
+                        size="sm"
+                      />
 
-                      <div className="flex items-center gap-4 text-xs text-slate-500 mt-1.5 flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-slate-400" /> <strong>{b.date}</strong>
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-emerald-600" /> <strong>{b.timeSlot}</strong>
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-slate-400" /> {b.room}
-                        </span>
-                        <span className="text-slate-400">
-                          Patient: <strong>{b.patientName}</strong> ({b.patientAge} yrs, {b.patientGender})
-                        </span>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-xs font-bold text-slate-500">{b.id}</span>
+                          <h3 className="text-sm font-bold text-slate-900">{docName}</h3>
+                          <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.2 rounded-full">
+                            {b.status}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-emerald-700 font-medium">
+                          {deptName ? `${deptName} • ` : ''}{facilityName}
+                        </p>
+
+                        <div className="flex items-center gap-4 text-xs text-slate-500 mt-1.5 flex-wrap">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-slate-400" /> <strong>{b.date}</strong>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-emerald-600" /> <strong>{b.timeSlot}</strong>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-slate-400" /> {roomName}
+                          </span>
+                          <span className="text-slate-400">
+                            Patient: <strong>{b.patientName}</strong> ({b.patientAge} yrs, {b.patientGender})
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 self-end md:self-center">
-                    <button
-                      type="button"
-                      onClick={() => setConfirmedSlip(b)}
-                      className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg flex items-center gap-1 shadow-2xs"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      {txt.printSlip}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCancel(b.id)}
-                      className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-1"
-                      title={txt.cancelBtn}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-2 self-end md:self-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setConfirmedSlip({
+                            ...b,
+                            doctorName: docName,
+                            facility: facilityName,
+                            department: deptName,
+                            room: roomName,
+                            tokenNo: b.tokenNo || `OPD-${tokenNum}`
+                          })
+                        }
+                        className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg flex items-center gap-1 shadow-2xs cursor-pointer"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        {txt.printSlip}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCancel(b.id)}
+                        className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-1 cursor-pointer"
+                        title={txt.cancelBtn}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -2051,64 +2080,84 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
             {/* Slip Body */}
             <div className="p-6 space-y-4 text-xs text-slate-700 max-h-[75vh] overflow-y-auto">
               {/* Token & ID Banner */}
-              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-emerald-800 block">
-                    {txt.tokenNo}
-                  </span>
-                  <span className="text-2xl font-black text-emerald-900 font-mono">
-                    {confirmedSlip.tokenNo}
-                  </span>
-                  <p className="text-[10px] text-slate-500 font-mono">{confirmedSlip.id}</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900 font-bold">
-                    {confirmedSlip.status}
-                  </span>
-                  <p className="text-[10px] text-emerald-800 font-semibold mt-1">
-                    {confirmedSlip.consultType}
-                  </p>
-                </div>
-              </div>
+              {(() => {
+                const slipDocName = typeof confirmedSlip.doctorName === 'object'
+                  ? (confirmedSlip.doctorName[lang] || confirmedSlip.doctorName['en-IN'] || 'Doctor')
+                  : (confirmedSlip.doctorName || 'Doctor');
+                const slipFacility = typeof confirmedSlip.facility === 'object'
+                  ? (confirmedSlip.facility[lang] || confirmedSlip.facility['en-IN'] || '')
+                  : (confirmedSlip.facility || '');
+                const slipDept = typeof confirmedSlip.department === 'object'
+                  ? (confirmedSlip.department[lang] || confirmedSlip.department['en-IN'] || '')
+                  : (confirmedSlip.department || '');
+                const slipRoom = typeof confirmedSlip.room === 'object'
+                  ? (confirmedSlip.room[lang] || confirmedSlip.room['en-IN'] || '')
+                  : (confirmedSlip.room || '');
 
-              {/* Consultation Details */}
-              <div className="space-y-2 border-b border-slate-100 pb-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-500">{txt.appointedDoctor}</span>
-                  <div className="flex items-center gap-2">
-                    <DoctorAvatar
-                      doc={{
-                        id: confirmedSlip.doctorId || confirmedSlip.id,
-                        name: confirmedSlip.doctorName,
-                        initials: confirmedSlip.doctorInitials || 'DR',
-                        color: confirmedSlip.doctorColor || 'from-teal-600 to-emerald-800'
-                      }}
-                      size="sm"
-                    />
-                    <strong className="text-slate-900">{confirmedSlip.doctorName}</strong>
-                  </div>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Department:</span>
-                  <span className="text-slate-800 font-semibold">{confirmedSlip.department}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Facility:</span>
-                  <span className="text-slate-800 font-medium">{confirmedSlip.facility}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">{txt.reportingRoom}</span>
-                  <strong className="text-emerald-800 bg-emerald-100 px-2 py-0.2 rounded font-mono">
-                    {confirmedSlip.room}
-                  </strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">{txt.dateTime}</span>
-                  <strong className="text-slate-900 font-mono">
-                    {confirmedSlip.date} at {confirmedSlip.timeSlot}
-                  </strong>
-                </div>
-              </div>
+                return (
+                  <>
+                    {/* Token & ID Banner */}
+                    <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-emerald-800 block">
+                          {txt.tokenNo}
+                        </span>
+                        <span className="text-2xl font-black text-emerald-900 font-mono">
+                          {confirmedSlip.tokenNo || 'OPD-12'}
+                        </span>
+                        <p className="text-[10px] text-slate-500 font-mono">{confirmedSlip.id}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900 font-bold">
+                          {confirmedSlip.status}
+                        </span>
+                        <p className="text-[10px] text-emerald-800 font-semibold mt-1">
+                          {confirmedSlip.consultType}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Consultation Details */}
+                    <div className="space-y-2 border-b border-slate-100 pb-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">{txt.appointedDoctor}</span>
+                        <div className="flex items-center gap-2">
+                          <DoctorAvatar
+                            doc={{
+                              id: confirmedSlip.doctorId || confirmedSlip.id,
+                              name: slipDocName,
+                              initials: confirmedSlip.doctorInitials || 'DR',
+                              color: confirmedSlip.doctorColor || 'from-teal-600 to-emerald-800'
+                            }}
+                            size="sm"
+                          />
+                          <strong className="text-slate-900">{slipDocName}</strong>
+                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Department:</span>
+                        <span className="text-slate-800 font-semibold">{slipDept}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Facility:</span>
+                        <span className="text-slate-800 font-medium">{slipFacility}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">{txt.reportingRoom}</span>
+                        <strong className="text-emerald-800 bg-emerald-100 px-2 py-0.2 rounded font-mono">
+                          {slipRoom}
+                        </strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">{txt.dateTime}</span>
+                        <strong className="text-slate-900 font-mono">
+                          {confirmedSlip.date} at {confirmedSlip.timeSlot}
+                        </strong>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Patient Demographics */}
               <div className="space-y-1.5 text-[11px] bg-slate-50 p-3 rounded-xl border border-slate-100">
