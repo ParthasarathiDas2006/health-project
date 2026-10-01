@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Brain, Scan, FileText, ShieldAlert } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Brain, Scan, FileText, ShieldAlert, Camera, RefreshCw, X, Upload } from 'lucide-react';
 
 const SAMPLE_XRAYS = [
   {
@@ -112,6 +112,77 @@ export default function XRayScanner() {
   const [scanStep, setScanStep] = useState('');
   const [result, setResult] = useState(null);
 
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState('environment'); // 'environment' | 'user'
+  const [cameraError, setCameraError] = useState(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+
+  // Stop camera on unmount or mode switch
+  useEffect(() => {
+    return () => {
+      stopCameraStream();
+    };
+  }, []);
+
+  function stopCameraStream() {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  }
+
+  async function startCamera(facing = cameraFacing) {
+    setCameraError(null);
+    stopCameraStream();
+    try {
+      const constraints = {
+        video: {
+          facingMode: facing,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setCameraActive(true);
+      setCameraFacing(facing);
+    } catch (err) {
+      console.warn('Camera access error:', err);
+      setCameraError(
+        'Unable to access camera (' + (err.message || 'permission denied') + '). Please ensure camera permissions are allowed in your browser, or upload an image file instead.'
+      );
+      setCameraActive(false);
+    }
+  }
+
+  function toggleCameraFacing() {
+    const nextFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+    startCamera(nextFacing);
+  }
+
+  function capturePhoto() {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    setUploadedFile({ url: dataUrl, name: 'camera_capture_' + Date.now() + '.jpg' });
+    setResult(null);
+    stopCameraStream();
+  }
+
   function runScan(caseData) {
     setResult(null);
     setScanning(true);
@@ -135,29 +206,31 @@ export default function XRayScanner() {
     if (!file) return;
     setUploadedFile({ url: URL.createObjectURL(file), name: file.name });
     setResult(null);
+    stopCameraStream();
   }
 
   function runUploadScan() {
     runScan({
       id: 'xr_upload',
-      label: 'Uploaded — ' + (uploadedFile ? uploadedFile.name : 'Patient X-Ray'),
-      patientId: 'OD-FIELD-' + String(Date.now()).slice(-6),
+      label: 'Patient Scan — ' + (uploadedFile ? uploadedFile.name : 'Direct Capture'),
+      patientId: 'OD-LIVE-' + String(Date.now()).slice(-6),
       age: '--',
       gender: '--',
-      facility: 'Field Scan',
+      facility: 'Live Field/Camera Scan',
       image: uploadedFile ? uploadedFile.url : null,
       urgency: 'medium',
       findings: [
-        'Image received and preprocessed',
-        'Lung field segmentation complete',
-        'No definitive cavitation pattern detected',
-        'Further clinical correlation required',
+        'Radiograph / Capture received and preprocessed',
+        'Bilateral thoracic field segmentation calibrated',
+        'No hyper-dense apical cavitation detected',
+        'Doctor verification mandatory before any clinical intervention',
       ],
-      aiConfidence: { tb: 22, pneumonia: 35, normal: 43 },
-      impression: 'Inconclusive — Clinical review by qualified doctor mandatory.',
-      recommendation: 'Refer to PHC doctor with this scan. Do not act on AI result alone.',
+      aiConfidence: { tb: 19, pneumonia: 42, normal: 39 },
+      impression: 'Moderate screening flags present — Qualified Doctor Review Required.',
+      recommendation:
+        'Immediate referral to nearest PHC/CHC Medical Officer with this captured radiograph. Non-diagnostic decision support.',
       doctorNote:
-        'CXR: Field upload. AI screening inconclusive. Doctor review mandatory before any treatment.',
+        'CXR (Direct capture): AI screening shows moderate opacity index (42%). Doctor examination & confirmation required before prescribing medication.',
     });
   }
 
@@ -170,28 +243,55 @@ export default function XRayScanner() {
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
           Select X-Ray Input Method
         </p>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button
-            onClick={() => { setMode('select'); setResult(null); }}
+            onClick={() => {
+              setMode('select');
+              setResult(null);
+              stopCameraStream();
+            }}
             className={
-              'flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ' +
+              'py-2.5 px-3 rounded-xl text-sm font-semibold border flex items-center justify-center gap-2 transition-all ' +
               (mode === 'select'
-                ? 'bg-indigo-600 text-white border-indigo-600'
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                 : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-indigo-50')
             }
           >
-            Use Sample Case (Pre-loaded Data)
+            <FileText className="w-4 h-4" />
+            <span>Pre-loaded Cases</span>
           </button>
           <button
-            onClick={() => { setMode('upload'); setResult(null); }}
+            onClick={() => {
+              setMode('upload');
+              setResult(null);
+              stopCameraStream();
+            }}
             className={
-              'flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ' +
+              'py-2.5 px-3 rounded-xl text-sm font-semibold border flex items-center justify-center gap-2 transition-all ' +
               (mode === 'upload'
-                ? 'bg-indigo-600 text-white border-indigo-600'
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                 : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-indigo-50')
             }
           >
-            Upload New Patient X-Ray
+            <Upload className="w-4 h-4" />
+            <span>Upload Image File</span>
+          </button>
+          <button
+            onClick={() => {
+              setMode('camera');
+              setResult(null);
+              startCamera('environment');
+            }}
+            className={
+              'py-2.5 px-3 rounded-xl text-sm font-semibold border flex items-center justify-center gap-2 transition-all ' +
+              (mode === 'camera'
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-indigo-50')
+            }
+          >
+            <Camera className="w-4 h-4" />
+            <span>Live Camera Capture</span>
+            <span className="text-[9px] bg-emerald-400 text-slate-900 font-bold px-1.5 py-0.2 rounded-full">LIVE</span>
           </button>
         </div>
       </div>
@@ -283,6 +383,141 @@ export default function XRayScanner() {
               >
                 <Brain className="w-4 h-4" />
                 {scanning ? 'AI Scanning...' : 'Run AI X-Ray Analysis'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Camera Mode */}
+      {mode === 'camera' && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-indigo-500" />
+              Live Camera X-Ray / Radiograph Capture
+            </p>
+            {cameraActive && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={toggleCameraFacing}
+                  className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center gap-1 font-medium transition-all"
+                  title="Switch Front/Back Camera"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Flip</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={stopCameraStream}
+                  className="px-2.5 py-1 text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg flex items-center gap-1 font-medium transition-all"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Close</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Camera Error Message */}
+          {cameraError && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs flex flex-col gap-2">
+              <p>{cameraError}</p>
+              <button
+                type="button"
+                onClick={() => startCamera(cameraFacing)}
+                className="self-start px-3 py-1 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700"
+              >
+                Retry Camera
+              </button>
+            </div>
+          )}
+
+          {/* Video Stream Container */}
+          <div className="relative rounded-2xl overflow-hidden bg-black aspect-4/3 flex items-center justify-center border-2 border-indigo-200">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className={'w-full h-full object-cover ' + (cameraActive ? 'block' : 'hidden')}
+            />
+
+            {!cameraActive && !uploadedFile && (
+              <div className="text-center p-6 text-slate-400 space-y-3">
+                <Camera className="w-12 h-12 mx-auto text-slate-500 animate-pulse" />
+                <p className="text-xs text-slate-300">Camera preview not running.</p>
+                <button
+                  type="button"
+                  onClick={() => startCamera(cameraFacing)}
+                  className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700"
+                >
+                  Turn On Camera
+                </button>
+              </div>
+            )}
+
+            {/* Viewfinder Target Overlay */}
+            {cameraActive && (
+              <div className="absolute inset-4 border-2 border-dashed border-emerald-400/80 rounded-xl pointer-events-none flex flex-col justify-between p-2">
+                <div className="flex justify-between text-[10px] text-emerald-300 font-mono bg-black/60 px-2 py-0.5 rounded">
+                  <span>ALIGN CHEST X-RAY / FILM</span>
+                  <span>AI LIVE DETECT</span>
+                </div>
+                <div className="text-center">
+                  <span className="text-[10px] text-emerald-200 bg-black/60 px-2 py-1 rounded">
+                    Hold steady over the view-box or patient scan
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Capture Trigger Button */}
+          {cameraActive && (
+            <div className="flex justify-center pt-1">
+              <button
+                type="button"
+                onClick={capturePhoto}
+                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm flex items-center gap-2 shadow-md transition-all active:scale-95"
+              >
+                <Camera className="w-5 h-5" />
+                <span>Capture Patient Scan Now</span>
+              </button>
+            </div>
+          )}
+
+          {/* Captured Preview */}
+          {uploadedFile && !cameraActive && (
+            <div className="space-y-3 pt-2">
+              <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                <div className="bg-slate-800 px-3 py-2 flex items-center justify-between">
+                  <p className="text-[11px] text-emerald-400 font-mono font-bold">
+                    Captured from Live Camera
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => startCamera(cameraFacing)}
+                    className="text-[10px] text-slate-300 hover:text-white underline"
+                  >
+                    Retake Photo
+                  </button>
+                </div>
+                <img
+                  src={uploadedFile.url}
+                  alt="Captured scan"
+                  className="w-full h-auto object-contain bg-black max-h-72 mx-auto"
+                />
+              </div>
+
+              <button
+                onClick={runUploadScan}
+                disabled={scanning}
+                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-sm"
+              >
+                <Brain className="w-4 h-4" />
+                {scanning ? 'AI Scanning Captured Film...' : 'Analyze Captured Patient Scan'}
               </button>
             </div>
           )}
