@@ -487,6 +487,277 @@ export const INDIAN_DRUG_DATABASE = [
     pregnancyCat: 'A',
     renalCutoff: 15,
     notes: 'Chelates fluoroquinolones and thyroxine. Separate intake.'
+  },
+  // Additional Anticoagulants
+  {
+    id: 'apixaban',
+    name: 'Apixaban (Eliquis 5mg)',
+    generic: 'Apixaban',
+    class: 'Direct Factor Xa Inhibitor (DOAC)',
+    allergyClass: 'ANTICOAGULANT',
+    category: 'Anticoagulant',
+    defaultDose: '5 mg BD',
+    pregnancyCat: 'B',
+    renalCutoff: 15,
+    notes: 'Direct oral anticoagulant; severe bleeding when combined with NSAIDs/Aspirin'
+  },
+  {
+    id: 'enoxaparin',
+    name: 'Enoxaparin Inj (Clexane 40mg / Lonopin)',
+    generic: 'Low Molecular Weight Heparin',
+    class: 'LMWH Anticoagulant',
+    allergyClass: 'ANTICOAGULANT',
+    category: 'Anticoagulant',
+    defaultDose: '40 mg SubQ OD',
+    pregnancyCat: 'B',
+    renalCutoff: 30,
+    notes: 'Safe anticoagulant in pregnancy (preferred over Warfarin); monitor for bleeding'
+  },
+  // Additional Analgesics / NSAIDs
+  {
+    id: 'piroxicam',
+    name: 'Piroxicam (Dolonex 20mg)',
+    generic: 'Piroxicam',
+    class: 'Oxicam NSAID',
+    allergyClass: 'NSAIDS_ASPIRIN',
+    category: 'NSAID',
+    defaultDose: '20 mg OD',
+    pregnancyCat: 'D',
+    renalCutoff: 40,
+    notes: 'High gastrointestinal ulceration risk; avoid in elderly and active ulcers'
+  },
+  {
+    id: 'mefenamic_acid',
+    name: 'Mefenamic Acid (Meftal 500 / Meftal-Spas)',
+    generic: 'Mefenamic Acid',
+    class: 'Anthranilic Acid NSAID',
+    allergyClass: 'NSAIDS_ASPIRIN',
+    category: 'NSAID',
+    defaultDose: '500 mg TDS',
+    pregnancyCat: 'D',
+    renalCutoff: 40,
+    notes: 'Common antispasmodic/NSAID in India; cross-allergic with Aspirin/Ibuprofen'
+  },
+  // Additional Anti-Diabetics
+  {
+    id: 'dapagliflozin',
+    name: 'Dapagliflozin (Forxiga 10mg / Oxra)',
+    generic: 'Dapagliflozin',
+    class: 'SGLT2 Inhibitor',
+    allergyClass: 'SGLT2_INHIBITOR',
+    category: 'Anti-Diabetic',
+    defaultDose: '10 mg OD morning',
+    pregnancyCat: 'C',
+    renalCutoff: 25,
+    notes: 'Cardio-renal protective; monitor for euglycemic DKA and genital mycotic infections'
+  },
+  {
+    id: 'human_insulin',
+    name: 'Human Insulin (Mixtard 30/70 / Actrapid)',
+    generic: 'Recombinant Human Insulin',
+    class: 'Pancreatic Hormone / Insulin',
+    allergyClass: 'INSULIN',
+    category: 'Anti-Diabetic',
+    defaultDose: '10-20 Units SubQ before meals',
+    pregnancyCat: 'B',
+    renalCutoff: 10,
+    notes: 'Safest anti-diabetic in pregnancy and severe CKD (eGFR < 30) where Metformin is blocked'
+  },
+  // Additional Cardiovascular / Anti-Hypertensives
+  {
+    id: 'metoprolol',
+    name: 'Metoprolol Succinate (Betaloc 50 / Met XL)',
+    generic: 'Metoprolol',
+    class: 'Cardioselective Beta-1 Blocker',
+    allergyClass: 'BETA_BLOCKER',
+    category: 'Cardiovascular',
+    defaultDose: '50 mg OD',
+    pregnancyCat: 'C',
+    renalCutoff: 10,
+    notes: 'Cardioselective beta-blocker for heart failure/angina; caution in asthma'
+  },
+  {
+    id: 'losartan',
+    name: 'Losartan (Repace 50 / Losar)',
+    generic: 'Losartan Potassium',
+    class: 'Angiotensin Receptor Blocker (ARB)',
+    allergyClass: 'ARB',
+    category: 'Anti-Hypertensive',
+    defaultDose: '50 mg OD',
+    pregnancyCat: 'D',
+    renalCutoff: 20,
+    notes: 'Category D in pregnancy (teratogenic); alternative to ACE-inhibitor cough'
+  },
+  // Additional Gastrointestinal
+  {
+    id: 'rabeprazole',
+    name: 'Rabeprazole (Razo 20 / Happi)',
+    generic: 'Rabeprazole Sodium',
+    class: 'Proton Pump Inhibitor (PPI)',
+    allergyClass: 'PPI',
+    category: 'Gastrointestinal',
+    defaultDose: '20 mg OD before food',
+    pregnancyCat: 'B',
+    renalCutoff: 10,
+    notes: 'Potent rapid-onset PPI for severe GERD and peptic ulcer healing'
+  },
+  // Additional Antibiotics
+  {
+    id: 'metronidazole',
+    name: 'Metronidazole (Flagyl 400)',
+    generic: 'Metronidazole',
+    class: 'Nitroimidazole Antimicrobial',
+    allergyClass: 'NITROIMIDAZOLE',
+    category: 'Antibiotic',
+    defaultDose: '400 mg TDS',
+    pregnancyCat: 'B',
+    renalCutoff: 10,
+    notes: 'Anaerobic & amoebic infection treatment; severe disulfiram reaction with alcohol'
+  }
+];
+
+// Rich Category Metadata with Clinical Protocol Highlights & 1-Click Category Sample Prescriptions
+export const DRUG_CATEGORIES = [
+  {
+    id: 'ALL',
+    label: 'All Medicines',
+    labelOr: 'ସମସ୍ତ ଔଷଧ (All)',
+    labelHi: 'सभी दवाएं (All)',
+    color: 'slate',
+    tag: '50+ Drugs',
+    description: 'Complete Indian Pharmacopoeia clinical formulary across all therapeutic classes.',
+    riskHighlights: [
+      'Comprehensive monitoring for direct IgE allergies, cross-reactivity, and multi-drug interactions.',
+      'Check patient ABHA profile for recorded adverse drug reactions and organ clearances.'
+    ],
+    sampleRxDrugIds: ['augmentin', 'paracetamol', 'pantoprazole'],
+    sampleDescription: 'General PHC Outpatient Prescription (Augmentin 625 + Dolo 650 + Pan 40)'
+  },
+  {
+    id: 'Antibiotic',
+    label: 'Antibiotic',
+    labelOr: 'ଆଣ୍ଟିବାୟୋଟିକ୍ (Antibiotic)',
+    labelHi: 'एंटीबायोटिक (Antibiotic)',
+    color: 'blue',
+    tag: '14 Formulations',
+    description: 'Penicillins, Cephalosporins, Fluoroquinolones, Macrolides, Sulfa & Tetracyclines.',
+    riskHighlights: [
+      'Penicillin Anaphylaxis: High incidence of acute IgE-mediated shock (Mox, Augmentin, Ampicillin).',
+      'Cephalosporin Cross-Reactivity: 5%–10% cross-allergy in penicillin-allergic patients (Cefixime, Monocef).',
+      'Sulfa SJS Risk: Stevens-Johnson Syndrome hazard with Cotrimoxazole / Septran.',
+      'Fluoroquinolones: Tendonitis & QT prolongation; avoid in children and pregnancy (Cipro, Levo).'
+    ],
+    sampleRxDrugIds: ['augmentin', 'cefixime', 'paracetamol'],
+    sampleDescription: 'Sample Broad-Spectrum RTI Prescription (Augmentin 625 + Taxim-O 200 + Dolo 650)'
+  },
+  {
+    id: 'Analgesic',
+    label: 'Analgesic & NSAID',
+    labelOr: 'ପେନ୍ କିଲର୍ ଓ NSAID (Analgesic)',
+    labelHi: 'पेनकिलर एवं NSAID (दर्द निवारक)',
+    color: 'rose',
+    tag: '8 Formulations',
+    description: 'NSAIDs (Diclofenac, Ibuprofen, Aceclofenac, Piroxicam, Meftal), Salicylates (Aspirin), Paracetamol, Tramadol.',
+    riskHighlights: [
+      'Asthma Bronchospasm: COX-1 inhibition triggers fatal bronchospasm (Samter Triad / NERD).',
+      'Peptic Ulcer Perforation: Severe mucosal erosion & upper gastrointestinal hemorrhage.',
+      'Nephrotoxicity in CKD: Causes acute renal papillary necrosis and fluid retention.',
+      'Safe Alternative: Paracetamol 650mg is the safest first-line analgesic.'
+    ],
+    sampleRxDrugIds: ['diclofenac', 'ibuprofen', 'pantoprazole'],
+    sampleDescription: 'Sample Acute Musculoskeletal Pain Prescription (Voveran 50 + Brufen 400 + Pan 40)'
+  },
+  {
+    id: 'Anticoagulant',
+    label: 'Anticoagulant & Antiplatelet',
+    labelOr: 'ରକ୍ତ ତରଳ (Anticoagulant)',
+    labelHi: 'रक्त पतला करने वाली (Anticoagulant)',
+    color: 'red',
+    tag: '5 Formulations',
+    description: 'Warfarin, Clopidogrel, Aspirin, Apixaban (Eliquis), Enoxaparin (Clexane).',
+    riskHighlights: [
+      'Fatal Bleeding Synergy: Warfarin + Diclofenac / Aspirin increases major hemorrhage risk by >450%.',
+      'CYP2C19 Suppression: Omeprazole disables Clopidogrel activation, risking stent thrombosis. Use Pantoprazole.',
+      'Pregnancy Absolute Contraindication: Warfarin causes severe fetal embryopathy (Category X).'
+    ],
+    sampleRxDrugIds: ['warfarin', 'clopidogrel', 'aspirin'],
+    sampleDescription: 'Sample High-Risk Antithrombotic Regimen (Warf 5mg + Clopilet 75mg + Ecosprin 75mg)'
+  },
+  {
+    id: 'Anti-Diabetic',
+    label: 'Anti-Diabetic',
+    labelOr: 'ମଧୁମେହ / ଶର୍କରା (Diabetes)',
+    labelHi: 'डायबिटीज (Anti-Diabetic)',
+    color: 'emerald',
+    tag: '6 Formulations',
+    description: 'Biguanides (Metformin), Sulfonylureas (Glimepiride, Gliclazide), DPP-4i (Teneligliptin), SGLT2i (Forxiga), Insulin.',
+    riskHighlights: [
+      'Lactic Acidosis Hazard: Metformin accumulation when eGFR < 30 ml/min or before radiocontrast dye.',
+      'Steroid Hyperglycemic Spike: Prednisolone / Dexona causes acute diabetic decompensation and DKA.',
+      'Sulfa Cross-Sensitivity: Sulfonylurea caution in patients with severe documented sulfa allergy.'
+    ],
+    sampleRxDrugIds: ['metformin', 'glimepiride', 'teneligliptin'],
+    sampleDescription: 'Sample Multi-Target Anti-Diabetic Regimen (Glycomet 1000 + Amaryl 2mg + Tenelimac 20)'
+  },
+  {
+    id: 'Cardiovascular',
+    label: 'Cardiovascular & BP',
+    labelOr: 'ରକ୍ତଚାପ ଓ ହୃଦରୋଗ (BP / Cardiac)',
+    labelHi: 'ब्लड प्रेशर एवं हृदय (Cardiovascular)',
+    color: 'purple',
+    tag: '9 Formulations',
+    description: 'CCBs (Amlodipine), ARBs (Telmisartan, Losartan), ACEi (Ramipril), Beta-Blockers (Atenolol, Propranolol, Metoprolol), Diuretics.',
+    riskHighlights: [
+      'Category D Teratogenicity: ACEi / ARBs cause oligohydramnios and fetal renal dysgenesis in pregnancy.',
+      'Severe Hyperkalemia: Combining ACEi/ARBs with Spironolactone raises potassium > 6.0 mEq/L.',
+      'Asthma Contraindication: Propranolol causes refractory bronchospasm and blocks Salbutamol rescue.'
+    ],
+    sampleRxDrugIds: ['telmisartan', 'amlodipine', 'spironolactone'],
+    sampleDescription: 'Sample Escalated Anti-Hypertensive Regimen (Telma 40 + Stamlo 5 + Aldactone 25)'
+  },
+  {
+    id: 'Gastrointestinal',
+    label: 'Gastrointestinal & PPI',
+    labelOr: 'ଗ୍ୟାସ୍ ଓ ପାକସ୍ଥଳୀ (GI / PPI)',
+    labelHi: 'गैस एवं एसिडिटी (Gastrointestinal)',
+    color: 'amber',
+    tag: '5 Formulations',
+    description: 'PPIs (Pantoprazole, Omeprazole, Rabeprazole), Antacids (Gelusil, Digene).',
+    riskHighlights: [
+      'Clopidogrel Interaction: Omeprazole strongly inhibits CYP2C19. Pantoprazole is the safe alternative.',
+      'Chelation Complexation: Antacids bind fluoroquinolones, tetracyclines and iron, disabling absorption.'
+    ],
+    sampleRxDrugIds: ['pantoprazole', 'antacid_gel'],
+    sampleDescription: 'Sample Gastroprotection & Antacid Regimen (Pan 40 + Digene Gel)'
+  },
+  {
+    id: 'Corticosteroid',
+    label: 'Corticosteroid',
+    labelOr: 'ଷ୍ଟିରଏଡ୍ (Corticosteroid)',
+    labelHi: 'स्टेरॉयड (Corticosteroid)',
+    color: 'violet',
+    tag: '2 Formulations',
+    description: 'Prednisolone (Wysolone), Dexamethasone (Dexona).',
+    riskHighlights: [
+      'Gastric Perforation Synergy: >10-fold ulceration risk when combined with NSAIDs.',
+      'Severe Hyperglycemia: Sharp glucose spikes in diabetics; immunosuppression.'
+    ],
+    sampleRxDrugIds: ['prednisolone', 'dexamethasone'],
+    sampleDescription: 'Sample Anti-Inflammatory Glucocorticoid Regimen (Wysolone 20mg + Dexona 4mg)'
+  },
+  {
+    id: 'Respiratory',
+    label: 'Respiratory',
+    labelOr: 'ଶ୍ୱାସରୋଗ (Respiratory)',
+    labelHi: 'दमा एवं श्वसन (Respiratory)',
+    color: 'cyan',
+    tag: '2 Formulations',
+    description: 'Bronchodilators (Salbutamol Inhaler), Leukotriene Antagonists (Montair-LC).',
+    riskHighlights: [
+      'Antagonized by Beta-Blockers: Non-selective beta blockers directly cancel Salbutamol action.'
+    ],
+    sampleRxDrugIds: ['salbutamol', 'montelukast'],
+    sampleDescription: 'Sample Asthma Maintenance & Rescue Regimen (Asthalin Inhaler + Montair-LC)'
   }
 ];
 

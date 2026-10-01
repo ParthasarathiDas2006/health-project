@@ -29,7 +29,11 @@ import {
   Stethoscope,
   Send,
   Zap,
-  Lock
+  Lock,
+  Layers,
+  Droplet,
+  TrendingUp,
+  Wind
 } from 'lucide-react';
 import {
   INDIAN_DRUG_DATABASE,
@@ -37,7 +41,8 @@ import {
   DRUG_INTERACTION_RULES,
   COMORBIDITY_CONTRAINDICATIONS,
   PRELOADED_ABHA_PATIENTS,
-  PRESET_CLINICAL_CASES
+  PRESET_CLINICAL_CASES,
+  DRUG_CATEGORIES
 } from '../data/drugSafetyData';
 
 export default function DrugAllergySafetyGuard({ appLang = 'or-IN', currentUser }) {
@@ -455,14 +460,152 @@ export default function DrugAllergySafetyGuard({ appLang = 'or-IN', currentUser 
     window.print();
   };
 
-  // Filtered drug database for searching
+  // Current active category configuration object
+  const currentCategoryObj = useMemo(() => {
+    return DRUG_CATEGORIES.find((c) => c.id === selectedFilterCategory) || DRUG_CATEGORIES[0];
+  }, [selectedFilterCategory]);
+
+  // Fast helper to compute patient safety status for any drug in the catalog
+  const getDrugSafetyStatusForPatient = (drug) => {
+    const patientAllergies = activePatient.knownAllergies || [];
+    const patientComorbidities = activePatient.comorbidities || [];
+    const ongoingMedIds = activePatient.activeMedications || [];
+
+    // 1. Direct allergy
+    for (const al of patientAllergies) {
+      const rule = ALLERGY_CLASSES[al.classKey];
+      if (rule && (rule.directTriggers.includes(drug.id) || drug.allergyClass === al.classKey)) {
+        return {
+          status: 'CRITICAL',
+          badgeText: lang === 'or-IN' ? '🔴 ଆଲର୍ଜି ନିଷିଦ୍ଧ' : (lang === 'hi-IN' ? '🔴 गंभीर एलर्जी' : '🔴 ALLERGY CONTRAINDICATION'),
+          badgeClass: 'bg-rose-600 text-white font-black',
+          reason: `${al.name} (${al.severity})`
+        };
+      }
+    }
+
+    // 2. Cross-allergy
+    for (const al of patientAllergies) {
+      const rule = ALLERGY_CLASSES[al.classKey];
+      if (rule?.crossReactiveClasses) {
+        for (const cross of rule.crossReactiveClasses) {
+          if (drug.allergyClass === cross.targetAllergyClass) {
+            return {
+              status: 'HIGH',
+              badgeText: lang === 'or-IN' ? `🟠 ${cross.frequency} କ୍ରସ୍-ଆଲର୍ଜି` : (lang === 'hi-IN' ? `🟠 ${cross.frequency} क्रॉस-एलर्जी` : `🟠 ${cross.frequency} CROSS-ALLERGY`),
+              badgeClass: 'bg-orange-500 text-white font-bold',
+              reason: cross.mechanism
+            };
+          }
+        }
+      }
+    }
+
+    // 3. Comorbidity
+    for (const cKey of patientComorbidities) {
+      const contra = COMORBIDITY_CONTRAINDICATIONS.find((c) => c.condition === cKey);
+      if (contra?.dangerousDrugs.includes(drug.id)) {
+        return {
+          status: 'CRITICAL',
+          badgeText: lang === 'or-IN' ? `⚠️ ${cKey} ବିପଦ` : (lang === 'hi-IN' ? `⚠️ ${cKey} खतरा` : `⚠️ ${cKey} CONTRAINDICATED`),
+          badgeClass: 'bg-rose-700 text-white font-bold',
+          reason: contra.warning
+        };
+      }
+    }
+
+    // 4. DDI with ongoing medications
+    for (const ongoingId of ongoingMedIds) {
+      const match = DRUG_INTERACTION_RULES.find(
+        (r) => (r.drugA === drug.id && r.drugB === ongoingId) || (r.drugA === ongoingId && r.drugB === drug.id)
+      );
+      if (match) {
+        const ongoingDrug = INDIAN_DRUG_DATABASE.find((d) => d.id === ongoingId);
+        return {
+          status: match.severity,
+          badgeText: lang === 'or-IN' ? `⚠️ DDI: ${ongoingDrug?.name.split(' ')[0]}` : (lang === 'hi-IN' ? `⚠️ DDI: ${ongoingDrug?.name.split(' ')[0]}` : `⚠️ DDI with ${ongoingDrug?.name.split(' ')[0]}`),
+          badgeClass: match.severity === 'CRITICAL' ? 'bg-rose-600 text-white font-black' : 'bg-amber-600 text-white font-bold',
+          reason: match.description
+        };
+      }
+    }
+
+    // 5. Renal check
+    if (activePatient.eGFR && drug.renalCutoff && activePatient.eGFR < drug.renalCutoff) {
+      return {
+        status: 'HIGH',
+        badgeText: `⚠️ eGFR < ${drug.renalCutoff}`,
+        badgeClass: 'bg-amber-600 text-white font-bold',
+        reason: `Renal clearance threshold exceeded (Patient eGFR: ${activePatient.eGFR})`
+      };
+    }
+
+    return {
+      status: 'SAFE',
+      badgeText: lang === 'or-IN' ? '🟢 ସୁରକ୍ଷିତ (Safe)' : (lang === 'hi-IN' ? '🟢 सुरक्षित (Safe)' : '🟢 SAFE TO PRESCRIBE'),
+      badgeClass: 'bg-emerald-100 text-emerald-800 font-bold',
+      reason: 'No documented contraindications'
+    };
+  };
+
+  // Helper to load sample Rx for the selected category
+  const handleLoadCategorySampleRx = (catObj) => {
+    if (!catObj?.sampleRxDrugIds) return;
+    const drugs = INDIAN_DRUG_DATABASE.filter((d) => catObj.sampleRxDrugIds.includes(d.id));
+    setPrescribedDrugs(drugs);
+    setIsOverridden(false);
+    setOverrideReason('');
+    setOcrSuccessMessage(null);
+  };
+
+  // Helper to count drugs per category
+  const getCategoryCount = (catId) => {
+    if (catId === 'ALL') return INDIAN_DRUG_DATABASE.length;
+    return INDIAN_DRUG_DATABASE.filter((drug) => {
+      if (catId === 'Antibiotic') return drug.category === 'Antibiotic';
+      if (catId === 'Analgesic') return drug.category === 'Analgesic' || drug.category === 'NSAID' || drug.category === 'Opioid Analgesic';
+      if (catId === 'Anticoagulant') return drug.category === 'Anticoagulant' || drug.category === 'Antiplatelet';
+      if (catId === 'Anti-Diabetic') return drug.category === 'Anti-Diabetic';
+      if (catId === 'Cardiovascular') return drug.category === 'Cardiovascular' || drug.category === 'Anti-Hypertensive' || drug.category === 'Diuretic';
+      if (catId === 'Gastrointestinal') return drug.category === 'Gastrointestinal';
+      if (catId === 'Corticosteroid') return drug.category === 'Corticosteroid';
+      if (catId === 'Respiratory') return drug.category === 'Respiratory';
+      return drug.category === catId;
+    }).length;
+  };
+
+  // Filtered drug database for searching & category browsing
   const filteredDrugs = useMemo(() => {
     return INDIAN_DRUG_DATABASE.filter((drug) => {
+      const query = searchQuery.trim().toLowerCase();
       const matchesSearch =
-        drug.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        drug.generic.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        drug.class.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCat = selectedFilterCategory === 'ALL' || drug.category === selectedFilterCategory;
+        !query ||
+        drug.name.toLowerCase().includes(query) ||
+        drug.generic.toLowerCase().includes(query) ||
+        drug.class.toLowerCase().includes(query);
+
+      let matchesCat = true;
+      if (selectedFilterCategory !== 'ALL') {
+        if (selectedFilterCategory === 'Antibiotic') {
+          matchesCat = drug.category === 'Antibiotic';
+        } else if (selectedFilterCategory === 'Analgesic') {
+          matchesCat = drug.category === 'Analgesic' || drug.category === 'NSAID' || drug.category === 'Opioid Analgesic';
+        } else if (selectedFilterCategory === 'Anticoagulant') {
+          matchesCat = drug.category === 'Anticoagulant' || drug.category === 'Antiplatelet';
+        } else if (selectedFilterCategory === 'Anti-Diabetic') {
+          matchesCat = drug.category === 'Anti-Diabetic';
+        } else if (selectedFilterCategory === 'Cardiovascular') {
+          matchesCat = drug.category === 'Cardiovascular' || drug.category === 'Anti-Hypertensive' || drug.category === 'Diuretic';
+        } else if (selectedFilterCategory === 'Gastrointestinal') {
+          matchesCat = drug.category === 'Gastrointestinal';
+        } else if (selectedFilterCategory === 'Corticosteroid') {
+          matchesCat = drug.category === 'Corticosteroid';
+        } else if (selectedFilterCategory === 'Respiratory') {
+          matchesCat = drug.category === 'Respiratory';
+        } else {
+          matchesCat = drug.category === selectedFilterCategory;
+        }
+      }
       return matchesSearch && matchesCat;
     });
   }, [searchQuery, selectedFilterCategory]);
@@ -757,59 +900,174 @@ export default function DrugAllergySafetyGuard({ appLang = 'or-IN', currentUser 
             />
           </div>
 
+          {/* Category Filter Pills with Item Counts */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-            {['ALL', 'Antibiotic', 'NSAID', 'Analgesic', 'Anti-Diabetic', 'Anti-Hypertensive', 'Cardiovascular', 'Anticoagulant'].map(
-              (cat) => (
+            {DRUG_CATEGORIES.map((cat) => {
+              const isSelected = selectedFilterCategory === cat.id;
+              const count = getCategoryCount(cat.id);
+              const label = lang === 'or-IN' ? cat.labelOr : (lang === 'hi-IN' ? cat.labelHi : cat.label);
+              return (
                 <button
-                  key={cat}
-                  onClick={() => setSelectedFilterCategory(cat)}
-                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${
-                    selectedFilterCategory === cat
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  key={cat.id}
+                  onClick={() => {
+                    setSelectedFilterCategory(cat.id);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                    isSelected
+                      ? 'bg-slate-900 text-white shadow-md ring-2 ring-indigo-500/40'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
-                  {cat}
+                  <span>{label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                      isSelected ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {count}
+                  </span>
                 </button>
-              )
-            )}
+              );
+            })}
           </div>
         </div>
 
-        {/* Search Results Dropdown/Grid (if user is searching) */}
-        {searchQuery.trim().length > 0 && (
-          <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-2xl p-2 bg-slate-50 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+        {/* Dynamic Category Clinical Protocol & 1-Click Test Prescription Banner */}
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 to-indigo-950 text-white border border-indigo-900/60 space-y-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-500/30 text-indigo-300 border border-indigo-400/30">
+                  {currentCategoryObj.id} Category Formulary
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  {filteredDrugs.length} Drugs Available
+                </span>
+              </div>
+              <h4 className="text-sm font-extrabold text-white flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-amber-400" />
+                {lang === 'or-IN' ? `${currentCategoryObj.labelOr} କ୍ଲିନିକାଲ୍ ଗାଇଡ୍ ଓ ସୁରକ୍ଷା ନିୟମ` : (lang === 'hi-IN' ? `${currentCategoryObj.labelHi} क्लिनिकल गाइड एवं सुरक्षा प्रोटोकॉल` : `${currentCategoryObj.label} Clinical Guide & Safety Protocol`)}
+              </h4>
+              <p className="text-xs text-slate-300 mt-0.5">
+                {currentCategoryObj.description}
+              </p>
+            </div>
+
+            {currentCategoryObj.sampleRxDrugIds && (
+              <button
+                onClick={() => handleLoadCategorySampleRx(currentCategoryObj)}
+                className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 shrink-0 self-start md:self-auto cursor-pointer"
+                title={currentCategoryObj.sampleDescription}
+              >
+                <Zap className="w-4 h-4 fill-slate-950" />
+                {lang === 'or-IN'
+                  ? `⚡ ନମୁନା ${currentCategoryObj.id} ପ୍ରିସ୍କ୍ରିପସନ୍ ଲୋଡ୍ କରନ୍ତୁ`
+                  : (lang === 'hi-IN'
+                  ? `⚡ नमूना ${currentCategoryObj.id} प्रिस्क्रिप्शन लोड करें`
+                  : `⚡ Load Sample ${currentCategoryObj.id} Rx`)}
+              </button>
+            )}
+          </div>
+
+          {/* Category Safety Alerts Bullet List */}
+          {currentCategoryObj.riskHighlights && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-indigo-900/60 text-[11px] text-slate-300">
+              {currentCategoryObj.riskHighlights.map((rh, i) => (
+                <div key={i} className="flex items-start gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                  <span>{rh}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Live Formulary Catalog Grid (Always Visible for the Selected Category) */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Pill className="w-3.5 h-3.5 text-indigo-600" />
+              {lang === 'or-IN' ? `ଫାର୍ମାସୀ ଡାଇରେକ୍ଟୋରୀ (${currentCategoryObj.id})` : (lang === 'hi-IN' ? `फार्मेसी ड्रग डायरेक्टरी (${currentCategoryObj.id})` : `Pharmacopoeia Catalog (${currentCategoryObj.id})`)}
+              <span className="text-slate-400 font-normal">({filteredDrugs.length} items)</span>
+            </span>
+            <span className="text-[11px] text-slate-500">
+              Showing real-time safety status for: <strong>{activePatient.name.split(' ')[0]}</strong>
+            </span>
+          </div>
+
+          <div className="max-h-72 overflow-y-auto border border-slate-200 rounded-2xl p-3 bg-slate-50/70 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {filteredDrugs.length > 0 ? (
-              filteredDrugs.slice(0, 9).map((drug) => {
+              filteredDrugs.map((drug) => {
                 const alreadyAdded = prescribedDrugs.some((d) => d.id === drug.id);
+                const safety = getDrugSafetyStatusForPatient(drug);
+
                 return (
                   <div
                     key={drug.id}
-                    className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-2xs hover:border-indigo-300 transition-colors"
+                    className={`p-3 rounded-2xl border transition-all flex flex-col justify-between gap-2 shadow-2xs ${
+                      alreadyAdded
+                        ? 'bg-indigo-50/50 border-indigo-300 ring-1 ring-indigo-400/30'
+                        : safety.status === 'CRITICAL'
+                        ? 'bg-rose-50/40 border-rose-200 hover:border-rose-300'
+                        : 'bg-white border-slate-200 hover:border-indigo-300'
+                    }`}
                   >
-                    <div className="min-w-0">
-                      <p className="font-bold text-slate-900 text-xs truncate">{drug.name}</p>
-                      <p className="text-[10px] text-slate-500 truncate">{drug.class} • {drug.defaultDose}</p>
+                    <div>
+                      <div className="flex items-start justify-between gap-1 mb-1">
+                        <span className="font-extrabold text-slate-900 text-xs leading-tight">
+                          {drug.name}
+                        </span>
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded-md whitespace-nowrap shrink-0 ${safety.badgeClass}`}
+                        >
+                          {safety.badgeText}
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-slate-600 font-medium">
+                        {drug.class} • <span className="font-bold text-slate-800">{drug.defaultDose}</span>
+                      </p>
+
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-1">
+                        <span>Preg: <strong>Cat {drug.pregnancyCat}</strong></span>
+                        <span>•</span>
+                        <span>Renal: {drug.renalCutoff ? `eGFR > ${drug.renalCutoff}` : 'Normal'}</span>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => handleAddDrug(drug)}
-                      disabled={alreadyAdded}
-                      className={`p-1.5 rounded-lg text-xs font-bold shrink-0 transition-all ${
-                        alreadyAdded
-                          ? 'bg-emerald-100 text-emerald-800 cursor-default'
-                          : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs'
-                      }`}
-                    >
-                      {alreadyAdded ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-                    </button>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[10px] text-slate-400 truncate max-w-[130px]" title={drug.notes}>
+                        {drug.notes}
+                      </span>
+                      {alreadyAdded ? (
+                        <button
+                          onClick={() => handleRemoveDrug(drug.id)}
+                          className="px-2.5 py-1 bg-emerald-100 hover:bg-rose-100 text-emerald-800 hover:text-rose-800 rounded-lg text-[11px] font-bold transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
+                          title="Click to remove from Rx"
+                        >
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          In Rx
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAddDrug(drug)}
+                          className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-bold shadow-2xs transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Add to Rx
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })
             ) : (
-              <p className="col-span-full text-center text-xs text-slate-400 py-3">No matching drug found in standard index.</p>
+              <p className="col-span-full text-center text-xs text-slate-400 py-6">
+                No matching medications found in {selectedFilterCategory} category.
+              </p>
             )}
           </div>
-        )}
+        </div>
 
         {/* Current Active Prescription Cart */}
         <div>
