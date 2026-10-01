@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Brain,
   ShieldAlert,
@@ -28,6 +28,357 @@ import {
   TrendingUp,
   RotateCcw
 } from 'lucide-react';
+
+// ─── Differential Triage Module (Feature 12) ────────────────────────────────
+const SYMPTOM_PRESETS = [
+  {
+    id: 'resp',
+    label: 'Respiratory',
+    emoji: '🫁',
+    symptoms: 'Productive cough 3 weeks, low-grade evening fever, mild breathlessness, night sweats',
+    age: 34, gender: 'Male',
+    spo2: 94, rr: 22, temp: 99.4, hr: 96,
+    differentials: [
+      { name: 'Pulmonary Tuberculosis', icd: 'A15.0', pct: 78, color: 'red', flag: true,
+        redFlags: ['Evening fever >2 weeks', 'Night sweats', 'Weight loss >3kg'],
+        doctorQs: ['History of drenching night sweats?', 'Hemoptysis (blood in sputum) in last 7 days?', 'Household contact with known TB patient?', 'Sputum AFB / CBNAAT done?'],
+        ashaAction: 'Refer to DOTS centre immediately. Do not start empirical antibiotics.' },
+      { name: 'LRTI / Bacterial Pneumonia', icd: 'J22', pct: 52, color: 'amber', flag: false,
+        redFlags: ['SpO₂ <94%', 'RR >20', 'Pleuritic chest pain'],
+        doctorQs: ['Sputum colour (yellow/green/rusty)?', 'Chest X-Ray done?', 'Any prior antibiotic use in last 2 weeks?'],
+        ashaAction: 'Monitor SpO₂ every 2h. Refer if SpO₂ drops below 92%.' },
+      { name: 'COPD Exacerbation', icd: 'J44.1', pct: 24, color: 'slate', flag: false,
+        redFlags: ['Wheeze on auscultation', 'Barrel chest', 'Smoking history'],
+        doctorQs: ['History of smoking (pack-years)?', 'Previous COPD diagnosis or spirometry?', 'Use of inhalers?'],
+        ashaAction: 'Document smoking history. Escalate to PHC doctor for spirometry referral.' },
+    ]
+  },
+  {
+    id: 'cardiac',
+    label: 'Cardiac',
+    emoji: '❤️',
+    symptoms: 'Chest tightness, radiating left arm pain, diaphoresis, nausea since 1 hour',
+    age: 58, gender: 'Male',
+    spo2: 96, rr: 18, temp: 98.6, hr: 110,
+    differentials: [
+      { name: 'Acute MI (STEMI/NSTEMI)', icd: 'I21', pct: 85, color: 'red', flag: true,
+        redFlags: ['Chest pain >30 min', 'Diaphoresis', 'Radiating arm/jaw pain'],
+        doctorQs: ['ECG done? ST elevation present?', 'Troponin / CKMB available?', 'Time of onset of pain?', 'Aspirin 325mg given?'],
+        ashaAction: 'EMERGENCY — Call 108 immediately. Give Aspirin 325mg if no allergy. Do not delay.' },
+      { name: 'Unstable Angina', icd: 'I20.0', pct: 60, color: 'amber', flag: true,
+        redFlags: ['Recurrent chest pain at rest', 'New onset within 2 months'],
+        doctorQs: ['Pain at rest or exertion?', 'Previous angina history?', 'Nitrate use?'],
+        ashaAction: 'Urgent PHC referral. Oxygen if available. Keep patient supine.' },
+      { name: 'GERD / Esophageal Spasm', icd: 'K21.0', pct: 20, color: 'slate', flag: false,
+        redFlags: ['Burning after food', 'Relieved by antacids'],
+        doctorQs: ['Pain related to meals?', 'Antacid trial response?', 'Any dysphagia?'],
+        ashaAction: 'Rule out cardiac cause first. Document response to antacids for doctor.' },
+    ]
+  },
+  {
+    id: 'maternal',
+    label: 'Maternal',
+    emoji: '🤰',
+    symptoms: 'Severe headache, visual disturbance, swollen feet, 34 weeks pregnant',
+    age: 26, gender: 'Female',
+    spo2: 98, rr: 16, temp: 99.0, hr: 88,
+    differentials: [
+      { name: 'Pre-eclampsia / Eclampsia', icd: 'O14.1', pct: 82, color: 'red', flag: true,
+        redFlags: ['BP >140/90', 'Proteinuria', 'Severe headache', 'Visual changes'],
+        doctorQs: ['BP reading (both arms)?', 'Dipstick urine protein?', 'Platelet count?', 'Any seizures?'],
+        ashaAction: 'EMERGENCY — Refer to FRU / district hospital NOW. Give MgSO4 if available per JSY protocol.' },
+      { name: 'Pregnancy-Induced Hypertension', icd: 'O13', pct: 55, color: 'amber', flag: false,
+        redFlags: ['BP 130-139/80-89', 'Persistent headache'],
+        doctorQs: ['Baseline BP in first trimester?', 'ANC visit frequency?', 'Fetal movements normal?'],
+        ashaAction: 'Monitor BP every 4h. Document in MCP card. Refer if BP worsens.' },
+      { name: 'Tension Headache (Pregnancy)', icd: 'G44.2', pct: 15, color: 'slate', flag: false,
+        redFlags: ['No neurological symptoms', 'BP normal'],
+        doctorQs: ['Duration of headache?', 'Associated nausea/vomiting?', 'Visual aura?'],
+        ashaAction: 'Safe analgesic (Paracetamol) per doctor advice. Monitor BP and fetal movements.' },
+    ]
+  },
+  {
+    id: 'pediatric',
+    label: 'Paediatric',
+    emoji: '👶',
+    symptoms: 'Child 3 years, high fever 104°F, neck stiffness, photophobia, rash on trunk',
+    age: 3, gender: 'Male',
+    spo2: 97, rr: 28, temp: 104.0, hr: 130,
+    differentials: [
+      { name: 'Bacterial Meningitis', icd: 'G00.9', pct: 75, color: 'red', flag: true,
+        redFlags: ['Neck stiffness', 'Photophobia', 'Petechial rash', 'High fever'],
+        doctorQs: ['Kernig / Brudzinski sign positive?', 'Fontanelle status?', 'CSF analysis done?', 'Vaccination history (Hib, MenC)?'],
+        ashaAction: 'EMERGENCY — Rush to district hospital. Do not delay antibiotics. Isolate.' },
+      { name: 'Viral Encephalitis', icd: 'A86', pct: 48, color: 'amber', flag: true,
+        redFlags: ['Altered consciousness', 'Seizures', 'Fever with behavioural change'],
+        doctorQs: ['Any seizure activity?', 'Consciousness level (AVPU)?', 'MRI / EEG possible?'],
+        ashaAction: 'Urgent referral to paediatric ward. Monitor airway. Seizure precautions.' },
+      { name: 'Dengue Fever', icd: 'A90', pct: 35, color: 'slate', flag: false,
+        redFlags: ['Thrombocytopenia', 'Retro-orbital pain', 'Dengue endemic area'],
+        doctorQs: ['NS1 antigen / IgM done?', 'Platelet count?', 'Bleeding from any site?'],
+        ashaAction: 'Dengue rapid test. Oral fluids. Monitor platelet. No NSAIDs.' },
+    ]
+  },
+];
+
+function DifferentialTriageModule() {
+  const [selectedPreset, setSelectedPreset] = useState(SYMPTOM_PRESETS[0]);
+  const [customSymptoms, setCustomSymptoms] = useState('');
+  const [analysing, setAnalysing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [resultReady, setResultReady] = useState(true);
+  const [expandedCard, setExpandedCard] = useState(0);
+  const [doctorNoteGenerated, setDoctorNoteGenerated] = useState(false);
+
+  const runAnalysis = () => {
+    setAnalysing(true);
+    setResultReady(false);
+    setProgress(0);
+    setDoctorNoteGenerated(false);
+    let p = 0;
+    const iv = setInterval(() => {
+      p += Math.floor(Math.random() * 18) + 6;
+      if (p >= 100) { p = 100; clearInterval(iv); setAnalysing(false); setResultReady(true); }
+      setProgress(p);
+    }, 180);
+  };
+
+  const colorMap = {
+    red: { bar: 'bg-red-500', badge: 'bg-red-100 text-red-700 border-red-200', border: 'border-red-300', ring: 'ring-red-200' },
+    amber: { bar: 'bg-amber-400', badge: 'bg-amber-100 text-amber-700 border-amber-200', border: 'border-amber-300', ring: 'ring-amber-100' },
+    slate: { bar: 'bg-slate-400', badge: 'bg-slate-100 text-slate-600 border-slate-200', border: 'border-slate-200', ring: '' },
+  };
+
+  const active = selectedPreset;
+  const topDiff = active.differentials[0];
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 rounded-2xl p-5 text-white">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Brain className="w-5 h-5 text-indigo-200" />
+              <h3 className="text-base font-extrabold">AI Differential Triage Engine</h3>
+              <span className="text-[10px] bg-indigo-500/50 border border-indigo-400 px-2 py-0.5 rounded-full font-mono">Non-Diagnostic</span>
+            </div>
+            <p className="text-indigo-200 text-xs">Human-in-the-Loop • MoHFW Safety Protocol • For Doctor Review Only</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <span className="text-[10px] bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 px-2 py-1 rounded-lg">✓ ABDM Aligned</span>
+            <span className="text-[10px] bg-indigo-500/20 border border-indigo-400/40 text-indigo-200 px-2 py-1 rounded-lg">NHP v2 Protocol</span>
+            <span className="text-[10px] bg-amber-500/20 border border-amber-400/40 text-amber-300 px-2 py-1 rounded-lg">ICD-10 Coded</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Scenario Selector */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Select Clinical Scenario</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {SYMPTOM_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => { setSelectedPreset(p); setResultReady(true); setExpandedCard(0); setDoctorNoteGenerated(false); }}
+              className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-sm font-semibold transition-all ${
+                selectedPreset.id === p.id
+                  ? 'bg-indigo-50 border-indigo-400 text-indigo-700 ring-2 ring-indigo-200'
+                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <span className="text-xl">{p.emoji}</span>
+              <span className="text-xs">{p.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Patient Vitals Bar */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-bold text-slate-700 flex items-center gap-1"><Activity className="w-4 h-4 text-indigo-500" /> Patient Snapshot</p>
+          <span className="text-[10px] text-slate-400">{active.age}y / {active.gender}</span>
+        </div>
+        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 mb-3">
+          <p className="text-xs text-slate-700 italic">"{active.symptoms}"</p>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { label: 'SpO₂', val: `${active.spo2}%`, warn: active.spo2 < 95, icon: '🫁' },
+            { label: 'RR', val: `${active.rr}/min`, warn: active.rr > 20, icon: '💨' },
+            { label: 'Temp', val: `${active.temp}°F`, warn: active.temp > 100.4, icon: '🌡️' },
+            { label: 'HR', val: `${active.hr} bpm`, warn: active.hr > 100 || active.hr < 60, icon: '❤️' },
+          ].map((v) => (
+            <div key={v.label} className={`text-center p-2 rounded-xl border ${v.warn ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="text-lg">{v.icon}</div>
+              <div className={`text-sm font-bold ${v.warn ? 'text-red-600' : 'text-slate-800'}`}>{v.val}</div>
+              <div className="text-[10px] text-slate-500">{v.label}</div>
+              {v.warn && <div className="text-[9px] text-red-500 font-bold mt-0.5">⚠ Abnormal</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* AI Analysis Button */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={runAnalysis}
+          disabled={analysing}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm"
+        >
+          <Brain className="w-4 h-4" />
+          {analysing ? 'Analysing Clinical Patterns...' : 'Re-Run AI Differential Analysis'}
+        </button>
+        <span className="text-[10px] text-slate-400">Non-diagnostic. For doctor review only.</span>
+      </div>
+
+      {/* Progress Bar */}
+      {analysing && (
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs text-slate-500">
+            <span>Matching symptom vectors against NHP clinical database...</span>
+            <span className="font-mono">{progress}%</span>
+          </div>
+          <div className="w-full bg-slate-200 rounded-full h-2.5">
+            <div className="bg-indigo-600 h-2.5 rounded-full transition-all duration-200" style={{ width: `${progress}%` }} />
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-2">
+            {['Symptom Vectorisation', 'ICD-10 Mapping', 'Red Flag Detection'].map((step, i) => (
+              <div key={step} className={`text-[10px] text-center p-1.5 rounded-lg border ${progress > i * 33 ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-400'}`}>
+                {progress > i * 33 ? '✓' : '○'} {step}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Differentials Result */}
+      {resultReady && !analysing && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-indigo-500" />
+              Differential Possibilities — For Doctor Review Only
+            </h4>
+            {topDiff.flag && (
+              <span className="flex items-center gap-1 bg-red-100 text-red-700 border border-red-300 text-[11px] font-bold px-2.5 py-1 rounded-full">
+                <AlertTriangle className="w-3.5 h-3.5" /> High-Priority Referral
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {active.differentials.map((d, idx) => {
+              const cm = colorMap[d.color];
+              const isOpen = expandedCard === idx;
+              return (
+                <div key={d.name} className={`border rounded-2xl overflow-hidden shadow-xs transition-all ${cm.border} ${d.flag ? 'ring-2 ' + cm.ring : ''}`}>
+                  {/* Card Header */}
+                  <button
+                    className="w-full flex items-center gap-3 p-4 bg-white hover:bg-slate-50 transition-colors text-left"
+                    onClick={() => setExpandedCard(isOpen ? -1 : idx)}
+                  >
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cm.badge}`}>
+                      #{idx + 1}
+                    </span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-slate-900">{d.name}</p>
+                        <span className="text-[10px] text-slate-400 font-mono">{d.icd}</span>
+                        {d.flag && <span className="text-[10px] bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded font-bold">⚠ Red Flag</span>}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex-1 bg-slate-100 rounded-full h-1.5">
+                          <div className={`${cm.bar} h-1.5 rounded-full`} style={{ width: `${d.pct}%` }} />
+                        </div>
+                        <span className={`text-xs font-bold ${d.color === 'red' ? 'text-red-600' : d.color === 'amber' ? 'text-amber-600' : 'text-slate-500'}`}>
+                          {d.pct}% likelihood
+                        </span>
+                      </div>
+                    </div>
+                    <ArrowRight className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                  </button>
+
+                  {/* Expanded Detail */}
+                  {isOpen && (
+                    <div className="border-t border-slate-100 bg-slate-50 p-4 space-y-3">
+                      {/* Red Flags */}
+                      <div>
+                        <p className="text-[11px] font-bold text-red-600 uppercase tracking-wide mb-1.5">🚩 Clinical Red Flags to Confirm</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {d.redFlags.map(f => (
+                            <span key={f} className="text-[11px] bg-red-50 border border-red-200 text-red-700 px-2 py-0.5 rounded-lg">{f}</span>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Doctor Questions */}
+                      <div>
+                        <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide mb-1.5">💬 Targeted Questions for Attending Doctor</p>
+                        <ul className="space-y-1">
+                          {d.doctorQs.map((q, qi) => (
+                            <li key={qi} className="flex items-start gap-2 text-xs text-slate-700">
+                              <span className="mt-0.5 text-indigo-400 font-bold">{qi + 1}.</span>
+                              {q}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      {/* ASHA Action */}
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                        <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide mb-1">🏥 ASHA / ANM Field Action</p>
+                        <p className="text-xs text-emerald-800">{d.ashaAction}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Doctor Referral Note Generator */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-indigo-500" />
+                Generate Doctor Referral Note
+              </p>
+              <button
+                onClick={() => setDoctorNoteGenerated(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition-all"
+              >
+                Generate Note
+              </button>
+            </div>
+            {doctorNoteGenerated && (
+              <div className="bg-slate-900 text-white rounded-xl p-4 font-mono text-[11px] space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-700 pb-2">
+                  <span className="text-emerald-400 font-bold">SwasthyaMitra — AI Triage Summary Note</span>
+                  <span className="text-slate-400">{new Date().toLocaleDateString('en-IN')}</span>
+                </div>
+                <p className="text-slate-300">Patient: {active.age}y {active.gender} | SpO₂: {active.spo2}% | HR: {active.hr} | Temp: {active.temp}°F</p>
+                <p className="text-amber-300">Presenting complaint: {active.symptoms}</p>
+                <p className="text-white font-bold">Top Differential (AI — non-diagnostic): {active.differentials[0].name} ({active.differentials[0].pct}%) [ICD: {active.differentials[0].icd}]</p>
+                <p className="text-indigo-300">Also consider: {active.differentials.slice(1).map(d => `${d.name} (${d.pct}%)`).join(', ')}</p>
+                <p className="text-red-400">Red Flags Present: {active.differentials[0].redFlags.join(' • ')}</p>
+                <p className="text-slate-400 text-[10px] mt-2 pt-2 border-t border-slate-700">⚠ This is a non-diagnostic AI triage support note. Final clinical decision rests with qualified physician. MoHFW Safety Protocol v2 compliant.</p>
+              </div>
+            )}
+          </div>
+
+          {/* MoHFW Compliance Footer */}
+          <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+            <ShieldAlert className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+            <p className="text-[11px] text-indigo-700">
+              <strong>Legal & Safety Notice:</strong> This module provides clinical decision support only. AI outputs are non-diagnostic and do not replace qualified medical judgment. Compliant with MoHFW Digital Health Policy 2023 and DPDP Act 2023. All data is session-only and not stored.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function GovtGovTechSuite({ currentUser, appLang, initialFeature }) {
   const lang = appLang || 'or-IN';
@@ -544,51 +895,7 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
 
       {/* Feature 2: Safe Differential Triage */}
       {activeSubTab === 'differential' && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <Brain className="w-5 h-5 text-indigo-600" />
-              2. Safe Non-Diagnostic Differential Triage (Human-in-the-Loop Legal Mandate)
-            </h3>
-            <p className="text-xs text-slate-500">Instead of definitive diagnosis, AI outputs structured clinical possibilities and targeted history questions.</p>
-          </div>
-
-          <div className="p-4 bg-slate-900 text-white rounded-2xl space-y-3 font-mono text-xs">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-              <span className="text-emerald-400 font-bold">✓ MoHFW Safety Protocol Verified</span>
-              <span className="text-slate-400 text-[10px]">Non-Diagnostic Support</span>
-            </div>
-            
-            <p className="text-slate-300">Symptom Input: "Productive cough for 3 weeks, low-grade evening fever, mild breathlessness"</p>
-            
-            <div className="bg-slate-800 p-3 rounded-xl space-y-2">
-              <p className="font-bold text-amber-400">Clinical Differential Possibilities for Qualified Doctor Review:</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div className="p-2 bg-slate-900 rounded border border-amber-500/40">
-                  <p className="font-bold text-white">1. Pulmonary TB</p>
-                  <p className="text-[10px] text-slate-400">Likelihood: High (78%)</p>
-                </div>
-                <div className="p-2 bg-slate-900 rounded border border-slate-700">
-                  <p className="font-bold text-white">2. LRTI / Bacterial Pneumonia</p>
-                  <p className="text-[10px] text-slate-400">Likelihood: Moderate (52%)</p>
-                </div>
-                <div className="p-2 bg-slate-900 rounded border border-slate-700">
-                  <p className="font-bold text-white">3. COPD Exacerbation</p>
-                  <p className="text-[10px] text-slate-400">Likelihood: Low (24%)</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-indigo-950/80 border border-indigo-800 p-3 rounded-xl">
-              <p className="font-bold text-indigo-300">💡 Suggested Targeted Questions for Attending Doctor / ASHA:</p>
-              <ul className="text-slate-300 mt-1 space-y-1 text-[11px]">
-                <li>• Ask patient about drenching night sweats and unpredicted weight loss (&gt;3kg).</li>
-                <li>• Verify hemoptysis (blood in sputum) history in last 7 days.</li>
-                <li>• Check family contact history with known TB index patient.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <DifferentialTriageModule />
       )}
 
       {/* Feature 3: Drug Allergy Alert */}
