@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import XRayScanner from './XRayScanner';
 import {
   Brain,
   ShieldAlert,
@@ -137,6 +138,7 @@ function DifferentialTriageModule() {
   const [resultReady, setResultReady] = useState(true);
   const [expandedCard, setExpandedCard] = useState(0);
   const [doctorNoteGenerated, setDoctorNoteGenerated] = useState(false);
+  const [activeModuleTab, setActiveModuleTab] = useState('differential'); // 'differential' | 'xray'
 
   const runAnalysis = () => {
     setAnalysing(true);
@@ -164,7 +166,7 @@ function DifferentialTriageModule() {
     <div className="space-y-5">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 rounded-2xl p-5 text-white">
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Brain className="w-5 h-5 text-indigo-200" />
@@ -179,11 +181,38 @@ function DifferentialTriageModule() {
             <span className="text-[10px] bg-amber-500/20 border border-amber-400/40 text-amber-300 px-2 py-1 rounded-lg">ICD-10 Coded</span>
           </div>
         </div>
+
+        {/* Tab Switcher inside header */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveModuleTab('differential')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              activeModuleTab === 'differential'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            <Brain className="w-4 h-4" /> Symptom Differential
+          </button>
+          <button
+            onClick={() => setActiveModuleTab('xray')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              activeModuleTab === 'xray'
+                ? 'bg-white text-indigo-700 shadow-sm'
+                : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            <Scan className="w-4 h-4" /> X-Ray AI Scanner
+            <span className="text-[9px] bg-emerald-400 text-slate-900 font-bold px-1.5 py-0.5 rounded-full ml-1">NEW</span>
+          </button>
+        </div>
       </div>
 
-      {/* Scenario Selector */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Select Clinical Scenario</p>
+      {activeModuleTab === 'differential' && (
+        <>
+          {/* Scenario Selector */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Select Clinical Scenario</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {SYMPTOM_PRESETS.map((p) => (
             <button
@@ -404,11 +433,16 @@ function DifferentialTriageModule() {
           <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl p-3">
             <ShieldAlert className="w-5 h-5 text-indigo-500 flex-shrink-0" />
             <p className="text-[11px] text-indigo-700">
-              <strong>Legal & Safety Notice:</strong> This module provides clinical decision support only. AI outputs are non-diagnostic and do not replace qualified medical judgment. Compliant with MoHFW Digital Health Policy 2023 and DPDP Act 2023. All data is session-only and not stored.
+              <strong>Legal &amp; Safety Notice:</strong> This module provides clinical decision support only. AI outputs are non-diagnostic and do not replace qualified medical judgment. Compliant with MoHFW Digital Health Policy 2023 and DPDP Act 2023. All data is session-only and not stored.
             </p>
           </div>
-        </div>
+            </div>
+          )}
+        </>
       )}
+
+      {/* X-Ray Scanner Sub-Module */}
+      {activeModuleTab === 'xray' && <XRayScanner />}
     </div>
   );
 }
