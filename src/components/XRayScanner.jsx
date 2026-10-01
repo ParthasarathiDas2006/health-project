@@ -92,6 +92,13 @@ const URGENCY = {
     badge: 'bg-emerald-600',
     label: 'LOW RISK',
   },
+  invalid: {
+    bg: 'bg-rose-50',
+    border: 'border-rose-400',
+    text: 'text-rose-800',
+    badge: 'bg-rose-700',
+    label: 'IMAGE NOT VALID / NON-ANATOMICAL',
+  },
 };
 
 const SCAN_STEPS = [
@@ -230,6 +237,10 @@ export default function XRayScanner() {
           let rightLungLuminance = 0;
           let lungCount = 0;
 
+          // Color saturation metrics: Medical X-rays are monochromatic/grayscale
+          let totalSaturation = 0;
+          let coloredPixelCount = 0;
+
           const totalPixels = width * height;
           const luminances = new Float32Array(totalPixels);
 
@@ -238,6 +249,14 @@ export default function XRayScanner() {
             const r = data[idx];
             const g = data[idx + 1];
             const b = data[idx + 2];
+
+            // Calculate color saturation (X-rays have RGB nearly identical, saturation < 15%)
+            const maxC = Math.max(r, g, b);
+            const minC = Math.min(r, g, b);
+            const sat = maxC === 0 ? 0 : ((maxC - minC) / maxC) * 100;
+            totalSaturation += sat;
+            if (sat > 22) coloredPixelCount++;
+
             // Standard perceptual luminance formula
             const lum = 0.299 * r + 0.587 * g + 0.114 * b;
             luminances[i] = lum;
@@ -270,6 +289,8 @@ export default function XRayScanner() {
           }
 
           const meanLum = totalLuminance / totalPixels;
+          const avgSaturation = totalSaturation / totalPixels;
+          const coloredRatio = (coloredPixelCount / totalPixels) * 100;
           const avgApical = apicalCount > 0 ? apicalLuminance / apicalCount : meanLum;
           const avgBase = baseCount > 0 ? baseLuminance / baseCount : meanLum;
           const asymmetry = lungCount > 0 ? Math.abs(rightLungLuminance - leftLungLuminance) / lungCount : 0;
@@ -281,7 +302,44 @@ export default function XRayScanner() {
           }
           const stdDev = Math.sqrt(variance / totalPixels);
 
-          // Classify based on calculated metrics
+          // ── VALIDATION: Verify if image is a legitimate Thoracic Radiograph ──────────
+          // Invalid conditions:
+          // 1. High Color Saturation (e.g., photo of room, furniture, outdoor, colorful graphic)
+          // 2. Pure Black / Blank / Solid White (meanLum < 12 or meanLum > 242)
+          // 3. Flat image / zero contrast texture (stdDev < 14)
+          const isTooColorful = avgSaturation > 20 || coloredRatio > 25;
+          const isBlankOrExtreme = meanLum < 12 || meanLum > 242;
+          const isLackingThoracicTexture = stdDev < 14;
+
+          if (isTooColorful || isBlankOrExtreme || isLackingThoracicTexture) {
+            resolve({
+              isValidXray: false,
+              aiConfidence: { tb: 0, pneumonia: 0, normal: 0 },
+              findings: [
+                isTooColorful
+                  ? 'High chromatic saturation detected (' + Math.round(avgSaturation) + '% sat) — Radiographs are monochromatic grayscale films'
+                  : 'Insufficient radiodensity / contrast dynamic range (σ: ' + Math.round(stdDev) + ')',
+                'No identifiable thoracic skeletal architecture (ribcage/clavicle/spine)',
+                'No anatomical lung field or mediastinal borders detected',
+                'Uploaded media does not match human anatomical radiograph profile',
+              ],
+              urgency: 'invalid',
+              impression: 'IMAGE NOT VALID — Non-Radiological / Non-Anatomical Image Detected.',
+              recommendation:
+                'REJECTED: Please upload or capture an actual human Chest X-Ray film (black & white radiograph) or align camera with viewbox.',
+              doctorNote:
+                'AI Triage Notice: Upload rejected by automated computer vision anatomical gatekeeper. Input is not a valid radiological scan.',
+              metrics: {
+                meanLum: Math.round(meanLum),
+                stdDev: Math.round(stdDev),
+                asymmetry: Math.round(asymmetry),
+                saturation: Math.round(avgSaturation),
+              },
+            });
+            return;
+          }
+
+          // Classify valid X-ray based on calculated metrics
           let tbScore = 0;
           let pneuScore = 0;
           let normScore = 0;
@@ -339,13 +397,19 @@ export default function XRayScanner() {
           }
 
           resolve({
+            isValidXray: true,
             aiConfidence: { tb: tbScore, pneumonia: pneuScore, normal: normScore },
             findings,
             urgency,
             impression,
             recommendation,
             doctorNote,
-            metrics: { meanLum: Math.round(meanLum), stdDev: Math.round(stdDev), asymmetry: Math.round(asymmetry) },
+            metrics: {
+              meanLum: Math.round(meanLum),
+              stdDev: Math.round(stdDev),
+              asymmetry: Math.round(asymmetry),
+              saturation: Math.round(avgSaturation),
+            },
           });
         } catch (e) {
           console.warn('Canvas pixel analysis error, falling back:', e);
@@ -811,37 +875,57 @@ export default function XRayScanner() {
 
             {/* Confidence + Findings */}
             <div className="space-y-3">
-              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
-                <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-2">
-                  AI Confidence Scores
-                </p>
-                {[
-                  { label: 'Pulmonary TB', val: result.aiConfidence.tb, color: 'bg-red-500' },
-                  {
-                    label: 'Bacterial Pneumonia',
-                    val: result.aiConfidence.pneumonia,
-                    color: 'bg-amber-400',
-                  },
-                  {
-                    label: 'Normal / No Disease',
-                    val: result.aiConfidence.normal,
-                    color: 'bg-emerald-500',
-                  },
-                ].map((bar) => (
-                  <div key={bar.label} className="mb-2">
-                    <div className="flex justify-between text-[10px] mb-0.5">
-                      <span className="text-slate-600 font-medium">{bar.label}</span>
-                      <span className="font-bold text-slate-800">{bar.val}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2">
-                      <div
-                        className={bar.color + ' h-2 rounded-full'}
-                        style={{ width: bar.val + '%' }}
-                      />
-                    </div>
+              {result.urgency === 'invalid' ? (
+                <div className="bg-rose-50 border-2 border-rose-300 rounded-xl p-4 space-y-2.5">
+                  <div className="flex items-center gap-2 text-rose-700 font-bold text-xs uppercase tracking-wide">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    <span>Input Validation Failed — Image Not Valid</span>
                   </div>
-                ))}
-              </div>
+                  <p className="text-xs text-rose-900 leading-relaxed font-medium">
+                    The uploaded or captured file is <strong>not recognized as a valid human thoracic radiograph</strong>. The AI detection model cannot diagnose non-anatomical photos, random objects, everyday pictures, or corrupted scans.
+                  </p>
+                  <div className="text-[11px] text-rose-800 bg-rose-100/70 border border-rose-200 rounded-lg p-2.5 space-y-1">
+                    <p className="font-semibold">Expected Input Requirements:</p>
+                    <ul className="list-disc list-inside space-y-0.5 text-[10px]">
+                      <li>Chest Radiograph / X-Ray Film (Black &amp; White / Grayscale)</li>
+                      <li>Visible thoracic cavity, clavicles, ribs, or lung fields</li>
+                      <li>Adequate viewbox illumination without colored reflections</li>
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                  <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-2">
+                    AI Confidence Scores
+                  </p>
+                  {[
+                    { label: 'Pulmonary TB', val: result.aiConfidence.tb, color: 'bg-red-500' },
+                    {
+                      label: 'Bacterial Pneumonia',
+                      val: result.aiConfidence.pneumonia,
+                      color: 'bg-amber-400',
+                    },
+                    {
+                      label: 'Normal / No Disease',
+                      val: result.aiConfidence.normal,
+                      color: 'bg-emerald-500',
+                    },
+                  ].map((bar) => (
+                    <div key={bar.label} className="mb-2">
+                      <div className="flex justify-between text-[10px] mb-0.5">
+                        <span className="text-slate-600 font-medium">{bar.label}</span>
+                        <span className="font-bold text-slate-800">{bar.val}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div
+                          className={bar.color + ' h-2 rounded-full'}
+                          style={{ width: bar.val + '%' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
                 <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-2">
@@ -864,18 +948,22 @@ export default function XRayScanner() {
                     <span>🔬 Pixel Opacity &amp; Density Telemetry</span>
                     <span className="text-[9px] bg-indigo-100 text-indigo-700 font-mono px-1.5 py-0.5 rounded">CV-CALIBRATED</span>
                   </p>
-                  <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="grid grid-cols-4 gap-2 text-center">
                     <div className="p-2 bg-white rounded-lg border border-slate-200">
-                      <p className="text-[10px] text-slate-500">Mean Luminance</p>
-                      <p className="text-xs font-bold text-slate-800">{result.metrics.meanLum} <span className="text-[9px] font-normal text-slate-400">HU-eq</span></p>
+                      <p className="text-[10px] text-slate-500">Mean Lum</p>
+                      <p className="text-xs font-bold text-slate-800">{result.metrics.meanLum} <span className="text-[9px] font-normal text-slate-400">HU</span></p>
                     </div>
                     <div className="p-2 bg-white rounded-lg border border-slate-200">
-                      <p className="text-[10px] text-slate-500">Texture Variance</p>
-                      <p className="text-xs font-bold text-slate-800">{result.metrics.stdDev} <span className="text-[9px] font-normal text-slate-400">σ</span></p>
+                      <p className="text-[10px] text-slate-500">Texture σ</p>
+                      <p className="text-xs font-bold text-slate-800">{result.metrics.stdDev} <span className="text-[9px] font-normal text-slate-400">var</span></p>
                     </div>
                     <div className="p-2 bg-white rounded-lg border border-slate-200">
-                      <p className="text-[10px] text-slate-500">Hemi-Asymmetry</p>
+                      <p className="text-[10px] text-slate-500">Hemi-Asym</p>
                       <p className="text-xs font-bold text-slate-800">{result.metrics.asymmetry} <span className="text-[9px] font-normal text-slate-400">Δ</span></p>
+                    </div>
+                    <div className="p-2 bg-white rounded-lg border border-slate-200">
+                      <p className="text-[10px] text-slate-500">Chroma Sat</p>
+                      <p className={`text-xs font-bold ${result.metrics.saturation > 18 ? 'text-rose-600' : 'text-slate-800'}`}>{result.metrics.saturation || 0}%</p>
                     </div>
                   </div>
                 </div>
