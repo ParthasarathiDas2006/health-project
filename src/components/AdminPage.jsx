@@ -560,12 +560,14 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       const matchesSpecialty = doctorSpecialtyFilter === 'all' || d.specialty === doctorSpecialtyFilter;
       const matchesSearch =
         !q ||
-        (d.name && d.name.toLowerCase().includes(q)) ||
-        (d.facility && d.facility.toLowerCase().includes(q)) ||
-        (d.district && d.district.toLowerCase().includes(q)) ||
-        (d.specialty && d.specialty.toLowerCase().includes(q)) ||
-        (d.regNo && d.regNo.toLowerCase().includes(q)) ||
-        (d.qualifications && d.qualifications.toLowerCase().includes(q));
+        (d._search
+          ? d._search.includes(q)
+          : (d.name && d.name.toLowerCase().includes(q)) ||
+            (d.facility && d.facility.toLowerCase().includes(q)) ||
+            (d.district && d.district.toLowerCase().includes(q)) ||
+            (d.specialty && d.specialty.toLowerCase().includes(q)) ||
+            (d.regNo && d.regNo.toLowerCase().includes(q)) ||
+            (d.qualifications && d.qualifications.toLowerCase().includes(q)));
       return matchesDistrict && matchesSpecialty && matchesSearch;
     });
   }, [fullDoctorsRegistry, doctorSearch, doctorDistrictFilter, doctorSpecialtyFilter]);
