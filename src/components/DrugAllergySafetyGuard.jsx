@@ -48,11 +48,107 @@ import {
 export default function DrugAllergySafetyGuard({ appLang = 'or-IN', currentUser }) {
   const lang = appLang || 'or-IN';
 
-  // 1. Patient State
-  const [selectedAbhaId, setSelectedAbhaId] = useState(PRELOADED_ABHA_PATIENTS[0].abhaId);
+  // 1. Dynamic Patient State (Preloaded + Custom New Patients)
+  const [patients, setPatients] = useState(() => {
+    try {
+      const saved = localStorage.getItem('swasthya_patients_cache');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return PRELOADED_ABHA_PATIENTS;
+  });
+
+  const [selectedAbhaId, setSelectedAbhaId] = useState(() => {
+    return PRELOADED_ABHA_PATIENTS[0].abhaId;
+  });
+
   const activePatient = useMemo(() => {
-    return PRELOADED_ABHA_PATIENTS.find((p) => p.abhaId === selectedAbhaId) || PRELOADED_ABHA_PATIENTS[0];
-  }, [selectedAbhaId]);
+    return patients.find((p) => p.abhaId === selectedAbhaId) || patients[0] || PRELOADED_ABHA_PATIENTS[0];
+  }, [patients, selectedAbhaId]);
+
+  // New Patient Modal & Form State
+  const [showNewPatientModal, setShowNewPatientModal] = useState(false);
+  const [newPatientName, setNewPatientName] = useState('');
+  const [newPatientAbha, setNewPatientAbha] = useState('');
+  const [newPatientAge, setNewPatientAge] = useState('36');
+  const [newPatientGender, setNewPatientGender] = useState('Male');
+  const [newPatientBlood, setNewPatientBlood] = useState('B+');
+  const [newPatientDistrict, setNewPatientDistrict] = useState('Bhubaneswar, Odisha');
+  const [newPatientFacility, setNewPatientFacility] = useState('Capital Hospital OPD');
+  const [newPatientPhone, setNewPatientPhone] = useState('+91 94370 55120');
+  const [newPatientEgfr, setNewPatientEgfr] = useState('92');
+  const [newPatientSelectedAllergies, setNewPatientSelectedAllergies] = useState([]);
+  const [newPatientSelectedComorbidities, setNewPatientSelectedComorbidities] = useState([]);
+  const [newPatientSelectedMeds, setNewPatientSelectedMeds] = useState([]);
+
+  // Generate random standard ABHA ID format
+  const handleGenerateAbhaId = () => {
+    const p1 = Math.floor(1000 + Math.random() * 9000);
+    const p2 = Math.floor(1000 + Math.random() * 9000);
+    const p3 = Math.floor(1000 + Math.random() * 9000);
+    setNewPatientAbha(`91-${p1}-${p2}-${p3}`);
+  };
+
+  // Auto-fill from currently logged in user
+  const handleAutoFillCurrentUser = () => {
+    if (!currentUser) return;
+    setNewPatientName(currentUser.name || '');
+    if (currentUser.age) setNewPatientAge(String(currentUser.age));
+    if (currentUser.gender) setNewPatientGender(currentUser.gender);
+    if (currentUser.bloodGroup) setNewPatientBlood(currentUser.bloodGroup);
+    if (currentUser.facility) setNewPatientFacility(currentUser.facility);
+    if (!newPatientAbha) handleGenerateAbhaId();
+  };
+
+  // Save new patient and activate immediately
+  const handleSaveNewPatient = (e) => {
+    e.preventDefault();
+    if (!newPatientName.trim()) return;
+
+    const abhaIdToUse = newPatientAbha.trim() || `91-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const formattedAllergies = newPatientSelectedAllergies.map((key) => {
+      const def = ALLERGY_CLASSES[key];
+      return {
+        classKey: key,
+        name: def ? def.name : key,
+        severity: 'EHR / Patient Self-Reported',
+        dateRecorded: new Date().toLocaleDateString('en-IN')
+      };
+    });
+
+    const newObj = {
+      abhaId: abhaIdToUse,
+      name: newPatientName.trim(),
+      age: parseInt(newPatientAge, 10) || 30,
+      gender: newPatientGender,
+      bloodGroup: newPatientBlood,
+      district: newPatientDistrict,
+      facility: newPatientFacility,
+      knownAllergies: formattedAllergies,
+      comorbidities: newPatientSelectedComorbidities,
+      eGFR: parseInt(newPatientEgfr, 10) || 90,
+      activeMedications: newPatientSelectedMeds,
+      emergencyContact: `${newPatientPhone} (Family)`
+    };
+
+    const updated = [newObj, ...patients.filter((p) => p.abhaId !== abhaIdToUse)];
+    setPatients(updated);
+    try {
+      localStorage.setItem('swasthya_patients_cache', JSON.stringify(updated));
+    } catch (err) {}
+    setSelectedAbhaId(abhaIdToUse);
+    setShowNewPatientModal(false);
+    setIsOverridden(false);
+    // Reset form fields
+    setNewPatientName('');
+    setNewPatientAbha('');
+    setNewPatientSelectedAllergies([]);
+    setNewPatientSelectedComorbidities([]);
+    setNewPatientSelectedMeds([]);
+  };
 
   // 2. Prescribed Drugs State (List of drug objects)
   const [prescribedDrugs, setPrescribedDrugs] = useState(() => {
@@ -696,22 +792,36 @@ export default function DrugAllergySafetyGuard({ appLang = 'or-IN', currentUser 
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-xs font-bold text-slate-700">{txt.selectPatient}</label>
-            <select
-              value={selectedAbhaId}
-              onChange={(e) => {
-                setSelectedAbhaId(e.target.value);
-                setIsOverridden(false);
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <label className="text-xs font-bold text-slate-700">{txt.selectPatient}</label>
+              <select
+                value={selectedAbhaId}
+                onChange={(e) => {
+                  setSelectedAbhaId(e.target.value);
+                  setIsOverridden(false);
+                }}
+                className="bg-slate-50 border border-slate-300 text-slate-900 font-bold text-xs rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 shadow-2xs cursor-pointer max-w-[260px] truncate"
+              >
+                {patients.map((p) => (
+                  <option key={p.abhaId} value={p.abhaId}>
+                    {p.name} ({p.abhaId}) - {p.district}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowNewPatientModal(true);
+                if (!newPatientAbha) handleGenerateAbhaId();
               }}
-              className="bg-slate-50 border border-slate-300 text-slate-900 font-bold text-xs rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 shadow-2xs cursor-pointer"
+              className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+              title="Add New Patient / Custom ABHA Profile"
             >
-              {PRELOADED_ABHA_PATIENTS.map((p) => (
-                <option key={p.abhaId} value={p.abhaId}>
-                  {p.name} ({p.abhaId}) - {p.district}
-                </option>
-              ))}
-            </select>
+              <Plus className="w-3.5 h-3.5" />
+              <span>{lang === 'or-IN' ? '➕ ନୂଆ ରୋଗୀ / ABHA ଏଣ୍ଟ୍ରି' : (lang === 'hi-IN' ? '➕ नया मरीज / ABHA एंट्री' : '+ New Patient / ABHA')}</span>
+            </button>
           </div>
         </div>
 
@@ -1468,6 +1578,312 @@ export default function DrugAllergySafetyGuard({ appLang = 'or-IN', currentUser 
                   className="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl text-xs shadow-md"
                 >
                   Confirm &amp; Digitally Sign Override
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 6B. New Patient Intake / Custom ABHA Modal */}
+      {showNewPatientModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2 text-slate-900 font-black text-base">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="leading-tight">
+                    {lang === 'or-IN' ? 'ନୂତନ ରୋଗୀ ABHA ପଞ୍ଜୀକରଣ ଓ ଆଲର୍ଜି ପ୍ରୋଫାଇଲ୍' : (lang === 'hi-IN' ? 'नया मरीज ABHA पंजीकरण एवं एलर्जी प्रोफाइल' : 'New Patient Intake & ABHA Safety Profile')}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-normal">
+                    Walk-in patient registration for real-time drug allergy & contraindication detection.
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowNewPatientModal(false)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Auto-fill button if user is logged in */}
+            {currentUser && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleAutoFillCurrentUser}
+                  className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 transition-all flex items-center gap-1"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                  Auto-fill using My Account ({currentUser.name})
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveNewPatient} className="space-y-4 text-xs">
+              {/* Row 1: Name and ABHA ID */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Patient Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newPatientName}
+                    onChange={(e) => setNewPatientName(e.target.value)}
+                    placeholder="e.g. Manoj Kumar Sahoo"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-slate-700">ABHA Number (14 Digits)</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAbhaId}
+                      className="text-[10px] text-indigo-600 font-bold hover:underline"
+                    >
+                      Generate Random ABHA
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={newPatientAbha}
+                    onChange={(e) => setNewPatientAbha(e.target.value)}
+                    placeholder="91-XXXX-XXXX-XXXX"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono font-bold text-slate-900 focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Age, Gender, Blood Group, eGFR */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Age (Years)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="120"
+                    value={newPatientAge}
+                    onChange={(e) => setNewPatientAge(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Gender</label>
+                  <select
+                    value={newPatientGender}
+                    onChange={(e) => setNewPatientGender(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900"
+                  >
+                    <option value="Male">Male (ପୁରୁଷ)</option>
+                    <option value="Female">Female (ମହିଳା)</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Blood Group</label>
+                  <select
+                    value={newPatientBlood}
+                    onChange={(e) => setNewPatientBlood(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900"
+                  >
+                    {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map((bg) => (
+                      <option key={bg} value={bg}>{bg}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1" title="Estimated Glomerular Filtration Rate">
+                    Renal eGFR (ml/min)
+                  </label>
+                  <input
+                    type="number"
+                    min="5"
+                    max="150"
+                    value={newPatientEgfr}
+                    onChange={(e) => setNewPatientEgfr(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900"
+                  />
+                </div>
+              </div>
+
+              {/* Row 3: District & Emergency Contact */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">District / PHC Facility</label>
+                  <input
+                    type="text"
+                    value={newPatientDistrict}
+                    onChange={(e) => setNewPatientDistrict(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Emergency Mobile</label>
+                  <input
+                    type="text"
+                    value={newPatientPhone}
+                    onChange={(e) => setNewPatientPhone(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-900"
+                  />
+                </div>
+              </div>
+
+              {/* SECTION: Known Allergies Checklist */}
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl space-y-2">
+                <span className="font-black text-rose-950 uppercase tracking-wider block text-[11px] flex items-center gap-1.5">
+                  <AlertOctagon className="w-3.5 h-3.5 text-rose-600" />
+                  Select Documented / Patient-Reported Drug Allergies:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {[
+                    { key: 'PENICILLIN_BETA_LACTAM', label: 'Penicillins & Beta-Lactams (Amoxicillin, Ampicillin)' },
+                    { key: 'SULFA_DRUGS', label: 'Sulfa Drugs / Sulfonamides (Septran, Bactrim)' },
+                    { key: 'NSAIDS_ASPIRIN', label: 'NSAIDs & Aspirin (Brufen, Voveran, Combiflam)' },
+                    { key: 'FLUOROQUINOLONE', label: 'Fluoroquinolones (Ciprofloxacin, Levofloxacin)' },
+                    { key: 'ACE_INHIBITOR', label: 'ACE Inhibitors (Ramipril - Angioedema)' }
+                  ].map((al) => {
+                    const isChecked = newPatientSelectedAllergies.includes(al.key);
+                    return (
+                      <label
+                        key={al.key}
+                        className={`p-2 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
+                          isChecked
+                            ? 'bg-rose-600 text-white font-bold border-rose-700 shadow-2xs'
+                            : 'bg-white text-slate-700 border-rose-200 hover:bg-rose-100/60'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewPatientSelectedAllergies([...newPatientSelectedAllergies, al.key]);
+                            } else {
+                              setNewPatientSelectedAllergies(newPatientSelectedAllergies.filter((k) => k !== al.key));
+                            }
+                          }}
+                          className="rounded text-rose-600 focus:ring-rose-500"
+                        />
+                        <span className="text-[11px] leading-tight">{al.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SECTION: Existing Comorbidities Checklist */}
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
+                <span className="font-black text-amber-950 uppercase tracking-wider block text-[11px] flex items-center gap-1.5">
+                  <HeartPulse className="w-3.5 h-3.5 text-amber-700" />
+                  Select Patient Health Conditions / Comorbidities:
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                  {[
+                    { key: 'ASTHMA', label: 'Asthma / Reactive Airway' },
+                    { key: 'DIABETES', label: 'Type 2 Diabetes Mellitus' },
+                    { key: 'CKD', label: 'Chronic Kidney Disease' },
+                    { key: 'PEPTIC_ULCER', label: 'Peptic Ulcer / Acidity' },
+                    { key: 'PREGNANCY', label: 'Pregnancy (Maternal ANC)' }
+                  ].map((cm) => {
+                    const isChecked = newPatientSelectedComorbidities.includes(cm.key);
+                    return (
+                      <label
+                        key={cm.key}
+                        className={`p-2 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
+                          isChecked
+                            ? 'bg-amber-600 text-white font-bold border-amber-700 shadow-2xs'
+                            : 'bg-white text-slate-700 border-amber-200 hover:bg-amber-100/60'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewPatientSelectedComorbidities([...newPatientSelectedComorbidities, cm.key]);
+                            } else {
+                              setNewPatientSelectedComorbidities(newPatientSelectedComorbidities.filter((k) => k !== cm.key));
+                            }
+                          }}
+                          className="rounded text-amber-600 focus:ring-amber-500"
+                        />
+                        <span className="text-[11px] leading-tight">{cm.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SECTION: Ongoing Chronic Daily Medications */}
+              <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl space-y-2">
+                <span className="font-black text-blue-950 uppercase tracking-wider block text-[11px] flex items-center gap-1.5">
+                  <Pill className="w-3.5 h-3.5 text-blue-700" />
+                  Select Ongoing Chronic Medications Patient Takes Daily:
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                  {[
+                    { id: 'metformin', label: 'Metformin 500mg (Diabetes)' },
+                    { id: 'amlodipine', label: 'Amlodipine 5mg (BP)' },
+                    { id: 'telmisartan', label: 'Telmisartan 40mg (BP)' },
+                    { id: 'salbutamol', label: 'Salbutamol Inhaler (Asthma)' },
+                    { id: 'warfarin', label: 'Warfarin 2mg (Blood Thinner)' },
+                    { id: 'autrin_iron', label: 'Autrin / Iron Supplement' }
+                  ].map((m) => {
+                    const isChecked = newPatientSelectedMeds.includes(m.id);
+                    return (
+                      <label
+                        key={m.id}
+                        className={`p-2 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
+                          isChecked
+                            ? 'bg-blue-600 text-white font-bold border-blue-700 shadow-2xs'
+                            : 'bg-white text-slate-700 border-blue-200 hover:bg-blue-100/60'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewPatientSelectedMeds([...newPatientSelectedMeds, m.id]);
+                            } else {
+                              setNewPatientSelectedMeds(newPatientSelectedMeds.filter((id) => id !== m.id));
+                            }
+                          }}
+                          className="rounded text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-[11px] leading-tight">{m.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Form Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setShowNewPatientModal(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Save &amp; Activate Patient for Drug Check
                 </button>
               </div>
             </form>
