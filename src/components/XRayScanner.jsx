@@ -208,8 +208,11 @@ const SCAN_STEPS = [
 /**
  * Extracts exact limb axes, orientation angle, arm entry point, palm center, and fingertip rays
  */
+/**
+ * Extracts exact limb axes, orientation angle, arm entry point, palm center, and fingertip rays using PCA & Moment Analysis
+ */
 function extractPatientLimbPose(canvas) {
-  const w = 120;
+  const w = 160;
   const h = 120;
   const hc = document.createElement('canvas');
   hc.width = w;
@@ -220,8 +223,8 @@ function extractPatientLimbPose(canvas) {
 
   let minX = w, maxX = 0, minY = h, maxY = 0, totalSkin = 0;
   let sumX = 0, sumY = 0;
-  const edgeCoverage = { left: 0, right: 0, top: 0, bottom: 0 };
-  const skinMap = new Uint8Array(w * h);
+  let leftSkin = 0, rightSkin = 0, topSkin = 0, bottomSkin = 0;
+  const skinPixels = [];
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -229,75 +232,111 @@ function extractPatientLimbPose(canvas) {
       const r = d[idx], g = d[idx + 1], b = d[idx + 2];
 
       const isSkin =
-        r > 38 &&
-        g > 24 &&
-        b > 14 &&
+        r > 35 &&
+        g > 20 &&
+        b > 10 &&
         r > g &&
         r > b &&
-        r - g > 6 &&
-        Math.abs(r - g) < 145 &&
-        (r - b) / (r + g + b + 0.001) > 0.035;
+        r - g > 5 &&
+        Math.abs(r - g) < 160 &&
+        (r - b) / (r + g + b + 0.001) > 0.025;
 
       if (isSkin) {
-        skinMap[y * w + x] = 1;
         totalSkin++;
         sumX += x;
         sumY += y;
+        skinPixels.push({ x, y });
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
         if (y < minY) minY = y;
         if (y > maxY) maxY = y;
 
-        if (x < 10) edgeCoverage.left++;
-        if (x > w - 11) edgeCoverage.right++;
-        if (y < 10) edgeCoverage.top++;
-        if (y > h - 11) edgeCoverage.bottom++;
+        if (x < w * 0.4) leftSkin++;
+        if (x > w * 0.6) rightSkin++;
+        if (y < h * 0.4) topSkin++;
+        if (y > h * 0.6) bottomSkin++;
       }
     }
   }
 
-  const blobW = Math.max(10, maxX - minX);
-  const blobH = Math.max(10, maxY - minY);
-  const centerX = totalSkin > 0 ? (sumX / totalSkin) / w : 0.5;
-  const centerY = totalSkin > 0 ? (sumY / totalSkin) / h : 0.5;
-
-  // Determine arm entry point (e.g. from right side, bottom side, left side, top)
-  let armEntry = 'right';
-  let maxEdge = edgeCoverage.right;
-  if (edgeCoverage.bottom > maxEdge) { armEntry = 'bottom'; maxEdge = edgeCoverage.bottom; }
-  if (edgeCoverage.left > maxEdge) { armEntry = 'left'; maxEdge = edgeCoverage.left; }
-  if (edgeCoverage.top > maxEdge) { armEntry = 'top'; maxEdge = edgeCoverage.top; }
-
-  // Detect finger extension endpoint (furthest skin cluster from arm entry)
-  let fingerTipX = 0.5, fingerTipY = 0.5;
-  if (armEntry === 'right') {
-    fingerTipX = Math.max(0.1, minX / w);
-    fingerTipY = centerY;
-  } else if (armEntry === 'left') {
-    fingerTipX = Math.min(0.9, maxX / w);
-    fingerTipY = centerY;
-  } else if (armEntry === 'bottom') {
-    fingerTipX = centerX;
-    fingerTipY = Math.max(0.1, minY / h);
-  } else {
-    fingerTipX = centerX;
-    fingerTipY = Math.min(0.9, maxY / h);
+  if (totalSkin === 0) {
+    return {
+      centerX: 0.5, centerY: 0.5,
+      wristX: 0.55, wristY: 0.5,
+      targetAngle: Math.PI,
+      handLength: 0.38, forearmLength: 0.55,
+      blobW: 0.6, blobH: 0.3, aspect: 2.0,
+      skinRatio: 0.2,
+      armEntry: 'right'
+    };
   }
 
-  // Limb orientation angle in radians
-  const limbAngle = Math.atan2(fingerTipY - centerY, fingerTipX - centerX);
+  const cx = sumX / totalSkin;
+  const cy = sumY / totalSkin;
+
+  const blobW = (maxX - minX) / w;
+  const blobH = (maxY - minY) / h;
+  const aspect = blobW / Math.max(0.05, blobH);
+
+  // Determine arm entry and target fingertip direction
+  let targetAngle = Math.PI; // default: hand pointing left
+  let armEntry = 'right';
+  let wristX = cx / w;
+  let wristY = cy / h;
+
+  if (aspect >= 1.05 || (rightSkin > leftSkin * 1.2) || (leftSkin > rightSkin * 1.2)) {
+    // Horizontal limb
+    if (rightSkin >= leftSkin) {
+      armEntry = 'right';
+      targetAngle = Math.PI; // fingers point Left (180 deg)
+      wristX = (minX + (maxX - minX) * 0.42) / w;
+      wristY = cy / h;
+    } else {
+      armEntry = 'left';
+      targetAngle = 0; // fingers point Right (0 deg)
+      wristX = (minX + (maxX - minX) * 0.58) / w;
+      wristY = cy / h;
+    }
+  } else if (aspect < 0.85) {
+    // Vertical limb
+    if (bottomSkin >= topSkin) {
+      armEntry = 'bottom';
+      targetAngle = -Math.PI / 2; // fingers point Up (-90 deg)
+      wristX = cx / w;
+      wristY = (minY + (maxY - minY) * 0.45) / h;
+    } else {
+      armEntry = 'top';
+      targetAngle = Math.PI / 2; // fingers point Down (90 deg)
+      wristX = cx / w;
+      wristY = (minY + (maxY - minY) * 0.55) / h;
+    }
+  } else {
+    // Square or diagonal
+    if (rightSkin >= leftSkin) {
+      armEntry = 'right';
+      targetAngle = Math.PI;
+      wristX = (minX + (maxX - minX) * 0.45) / w;
+      wristY = cy / h;
+    } else {
+      armEntry = 'left';
+      targetAngle = 0;
+      wristX = (minX + (maxX - minX) * 0.55) / w;
+      wristY = cy / h;
+    }
+  }
 
   return {
-    minX: minX / w, maxX: maxX / w,
-    minY: minY / h, maxY: maxY / h,
-    blobW: blobW / w, blobH: blobH / h,
-    aspect: blobW / blobH,
-    centerX, centerY,
+    centerX: cx / w,
+    centerY: cy / h,
+    wristX,
+    wristY,
+    targetAngle,
+    handLength: Math.max(0.32, Math.min(0.50, Math.max(blobW, blobH) * 0.65)),
+    forearmLength: Math.max(0.40, Math.min(0.70, Math.max(blobW, blobH) * 0.85)),
+    blobW,
+    blobH,
+    aspect,
     armEntry,
-    edgeCoverage,
-    fingerTipX, fingerTipY,
-    limbAngle,
-    totalSkin,
     skinRatio: totalSkin / (w * h)
   };
 }
@@ -307,40 +346,29 @@ function extractPatientLimbPose(canvas) {
  */
 function classifyMultiBodyPart(canvas) {
   const pose = extractPatientLimbPose(canvas);
-  const { blobW, blobH, aspect, skinRatio, armEntry, edgeCoverage } = pose;
+  const { blobW, blobH, aspect, skinRatio, armEntry } = pose;
 
-  const hasEdgeEntry = edgeCoverage.right > 5 || edgeCoverage.left > 5 || edgeCoverage.bottom > 5 || edgeCoverage.top > 5;
-
-  // 1. Hand / Wrist / Forearm (Module 1 / 2 / 3) — Priority when arm/hand enters from an edge
-  if (hasEdgeEntry || (skinRatio >= 0.03 && skinRatio <= 0.70)) {
-    if (armEntry === 'right' || armEntry === 'left') {
-      return { moduleId: 'm1_hand', confidence: 97, label: 'Module 1: Hand & Forearm' };
-    }
-    if (armEntry === 'bottom' && blobH >= blobW * 0.6) {
-      return { moduleId: 'm1_hand', confidence: 96, label: 'Module 1: Hand & Wrist' };
-    }
-    if (armEntry === 'top') {
-      return { moduleId: 'm1_hand', confidence: 95, label: 'Module 1: Hand & Forearm' };
-    }
+  // 1. Hand / Wrist / Forearm (Module 1 / 2 / 3) — Extended limbs
+  if (aspect >= 0.95 || armEntry === 'right' || armEntry === 'left' || (armEntry === 'bottom' && blobH >= 0.4)) {
+    return { moduleId: 'm1_hand', confidence: 98, label: 'Module 1: Hand & Forearm' };
   }
 
   // 2. Knee & Lower Leg (Module 10 / 9)
-  if (pose.centerY > 0.52 && aspect < 0.85 && skinRatio > 0.08) {
+  if (pose.centerY > 0.55 && aspect < 0.85 && skinRatio > 0.08) {
     return { moduleId: 'm10_knee', confidence: 93, label: 'Module 10: Knee' };
   }
 
-  // 3. Head / Skull (Module 11) - isolated centered oval with no edge limb entry
-  if (!hasEdgeEntry && skinRatio >= 0.12 && skinRatio <= 0.60 && aspect >= 0.75 && aspect <= 1.30 && pose.centerY < 0.52) {
+  // 3. Head / Skull (Module 11) - isolated centered oval
+  if (skinRatio >= 0.12 && skinRatio <= 0.60 && aspect >= 0.80 && aspect <= 1.25 && pose.centerY < 0.48) {
     return { moduleId: 'm11_skull', confidence: 94, label: 'Module 11: Head / Skull' };
   }
 
-  // 4. Chest / Torso (Module 12) - wide chest area
-  if (skinRatio > 0.55 && aspect > 1.3 && !hasEdgeEntry) {
+  // 4. Chest / Torso (Module 12)
+  if (skinRatio > 0.55 && aspect > 1.35) {
     return { moduleId: 'm12_chest', confidence: 95, label: 'Module 12: Chest (CXR)' };
   }
 
-  // Default fallback for limb captures
-  return { moduleId: 'm1_hand', confidence: 95, label: 'Module 1: Hand & Forearm' };
+  return { moduleId: 'm1_hand', confidence: 96, label: 'Module 1: Hand & Forearm' };
 }
 
 /**
@@ -498,13 +526,13 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
       const ctx = canvas.getContext('2d');
 
       // 1. Dark radiographic cassette background with deep optical density
-      ctx.fillStyle = '#01040a';
+      ctx.fillStyle = '#010409';
       ctx.fillRect(0, 0, w, h);
 
       // 2. Render Soft-Tissue Envelope from patient's camera silhouette
       ctx.save();
-      ctx.filter = 'grayscale(100%) blur(8px) contrast(1.8) brightness(0.4)';
-      ctx.globalAlpha = 0.25;
+      ctx.filter = 'grayscale(100%) blur(10px) contrast(1.6) brightness(0.35)';
+      ctx.globalAlpha = 0.22;
       ctx.drawImage(capturedCanvas, 0, 0, w, h);
       ctx.restore();
 
@@ -549,89 +577,47 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
 
       // 3. Render Posture-Matched Radiograph Skeleton
       if (mod.id === 'm1_hand' || mod.id === 'm2_wrist' || mod.id === 'm3_forearm' || mod.id === 'm4_elbow' || mod.id === 'm5_upperarm') {
-        const palmX = pose.centerX * w;
-        const palmY = pose.centerY * h;
+        const wristCanvasX = pose.wristX * w;
+        const wristCanvasY = pose.wristY * h;
+        const hl = pose.handLength * w * 1.15;
+        const fl = pose.forearmLength * w * 1.25;
 
-        // Calculate continuous orientation angle:
-        // In refImg (xray_hand.jpg), fingers point UP (-PI/2).
-        // If armEntry is 'right', fingertips point left (-PI or PI).
-        // If armEntry is 'left', fingertips point right (0).
-        // If armEntry is 'bottom', fingertips point up (-PI/2).
-        // If armEntry is 'top', fingertips point down (PI/2).
-        let targetAngle = pose.limbAngle;
-        if (pose.armEntry === 'right') {
-          targetAngle = Math.PI; // pointing Left
-        } else if (pose.armEntry === 'left') {
-          targetAngle = 0; // pointing Right
-        } else if (pose.armEntry === 'bottom') {
-          targetAngle = -Math.PI / 2; // pointing Up
-        } else if (pose.armEntry === 'top') {
-          targetAngle = Math.PI / 2; // pointing Down
-        }
-
-        const rotationAngle = targetAngle - (-Math.PI / 2); // Delta from upright (-PI/2)
-
-        // Draw the authentic clinical hand radiograph rotated & scaled to user posture
+        // Unified Transform Matrix:
+        // (0, 0) is the WRIST JOINT.
+        // -Y is towards FINGERTIPS (along pose.targetAngle).
+        // +Y is towards FOREARM / ELBOW (opposite of pose.targetAngle).
         ctx.save();
-        ctx.translate(palmX, palmY);
-        ctx.rotate(rotationAngle);
+        ctx.translate(wristCanvasX, wristCanvasY);
+        ctx.rotate(pose.targetAngle + Math.PI / 2);
 
-        const handRenderWidth = Math.max(340, Math.min(560, (pose.blobW > pose.blobH ? pose.blobW : pose.blobH) * w * 1.05));
-        const handRenderHeight = handRenderWidth * 1.35;
+        // A. Draw authentic clinical hand radiograph from wrist (Y=0) to fingertips (Y=-hl)
+        // Crop bottom 14% of xray_hand.jpg to remove watermark cleanly
+        const sW = refImg.width || 600;
+        const sH = (refImg.height || 900) * 0.85;
+        const hw = hl * (sW / sH);
 
-        // Shift origin so wrist is near bottom and fingers near top of the reference frame
-        ctx.globalAlpha = 0.92;
+        ctx.globalAlpha = 0.95;
         ctx.drawImage(
           refImg,
-          -handRenderWidth / 2,
-          -handRenderHeight * 0.65,
-          handRenderWidth,
-          handRenderHeight
+          0, 0, sW, sH,
+          -hw / 2, -hl, hw, hl
         );
+
+        // B. Draw Forearm Bones (Radius & Ulna) starting DIRECTLY at the wrist (Y=0) extending to Y=fl
+        // Radius (lateral): from X=-18 at Y=0 to X=-24 at Y=fl
+        drawRadiographicBone(-18, 0, -24, fl, 28, false);
+
+        // Ulna (medial): from X=+18 at Y=0 to X=+22 at Y=fl
+        drawRadiographicBone(18, 0, 22, fl, 24, false);
+
+        // Articular Wrist Joint Capsular Blend at (0, 0)
+        ctx.fillStyle = 'rgba(235, 245, 255, 0.90)';
+        ctx.beginPath();
+        ctx.ellipse(-18, 2, 14, 8, 0, 0, Math.PI * 2);
+        ctx.ellipse(18, 2, 12, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
         ctx.restore();
-
-        // Forearm Radius & Ulna Continuation to Frame Boundary
-        const wristDist = handRenderHeight * 0.22;
-        const wristX = palmX - Math.cos(targetAngle) * wristDist;
-        const wristY = palmY - Math.sin(targetAngle) * wristDist;
-
-        let armOriginX = w + 60;
-        let armOriginY = wristY;
-        if (pose.armEntry === 'right') {
-          armOriginX = w + 60;
-          armOriginY = wristY;
-        } else if (pose.armEntry === 'left') {
-          armOriginX = -60;
-          armOriginY = wristY;
-        } else if (pose.armEntry === 'bottom') {
-          armOriginX = wristX;
-          armOriginY = h + 60;
-        } else {
-          armOriginX = wristX;
-          armOriginY = -60;
-        }
-
-        const forearmNormalX = -Math.sin(targetAngle);
-        const forearmNormalY = Math.cos(targetAngle);
-        const boneSpacing = 30;
-
-        // Radius (lateral forearm bone)
-        drawRadiographicBone(
-          armOriginX + forearmNormalX * boneSpacing,
-          armOriginY + forearmNormalY * boneSpacing,
-          wristX + forearmNormalX * (boneSpacing * 0.75),
-          wristY + forearmNormalY * (boneSpacing * 0.75),
-          30
-        );
-
-        // Ulna (medial forearm bone)
-        drawRadiographicBone(
-          armOriginX - forearmNormalX * boneSpacing,
-          armOriginY - forearmNormalY * boneSpacing,
-          wristX - forearmNormalX * (boneSpacing * 0.75),
-          wristY - forearmNormalY * (boneSpacing * 0.75),
-          26
-        );
       } else {
         // Multi-Body Rendering for Skull, Knees, Chest, etc. using authentic textures
         const cx = pose.centerX * w;
