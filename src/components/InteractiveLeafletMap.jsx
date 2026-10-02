@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { LocateFixed, Maximize2, Navigation, Layers, PhoneCall, Bed, ShieldCheck } from 'lucide-react';
+import { LocateFixed, Maximize2, Navigation, Layers, PhoneCall, Bed, ShieldCheck, RefreshCw } from 'lucide-react';
 
 export default function InteractiveLeafletMap({
   userCoords,
@@ -21,20 +21,25 @@ export default function InteractiveLeafletMap({
   const routePolylineRef = useRef(null);
   const routeDecorationsRef = useRef([]);
 
-  const [mapStyle, setMapStyle] = useState('osm'); // 'osm' | 'carto'
+  // Use 'carto' as default for lightning-fast CDN tile loading worldwide
+  const [mapStyle, setMapStyle] = useState('carto'); // 'carto' | 'osm'
   const tileLayerRef = useRef(null);
 
   const activeHospital = hospitals.find((h) => h.id === activeHospitalId) || hospitals[0];
 
-  // Tile layer URLs
+  // Tile layer configs with explicit subdomains and maxZoom
   const TILE_LAYERS = {
-    osm: {
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      attribution: '&copy; OpenStreetMap contributors'
-    },
     carto: {
       url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      subdomains: 'abcd',
+      maxZoom: 19,
       attribution: '&copy; CARTO &copy; OpenStreetMap contributors'
+    },
+    osm: {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      subdomains: ['a', 'b', 'c'],
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
     }
   };
 
@@ -50,20 +55,36 @@ export default function InteractiveLeafletMap({
       center: [initialLat, initialLng],
       zoom: 13,
       zoomControl: false,
-      attributionControl: false
+      attributionControl: false,
+      trackResize: true
     });
 
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    const layerConfig = TILE_LAYERS.osm;
+    const layerConfig = TILE_LAYERS[mapStyle] || TILE_LAYERS.carto;
     tileLayerRef.current = L.tileLayer(layerConfig.url, {
       maxZoom: 19,
+      subdomains: layerConfig.subdomains,
       attribution: layerConfig.attribution
     }).addTo(map);
 
     mapInstanceRef.current = map;
 
+    // Smooth initial sizing
+    const animId = requestAnimationFrame(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize({ animate: false });
+      }
+    });
+    const t1 = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize({ animate: false });
+      }
+    }, 200);
+
     return () => {
+      cancelAnimationFrame(animId);
+      clearTimeout(t1);
       map.remove();
       mapInstanceRef.current = null;
     };
@@ -71,13 +92,18 @@ export default function InteractiveLeafletMap({
 
   // 2. Handle Tile Layer Switch
   useEffect(() => {
-    if (!mapInstanceRef.current || !tileLayerRef.current) return;
-    mapInstanceRef.current.removeLayer(tileLayerRef.current);
-    const config = TILE_LAYERS[mapStyle] || TILE_LAYERS.osm;
+    if (!mapInstanceRef.current) return;
+    if (tileLayerRef.current) {
+      mapInstanceRef.current.removeLayer(tileLayerRef.current);
+    }
+    const config = TILE_LAYERS[mapStyle] || TILE_LAYERS.carto;
     tileLayerRef.current = L.tileLayer(config.url, {
       maxZoom: 19,
+      subdomains: config.subdomains,
       attribution: config.attribution
     }).addTo(mapInstanceRef.current);
+
+    mapInstanceRef.current.invalidateSize();
   }, [mapStyle]);
 
   // 3. Update User GPS Marker
@@ -144,8 +170,8 @@ export default function InteractiveLeafletMap({
 
     hospitals.forEach((hosp) => {
       const isSelected = hosp.id === activeHospitalId;
-      const isApex = hosp.category.includes('Apex') || hosp.category.includes('Medical College');
-      const isTrauma = hosp.traumaLevel.includes('Level-1');
+      const isApex = hosp.category?.includes('Apex') || hosp.category?.includes('Medical College');
+      const isTrauma = hosp.traumaLevel?.includes('Level-1');
 
       let pinColor = '#10b981'; // emerald
       let badgeBg = 'bg-emerald-600';
@@ -232,7 +258,7 @@ export default function InteractiveLeafletMap({
             <span>Rating: <strong>★ ${hosp.rating || 4.8}</strong></span>
           </div>
           <div class="flex items-center gap-1.5 pt-1">
-            <a href="tel:${hosp.phone.replace(/[^0-9+]/g, '')}" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 rounded text-center text-[10px] no-underline">
+            <a href="tel:${hosp.phone?.replace(/[^0-9+]/g, '')}" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 rounded text-center text-[10px] no-underline">
               📞 Emergency Call
             </a>
             <a href="https://www.google.com/maps/dir/?api=1&destination=${hosp.lat},${hosp.lng}" target="_blank" rel="noopener noreferrer" class="bg-slate-900 hover:bg-black text-white font-bold px-2 py-1.5 rounded text-[10px] no-underline">
@@ -314,7 +340,6 @@ export default function InteractiveLeafletMap({
     const map = mapInstanceRef.current;
     if (!map || !userCoords?.lat || !activeHospital?.lat) return;
 
-    // Remove existing polyline and decor
     if (routePolylineRef.current) {
       map.removeLayer(routePolylineRef.current);
       routePolylineRef.current = null;
@@ -322,13 +347,12 @@ export default function InteractiveLeafletMap({
     routeDecorationsRef.current.forEach((layer) => map.removeLayer(layer));
     routeDecorationsRef.current = [];
 
-    // Synthesize a realistic curved highway polyline with 4 waypoints
     const startLat = userCoords.lat;
     const startLng = userCoords.lng;
     const endLat = activeHospital.lat;
     const endLng = activeHospital.lng;
 
-    // Midpoints with slight highway curvature
+    // Midpoints with slight curvature
     const midLat1 = startLat + (endLat - startLat) * 0.33 + 0.005;
     const midLng1 = startLng + (endLng - startLng) * 0.33 - 0.004;
     const midLat2 = startLat + (endLat - startLat) * 0.66 - 0.003;
@@ -376,6 +400,7 @@ export default function InteractiveLeafletMap({
   const handleRecenter = () => {
     if (!mapInstanceRef.current || !userCoords?.lat) return;
     mapInstanceRef.current.setView([userCoords.lat, userCoords.lng], 14, { animate: true });
+    mapInstanceRef.current.invalidateSize();
   };
 
   // Handle Fit Route
@@ -386,12 +411,23 @@ export default function InteractiveLeafletMap({
       [activeHospital.lat, activeHospital.lng]
     ]);
     mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], animate: true });
+    mapInstanceRef.current.invalidateSize();
+  };
+
+  // Force Refresh Map Tiles
+  const handleForceRefresh = () => {
+    if (!mapInstanceRef.current) return;
+    mapInstanceRef.current.invalidateSize({ animate: false });
   };
 
   return (
-    <div className="relative w-full h-[460px] sm:h-[520px] rounded-2xl overflow-hidden border border-slate-300 shadow-md">
-      {/* Real Leaflet Map DOM Node */}
-      <div ref={mapContainerRef} className="w-full h-full bg-slate-100 z-0" />
+    <div className="relative w-full h-[480px] sm:h-[540px] rounded-2xl overflow-hidden border border-slate-300 shadow-md bg-slate-100">
+      {/* Real Leaflet Map DOM Node with explicit style */}
+      <div
+        ref={mapContainerRef}
+        style={{ width: '100%', height: '100%', minHeight: '480px' }}
+        className="leaflet-container"
+      />
 
       {/* Floating Header Overlay */}
       <div className="absolute top-3 left-3 z-10 flex flex-wrap items-center gap-2 pointer-events-none">
@@ -399,12 +435,12 @@ export default function InteractiveLeafletMap({
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span>Odisha Emergency GPS Corridors</span>
           <span className="bg-emerald-500/30 text-emerald-300 text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold">
-            {hospitals.length} Facilities Active
+            {hospitals.length} Hospitals
           </span>
         </div>
       </div>
 
-      {/* Floating Action Controls (Recenter, Fit Route, Map Layer) */}
+      {/* Floating Action Controls (Recenter, Fit Route, Map Layer, Refresh) */}
       <div className="absolute bottom-4 right-3 z-10 flex flex-col gap-2 pointer-events-auto">
         <button
           onClick={handleRecenter}
@@ -423,11 +459,19 @@ export default function InteractiveLeafletMap({
         </button>
 
         <button
-          onClick={() => setMapStyle((s) => (s === 'osm' ? 'carto' : 'osm'))}
-          title="Switch Map Tiles (Streets / Voyager)"
+          onClick={() => setMapStyle((s) => (s === 'carto' ? 'osm' : 'carto'))}
+          title="Switch Map Tiles (Voyager / OpenStreetMap)"
           className="bg-white/95 hover:bg-white text-slate-800 p-2.5 rounded-xl shadow-lg border border-slate-200 transition-all hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
         >
           <Layers className="w-4 h-4 text-purple-600" />
+        </button>
+
+        <button
+          onClick={handleForceRefresh}
+          title="Reload Map Sizing"
+          className="bg-white/95 hover:bg-white text-slate-800 p-2.5 rounded-xl shadow-lg border border-slate-200 transition-all hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
+        >
+          <RefreshCw className="w-4 h-4 text-slate-700" />
         </button>
       </div>
 

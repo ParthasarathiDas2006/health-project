@@ -1,7 +1,7 @@
 /**
  * Backend Triage Service & LLM Orchestrator
  * Framework: Express.js (or adaptable to FastAPI/Django)
- * LLM: Google Gemini 1.5 Flash / OpenAI structured response
+ * LLM: Google Gemini 2.0 Flash / OpenAI structured response
  *
  * CLINICAL SAFETY MANDATE:
  * Strict system prompt ensures zero diagnostic claims or prescriptions.
@@ -51,12 +51,12 @@ function evaluateDeterministicRedFlags(vitals = {}, labText = '') {
   }
 
   // 4. Lab Pattern Keyword Heuristics
-  const labLower = labText.toLowerCase();
+  const labLower = (labText || '').toLowerCase();
   if (labLower.includes('platelet') && /([1-4][0-9],000|\b[1-4][0-9]000\b)/.test(labText)) {
     flags.push('Severe Thrombocytopenia (< 50,000 /cumm) - acute bleeding caution');
     urgency = 'RED';
   }
-  if (labLower.includes('ketone') && (labLower.includes('+++') || labLower.includes('large'))) {
+  if (labLower.includes('ketone') && (labLower.includes('+++') || labLower.includes('large') || labLower.includes('moderate'))) {
     flags.push('High Ketonuria detected - Ketoacidosis risk');
     urgency = 'RED';
   }
@@ -93,13 +93,19 @@ router.post('/generate-note', async (req, res) => {
     // 1. Run deterministic rule evaluation first
     const ruleEvaluation = evaluateDeterministicRedFlags(vitals, ocrLabText || '');
 
-    // 2. Prepare payload for LLM (Google Gemini / OpenAI)
-    const promptContent = `
+    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+
+    // 2. If API Key exists, call Live Google Gemini 2.0 Flash
+    if (apiKey) {
+      try {
+        const promptContent = `
+${SYSTEM_TRIAGE_PROMPT}
+
 Patient Context:
 - Intake Language: ${intakeLanguage || 'hi-IN'}
 - Raw Symptoms: "${rawSymptoms}"
 - Documented Vitals: ${JSON.stringify(vitals || {})}
-- Extracted Lab Report Text:
+- Extracted Lab Report / Prescription Text:
 "${ocrLabText || 'None uploaded'}"
 
 Generate the JSON triage note adhering strictly to this schema:
@@ -116,9 +122,43 @@ Generate the JSON triage note adhering strictly to this schema:
   "suggestedClarificationsForDoctor": ["string"],
   "recommendedReferralUnit": "string"
 }
+Return ONLY raw JSON without markdown formatting.
 `;
 
-    // 3. Fallback Response (Mocking the LLM generation for instant reliable execution)
+        const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const geminiRes = await fetch(geminiEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptContent }] }],
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: 'application/json'
+            }
+          })
+        });
+
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          const parsedNote = JSON.parse(geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
+          if (parsedNote.urgencyTier) {
+            return res.status(200).json({
+              triageId: `TRG-${Date.now().toString().slice(-4)}`,
+              patientId: patientId || 'P-UNKNOWN',
+              generatedAt: new Date().toISOString(),
+              ...parsedNote,
+              deterministicRedFlags: ruleEvaluation.flags,
+              nonDiagnosticDisclaimer:
+                'NON-DIAGNOSTIC TRIAGE NOTE. For qualified medical practitioner review only.'
+            });
+          }
+        }
+      } catch (geminiErr) {
+        console.warn('Gemini 2.0 API call fallback to deterministic rules:', geminiErr.message);
+      }
+    }
+
+    // 3. Fallback Response (Mocking / Deterministic when Gemini API is unavailable)
     const triageResponse = {
       triageId: `TRG-${Date.now().toString().slice(-4)}`,
       patientId: patientId || 'P-UNKNOWN',

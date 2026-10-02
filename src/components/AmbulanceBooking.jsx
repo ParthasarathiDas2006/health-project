@@ -361,11 +361,14 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
       center: [(ambLat + pickupLat) / 2, (ambLng + pickupLng) / 2],
       zoom: 14,
       zoomControl: false,
-      attributionControl: false
+      attributionControl: false,
+      trackResize: true
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+      attribution: '&copy; CARTO &copy; OpenStreetMap contributors'
     }).addTo(map);
 
     L.control.zoom({ position: 'topright' }).addTo(map);
@@ -423,9 +426,19 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
 
     map.fitBounds(L.latLngBounds([[ambLat, ambLng], [pickupLat, pickupLng]]), { padding: [40, 40] });
 
+    // Handle smooth sizing
+    const animId = requestAnimationFrame(() => {
+      map.invalidateSize({ animate: false });
+    });
+    const t1 = setTimeout(() => {
+      map.invalidateSize({ animate: false });
+    }, 200);
+
     trackMapInstanceRef.current = map;
 
     return () => {
+      cancelAnimationFrame(animId);
+      clearTimeout(t1);
       map.remove();
       trackMapInstanceRef.current = null;
     };

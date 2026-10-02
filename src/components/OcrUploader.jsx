@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { UploadCloud, FileText, AlertTriangle, Loader2, Sparkles } from 'lucide-react';
+import { runGeminiMultimodalOcr, parseLabMetrics } from '../services/geminiOcrService';
 
 /**
  * OCR Report Uploader
  * 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
- * Extracts text from uploaded lab reports, highlights abnormalities,
- * and handles edge-fallbacks for rural clinics.
+ * Extracts text from uploaded lab reports & prescriptions with live Gemini API under the hood,
+ * highlights abnormalities, and preserves the exact original UI/UX.
  */
 export default function OcrUploader({ onOcrComplete, appLang }) {
   const [file, setFile] = useState(null);
@@ -105,34 +106,22 @@ Blood Pressure            178/104      mmHg       (<120/80)         [STAGE 2 HTN
 
   const runOcr = async (imageFile) => {
     setIsProcessing(true);
-    setProgress(10);
+    setProgress(15);
 
     try {
-      for (let p = 20; p <= 90; p += 25) {
-        await new Promise((res) => setTimeout(res, 250));
-        setProgress(p);
-      }
+      const result = await runGeminiMultimodalOcr({
+        file: imageFile,
+        appLang: lang,
+        onProgress: (p) => setProgress(p)
+      });
 
-      const mockOcrText = `
-GOVERNMENT CIVIL HOSPITAL - CENTRAL PATHOLOGY LAB
-PATIENT INVESTIGATION REPORT
-==================================================
-PLATELET COUNT: 45,000 /cumm  (Ref: 150000 - 450000) *CRITICAL*
-TOTAL LEUKOCYTES: 3,400 /cumm (Ref: 4000 - 10000)
-HEMOGLOBIN: 12.8 gm/dL        (Ref: 12.0 - 16.0)
-SERUM CREATININE: 1.1 mg/dL   (Ref: 0.7 - 1.3)
-BILIRUBIN TOTAL: 1.4 mg/dL    (Ref: 0.2 - 1.0) *HIGH*
-==================================================`;
-
-      setExtractedText(mockOcrText);
+      setExtractedText(result.rawText);
+      setParsedMetrics(result.metrics);
       setProgress(100);
 
-      const parsed = parseLabMetrics(mockOcrText);
-      setParsedMetrics(parsed);
-
       onOcrComplete({
-        rawText: mockOcrText,
-        metrics: parsed,
+        rawText: result.rawText,
+        metrics: result.metrics,
         fileName: imageFile.name,
       });
     } catch (err) {
@@ -143,34 +132,11 @@ BILIRUBIN TOTAL: 1.4 mg/dL    (Ref: 0.2 - 1.0) *HIGH*
     }
   };
 
-  const parseLabMetrics = (text) => {
-    const findings = [];
-    const plateletMatch = text.match(/platelet(?: count)?[:\s]+([\d,]+)/i);
-    if (plateletMatch) {
-      const val = parseInt(plateletMatch[1].replace(/,/g, ''), 10);
-      if (val < 50000) {
-        findings.push({ name: t.plateletsName, value: `${val} /cumm`, status: 'CRITICAL_LOW', alert: t.severeThrombocytopenia });
-      } else if (val < 100000) {
-        findings.push({ name: t.plateletsName, value: `${val} /cumm`, status: 'LOW', alert: t.moderateThrombocytopenia });
-      }
-    }
-
-    const rbsMatch = text.match(/(?:rbs|random blood sugar|glucose)[:\s]+(\d+)/i);
-    if (rbsMatch) {
-      const val = parseInt(rbsMatch[1], 10);
-      if (val > 300) {
-        findings.push({ name: t.glucoseName, value: `${val} mg/dL`, status: 'CRITICAL_HIGH', alert: t.hyperglycemicCrisis });
-      }
-    }
-
-    return findings;
-  };
-
   const loadDemo = (demo) => {
     setExtractedText(demo.snippet);
     setPreviewUrl(null);
     setFile({ name: `${demo.title}.txt` });
-    const parsed = parseLabMetrics(demo.snippet);
+    const parsed = parseLabMetrics(demo.snippet, lang);
     setParsedMetrics(parsed);
     onOcrComplete({
       rawText: demo.snippet,
