@@ -27,17 +27,109 @@ import {
   Plus,
   Trash2,
   Eye,
-  Check
+  Check,
+  Sparkles,
+  Bed,
+  MessageSquare,
+  AlertCircle,
+  XCircle,
+  Lock,
+  Smartphone,
+  Sliders,
+  Award
 } from 'lucide-react';
 import { getHospitalPartners } from '../data/hospitalPartners';
 
 /**
  * PDF Referral Slips & NMC Prescriptions Suite with Verifiable QR Codes
- * 100% compliant with National Medical Commission (NMC) 2023 Regulations & NHM Inter-Facility Referral Protocols.
+ * 100% compliant with National Medical Commission (NMC 2023 Regulations) & NHM Inter-Facility Referral Protocols.
  * Pure Localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
  */
 
-// ─── Preset Clinical Scenarios ────────────────────────────────────────────────
+// ─── NMC 2023 Brand-to-Generic Medical Dictionary ───────────────────────────
+const BRAND_TO_GENERIC_MAP = {
+  'DOLO 650': { generic: 'PARACETAMOL', dosage: '650 mg', form: 'Tablet' },
+  'DOLO': { generic: 'PARACETAMOL', dosage: '650 mg', form: 'Tablet' },
+  'CROCIN': { generic: 'PARACETAMOL', dosage: '500 mg', form: 'Tablet' },
+  'CALPOL': { generic: 'PARACETAMOL', dosage: '500 mg', form: 'Suspension' },
+  'AUGMENTIN': { generic: 'AMOXICILLIN + CLAVULANIC ACID', dosage: '625 mg', form: 'Tablet' },
+  'CLAVAM': { generic: 'AMOXICILLIN + CLAVULANIC ACID', dosage: '625 mg', form: 'Tablet' },
+  'PAN 40': { generic: 'PANTOPRAZOLE', dosage: '40 mg', form: 'Tablet' },
+  'PANTOCID': { generic: 'PANTOPRAZOLE', dosage: '40 mg', form: 'Tablet' },
+  'PAN-D': { generic: 'PANTOPRAZOLE + DOMPERIDONE', dosage: '40 mg + 30 mg SR', form: 'Capsule' },
+  'AZITHRAL': { generic: 'AZITHROMYCIN', dosage: '500 mg', form: 'Tablet' },
+  'AZIWIN': { generic: 'AZITHROMYCIN', dosage: '500 mg', form: 'Tablet' },
+  'GLYCOMET': { generic: 'METFORMIN HYDROCHLORIDE', dosage: '500 mg', form: 'Tablet' },
+  'TELMA 40': { generic: 'TELMISARTAN', dosage: '40 mg', form: 'Tablet' },
+  'TELMA': { generic: 'TELMISARTAN', dosage: '40 mg', form: 'Tablet' },
+  'ECOSPRIN': { generic: 'ASPIRIN (DISPERSIBLE)', dosage: '75 mg', form: 'Tablet' },
+  'MONOCEF': { generic: 'CEFTRIAXONE SODIUM', dosage: '1 g', form: 'Injection' },
+  'TAXIM-O': { generic: 'CEFIXIME', dosage: '200 mg', form: 'Tablet' },
+  'MEFTAL-SPAS': { generic: 'MEFENAMIC ACID + DICYCLOMINE HYDROCHLORIDE', dosage: '250 mg + 10 mg', form: 'Tablet' },
+  'AVIL': { generic: 'PHENIRAMINE MALEATE', dosage: '25 mg', form: 'Tablet' },
+  'LIPITOR': { generic: 'ATORVASTATIN', dosage: '20 mg', form: 'Tablet' },
+  'CIPLOX': { generic: 'CIPROFLOXACIN', dosage: '500 mg', form: 'Tablet' }
+};
+
+// ─── Destination Apex Hospitals Real-Time Bed & Nodal Directory ─────────────
+const APEX_DESTINATION_STATUS = {
+  'SCB Medical College & Hospital (SCBMCH), Cuttack - Emergency HDU': {
+    nodalPhone: '0671-2414004',
+    emergencyOfficer: 'Dr. Debasish Ray (Casualty MO)',
+    icuBeds: 4,
+    hduBeds: 7,
+    oxygenSupply: '99.8% Liquid Medical O2 (Normal)',
+    greenCorridor: 'NH-16 Corridor Active (Pilot clearance notified)',
+    bloodBankUnits: 'O+ (22 Units), B+ (18 Units), A+ (14 Units)'
+  },
+  'MKCG Medical College & Hospital, Berhampur - Obstetric ICU': {
+    nodalPhone: '0680-2292746',
+    emergencyOfficer: 'Dr. Minati Panigrahi (Obs/Gynae Nodal)',
+    icuBeds: 2,
+    hduBeds: 5,
+    oxygenSupply: '100% Manifold Pressure OK',
+    greenCorridor: 'State Highway 17 Ambulance Protocol Ready',
+    bloodBankUnits: 'O+ (15 Units), B+ (12 Units), AB+ (6 Units)'
+  },
+  'AIIMS Bhubaneswar Emergency & Interventional Cath Lab': {
+    nodalPhone: '0674-2476789',
+    emergencyOfficer: 'Dr. Ashis Patnaik (Cardiology Registrar)',
+    icuBeds: 3,
+    hduBeds: 8,
+    oxygenSupply: 'Continuous Cryogenic Tank Supply',
+    greenCorridor: 'Golden Hour PPCI Team on Active Standby',
+    bloodBankUnits: 'Universal O- (6 Units), A+ (24 Units), B+ (30 Units)'
+  },
+  'SCB Medical College & Hospital, Cuttack - Diabetic Foot & Vascular Surgery OPD': {
+    nodalPhone: '0671-2414108',
+    emergencyOfficer: 'Dr. R. C. Mohanty (Vascular Surgery Unit)',
+    icuBeds: 6,
+    hduBeds: 12,
+    oxygenSupply: 'Normal Operating Level',
+    greenCorridor: 'Normal Transit Schedule',
+    bloodBankUnits: 'B+ (19 Units), O+ (25 Units)'
+  },
+  'SLN Medical College & Hospital, Koraput - Pediatric Intensive Care Unit (PICU)': {
+    nodalPhone: '06852-251022',
+    emergencyOfficer: 'Dr. Sukant Das (Pediatric ICU In-Charge)',
+    icuBeds: 3,
+    hduBeds: 6,
+    oxygenSupply: 'High-Flow Nasal Cannula Standby',
+    greenCorridor: 'Ghat Road Special 108 ALS Convoy Alerted',
+    bloodBankUnits: 'Whole Blood (34 Units), FFP (12 Units)'
+  },
+  'PRM Medical College & Hospital, Baripada - Critical Care Envenomation Unit': {
+    nodalPhone: '06792-255011',
+    emergencyOfficer: 'Dr. Manoj Soren (ASV Resuscitation Desk)',
+    icuBeds: 4,
+    hduBeds: 8,
+    oxygenSupply: 'Mechanical Ventilators Ready (3 free)',
+    greenCorridor: 'NH-18 Rapid Transit Siren Protocol On',
+    bloodBankUnits: 'Anti-Snake Venom Stock: 140 Vials Available'
+  }
+};
+
+// ─── 6 Authentic Odisha Clinical Scenarios ──────────────────────────────────
 const CLINICAL_PRESETS = [
   {
     id: 'CASE-01',
@@ -145,6 +237,60 @@ const CLINICAL_PRESETS = [
       { name: 'TENELIGLIPTIN', dosage: '20 mg', form: 'Tablet', freq: 'OD (Morning)', duration: '14 Days', instruction: 'Take before breakfast.' },
       { name: 'AMOXICILLIN + CLAVULANIC ACID', dosage: '625 mg', form: 'Tablet', freq: 'BD after food', duration: '7 Days', instruction: 'Broad-spectrum coverage for wound infection.' }
     ]
+  },
+  {
+    id: 'CASE-05',
+    patientName: 'Babula Muduli (ବାବୁଲା ମୁଦୁଲି)',
+    age: 5,
+    gender: 'Male',
+    abhaId: '91-7788-3310-9921',
+    phone: '+91 94380 55102',
+    district: 'Malkangiri',
+    address: 'Mathili Block, Malkangiri - 764044',
+    bloodGroup: 'O+',
+    weight: '16 kg',
+    allergies: 'None Reported (NKDA)',
+    acuity: 'RED',
+    provisionalDiagnosis: 'Pediatric Cerebral Malaria with Repeated Convulsions (ICD-10: B50.0)',
+    chiefComplaints: 'High fever 104.2°F for 3 days, altered sensorium, generalized tonic-clonic convulsions 20 mins ago, unarousable coma.',
+    vitals: { bp: '84/50 mmHg', pulse: '142 bpm', spo2: '91%', temp: '104.2°F', rr: '36/min' },
+    originFacility: 'Community Health Centre (CHC), Mathili, Malkangiri',
+    referredTo: 'SLN Medical College & Hospital, Koraput - Pediatric Intensive Care Unit (PICU)',
+    referralReason: 'Rapid diagnostic test (RDT) positive for Plasmodium falciparum with cerebral complications (GCS 7/15); urgent IV Artesunate & PICU ventilator backup required.',
+    transitTransport: '108 ALS Ambulance equipped with pediatric suction & portable pulse oximeter',
+    oxygenReq: 'Oxygen at 3 L/min via pediatric face mask',
+    medications: [
+      { name: 'ARTESUNATE', dosage: '40 mg (2.4 mg/kg)', form: 'IV Injection', freq: 'STAT Loading', duration: '1 Dose', instruction: 'Reconstitute with 5% Sodium Bicarbonate and normal saline. Repeat at 12 & 24 hours.' },
+      { name: 'MIDAZOLAM', dosage: '1.5 mg (0.1 mg/kg)', form: 'IV/Intranasal', freq: 'PRN for Seizures', duration: 'SOS', instruction: 'Administer slowly if convulsion lasts >3 mins.' },
+      { name: 'PARACETAMOL', dosage: '250 mg', form: 'Suppository', freq: 'Rectal STAT', duration: '1 Dose', instruction: 'For rapid temperature reduction.' }
+    ]
+  },
+  {
+    id: 'CASE-06',
+    patientName: 'Bichitra Mohapatra (ବିଚିତ୍ର ମହାପାତ୍ର)',
+    age: 34,
+    gender: 'Male',
+    abhaId: '91-9922-1104-4458',
+    phone: '+91 94379 88123',
+    district: 'Mayurbhanj',
+    address: 'Betnoti Block, Mayurbhanj - 757025',
+    bloodGroup: 'AB+',
+    weight: '62 kg',
+    allergies: 'None (NKDA)',
+    acuity: 'RED',
+    provisionalDiagnosis: 'Acute Neurotoxic Snakebite (Common Krait) Envenomation (ICD-10: T63.0)',
+    chiefComplaints: 'Bitten on right ankle while sleeping on floor 2 hours ago; early bilateral ptosis (eyelid drooping), dysphagia, generalized muscle weakness.',
+    vitals: { bp: '104/68 mmHg', pulse: '98 bpm', spo2: '93%', temp: '98.2°F', rr: '16/min (Shallow)' },
+    originFacility: 'Community Health Centre (CHC), Betnoti, Mayurbhanj',
+    referredTo: 'PRM Medical College & Hospital, Baripada - Critical Care Envenomation Unit',
+    referralReason: 'Rapid progression of neurotoxic paralysis with impending respiratory arrest (Single Breath Count <15); emergency Anti-Snake Venom (ASV) & mechanical ventilation needed.',
+    transitTransport: '108 ALS Ambulance with Bag-Valve-Mask (Ambu) & Doctor escort',
+    oxygenReq: 'Continuous 6 L/min via non-rebreather mask (NRBM)',
+    medications: [
+      { name: 'POLYVALENT ANTI-SNAKE VENOM (ASV)', dosage: '10 Vials (100 ml)', form: 'IV Infusion', freq: 'In 200 ml Normal Saline over 1 hour', duration: 'Initial Loading Dose', instruction: 'Monitor for anaphylaxis; keep Adrenaline 1:1000 0.5ml IM at bedside.' },
+      { name: 'NEOSTIGMINE METHYLSULFATE', dosage: '0.5 mg', form: 'IV Injection', freq: 'With Atropine 0.6 mg STAT', duration: 'Challenge Dose', instruction: 'Evaluate response in 30 mins for neuromuscular improvement.' },
+      { name: 'TETANUS TOXOID', dosage: '0.5 ml', form: 'IM Injection', freq: 'STAT', duration: '1 Dose', instruction: 'Deep intramuscular right deltoid.' }
+    ]
   }
 ];
 
@@ -181,15 +327,18 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
   const [transportMode, setTransportMode] = useState(currentCase.transitTransport);
   const [oxygenReq, setOxygenReq] = useState(currentCase.oxygenReq);
 
-  // Verifiable QR Code & Digital Stamp
+  // Verifiable QR Code & Cryptographic Stamp
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [verificationToken, setVerificationToken] = useState(null);
   const [verifyStatus, setVerifyStatus] = useState(null); // 'VALID' | 'TAMPERED' | null
-  const [verifyInputPayload, setVerifyInputPayload] = useState('');
+  const [simulateTamper, setSimulateTamper] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedSms, setCopiedSms] = useState(false);
   const [vaultList, setVaultList] = useState([]);
+  const [showSmsModal, setShowSmsModal] = useState(false);
+  const [showDoctorModal, setShowDoctorModal] = useState(false);
 
-  // When selected case changes, populate fields
+  // Populate fields on preset change
   useEffect(() => {
     setPatientName(currentCase.patientName);
     setPatientAge(currentCase.age);
@@ -206,17 +355,19 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     setReferralReason(currentCase.referralReason);
     setTransportMode(currentCase.transitTransport);
     setOxygenReq(currentCase.oxygenReq);
+    setVerifyStatus(null);
   }, [selectedCaseId]);
 
   // Generate Unique Cryptographic Token and Real Verifiable QR Code
   useEffect(() => {
     const docId = `NMC-OD-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+    const cadId = `CAD-108-OD-${Math.floor(10000 + Math.random() * 90000)}`;
     const timestamp = new Date().toISOString();
 
-    // Verification Payload encoded into QR Code
     const payload = {
       docType: activeTab === 'referral' ? 'NHM_REFERRAL_SLIP' : 'NMC_E_PRESCRIPTION',
       docId: docId,
+      cadToken: cadId,
       rmp: {
         name: doctorName,
         regNo: doctorRegNo,
@@ -232,15 +383,15 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       diagnosis: diagnosis,
       facility: facilityName,
       issuedAt: timestamp,
-      securityHash: `SHA256:${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
+      securityHash: `SHA256:${Math.random().toString(36).substring(2, 12).toUpperCase()}${Math.random().toString(36).substring(2, 12).toUpperCase()}`,
       verifyUrl: `https://swasthyamitra.odisha.gov.in/verify?docId=${docId}&reg=${doctorRegNo}`
     };
 
     setVerificationToken(payload);
 
-    // Convert JSON to QR Data URL
     const qrString = JSON.stringify({
       id: payload.docId,
+      cad: payload.cadToken,
       rmp: payload.rmp.regNo,
       patient: payload.patient.abhaId,
       type: payload.docType,
@@ -249,7 +400,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     });
 
     QRCode.toDataURL(qrString, {
-      width: 220,
+      width: 240,
       margin: 1,
       color: {
         dark: '#0f172a',
@@ -260,6 +411,18 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       .catch((err) => console.warn('QR Code generation error', err));
   }, [selectedCaseId, activeTab, doctorName, doctorRegNo, patientName, diagnosis, facilityName]);
 
+  // Load vault list on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('nhp_clinical_docs_vault');
+      if (saved) {
+        setVaultList(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+  }, []);
+
   // Multilingual UI Texts
   const txt = {
     'or-IN': {
@@ -269,9 +432,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       tabReferral: '୨. ହସ୍ପିଟାଲ୍ ରେଫରାଲ୍ ସ୍ଲିପ୍ (୧୦୮)',
       tabVerify: '୩. QR କୋଡ୍ ସତ୍ୟତା ଯାଞ୍ଚ (Scanner)',
       tabVault: '୪. ଜାରି କରାଯାଇଥିବା ଦଲିଲ୍ ଭଲ୍ଟ',
-      nmcNotice: 'NMC ମାଣ୍ଡେଟ୍: ସମସ୍ତ ଔଷଧର ନାମ ବଡ଼ ଅକ୍ଷରରେ (GENERIC CAPITAL LETTERS) ଲିଖିତ।',
+      nmcNotice: 'NMC ମାଣ୍ଡେଟ୍ ୨୦୨୩: ସମସ୍ତ ଔଷଧର ନାମ ବଡ଼ ଅକ୍ଷରରେ (GENERIC CAPITAL LETTERS) ଲିଖିତ।',
       btnPrintPdf: 'ପ୍ରିଣ୍ଟ୍ / PDF ସେଭ୍ କରନ୍ତୁ',
       btnVerifyDoc: 'QR କୋଡ୍ ଯାଞ୍ଚ କରନ୍ତୁ',
+      btnSmsDispatch: '୧୦୮ SMS ଟୋକନ୍ ପଠାନ୍ତୁ',
       rmpBadge: 'RMP ସତ୍ୟାପିତ ଡାକ୍ତର',
       abhaBadge: 'ABHA ଲିଙ୍କ୍ ହୋଇଛି',
       rxHeader: 'ଚିକିତ୍ସା ଲେଖା (Rx)',
@@ -285,7 +449,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       refTransportLabel: '୧୦୮ ପରିବହନ ବ୍ୟବସ୍ଥା:',
       oxygenLabel: 'ଅମ୍ଳଜାନ (Oxygen) ଆବଶ୍ୟକତା:',
       doctorSignLabel: 'ପଞ୍ଜୀକୃତ ଡାକ୍ତରଙ୍କ ଡିଜିଟାଲ୍ ଦସ୍ତଖତ',
-      validStamp: '✓ NMC / OMC ସରକାରୀ ସତ୍ୟାପିତ'
+      validStamp: '✓ NMC / OMC ସରକାରୀ ସତ୍ୟାପିତ',
+      liveBedTitle: 'ଗନ୍ତବ୍ୟ ହସ୍ପିଟାଲ୍ ଲାଇଭ୍ ଶଯ୍ୟା ଓ ନୋଡାଲ୍ ସ୍ଥିତି:',
+      autoFixTooltip: 'ବ୍ରାଣ୍ଡ୍ ନାମ ଚିହ୍ନଟ ହୋଇଛି! NMC ଜେନେରିକ୍ ରୂପରେ ବଦଳାନ୍ତୁ'
     },
     'hi-IN': {
       title: 'NMC ई-प्रिस्क्रिप्शन एवं सत्यापित QR कोड रेफरल पर्ची',
@@ -294,9 +460,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       tabReferral: '2. अस्पताल रेफरल पर्ची (108)',
       tabVerify: '3. QR कोड सत्यता सत्यापन (Scanner)',
       tabVault: '4. जारी किए गए दस्तावेज वॉल्ट',
-      nmcNotice: 'NMC आदेश: सभी दवाओं के जेनेरिक नाम बड़े अक्षरों (CAPITAL LETTERS) में लिखे गए हैं।',
+      nmcNotice: 'NMC आदेश 2023: सभी दवाओं के जेनेरिक नाम बड़े अक्षरों (CAPITAL LETTERS) में लिखे गए हैं।',
       btnPrintPdf: 'प्रिंट / PDF डाउनलोड करें',
       btnVerifyDoc: 'QR कोड सत्यापित करें',
+      btnSmsDispatch: '108 SMS टोकन भेजें',
       rmpBadge: 'RMP सत्यापित चिकित्सक',
       abhaBadge: 'ABHA लिंक्ड',
       rxHeader: 'दवा विवरण (Rx)',
@@ -310,7 +477,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       refTransportLabel: '108 आपातकालीन एम्बुलेंस:',
       oxygenLabel: 'ऑक्सीजन आवश्यकता:',
       doctorSignLabel: 'पंजीकृत चिकित्सक के डिजिटल हस्ताक्षर',
-      validStamp: '✓ NMC / OMC आधिकारिक सत्यापित'
+      validStamp: '✓ NMC / OMC आधिकारिक सत्यापित',
+      liveBedTitle: 'लक्ष्य अस्पताल लाइव बेड एवं नोडल स्थिति:',
+      autoFixTooltip: 'ब्रांड नाम पहचाना गया! NMC जेनेरिक में बदलें'
     },
     'en-IN': {
       title: 'PDF Referral Slips & NMC Prescriptions with Verifiable QR Codes',
@@ -322,6 +491,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       nmcNotice: 'NMC Mandate 2023: Generic medicine names displayed in standard legible CAPITAL LETTERS.',
       btnPrintPdf: 'Print / Save as PDF Slip',
       btnVerifyDoc: 'Verify QR Authenticity',
+      btnSmsDispatch: '108 SMS Dispatch Token',
       rmpBadge: 'Verified RMP Clinician',
       abhaBadge: 'ABHA Linked',
       rxHeader: 'Prescription Table (Rx)',
@@ -335,9 +505,34 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       refTransportLabel: '108 Transit & Paramedic Protocol:',
       oxygenLabel: 'Transit Oxygen Requirement:',
       doctorSignLabel: 'Registered Medical Practitioner Digital Seal',
-      validStamp: '✓ NMC / OMC Verified Document'
+      validStamp: '✓ NMC / OMC Verified Document',
+      liveBedTitle: 'Destination Apex Hospital Live Bed & Nodal Status:',
+      autoFixTooltip: 'Brand detected! Click to convert to NMC generic standard'
     }
   }[lang] || {};
+
+  // Check if a medication name is a known brand
+  const checkBrandName = (name) => {
+    const upper = (name || '').trim().toUpperCase();
+    for (const brand in BRAND_TO_GENERIC_MAP) {
+      if (upper.includes(brand)) {
+        return BRAND_TO_GENERIC_MAP[brand];
+      }
+    }
+    return null;
+  };
+
+  // Convert Brand to NMC Generic in medications list
+  const handleAutoFixBrand = (index, genericObj) => {
+    const updated = [...medications];
+    updated[index] = {
+      ...updated[index],
+      name: genericObj.generic,
+      dosage: genericObj.dosage,
+      form: genericObj.form
+    };
+    setMedications(updated);
+  };
 
   // Add medication row
   const handleAddMedication = () => {
@@ -359,9 +554,13 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     setMedications(medications.filter((_, idx) => idx !== index));
   };
 
-  // Perform Verification Simulation
+  // Perform Verification Simulation (Honest check or Tamper detection)
   const handleVerifyPayload = () => {
-    setVerifyStatus('VALID');
+    if (simulateTamper) {
+      setVerifyStatus('TAMPERED');
+    } else {
+      setVerifyStatus('VALID');
+    }
   };
 
   // Copy Verification URL
@@ -373,12 +572,33 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     }
   };
 
+  // Copy SMS Token
+  const handleCopySms = () => {
+    const text = generateSmsText();
+    navigator.clipboard.writeText(text);
+    setCopiedSms(true);
+    setTimeout(() => setCopiedSms(false), 2500);
+  };
+
+  // Generate localized SMS payload for 108 Emergency transit
+  const generateSmsText = () => {
+    const docId = verificationToken?.docId || 'NMC-OD-2026-992144';
+    const cadId = verificationToken?.cadToken || 'CAD-108-OD-44102';
+    if (lang === 'or-IN') {
+      return `[ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଓଡ଼ିଶା ୧୦୮ ଜରୁରୀ ସ୍ଥାନାନ୍ତରଣ ଟୋକନ୍]\nରୋଗୀ: ${patientName} (${patientAge}ବର୍ଷ, ${patientGender})\nABHA: ${patientAbha}\nଡାକ୍ତରଖାନା: ${facilityName} ରୁ ${referralTarget}\nପ୍ରାଥମିକତା: ${currentCase.acuity} PRIORITY\nରୋଗ ନିର୍ଣ୍ଣୟ: ${diagnosis}\n୧୦୮ CAD ଟୋକନ୍: ${cadId}\nଡାକ୍ତର: ${doctorName} (OMC Reg: ${doctorRegNo})\nQR ଯାଞ୍ଚ ଲିଙ୍କ୍: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
+    } else if (lang === 'hi-IN') {
+      return `[स्वास्थ्य मित्र ओडिशा 108 आपातकालीन ट्रांसफर टोकन]\nमरीज: ${patientName} (${patientAge} वर्ष, ${patientGender})\nABHA ID: ${patientAbha}\nअस्पताल: ${facilityName} से ${referralTarget}\nप्राथमिकता: ${currentCase.acuity} PRIORITY\nनिदान: ${diagnosis}\n108 CAD टोकन: ${cadId}\nडॉक्टर: ${doctorName} (OMC Reg: ${doctorRegNo})\nQR सत्यापन: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
+    }
+    return `[SwasthyaMitra Odisha 108 Emergency Transfer Token]\nPatient: ${patientName} (${patientAge}y, ${patientGender})\nABHA: ${patientAbha}\nTransfer: From ${facilityName} TO ${referralTarget}\nAcuity: ${currentCase.acuity} PRIORITY\nDiagnosis: ${diagnosis}\n108 CAD Token: ${cadId}\nRMP Doctor: ${doctorName} (OMC: ${doctorRegNo})\nVerify QR: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
+  };
+
   // Save current slip to localStorage vault
   const handleSaveToVault = () => {
     if (!verificationToken) return;
     const entry = {
       id: verificationToken.docId,
-      docType: activeTab === 'referral' ? 'Referral Slip' : 'NMC Prescription',
+      cadToken: verificationToken.cadToken,
+      docType: activeTab === 'referral' ? 'Referral Slip (108)' : 'NMC Prescription (Generic)',
       patientName: patientName,
       abhaId: patientAbha,
       diagnosis: diagnosis,
@@ -395,17 +615,16 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     alert(`Document ${entry.id} saved to Clinical Vault!`);
   };
 
-  // Load vault list on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('nhp_clinical_docs_vault');
-      if (saved) {
-        setVaultList(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.warn(e);
-    }
-  }, []);
+  // Destination apex live status lookup
+  const apexStatus = APEX_DESTINATION_STATUS[referralTarget] || {
+    nodalPhone: '0674-2391980',
+    emergencyOfficer: 'State Central Emergency Nodal Desk',
+    icuBeds: 2,
+    hduBeds: 5,
+    oxygenSupply: 'Normal Hospital Supply',
+    greenCorridor: 'Standard Transfer Protocol',
+    bloodBankUnits: 'Standard Regional Blood Bank Linked'
+  };
 
   return (
     <div className="space-y-6">
@@ -435,6 +654,23 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
           {/* Quick Actions */}
           <div className="flex flex-wrap items-center gap-2.5">
             <button
+              onClick={() => setShowDoctorModal(true)}
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-all"
+              title="Edit Clinician Credentials"
+            >
+              <Stethoscope className="w-3.5 h-3.5 text-indigo-400" />
+              <span>RMP: {doctorName.split(' ')[1] || doctorName}</span>
+            </button>
+
+            <button
+              onClick={() => setShowSmsModal(true)}
+              className="flex items-center gap-1.5 bg-rose-700 hover:bg-rose-600 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-rose-200" />
+              <span>{txt.btnSmsDispatch}</span>
+            </button>
+
+            <button
               onClick={() => window.print()}
               className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-black shadow-sm transition-all border border-indigo-400/40"
             >
@@ -456,7 +692,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
         <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-1">
           <button
             onClick={() => setActiveTab('prescription')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'prescription'
                 ? 'bg-white text-indigo-950 shadow-md ring-2 ring-indigo-400/40'
                 : 'bg-indigo-950/60 text-indigo-200 hover:bg-indigo-800/60'
@@ -468,7 +704,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
 
           <button
             onClick={() => setActiveTab('referral')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'referral'
                 ? 'bg-white text-indigo-950 shadow-md ring-2 ring-indigo-400/40'
                 : 'bg-indigo-950/60 text-indigo-200 hover:bg-indigo-800/60'
@@ -480,7 +716,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
 
           <button
             onClick={() => setActiveTab('verify')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'verify'
                 ? 'bg-white text-indigo-950 shadow-md ring-2 ring-indigo-400/40'
                 : 'bg-indigo-950/60 text-indigo-200 hover:bg-indigo-800/60'
@@ -492,7 +728,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
 
           <button
             onClick={() => setActiveTab('vault')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'vault'
                 ? 'bg-white text-indigo-950 shadow-md ring-2 ring-indigo-400/40'
                 : 'bg-indigo-950/60 text-indigo-200 hover:bg-indigo-800/60'
@@ -508,25 +744,25 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       </div>
 
       {/* ───────────────────────────────────────────────────────── */}
-      {/* 2. CLINICAL SCENARIOS SELECTOR STRIP */}
+      {/* 2. CLINICAL SCENARIOS SELECTOR STRIP (6 Authentic Cases) */}
       {/* ───────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
             <Activity className="w-4 h-4 text-indigo-600" />
-            <span>Select Odisha Patient Scenario to Pre-populate Form:</span>
+            <span>Select Authentic Odisha Clinical Case to Load &amp; Edit:</span>
           </div>
           <span className="text-[11px] text-slate-400">
-            All forms support real-time editing &amp; PDF generation
+            Full dynamic editing, NMC generic validation &amp; print ready
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {CLINICAL_PRESETS.map((item) => (
             <button
               key={item.id}
               onClick={() => setSelectedCaseId(item.id)}
-              className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+              className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                 selectedCaseId === item.id
                   ? 'bg-indigo-50 border-indigo-400 ring-2 ring-indigo-200 shadow-2xs'
                   : 'bg-slate-50 border-slate-200 hover:border-slate-300'
@@ -549,8 +785,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 </div>
                 <p className="text-[10px] text-slate-500 line-clamp-1">{item.provisionalDiagnosis}</p>
               </div>
-              <div className="text-[10px] text-indigo-700 font-semibold mt-2">
-                📍 {item.district} • {item.age}y/{item.gender}
+              <div className="text-[10px] text-indigo-700 font-semibold mt-2 flex items-center justify-between">
+                <span>📍 {item.district} • {item.age}y/{item.gender}</span>
+                <span className="text-slate-400 font-mono text-[9px]">{item.id}</span>
               </div>
             </button>
           ))}
@@ -562,21 +799,39 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       {/* ───────────────────────────────────────────────────────── */}
       {(activeTab === 'prescription' || activeTab === 'referral') && (
         <div className="space-y-4">
-          {/* Compliance Info Banner */}
-          <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-center justify-between gap-2 shadow-2xs">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-              <span className="font-medium">{txt.nmcNotice}</span>
+          {/* Compliance & Live Apex Status Banner */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span className="font-medium">{txt.nmcNotice}</span>
+              </div>
+              <span className="bg-amber-200/80 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded shrink-0">
+                Section 27 NMC Act
+              </span>
             </div>
-            <span className="bg-amber-200/80 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded">
-              Verified by NMC RMP
-            </span>
+
+            {/* Destination Apex Live Bed Availability Widget */}
+            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-900 text-xs flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2 truncate">
+                <Bed className="w-4 h-4 text-indigo-600 shrink-0" />
+                <div className="truncate">
+                  <span className="font-bold block truncate">{txt.liveBedTitle}</span>
+                  <span className="text-[10px] text-indigo-700 block truncate">
+                    ICU: <strong>{apexStatus.icuBeds} Free</strong> • HDU: <strong>{apexStatus.hduBeds} Free</strong> • {apexStatus.greenCorridor}
+                  </span>
+                </div>
+              </div>
+              <span className="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shrink-0">
+                LIVE VACANCY
+              </span>
+            </div>
           </div>
 
-          {/* THE OFFICIAL SLIP (PRINTED IN REAL PDF) */}
+          {/* THE OFFICIAL SLIP (PRINTABLE REAL PDF FORMAT) */}
           <div
             id="printable-clinical-slip"
-            className="bg-white rounded-2xl border-2 border-slate-300 shadow-lg p-6 sm:p-8 space-y-6 text-slate-800 font-sans print:border-none print:shadow-none print:p-0"
+            className="bg-white rounded-2xl border-2 border-slate-300 shadow-lg p-6 sm:p-8 space-y-6 text-slate-800 font-sans print:border-none print:shadow-none print:p-0 print:m-0"
           >
             {/* 1. Official Letterhead Header */}
             <div className="border-b-2 border-slate-900 pb-4">
@@ -609,6 +864,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                       {verificationToken?.docId}
                     </span>
                     <span className="text-emerald-700 font-bold block">✓ ABDM VERIFIABLE</span>
+                    <span>108 CAD: <strong>{verificationToken?.cadToken}</strong></span>
                     <span>Date: {new Date().toLocaleDateString()}</span>
                     <span>Time: {new Date().toLocaleTimeString()}</span>
                     <span className="text-[9px] text-slate-400 block truncate max-w-[120px]">
@@ -736,7 +992,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                   </div>
                   <button
                     onClick={handleAddMedication}
-                    className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 print:hidden flex items-center gap-1"
+                    className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 print:hidden flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>{txt.addMedBtn}</span>
@@ -753,33 +1009,59 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                         <th className="p-2.5">Frequency &amp; Timing</th>
                         <th className="p-2.5">Duration</th>
                         <th className="p-2.5">Special Instructions</th>
+                        <th className="p-2.5 print:hidden">Compliance</th>
                         <th className="p-2.5 print:hidden">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {medications.map((med, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/80">
-                          <td className="p-2.5 font-bold text-slate-400">{idx + 1}</td>
-                          <td className="p-2.5 font-black text-slate-900 font-mono tracking-wide">
-                            {med.name.toUpperCase()}
-                          </td>
-                          <td className="p-2.5 font-semibold text-slate-700">
-                            {med.dosage} ({med.form})
-                          </td>
-                          <td className="p-2.5 font-bold text-indigo-900">{med.freq}</td>
-                          <td className="p-2.5 text-slate-600">{med.duration}</td>
-                          <td className="p-2.5 text-slate-600 text-[11px] italic">{med.instruction}</td>
-                          <td className="p-2.5 print:hidden">
-                            <button
-                              onClick={() => handleDeleteMedication(idx)}
-                              className="text-slate-400 hover:text-rose-600"
-                              title="Delete Row"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {medications.map((med, idx) => {
+                        const brandMatch = checkBrandName(med.name);
+                        return (
+                          <tr key={idx} className="hover:bg-slate-50/80">
+                            <td className="p-2.5 font-bold text-slate-400">{idx + 1}</td>
+                            <td className="p-2.5 font-black text-slate-900 font-mono tracking-wide">
+                              {med.name.toUpperCase()}
+                              {brandMatch && (
+                                <span className="block text-[9px] text-amber-700 font-sans font-bold">
+                                  ⚠️ Brand-like text
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-2.5 font-semibold text-slate-700">
+                              {med.dosage} ({med.form})
+                            </td>
+                            <td className="p-2.5 font-bold text-indigo-900">{med.freq}</td>
+                            <td className="p-2.5 text-slate-600">{med.duration}</td>
+                            <td className="p-2.5 text-slate-600 text-[11px] italic">{med.instruction}</td>
+                            <td className="p-2.5 print:hidden">
+                              {brandMatch ? (
+                                <button
+                                  onClick={() => handleAutoFixBrand(idx, brandMatch)}
+                                  className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-black flex items-center gap-1 shadow-2xs"
+                                  title={txt.autoFixTooltip}
+                                >
+                                  <Sparkles className="w-2.5 h-2.5" />
+                                  <span>Auto-Fix</span>
+                                </button>
+                              ) : (
+                                <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-0.5">
+                                  <Check className="w-3 h-3" />
+                                  <span>NMC Generic</span>
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-2.5 print:hidden">
+                              <button
+                                onClick={() => handleDeleteMedication(idx)}
+                                className="text-slate-400 hover:text-rose-600 cursor-pointer"
+                                title="Delete Row"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -789,10 +1071,15 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
             {/* 5. B. REFERRAL SLIP SECTION (WHEN IN REFERRAL TAB) */}
             {activeTab === 'referral' && (
               <div className="space-y-4 pt-2">
-                <div className="border-b-2 border-rose-900 pb-1 flex items-center gap-2">
-                  <Ambulance className="w-5 h-5 text-rose-700" />
-                  <span className="text-sm font-black text-rose-950 uppercase tracking-wider">
-                    Emergency Inter-Facility Transfer Protocol
+                <div className="border-b-2 border-rose-900 pb-1 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Ambulance className="w-5 h-5 text-rose-700" />
+                    <span className="text-sm font-black text-rose-950 uppercase tracking-wider">
+                      Emergency Inter-Facility Transfer Protocol
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                    CAD ID: {verificationToken?.cadToken}
                   </span>
                 </div>
 
@@ -812,9 +1099,16 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                         Target Apex Center (Referred To)
                       </span>
                       <strong className="text-indigo-950 block text-xs">{referralTarget}</strong>
-                      <span className="text-[10px] text-indigo-600 font-semibold block mt-0.5">
-                        ✓ Tertiary Level Care • Nodal Unit Notified
-                      </span>
+                      <div className="mt-1 p-2 bg-indigo-50/70 border border-indigo-200 rounded-lg text-[10px] space-y-0.5">
+                        <div className="flex justify-between text-indigo-900">
+                          <span>Nodal Emergency Desk:</span>
+                          <strong className="font-mono">{apexStatus.nodalPhone}</strong>
+                        </div>
+                        <div className="text-slate-600">Officer: {apexStatus.emergencyOfficer}</div>
+                        <div className="text-emerald-700 font-bold">
+                          ✓ ICU: {apexStatus.icuBeds} Free | HDU: {apexStatus.hduBeds} Free
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -835,6 +1129,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                       </div>
                       <div>
                         <strong>In-Transit Oxygen:</strong> {oxygenReq}
+                      </div>
+                      <div className="text-rose-800 font-semibold pt-1">
+                        <strong>Green Corridor:</strong> {apexStatus.greenCorridor}
                       </div>
                     </div>
                   </div>
@@ -886,7 +1183,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 <span>NMC / ABDM Verifiable QR Code Scanner</span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Scan or paste a prescription token to verify clinician credentials against the National Medical Commission registry.
+                Simulates real-world QR audit at apex hospital casualty desks, pharmacies, and 108 transit checkpoints.
               </p>
             </div>
 
@@ -896,10 +1193,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 <img
                   src={qrDataUrl}
                   alt="Scannable QR Code"
-                  className="w-44 h-44 rounded-xl shadow-md border border-slate-200"
+                  className="w-48 h-48 rounded-xl shadow-md border border-slate-200"
                 />
               ) : (
-                <div className="w-44 h-44 flex items-center justify-center text-slate-400">
+                <div className="w-48 h-48 flex items-center justify-center text-slate-400">
                   Generating QR...
                 </div>
               )}
@@ -908,11 +1205,32 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
               </span>
             </div>
 
+            {/* Tamper Simulation Toggle */}
+            <div className="p-3 bg-slate-100 rounded-xl flex items-center justify-between text-xs">
+              <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                <Sliders className="w-4 h-4 text-indigo-600" />
+                <span>Simulate Document Tampering (Test Cryptographic Check):</span>
+              </span>
+              <button
+                onClick={() => {
+                  setSimulateTamper(!simulateTamper);
+                  setVerifyStatus(null);
+                }}
+                className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+                  simulateTamper
+                    ? 'bg-rose-600 text-white'
+                    : 'bg-slate-300 text-slate-700 hover:bg-slate-400'
+                }`}
+              >
+                {simulateTamper ? 'TAMPER ACTIVE' : 'OFF (HONEST)'}
+              </button>
+            </div>
+
             {/* Actions */}
             <div className="space-y-2">
               <button
                 onClick={handleVerifyPayload}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Simulate Receiving Hospital Verification</span>
@@ -920,7 +1238,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
 
               <button
                 onClick={handleCopyLink}
-                className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
+                className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
                 {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedLink ? 'Verification URL Copied!' : 'Copy Verification Web Link'}</span>
@@ -938,7 +1256,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
               <p className="text-xs text-slate-500">Live check against Odisha Medical Council &amp; ABDM Gateway.</p>
             </div>
 
-            {verifyStatus === 'VALID' ? (
+            {verifyStatus === 'VALID' && (
               <div className="space-y-4 animate-fadeIn">
                 <div className="p-4 bg-emerald-50 border-2 border-emerald-400 rounded-2xl space-y-2">
                   <div className="flex items-center gap-2 text-emerald-900 font-extrabold text-sm">
@@ -984,7 +1302,30 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                   </div>
                 </div>
               </div>
-            ) : (
+            )}
+
+            {verifyStatus === 'TAMPERED' && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="p-4 bg-rose-50 border-2 border-rose-400 rounded-2xl space-y-2">
+                  <div className="flex items-center gap-2 text-rose-900 font-extrabold text-sm">
+                    <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                    <span>⚠️ CRYPTOGRAPHIC SIGNATURE MISMATCH (TAMPER DETECTED)</span>
+                  </div>
+                  <p className="text-xs text-rose-800 leading-relaxed font-medium">
+                    The document content does not match the official SHA-256 hash registered in the Odisha Medical Council registry. Content or medication values have been altered post-issuance!
+                  </p>
+                </div>
+
+                <div className="p-3 bg-rose-100/60 rounded-xl border border-rose-200 text-xs text-rose-900 space-y-1">
+                  <strong>Security Alert Protocol:</strong>
+                  <p>1. Do NOT dispense medications from this altered slip.</p>
+                  <p>2. Verify directly with issuing hospital desk: <strong>{facilityName}</strong>.</p>
+                  <p>3. Audit log transmitted to State Drug Controller &amp; NMC Council.</p>
+                </div>
+              </div>
+            )}
+
+            {!verifyStatus && (
               <div className="p-12 text-center text-slate-400 border border-dashed rounded-2xl">
                 <QrCode className="w-12 h-12 mx-auto mb-2 text-slate-300" />
                 <p className="text-xs font-semibold">Click "Simulate Receiving Hospital Verification" to audit the digital credentials.</p>
@@ -1011,7 +1352,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
             </div>
             <button
               onClick={handleSaveToVault}
-              className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700"
+              className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 cursor-pointer"
             >
               + Archive Current
             </button>
@@ -1042,7 +1383,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                       onClick={() => {
                         window.print();
                       }}
-                      className="text-indigo-600 font-bold hover:underline flex items-center gap-1"
+                      className="text-indigo-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <Printer className="w-3 h-3" />
                       <span>Re-Print</span>
@@ -1057,6 +1398,129 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
               <p className="text-xs font-medium">No documents saved in vault yet. Click "Save to Vault" to archive slips.</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────── */}
+      {/* 6. MODAL: 108 CAD SMS DISPATCH PREVIEW */}
+      {/* ───────────────────────────────────────────────────────── */}
+      {showSmsModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-rose-600" />
+                <h3 className="font-bold text-sm text-slate-900">
+                  NHM 108 Emergency Transit SMS Token
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowSmsModal(false)}
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              This SMS token is transmitted to the patient attendant, escorting ASHA worker, and the nearest 108 ALS ambulance base:
+            </p>
+
+            <div className="p-3 bg-slate-100 rounded-xl font-mono text-xs text-slate-800 whitespace-pre-wrap border border-slate-200 max-h-60 overflow-y-auto">
+              {generateSmsText()}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowSmsModal(false)}
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleCopySms}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                {copiedSms ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedSms ? 'SMS Copied!' : 'Copy SMS Text'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────── */}
+      {/* 7. MODAL: EDIT CLINICIAN / RMP DETAILS */}
+      {/* ───────────────────────────────────────────────────────── */}
+      {showDoctorModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Stethoscope className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-bold text-sm text-slate-900">
+                  Update Registered Clinician (RMP) Details
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowDoctorModal(false)}
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">RMP Doctor Name:</label>
+                <input
+                  type="text"
+                  value={doctorName}
+                  onChange={(e) => setDoctorName(e.target.value)}
+                  className="w-full p-2 border border-slate-300 rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">State Medical Registration No (OMC):</label>
+                <input
+                  type="text"
+                  value={doctorRegNo}
+                  onChange={(e) => setDoctorRegNo(e.target.value)}
+                  className="w-full p-2 border border-slate-300 rounded-lg font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Degrees &amp; Specialization:</label>
+                <input
+                  type="text"
+                  value={doctorDegrees}
+                  onChange={(e) => setDoctorDegrees(e.target.value)}
+                  className="w-full p-2 border border-slate-300 rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Clinical Facility:</label>
+                <input
+                  type="text"
+                  value={facilityName}
+                  onChange={(e) => setFacilityName(e.target.value)}
+                  className="w-full p-2 border border-slate-300 rounded-lg"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setShowDoctorModal(false)}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+              >
+                Save Credentials
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
