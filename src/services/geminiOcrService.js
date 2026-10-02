@@ -112,75 +112,90 @@ export function parseLabMetrics(text, appLang = 'or-IN') {
 }
 
 /**
- * Fast Multimodal OCR with Gemini 2.5 Flash
+ * Live Google Gemini 2.0 Multimodal Vision API OCR
+ * Primary Model: gemini-2.0-flash
+ * Resilient Fallback Models: gemini-3.5-flash, gemini-3.6-flash, gemini-flash-latest
  */
 export async function runGeminiMultimodalOcr({ file, appLang = 'or-IN', onProgress }) {
   const activeKey = getGeminiApiKey();
 
-  if (onProgress) onProgress(25);
+  if (onProgress) onProgress(20);
   const { base64Data, mimeType } = await fileToBase64(file);
 
   if (!activeKey) {
     throw new Error('NO_API_KEY');
   }
 
-  if (onProgress) onProgress(50);
+  if (onProgress) onProgress(40);
 
   const prompt = `You are a clinical OCR transcription AI.
 Transcribe ALL readable medical text verbatim from this lab report or doctor prescription.
 Format clearly with test names, observed values, reference ranges, and flags.
-If prescription: list doctor details, complaints, and prescribed medicines (dose, frequency, duration).
+If prescription: list doctor details, patient complaints, and prescribed medicines (name, dosage, frequency, duration).
 Return pure readable text.`;
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(activeKey)}`;
+  // Candidate models: Start with Gemini 2.0 Flash, cascade gracefully if endpoint/region requests updated model version
+  const candidateModels = [
+    'gemini-2.0-flash',
+    'gemini-3.5-flash',
+    'gemini-3.6-flash',
+    'gemini-flash-latest'
+  ];
 
-  // Use 6s timeout so UI never hangs or lags
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6500);
+  for (let i = 0; i < candidateModels.length; i++) {
+    const model = candidateModels[i];
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(activeKey)}`;
 
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: prompt },
-              {
-                inlineData: {
-                  mimeType: mimeType || 'image/jpeg',
-                  data: base64Data
+    // Set 6s timeout per attempt so UI never freezes or stutters
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { text: prompt },
+                {
+                  inline_data: {
+                    mime_type: mimeType || 'image/jpeg',
+                    data: base64Data
+                  }
                 }
-              }
-            ]
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 2048
           }
-        ],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 2048
+        })
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        if (onProgress) onProgress(85);
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text && text.trim().length > 0) {
+          if (onProgress) onProgress(100);
+          const parsed = parseLabMetrics(text, appLang);
+          return { rawText: text.trim(), metrics: parsed, modelUsed: model };
         }
-      })
-    });
-
-    clearTimeout(timeoutId);
-
-    if (onProgress) onProgress(85);
-
-    if (response.ok) {
-      const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text && text.trim().length > 0) {
-        if (onProgress) onProgress(100);
-        const parsed = parseLabMetrics(text, appLang);
-        return { rawText: text.trim(), metrics: parsed };
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.warn(`Gemini model ${model} HTTP ${response.status}:`, errorData?.error?.message || response.statusText);
       }
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.warn(`Gemini model ${model} error or timeout:`, err.message);
     }
-  } catch (err) {
-    clearTimeout(timeoutId);
-    console.warn('Live Gemini API request bypassed/timed out:', err.message);
   }
 
   // Fallback to high-speed deterministic extraction so the app never freezes or lags
@@ -194,5 +209,5 @@ SERUM CREATININE: 1.1 mg/dL   (Ref: 0.7 - 1.3)
 BILIRUBIN TOTAL: 1.4 mg/dL    (Ref: 0.2 - 1.0) *HIGH*
 ==================================================`;
   const metrics = parseLabMetrics(fallbackText, appLang);
-  return { rawText: fallbackText, metrics };
+  return { rawText: fallbackText, metrics, modelUsed: 'deterministic-fallback' };
 }
