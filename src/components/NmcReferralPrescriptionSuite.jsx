@@ -36,14 +36,20 @@ import {
   Lock,
   Smartphone,
   Sliders,
-  Award
+  Award,
+  Mic,
+  MicOff,
+  Navigation,
+  FileDown,
+  Compass,
+  Edit3
 } from 'lucide-react';
 import { getHospitalPartners } from '../data/hospitalPartners';
 
 /**
  * PDF Referral Slips & NMC Prescriptions Suite with Verifiable QR Codes
  * 100% compliant with National Medical Commission (NMC 2023 Regulations) & NHM Inter-Facility Referral Protocols.
- * Pure Localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
+ * Advanced Clinical Decision Support: Live Drug-Allergy Guard, 108 Transit ETA & Route Calculator, Canvas Signature Pad, Voice Dictation, Brand-to-Generic Auto-Fixer, and Cryptographic Audit.
  */
 
 // ─── NMC 2023 Brand-to-Generic Medical Dictionary ───────────────────────────
@@ -68,7 +74,8 @@ const BRAND_TO_GENERIC_MAP = {
   'MEFTAL-SPAS': { generic: 'MEFENAMIC ACID + DICYCLOMINE HYDROCHLORIDE', dosage: '250 mg + 10 mg', form: 'Tablet' },
   'AVIL': { generic: 'PHENIRAMINE MALEATE', dosage: '25 mg', form: 'Tablet' },
   'LIPITOR': { generic: 'ATORVASTATIN', dosage: '20 mg', form: 'Tablet' },
-  'CIPLOX': { generic: 'CIPROFLOXACIN', dosage: '500 mg', form: 'Tablet' }
+  'CIPLOX': { generic: 'CIPROFLOXACIN', dosage: '500 mg', form: 'Tablet' },
+  'ZIFI': { generic: 'CEFIXIME', dosage: '200 mg', form: 'Tablet' }
 };
 
 // ─── Destination Apex Hospitals Real-Time Bed & Nodal Directory ─────────────
@@ -126,6 +133,52 @@ const APEX_DESTINATION_STATUS = {
     oxygenSupply: 'Mechanical Ventilators Ready (3 free)',
     greenCorridor: 'NH-18 Rapid Transit Siren Protocol On',
     bloodBankUnits: 'Anti-Snake Venom Stock: 140 Vials Available'
+  }
+};
+
+// ─── Odisha 108 Emergency Transit Highway Corridor Routes ───────────────────
+const ODISHA_TRANSIT_ROUTES = {
+  'CASE-01': {
+    distance: '4.8 km',
+    eta: '14 mins',
+    highway: 'Mahanadi Ring Road & Kathajodi Flyover',
+    oxygenRefillPost: 'Chhatra Bazar Emergency Depot',
+    pilotEscort: 'Cuttack Urban Police Traffic Pilot Active'
+  },
+  'CASE-02': {
+    distance: '32 km',
+    eta: '42 mins',
+    highway: 'State Highway 17 (Digapahandi - Berhampur Arterial)',
+    oxygenRefillPost: 'Aska Sub-Divisional Hospital (SDH)',
+    pilotEscort: 'Ganjam 108 Command Priority Siren'
+  },
+  'CASE-03': {
+    distance: '7.2 km',
+    eta: '16 mins',
+    highway: 'Biju Patnaik Airport Road & Sishu Bhawan Square Corridor',
+    oxygenRefillPost: 'Capital Hospital Trauma Post',
+    pilotEscort: 'Smart City Green Corridor Active'
+  },
+  'CASE-04': {
+    distance: '82 km',
+    eta: '1 hr 35 mins',
+    highway: 'NH-316 (Puri-Bhubaneswar Expressway) & NH-16',
+    oxygenRefillPost: 'Pipili CHC En-Route Refill Station',
+    pilotEscort: 'Toll Plaza Priority Transit Protocol'
+  },
+  'CASE-05': {
+    distance: '114 km',
+    eta: '3 hrs 10 mins',
+    highway: 'NH-326 (Mathili - Boipariguda - Koraput Ghat Section)',
+    oxygenRefillPost: 'Boipariguda CHC Emergency Oxygen Post',
+    pilotEscort: 'Tribal Belt ALS 4x4 Emergency Convoy'
+  },
+  'CASE-06': {
+    distance: '28 km',
+    eta: '34 mins',
+    highway: 'NH-18 (Betnoti to Baripada Bypass Corridor)',
+    oxygenRefillPost: 'Baisinga PHC Transit Hub',
+    pilotEscort: 'Mayurbhanj Highway Patrol Clearance'
   }
 };
 
@@ -337,6 +390,16 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
   const [vaultList, setVaultList] = useState([]);
   const [showSmsModal, setShowSmsModal] = useState(false);
   const [showDoctorModal, setShowDoctorModal] = useState(false);
+  const [showSignModal, setShowSignModal] = useState(false);
+
+  // HTML5 Canvas Digital Signature Pad State
+  const canvasRef = useRef(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState(null);
+
+  // Voice Dictation State
+  const [isDictating, setIsDictating] = useState(false);
+  const [dictationTarget, setDictationTarget] = useState(null); // 'complaints' | 'diagnosis' | 'referralReason'
 
   // Populate fields on preset change
   useEffect(() => {
@@ -436,6 +499,8 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       btnPrintPdf: 'ପ୍ରିଣ୍ଟ୍ / PDF ସେଭ୍ କରନ୍ତୁ',
       btnVerifyDoc: 'QR କୋଡ୍ ଯାଞ୍ଚ କରନ୍ତୁ',
       btnSmsDispatch: '୧୦୮ SMS ଟୋକନ୍ ପଠାନ୍ତୁ',
+      btnWhatsAppDispatch: 'WhatsApp ରେଫରାଲ୍ ପଠାନ୍ତୁ',
+      btnSignOff: 'ଡାକ୍ତରୀ ଦସ୍ତଖତ (Signature Pad)',
       rmpBadge: 'RMP ସତ୍ୟାପିତ ଡାକ୍ତର',
       abhaBadge: 'ABHA ଲିଙ୍କ୍ ହୋଇଛି',
       rxHeader: 'ଚିକିତ୍ସା ଲେଖା (Rx)',
@@ -451,7 +516,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       doctorSignLabel: 'ପଞ୍ଜୀକୃତ ଡାକ୍ତରଙ୍କ ଡିଜିଟାଲ୍ ଦସ୍ତଖତ',
       validStamp: '✓ NMC / OMC ସରକାରୀ ସତ୍ୟାପିତ',
       liveBedTitle: 'ଗନ୍ତବ୍ୟ ହସ୍ପିଟାଲ୍ ଲାଇଭ୍ ଶଯ୍ୟା ଓ ନୋଡାଲ୍ ସ୍ଥିତି:',
-      autoFixTooltip: 'ବ୍ରାଣ୍ଡ୍ ନାମ ଚିହ୍ନଟ ହୋଇଛି! NMC ଜେନେରିକ୍ ରୂପରେ ବଦଳାନ୍ତୁ'
+      autoFixTooltip: 'ବ୍ରାଣ୍ଡ୍ ନାମ ଚିହ୍ନଟ ହୋଇଛି! NMC ଜେନେରିକ୍ ରୂପରେ ବଦଳାନ୍ତୁ',
+      etaLabel: '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ପରିବହନ ଦୂରତା ଓ ସମୟ (ETA):',
+      exportHtmlBtn: 'ଅଫଲାଇନ୍ ସାର୍ଟିଫିକେଟ୍ ଡାଉନଲୋଡ୍'
     },
     'hi-IN': {
       title: 'NMC ई-प्रिस्क्रिप्शन एवं सत्यापित QR कोड रेफरल पर्ची',
@@ -464,6 +531,8 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       btnPrintPdf: 'प्रिंट / PDF डाउनलोड करें',
       btnVerifyDoc: 'QR कोड सत्यापित करें',
       btnSmsDispatch: '108 SMS टोकन भेजें',
+      btnWhatsAppDispatch: 'WhatsApp रेफरल भेजें',
+      btnSignOff: 'डिजिटल हस्ताक्षर (Signature Pad)',
       rmpBadge: 'RMP सत्यापित चिकित्सक',
       abhaBadge: 'ABHA लिंक्ड',
       rxHeader: 'दवा विवरण (Rx)',
@@ -479,7 +548,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       doctorSignLabel: 'पंजीकृत चिकित्सक के डिजिटल हस्ताक्षर',
       validStamp: '✓ NMC / OMC आधिकारिक सत्यापित',
       liveBedTitle: 'लक्ष्य अस्पताल लाइव बेड एवं नोडल स्थिति:',
-      autoFixTooltip: 'ब्रांड नाम पहचाना गया! NMC जेनेरिक में बदलें'
+      autoFixTooltip: 'ब्रांड नाम पहचाना गया! NMC जेनेरिक में बदलें',
+      etaLabel: '108 एम्बुलेंस दूरी एवं आगमन समय (ETA):',
+      exportHtmlBtn: 'ऑफलाइन सर्टिफिकेट डाउनलोड'
     },
     'en-IN': {
       title: 'PDF Referral Slips & NMC Prescriptions with Verifiable QR Codes',
@@ -492,6 +563,8 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       btnPrintPdf: 'Print / Save as PDF Slip',
       btnVerifyDoc: 'Verify QR Authenticity',
       btnSmsDispatch: '108 SMS Dispatch Token',
+      btnWhatsAppDispatch: 'WhatsApp Family Referral',
+      btnSignOff: 'Doctor Sign-Off Pad',
       rmpBadge: 'Verified RMP Clinician',
       abhaBadge: 'ABHA Linked',
       rxHeader: 'Prescription Table (Rx)',
@@ -507,7 +580,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       doctorSignLabel: 'Registered Medical Practitioner Digital Seal',
       validStamp: '✓ NMC / OMC Verified Document',
       liveBedTitle: 'Destination Apex Hospital Live Bed & Nodal Status:',
-      autoFixTooltip: 'Brand detected! Click to convert to NMC generic standard'
+      autoFixTooltip: 'Brand detected! Click to convert to NMC generic standard',
+      etaLabel: '108 Transit Route & Golden-Hour ETA:',
+      exportHtmlBtn: 'Download Offline Certificate'
     }
   }[lang] || {};
 
@@ -533,6 +608,70 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     };
     setMedications(updated);
   };
+
+  // Live Clinical Safety Guard: Drug-Allergy & Interaction Check
+  const checkPrescriptionSafety = () => {
+    const warnings = [];
+    const allergiesUpper = (patientAllergies || '').toUpperCase();
+
+    // Check Penicillin allergy conflict
+    if (allergiesUpper.includes('PENICILLIN') || allergiesUpper.includes('AMOXICILLIN')) {
+      const hasPenicillin = medications.some((m) =>
+        m.name.toUpperCase().includes('AMOXICILLIN') ||
+        m.name.toUpperCase().includes('AMPICILLIN') ||
+        m.name.toUpperCase().includes('PENICILLIN')
+      );
+      if (hasPenicillin) {
+        warnings.push({
+          type: 'CRITICAL_ALLERGY',
+          text: '🚨 CRITICAL ALLERGY HAZARD: Patient has Penicillin allergy! Amoxicillin/Penicillin carries high risk of fatal anaphylaxis. Switch to Azithromycin or Macrolide.'
+        });
+      }
+    }
+
+    // Check Sulfa allergy conflict
+    if (allergiesUpper.includes('SULFA')) {
+      const hasSulfa = medications.some((m) =>
+        m.name.toUpperCase().includes('SULFA') ||
+        m.name.toUpperCase().includes('CO-TRIMOXAZOLE')
+      );
+      if (hasSulfa) {
+        warnings.push({
+          type: 'CRITICAL_ALLERGY',
+          text: '🚨 SULFA ALLERGY ALERT: Prescribing Sulfonamides to a patient with Sulfa hypersensitivity risk Stevens-Johnson syndrome.'
+        });
+      }
+    }
+
+    // Check Bleeding / NSAID conflict in Dengue or severe coagulopathy
+    if (diagnosis.toUpperCase().includes('DENGUE') || diagnosis.toUpperCase().includes('THROMBOCYTOPENIA')) {
+      const hasNsaid = medications.some((m) =>
+        m.name.toUpperCase().includes('IBUPROFEN') ||
+        m.name.toUpperCase().includes('DICLOFENAC') ||
+        m.name.toUpperCase().includes('ASPIRIN')
+      );
+      if (hasNsaid) {
+        warnings.push({
+          type: 'DRUG_CONTRAINDICATION',
+          text: '⚠️ CONTRAINDICATION: NSAIDs & Aspirin are strictly contraindicated in Dengue due to heightened gastrointestinal hemorrhage and platelet dysfunction risk.'
+        });
+      }
+    }
+
+    // Dual Antiplatelet bleeding alert
+    const hasAspirin = medications.some((m) => m.name.toUpperCase().includes('ASPIRIN'));
+    const hasClopidogrel = medications.some((m) => m.name.toUpperCase().includes('CLOPIDOGREL'));
+    if (hasAspirin && hasClopidogrel) {
+      warnings.push({
+        type: 'DRUG_INTERACTION',
+        text: 'ℹ️ DUAL ANTIPLATELET THERAPY: Aspirin + Clopidogrel synergism active. Ensure PPI gastroprotection (Pantoprazole) is prescribed.'
+      });
+    }
+
+    return warnings;
+  };
+
+  const safetyWarnings = checkPrescriptionSafety();
 
   // Add medication row
   const handleAddMedication = () => {
@@ -592,6 +731,14 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     return `[SwasthyaMitra Odisha 108 Emergency Transfer Token]\nPatient: ${patientName} (${patientAge}y, ${patientGender})\nABHA: ${patientAbha}\nTransfer: From ${facilityName} TO ${referralTarget}\nAcuity: ${currentCase.acuity} PRIORITY\nDiagnosis: ${diagnosis}\n108 CAD Token: ${cadId}\nRMP Doctor: ${doctorName} (OMC: ${doctorRegNo})\nVerify QR: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
   };
 
+  // WhatsApp 1-Click Dispatch Link
+  const handleWhatsAppDispatch = () => {
+    const cleanPhone = (patientPhone || '').replace(/[^0-9]/g, '');
+    const sms = generateSmsText();
+    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(sms)}`;
+    window.open(url, '_blank');
+  };
+
   // Save current slip to localStorage vault
   const handleSaveToVault = () => {
     if (!verificationToken) return;
@@ -615,6 +762,146 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     alert(`Document ${entry.id} saved to Clinical Vault!`);
   };
 
+  // Download Offline Standalone HTML Certificate
+  const handleDownloadOfflineCertificate = () => {
+    const slipEl = document.getElementById('printable-clinical-slip');
+    if (!slipEl) return;
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${verificationToken?.docId || 'Clinical-Document'}</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; padding: 24px; color: #0f172a; }
+    .card { max-width: 900px; margin: 0 auto; background: white; border: 2px solid #cbd5e1; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; }
+    th { background: #f1f5f9; text-transform: uppercase; font-size: 11px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-weight: bold; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    ${slipEl.innerHTML}
+  </div>
+</body>
+</html>`;
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${verificationToken?.docId || 'NMC-Prescription'}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // HTML5 Signature Canvas Drawing Handlers
+  const startDrawing = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const draw = (e) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1e3a8a'; // Deep doctor blue ink
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      setSignatureDataUrl(canvas.toDataURL('image/png'));
+    }
+  };
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    setSignatureDataUrl(null);
+  };
+
+  const adoptDefaultSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = 'italic 28px "Brush Script MT", cursive, Georgia, serif';
+    ctx.fillStyle = '#1e3a8a';
+    ctx.fillText(`${doctorName}`, 30, 70);
+    setSignatureDataUrl(canvas.toDataURL('image/png'));
+  };
+
+  // Speech-to-Text Voice Dictation
+  const handleToggleVoiceDictation = (fieldKey) => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech Recognition is not supported by your current browser. Please try in Chrome or Edge.');
+      return;
+    }
+
+    if (isDictating && dictationTarget === fieldKey) {
+      setIsDictating(false);
+      setDictationTarget(null);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = lang === 'or-IN' ? 'or-IN' : (lang === 'hi-IN' ? 'hi-IN' : 'en-IN');
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsDictating(true);
+      setDictationTarget(fieldKey);
+    };
+
+    recognition.onresult = (event) => {
+      const speechText = event.results[0][0].transcript;
+      if (fieldKey === 'complaints') {
+        setChiefComplaints((prev) => (prev ? `${prev} ${speechText}` : speechText));
+      } else if (fieldKey === 'diagnosis') {
+        setDiagnosis((prev) => (prev ? `${prev} - ${speechText}` : speechText));
+      } else if (fieldKey === 'referralReason') {
+        setReferralReason((prev) => (prev ? `${prev} ${speechText}` : speechText));
+      }
+      setIsDictating(false);
+      setDictationTarget(null);
+    };
+
+    recognition.onerror = () => {
+      setIsDictating(false);
+      setDictationTarget(null);
+    };
+
+    recognition.onend = () => {
+      setIsDictating(false);
+      setDictationTarget(null);
+    };
+
+    recognition.start();
+  };
+
   // Destination apex live status lookup
   const apexStatus = APEX_DESTINATION_STATUS[referralTarget] || {
     nodalPhone: '0674-2391980',
@@ -624,6 +911,14 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     oxygenSupply: 'Normal Hospital Supply',
     greenCorridor: 'Standard Transfer Protocol',
     bloodBankUnits: 'Standard Regional Blood Bank Linked'
+  };
+
+  const transitRoute = ODISHA_TRANSIT_ROUTES[selectedCaseId] || {
+    distance: '18 km',
+    eta: '25 mins',
+    highway: 'State Highway Corridor',
+    oxygenRefillPost: 'District Central Health Depot',
+    pilotEscort: '108 Priority Green Siren Clearance'
   };
 
   return (
@@ -652,10 +947,19 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
           </div>
 
           {/* Quick Actions */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setShowSignModal(true)}
+              className="flex items-center gap-1.5 bg-indigo-700 hover:bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
+              title="Digital Pen Signature Pad"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-indigo-200" />
+              <span>{signatureDataUrl ? 'Signature Saved ✓' : txt.btnSignOff}</span>
+            </button>
+
             <button
               onClick={() => setShowDoctorModal(true)}
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-all"
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-all cursor-pointer"
               title="Edit Clinician Credentials"
             >
               <Stethoscope className="w-3.5 h-3.5 text-indigo-400" />
@@ -664,26 +968,44 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
 
             <button
               onClick={() => setShowSmsModal(true)}
-              className="flex items-center gap-1.5 bg-rose-700 hover:bg-rose-600 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all"
+              className="flex items-center gap-1.5 bg-rose-700 hover:bg-rose-600 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
             >
               <MessageSquare className="w-3.5 h-3.5 text-rose-200" />
               <span>{txt.btnSmsDispatch}</span>
             </button>
 
             <button
+              onClick={handleWhatsAppDispatch}
+              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
+              title="Send to Patient's WhatsApp"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>{txt.btnWhatsAppDispatch}</span>
+            </button>
+
+            <button
               onClick={() => window.print()}
-              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-black shadow-sm transition-all border border-indigo-400/40"
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-black shadow-sm transition-all border border-indigo-400/40 cursor-pointer"
             >
               <Printer className="w-4 h-4 text-indigo-200" />
               <span>{txt.btnPrintPdf}</span>
             </button>
 
             <button
+              onClick={handleDownloadOfflineCertificate}
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-all cursor-pointer"
+              title="Save Standalone Offline Certificate"
+            >
+              <FileDown className="w-3.5 h-3.5 text-amber-300" />
+              <span className="hidden sm:inline">Offline HTML</span>
+            </button>
+
+            <button
               onClick={handleSaveToVault}
-              className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all"
+              className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span>Save to Vault</span>
+              <span>Vault</span>
             </button>
           </div>
         </div>
@@ -799,6 +1121,27 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       {/* ───────────────────────────────────────────────────────── */}
       {(activeTab === 'prescription' || activeTab === 'referral') && (
         <div className="space-y-4">
+          {/* Clinical Drug Safety Alerts Strip */}
+          {safetyWarnings.length > 0 && (
+            <div className="space-y-2">
+              {safetyWarnings.map((warn, wIdx) => (
+                <div
+                  key={wIdx}
+                  className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 shadow-2xs ${
+                    warn.type === 'CRITICAL_ALLERGY'
+                      ? 'bg-rose-100 border-rose-400 text-rose-950 font-bold animate-pulse'
+                      : warn.type === 'DRUG_CONTRAINDICATION'
+                      ? 'bg-amber-100 border-amber-400 text-amber-950 font-semibold'
+                      : 'bg-blue-50 border-blue-300 text-blue-900'
+                  }`}
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                  <span className="leading-relaxed">{warn.text}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Compliance & Live Apex Status Banner */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-center justify-between gap-2 shadow-2xs">
@@ -827,6 +1170,40 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
               </span>
             </div>
           </div>
+
+          {/* 108 Emergency Transit Corridor & ETA Strip */}
+          {activeTab === 'referral' && (
+            <div className="p-3.5 bg-gradient-to-r from-rose-50 via-red-50 to-orange-50 border border-rose-200 rounded-xl text-xs space-y-2 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="font-black text-rose-950 flex items-center gap-1.5">
+                  <Navigation className="w-4 h-4 text-rose-600" />
+                  <span>{txt.etaLabel}</span>
+                </span>
+                <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                  108 PRIORITY DISPATCH
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
+                <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
+                  <span className="text-slate-400 block text-[10px]">Total Distance:</span>
+                  <strong className="text-rose-950 text-sm">{transitRoute.distance}</strong>
+                </div>
+                <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
+                  <span className="text-slate-400 block text-[10px]">Golden Hour ETA:</span>
+                  <strong className="text-rose-950 text-sm">{transitRoute.eta}</strong>
+                </div>
+                <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
+                  <span className="text-slate-400 block text-[10px]">Primary Transit Highway:</span>
+                  <strong className="text-slate-900 block truncate">{transitRoute.highway}</strong>
+                </div>
+                <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
+                  <span className="text-slate-400 block text-[10px]">En-Route Oxygen Post:</span>
+                  <strong className="text-emerald-800 block truncate">{transitRoute.oxygenRefillPost}</strong>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* THE OFFICIAL SLIP (PRINTABLE REAL PDF FORMAT) */}
           <div
@@ -962,21 +1339,59 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
             {/* 4. Clinical Diagnosis & Chief Complaints */}
             <div className="space-y-3">
               <div>
-                <span className="text-xs font-black uppercase tracking-wider text-slate-500 block mb-1">
-                  {txt.diagLabel}
-                </span>
-                <div className="p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-extrabold text-slate-900">
-                  {diagnosis}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
+                    {txt.diagLabel}
+                  </span>
+                  <button
+                    onClick={() => handleToggleVoiceDictation('diagnosis')}
+                    className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1 print:hidden cursor-pointer"
+                  >
+                    {isDictating && dictationTarget === 'diagnosis' ? (
+                      <span className="text-rose-600 animate-pulse flex items-center gap-1">
+                        <MicOff className="w-3 h-3" /> Listening...
+                      </span>
+                    ) : (
+                      <>
+                        <Mic className="w-3 h-3" /> <span>Dictate Voice</span>
+                      </>
+                    )}
+                  </button>
                 </div>
+                <input
+                  type="text"
+                  value={diagnosis}
+                  onChange={(e) => setDiagnosis(e.target.value)}
+                  className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-extrabold text-slate-900 print:bg-transparent print:border-none print:p-0"
+                />
               </div>
 
               <div>
-                <span className="text-xs font-black uppercase tracking-wider text-slate-500 block mb-1">
-                  {txt.complaintLabel}
-                </span>
-                <p className="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200 leading-relaxed font-medium">
-                  {chiefComplaints}
-                </p>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
+                    {txt.complaintLabel}
+                  </span>
+                  <button
+                    onClick={() => handleToggleVoiceDictation('complaints')}
+                    className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1 print:hidden cursor-pointer"
+                  >
+                    {isDictating && dictationTarget === 'complaints' ? (
+                      <span className="text-rose-600 animate-pulse flex items-center gap-1">
+                        <MicOff className="w-3 h-3" /> Listening...
+                      </span>
+                    ) : (
+                      <>
+                        <Mic className="w-3 h-3" /> <span>Dictate Voice</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <textarea
+                  rows={2}
+                  value={chiefComplaints}
+                  onChange={(e) => setChiefComplaints(e.target.value)}
+                  className="w-full text-xs text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200 leading-relaxed font-medium print:bg-transparent print:border-none print:p-0 resize-none"
+                />
               </div>
             </div>
 
@@ -1037,7 +1452,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                               {brandMatch ? (
                                 <button
                                   onClick={() => handleAutoFixBrand(idx, brandMatch)}
-                                  className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-black flex items-center gap-1 shadow-2xs"
+                                  className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-black flex items-center gap-1 shadow-2xs cursor-pointer"
                                   title={txt.autoFixTooltip}
                                 >
                                   <Sparkles className="w-2.5 h-2.5" />
@@ -1151,11 +1566,22 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 </p>
               </div>
 
-              {/* RMP Signature Seal */}
+              {/* RMP Signature Seal with Vector Signature Overlay */}
               <div className="text-right sm:border-l sm:pl-6 border-slate-300 space-y-0.5 shrink-0">
-                <div className="inline-block border border-dashed border-emerald-400 bg-emerald-50/60 px-3 py-1 rounded text-[10px] font-bold text-emerald-800 mb-1">
-                  {txt.validStamp}
-                </div>
+                {signatureDataUrl ? (
+                  <div className="flex flex-col items-end mb-1">
+                    <img
+                      src={signatureDataUrl}
+                      alt="Doctor Digital Signature"
+                      className="h-10 w-32 object-contain"
+                    />
+                    <span className="text-[8px] text-slate-400 font-mono">Digital Signature Attached</span>
+                  </div>
+                ) : (
+                  <div className="inline-block border border-dashed border-emerald-400 bg-emerald-50/60 px-3 py-1 rounded text-[10px] font-bold text-emerald-800 mb-1">
+                    {txt.validStamp}
+                  </div>
+                )}
                 <div className="font-black text-slate-900 text-sm">{doctorName}</div>
                 <div className="text-xs font-bold text-indigo-800">{doctorDegrees}</div>
                 <div className="text-[11px] font-mono text-slate-600">
@@ -1216,7 +1642,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                   setSimulateTamper(!simulateTamper);
                   setVerifyStatus(null);
                 }}
-                className={`px-3 py-1 rounded-lg text-xs font-black transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
                   simulateTamper
                     ? 'bg-rose-600 text-white'
                     : 'bg-slate-300 text-slate-700 hover:bg-slate-400'
@@ -1518,6 +1944,75 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer"
               >
                 Save Credentials
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────── */}
+      {/* 8. MODAL: HTML5 CANVAS DIGITAL SIGNATURE PAD */}
+      {/* ───────────────────────────────────────────────────────── */}
+      {showSignModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-bold text-sm text-slate-900">
+                  Doctor Digital Pen Signature Pad
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowSignModal(false)}
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600">
+              Sign using your mouse, stylus, or touch screen. This handwritten digital signature is stamped directly on the printable NMC Prescription &amp; Referral Slip:
+            </p>
+
+            {/* Canvas Area */}
+            <div className="bg-slate-50 border-2 border-dashed border-indigo-300 rounded-xl p-1 flex justify-center">
+              <canvas
+                ref={canvasRef}
+                width={420}
+                height={140}
+                className="bg-white rounded-lg cursor-crosshair touch-none shadow-2xs"
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={clearSignature}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
+                >
+                  Clear Pad
+                </button>
+                <button
+                  onClick={adoptDefaultSignature}
+                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold cursor-pointer"
+                >
+                  Adopt Verified Cursive
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowSignModal(false)}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer"
+              >
+                Save Signature
               </button>
             </div>
           </div>
