@@ -505,17 +505,55 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
 
     // Select authentic clinical radiograph texture asset
     let refImgSrc = '/images/xray_hand.jpg';
+    let cropBottom = 0.85;
     if (mod.id === 'm11_skull') {
       refImgSrc = '/images/xray_skull.jpg';
+      cropBottom = 0.98;
     } else if (mod.id === 'm12_chest' || mod.id === 'm6_shoulder') {
       refImgSrc = '/images/xray_chest_clinical.jpg';
+      cropBottom = 0.98;
     } else if (mod.id === 'm10_knee' || mod.id === 'm9_lowerleg' || mod.id === 'm8_ankle' || mod.id === 'm7_foot') {
       refImgSrc = '/images/xray_knees.jpg';
+      cropBottom = 0.98;
     }
 
     const refImg = new Image();
     refImg.crossOrigin = 'anonymous';
     refImg.src = refImgSrc;
+
+    // Helper: Extracts clean radiopaque bone texture with transparent background & soft boundary feathering
+    function prepareCleanRadiograph(img, cropB = 0.85, isHand = true) {
+      const iw = img.naturalWidth || img.width || 600;
+      const ih = Math.floor((img.naturalHeight || img.height || 800) * cropB);
+      const c = document.createElement('canvas');
+      c.width = iw;
+      c.height = ih;
+      const ictx = c.getContext('2d');
+      ictx.drawImage(img, 0, 0, iw, ih, 0, 0, iw, ih);
+
+      const imgD = ictx.getImageData(0, 0, iw, ih);
+      const px = imgD.data;
+
+      // Soft transparency curve for background removal and wrist seam elimination
+      for (let i = 0; i < px.length; i += 4) {
+        const r = px[i], g = px[i + 1], b = px[i + 2];
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        const yCoord = Math.floor(i / 4 / iw);
+
+        // Remove dark cassette background pedestal (make transparent)
+        if (lum < 52) {
+          px[i + 3] = Math.max(0, Math.min(255, (lum - 14) * 7.5));
+        }
+
+        // Feather the bottom wrist edge so there is NEVER a hard rectangular line
+        if (isHand && yCoord > ih * 0.78) {
+          const f = 1 - (yCoord - ih * 0.78) / (ih * 0.22);
+          px[i + 3] = Math.floor(px[i + 3] * Math.max(0, Math.min(1, f)));
+        }
+      }
+      ictx.putImageData(imgD, 0, 0);
+      return { canvas: c, width: iw, height: ih };
+    }
 
     const onRefLoaded = () => {
       const canvas = document.createElement('canvas');
@@ -531,56 +569,98 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
 
       // 2. Render Soft-Tissue Envelope from patient's camera silhouette
       ctx.save();
-      ctx.filter = 'grayscale(100%) blur(10px) contrast(1.6) brightness(0.35)';
-      ctx.globalAlpha = 0.22;
+      ctx.filter = 'grayscale(100%) blur(12px) contrast(1.7) brightness(0.38)';
+      ctx.globalAlpha = 0.26;
       ctx.drawImage(capturedCanvas, 0, 0, w, h);
       ctx.restore();
 
-      // Helper to draw realistic cortical bone cylinders with medullary canal
-      function drawRadiographicBone(x1, y1, x2, y2, thickness, rounded = true) {
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        if (len < 2) return;
-        const angle = Math.atan2(dy, dx);
+      // Cleaned reference radiograph without rectangular borders
+      const isHandMod = mod.id === 'm1_hand' || mod.id === 'm2_wrist' || mod.id === 'm3_forearm' || mod.id === 'm4_elbow' || mod.id === 'm5_upperarm';
+      const cleanRef = prepareCleanRadiograph(refImg, cropBottom, isHandMod);
+
+      // Helper to draw realistic anatomical curved forearm bones with cortical density & cancellous trabeculae
+      function drawAnatomicalForearmBone(isRadius, startY, endY) {
+        const steps = 28;
+        const dy = (endY - startY) / steps;
 
         ctx.save();
-        ctx.translate(x1, y1);
-        ctx.rotate(angle);
 
-        // Cortical density gradient (dense bright white exterior, spongy medullary interior)
-        const grad = ctx.createLinearGradient(0, -thickness / 2, 0, thickness / 2);
-        grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-        grad.addColorStop(0.18, 'rgba(235, 245, 255, 0.82)');
-        grad.addColorStop(0.5, 'rgba(175, 205, 235, 0.50)');
-        grad.addColorStop(0.82, 'rgba(235, 245, 255, 0.82)');
-        grad.addColorStop(1, 'rgba(255, 255, 255, 0.95)');
+        // 1. Outer Cortical Wall (radiopaque dense white)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+        ctx.beginPath();
+        for (let s = 0; s <= steps; s++) {
+          const y = startY + s * dy;
+          const t = s / steps;
+          const baseX = isRadius ? -20 - 6 * Math.sin(t * Math.PI) : 20 + 3 * Math.sin(t * Math.PI);
+          const halfThick = isRadius ? (20 - t * 6) : (15 + t * 3);
+          const x = baseX - halfThick;
+          if (s === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        for (let s = steps; s >= 0; s--) {
+          const y = startY + s * dy;
+          const t = s / steps;
+          const baseX = isRadius ? -20 - 6 * Math.sin(t * Math.PI) : 20 + 3 * Math.sin(t * Math.PI);
+          const halfThick = isRadius ? (20 - t * 6) : (15 + t * 3);
+          const x = baseX + halfThick;
+          ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // 2. Medullary Canal Core (spongy cancellous trabecular interior)
+        const grad = ctx.createLinearGradient(0, startY, 0, endY);
+        grad.addColorStop(0, 'rgba(140, 180, 220, 0.55)');
+        grad.addColorStop(0.5, 'rgba(100, 145, 195, 0.42)');
+        grad.addColorStop(1, 'rgba(140, 180, 220, 0.55)');
 
         ctx.fillStyle = grad;
         ctx.beginPath();
-        if (rounded) {
-          ctx.roundRect(0, -thickness / 2, len, thickness, thickness * 0.38);
-        } else {
-          ctx.rect(0, -thickness / 2, len, thickness);
+        for (let s = 0; s <= steps; s++) {
+          const y = startY + s * dy;
+          const t = s / steps;
+          const baseX = isRadius ? -20 - 6 * Math.sin(t * Math.PI) : 20 + 3 * Math.sin(t * Math.PI);
+          const halfThick = (isRadius ? (20 - t * 6) : (15 + t * 3)) * 0.62;
+          const x = baseX - halfThick;
+          if (s === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         }
+        for (let s = steps; s >= 0; s--) {
+          const y = startY + s * dy;
+          const t = s / steps;
+          const baseX = isRadius ? -20 - 6 * Math.sin(t * Math.PI) : 20 + 3 * Math.sin(t * Math.PI);
+          const halfThick = (isRadius ? (20 - t * 6) : (15 + t * 3)) * 0.62;
+          const x = baseX + halfThick;
+          ctx.lineTo(x, y);
+        }
+        ctx.closePath();
         ctx.fill();
 
-        // Epiphyseal articular ends
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
-        ctx.beginPath();
-        ctx.arc(0, 0, thickness * 0.54, 0, Math.PI * 2);
-        ctx.arc(len, 0, thickness * 0.52, 0, Math.PI * 2);
-        ctx.fill();
+        // 3. Trabecular Micro-architecture
+        ctx.strokeStyle = 'rgba(235, 248, 255, 0.50)';
+        ctx.lineWidth = 1.3;
+        for (let r = -2; r <= 2; r++) {
+          ctx.beginPath();
+          for (let s = 0; s <= steps; s++) {
+            const y = startY + s * dy;
+            const t = s / steps;
+            const baseX = isRadius ? -20 - 6 * Math.sin(t * Math.PI) : 20 + 3 * Math.sin(t * Math.PI);
+            const x = baseX + r * 3.5;
+            if (s === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
 
         ctx.restore();
       }
 
       // 3. Render Posture-Matched Radiograph Skeleton
-      if (mod.id === 'm1_hand' || mod.id === 'm2_wrist' || mod.id === 'm3_forearm' || mod.id === 'm4_elbow' || mod.id === 'm5_upperarm') {
+      if (isHandMod) {
         const wristCanvasX = pose.wristX * w;
         const wristCanvasY = pose.wristY * h;
-        const hl = pose.handLength * w * 1.15;
-        const fl = pose.forearmLength * w * 1.25;
+        const hl = pose.handLength * w * 1.18;
+        const fl = pose.forearmLength * w * 1.30;
 
         // Unified Transform Matrix:
         // (0, 0) is the WRIST JOINT.
@@ -590,36 +670,20 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
         ctx.translate(wristCanvasX, wristCanvasY);
         ctx.rotate(pose.targetAngle + Math.PI / 2);
 
-        // A. Draw authentic clinical hand radiograph from wrist (Y=0) to fingertips (Y=-hl)
-        // Crop bottom 14% of xray_hand.jpg to remove watermark cleanly
-        const sW = refImg.width || 600;
-        const sH = (refImg.height || 900) * 0.85;
-        const hw = hl * (sW / sH);
+        // A. Draw Forearm Bones (Radius & Ulna) starting UNDER the wrist carpal base (-hl * 0.16) extending to Y = fl
+        drawAnatomicalForearmBone(true, -hl * 0.16, fl);  // Radius (lateral, broad distal base)
+        drawAnatomicalForearmBone(false, -hl * 0.16, fl); // Ulna (medial, styloid process)
 
-        ctx.globalAlpha = 0.95;
+        // B. Draw transparent feathered authentic clinical hand radiograph on top
+        const hw = hl * (cleanRef.width / cleanRef.height);
         ctx.drawImage(
-          refImg,
-          0, 0, sW, sH,
+          cleanRef.canvas,
           -hw / 2, -hl, hw, hl
         );
 
-        // B. Draw Forearm Bones (Radius & Ulna) starting DIRECTLY at the wrist (Y=0) extending to Y=fl
-        // Radius (lateral): from X=-18 at Y=0 to X=-24 at Y=fl
-        drawRadiographicBone(-18, 0, -24, fl, 28, false);
-
-        // Ulna (medial): from X=+18 at Y=0 to X=+22 at Y=fl
-        drawRadiographicBone(18, 0, 22, fl, 24, false);
-
-        // Articular Wrist Joint Capsular Blend at (0, 0)
-        ctx.fillStyle = 'rgba(235, 245, 255, 0.90)';
-        ctx.beginPath();
-        ctx.ellipse(-18, 2, 14, 8, 0, 0, Math.PI * 2);
-        ctx.ellipse(18, 2, 12, 7, 0, 0, Math.PI * 2);
-        ctx.fill();
-
         ctx.restore();
       } else {
-        // Multi-Body Rendering for Skull, Knees, Chest, etc. using authentic textures
+        // Multi-Body Rendering for Skull, Knees, Chest, etc. with clean transparency
         const cx = pose.centerX * w;
         const cy = pose.centerY * h;
 
@@ -627,8 +691,7 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
         ctx.translate(cx, cy);
         const renderW = Math.max(480, pose.blobW * w * 1.2);
         const renderH = Math.max(480, pose.blobH * h * 1.2);
-        ctx.globalAlpha = 0.90;
-        ctx.drawImage(refImg, -renderW / 2, -renderH / 2, renderW, renderH);
+        ctx.drawImage(cleanRef.canvas, -renderW / 2, -renderH / 2, renderW, renderH);
         ctx.restore();
       }
 
