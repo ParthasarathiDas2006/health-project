@@ -22,6 +22,7 @@ import { isFirebaseConfigured } from './config/firebase';
 import { saveFirestoreDoc, FIRESTORE_COLLECTIONS } from './services/firebaseDb';
 import { syncAllAuthFromFirestore } from './utils/authStorage';
 import { syncBloodBankFromFirestore } from './utils/bloodBankStorage';
+const NmcReferralPrescriptionSuite = lazy(() => import('./components/NmcReferralPrescriptionSuite'));
 import {
   Activity,
   Brain,
@@ -413,6 +414,7 @@ export default function App() {
       medicineExpiryTab: '୯. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
       nearestMedicalTab: '୧୦. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
       ambulanceTab: '୧୧. ୧୦୮ ଆମ୍ବୁଲାନ୍ସ (Ambulance)',
+      nmcReferralTab: 'NMC ପ୍ରେସକ୍ରିପସନ୍ ଓ ରେଫରାଲ୍ (QR)',
       t11_history: '୧୧. ABHA ଐତିହାସିକ ଗ୍ରାଫ୍',
       t12_differential: '୧୨. ନିରାପଦ ଡିଫରେନ୍ସିଆଲ୍ ଟ୍ରାଏଜ୍',
       t13_drugallergy: '୧୩. ଔଷଧ ଆଲର୍ଜି ଚେତାବନୀ',
@@ -431,7 +433,7 @@ export default function App() {
       t26_federated: '୨୬. ଫେଡେରେଟେଡ୍ ପ୍ରାଇଭେସୀ Node',
       t27_fairness: '୨୭. AI ନିରପେକ୍ଷତା Dashboard',
       t28_rlhf: '୨୮. ଡାକ୍ତର ଫିଡବ୍ୟାକ୍ RLHF',
-      t29_discharge: '୨୯. ଡିଜିଟାଲ୍ ଡିସଚାର୍ଜ Summary',
+      t29_discharge: '୨୯. NMC ପ୍ରେସକ୍ରିପସନ୍ ଓ ଯାଞ୍ଚଯୋଗ୍ୟ QR ରେଫରାଲ୍',
       t30_anc_maternal: '୩୦. ANC ଗର୍ଭବତୀ ମାତୃ ସୁରକ୍ଷା',
       t31_mental_health: '୩୧. PHQ-2 ମାନସିକ ସ୍ୱାସ୍ଥ୍ୟ Screen',
       t32_carbon_sms: '୩୨. ନାଗରିକ Carbon SMS Receipt',
@@ -481,6 +483,7 @@ export default function App() {
       medicineExpiryTab: '9. दवा एक्सपायरी जांच',
       nearestMedicalTab: '10. निकटतम अस्पताल (GPS Map)',
       ambulanceTab: '11. 108 एम्बुलेंस (Ambulance)',
+      nmcReferralTab: 'NMC प्रिस्क्रिप्शन एवं रेफरल (QR)',
       t11_history: '11. ABHA ट्रेंड ग्राफ',
       t12_differential: '12. डिफरेंशियल ट्रायज',
       t13_drugallergy: '13. ड्रग एलर्जी अलर्ट',
@@ -499,7 +502,7 @@ export default function App() {
       t26_federated: '26. फेडेरेटेड गोपनीयता नोड',
       t27_fairness: '27. AI निष्पक्षता डैशबोर्ड',
       t28_rlhf: '28. डॉक्टर फीडबैक RLHF',
-      t29_discharge: '29. डिजिटल डिस्चार्ज सारांश',
+      t29_discharge: '29. NMC प्रिस्क्रिप्शन एवं QR रेफरल पर्ची',
       t30_anc_maternal: '30. मातृ स्वास्थ्य एवं ANC',
       t31_mental_health: '31. PHQ-2 मानसिक स्वास्थ्य',
       t32_carbon_sms: '32. नागरिक कार्बन एसएमएस',
@@ -549,6 +552,7 @@ export default function App() {
       medicineExpiryTab: '9. Medicine Expiry Checker',
       nearestMedicalTab: '10. Nearest Medical & GPS Map',
       ambulanceTab: '11. 108 Emergency Ambulance',
+      nmcReferralTab: 'NMC Rx & Referral Slips (QR)',
       t11_history: '11. ABHA History Builder',
       t12_differential: '12. Safe Differential Triage',
       t13_drugallergy: '13. Drug Allergy Alert',
@@ -567,7 +571,7 @@ export default function App() {
       t26_federated: '26. Federated AI Privacy Node',
       t27_fairness: '27. AI Bias & Fairness Audit',
       t28_rlhf: '28. Doctor Feedback RLHF',
-      t29_discharge: '29. Digital Discharge Summary',
+      t29_discharge: '29. PDF Referral & NMC Prescriptions (QR)',
       t30_anc_maternal: '30. Maternal ANC High-Risk Module',
       t31_mental_health: '31. PHQ-2 Mental Health & NCD',
       t32_carbon_sms: '32. Carbon Copy Citizen SMS',
@@ -598,28 +602,28 @@ export default function App() {
 
   // Left sidebar menu items for GovTech Clinical Modules
   const leftSidebarItems = [
-    { id: 't11_history', label: uiText.t11_history || 'ABHA Trend Analysis', icon: Activity },
-    { id: 't12_differential', label: uiText.t12_differential || 'Differential Triage', icon: FileText },
-    { id: 't13_drugallergy', label: uiText.t13_drugallergy || 'Drug-Allergy Guard', icon: AlertTriangle },
-    { id: 't14_riskscores', label: uiText.t14_riskscores || 'Risk Score Calculator', icon: Activity },
-    { id: 't15_followup', label: uiText.t15_followup || 'Smart Follow-up Engine', icon: Phone },
-    { id: 't16_whatsapp_ussd', label: uiText.t16_whatsapp_ussd || 'WhatsApp & USSD Triage', icon: Mail },
-    { id: 't17_asha_voice', label: uiText.t17_asha_voice || 'ASHA Voice Copilot', icon: Stethoscope },
-    { id: 't18_pain_map', label: uiText.t18_pain_map || 'Pictorial Pain Map', icon: Activity },
-    { id: 't19_family_triage', label: uiText.t19_family_triage || 'Family Camp Triage', icon: Building },
-    { id: 't20_opd_balancer', label: uiText.t20_opd_balancer || 'OPD Load Balancer', icon: Building2 },
-    { id: 't21_counterfeit', label: uiText.t21_counterfeit || 'Counterfeit Drug Detector', icon: UploadCloud },
-    { id: 't22_kiosk', label: uiText.t22_kiosk || 'Zero-Touch Kiosk', icon: ShieldCheck },
-    { id: 't23_outbreak', label: uiText.t23_outbreak || 'IDSP Outbreak Radar', icon: AlertTriangle },
-    { id: 't24_inventory', label: uiText.t24_inventory || 'Inventory Auto-Order', icon: Pill },
-    { id: 't25_dpdp_consent', label: uiText.t25_dpdp_consent || 'DPDP Audio Consent', icon: ShieldCheck },
-    { id: 't26_federated', label: uiText.t26_federated || 'Federated Privacy Model', icon: ShieldCheck },
-    { id: 't27_fairness', label: uiText.t27_fairness || 'AI Bias & Fairness', icon: Activity },
-    { id: 't28_rlhf', label: uiText.t28_rlhf || 'Doctor Feedback Loop (RLHF)', icon: Stethoscope },
-    { id: 't29_discharge', label: uiText.t29_discharge || 'Multilingual Discharge Summary', icon: FileText },
-    { id: 't30_anc_maternal', label: uiText.t30_anc_maternal || 'ANC High-Risk Pregnancy', icon: Activity },
-    { id: 't31_mental_health', label: uiText.t31_mental_health || 'PHQ-2 Mental Health Screener', icon: Stethoscope },
-    { id: 't32_carbon_sms', label: uiText.t32_carbon_sms || 'Citizen SMS Receipts', icon: Mail }
+    { id: 't11_history', num: 11, label: uiText.t11_history || '11. ABHA Trend Analysis', icon: Activity },
+    { id: 't12_differential', num: 12, label: uiText.t12_differential || '12. Differential Triage', icon: FileText },
+    { id: 't13_drugallergy', num: 13, label: uiText.t13_drugallergy || '13. Drug-Allergy Guard', icon: AlertTriangle },
+    { id: 't14_riskscores', num: 14, label: uiText.t14_riskscores || '14. Risk Score Calculator', icon: Activity },
+    { id: 't15_followup', num: 15, label: uiText.t15_followup || '15. Smart Follow-up Engine', icon: Phone },
+    { id: 't16_whatsapp_ussd', num: 16, label: uiText.t16_whatsapp_ussd || '16. WhatsApp & USSD Triage', icon: Mail },
+    { id: 't17_asha_voice', num: 17, label: uiText.t17_asha_voice || '17. ASHA Voice Copilot', icon: Stethoscope },
+    { id: 't18_pain_map', num: 18, label: uiText.t18_pain_map || '18. Pictorial Pain Map', icon: Activity },
+    { id: 't19_family_triage', num: 19, label: uiText.t19_family_triage || '19. Family Camp Triage', icon: Building },
+    { id: 't20_opd_balancer', num: 20, label: uiText.t20_opd_balancer || '20. OPD Load Balancer', icon: Building2 },
+    { id: 't21_counterfeit', num: 21, label: uiText.t21_counterfeit || '21. Counterfeit Drug Detector', icon: UploadCloud },
+    { id: 't22_kiosk', num: 22, label: uiText.t22_kiosk || '22. Zero-Touch Kiosk', icon: ShieldCheck },
+    { id: 't23_outbreak', num: 23, label: uiText.t23_outbreak || '23. IDSP Outbreak Radar', icon: AlertTriangle },
+    { id: 't24_inventory', num: 24, label: uiText.t24_inventory || '24. Inventory Auto-Order', icon: Pill },
+    { id: 't25_dpdp_consent', num: 25, label: uiText.t25_dpdp_consent || '25. DPDP Audio Consent', icon: ShieldCheck },
+    { id: 't26_federated', num: 26, label: uiText.t26_federated || '26. Federated Privacy Model', icon: ShieldCheck },
+    { id: 't27_fairness', num: 27, label: uiText.t27_fairness || '27. AI Bias & Fairness', icon: Activity },
+    { id: 't28_rlhf', num: 28, label: uiText.t28_rlhf || '28. Doctor Feedback Loop (RLHF)', icon: Stethoscope },
+    { id: 't29_nmc_referral', num: 29, label: uiText.t29_discharge || '29. PDF Referral & NMC Prescriptions (QR)', icon: FileText },
+    { id: 't30_anc_maternal', num: 30, label: uiText.t30_anc_maternal || '30. ANC High-Risk Pregnancy', icon: Activity },
+    { id: 't31_mental_health', num: 31, label: uiText.t31_mental_health || '31. PHQ-2 Mental Health Screener', icon: Stethoscope },
+    { id: 't32_carbon_sms', num: 32, label: uiText.t32_carbon_sms || '32. Citizen SMS Receipts', icon: Mail }
   ];
 
   return (
@@ -945,6 +949,21 @@ export default function App() {
               </span>
             </button>
 
+            <button
+              onClick={() => setActiveTab('nmc_referral')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'nmc_referral' || activeTab === 't29_nmc_referral' || activeTab === 't29_discharge'
+                  ? 'bg-gradient-to-r from-indigo-700 to-purple-800 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5 text-indigo-300" />
+              <span>{uiText.nmcReferralTab || 'NMC Rx & Referral'}</span>
+              <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                QR
+              </span>
+            </button>
+
           </nav>
 
           {/* Right Controls: Theme Switcher, Global Language Switcher & User Profile Pill */}
@@ -1265,6 +1284,7 @@ export default function App() {
                 currentUser={{ ...currentUser, preferredLanguage: appLang }}
                 appLang={appLang}
                 onSwitchUser={() => setShowAuthPage(true)}
+                onOpenNmcSuite={() => setActiveTab('nmc_referral')}
               />
             </Suspense>
           </div>
@@ -1686,7 +1706,13 @@ export default function App() {
           {activeTab === 't26_federated' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
           {activeTab === 't27_fairness' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
           {activeTab === 't28_rlhf' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />}
-          {activeTab === 't29_discharge' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
+          {(activeTab === 't29_discharge' || activeTab === 't29_nmc_referral' || activeTab === 'nmc_referral') && (
+            <NmcReferralPrescriptionSuite
+              appLang={appLang}
+              currentUser={currentUser}
+              onNavigateBack={() => setActiveTab('dashboard')}
+            />
+          )}
           {activeTab === 't30_anc_maternal' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
           {activeTab === 't31_mental_health' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
           {activeTab === 't32_carbon_sms' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
