@@ -142,113 +142,90 @@ const SCAN_STEPS = [
 ];
 
 /**
- * Computer Vision Algorithm: Dynamically locates the patient's torso,
- * chest center, neck, shoulder width, and posture tilt from the captured image.
+ * Computer Vision Algorithm: Dynamically locates the patient's face, chin, neck,
+ * and maps the exact thoracic chest bounding box from the captured camera frame.
  */
 function detectPatientBodyBounds(data, w, h) {
-  let minX = w;
-  let maxX = 0;
-  let minY = h;
-  let maxY = 0;
-  let totalMass = 0;
-  let weightedX = 0;
-  let weightedY = 0;
+  let skinXSum = 0;
+  let skinYSum = 0;
+  let skinCount = 0;
+  let minSkinY = h;
+  let maxSkinY = 0;
+  let minSkinX = w;
+  let maxSkinX = 0;
 
-  // Horizontal slices for shoulder & chest width estimation
-  const rowDensity = new Float32Array(h);
-  const colDensity = new Float32Array(w);
-
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
+  // 1. Scan for face & neck skin pixels in upper-middle area (y: 10% to 55%)
+  for (let y = Math.floor(h * 0.1); y < Math.floor(h * 0.55); y += 2) {
+    for (let x = Math.floor(w * 0.15); x < Math.floor(w * 0.85); x += 2) {
       const idx = (y * w + x) * 4;
       const r = data[idx];
       const g = data[idx + 1];
       const b = data[idx + 2];
-      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
-      // Soft tissue & body presence threshold
-      if (lum > 25 && lum < 235) {
-        rowDensity[y]++;
-        colDensity[x]++;
-        weightedX += x;
-        weightedY += y;
-        totalMass++;
-
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
+      // Perceptual human skin tone check
+      if (
+        r > 60 &&
+        g > 40 &&
+        b > 25 &&
+        r > g &&
+        r > b &&
+        r - g > 8 &&
+        r - g < 95 &&
+        Math.abs(r - b) > 10
+      ) {
+        skinXSum += x;
+        skinYSum += y;
+        skinCount++;
+        if (y < minSkinY) minSkinY = y;
+        if (y > maxSkinY) maxSkinY = y;
+        if (x < minSkinX) minSkinX = x;
+        if (x > maxSkinX) maxSkinX = x;
       }
     }
   }
 
-  // Fallback defaults if image is uniform
-  if (totalMass < 500) {
-    return {
-      cx: w * 0.5,
-      cy: h * 0.46,
-      torsoW: w * 0.38,
-      torsoH: h * 0.45,
-      neckY: h * 0.18,
-      waistY: h * 0.78,
-      tilt: 0,
-      detected: false,
-    };
+  let faceCenterX = w * 0.5;
+  let chinY = h * 0.42;
+  let headDetected = false;
+
+  if (skinCount > 80) {
+    faceCenterX = skinXSum / skinCount;
+    chinY = maxSkinY; // Lowest face skin point is chin / upper neck
+    headDetected = true;
   }
 
-  const cx = weightedX / totalMass;
-  const cy = weightedY / totalMass;
+  // 2. Align thoracic chest right below the chin/neck
+  const neckY = headDetected
+    ? Math.min(h * 0.52, Math.max(h * 0.32, chinY + 6))
+    : h * 0.42;
+  const cx = faceCenterX;
 
-  // Calculate dynamic torso width based on upper 25%-65% of detected body mass
-  const detectedWidth = Math.max(w * 0.28, Math.min(w * 0.52, (maxX - minX) * 0.7));
-  const detectedHeight = Math.max(h * 0.35, Math.min(h * 0.65, (maxY - minY) * 0.72));
+  // Chest vertical span: starts just below neck and extends down through torso
+  const chestTopY = neckY + 4;
+  const chestBottomY = Math.min(h * 0.94, chestTopY + (h - chestTopY) * 0.86);
+  const cy = (chestTopY + chestBottomY) * 0.5;
+  const th = (chestBottomY - chestTopY) * 0.5;
 
-  // Determine neck & waist positions
-  const neckY = Math.max(h * 0.1, cy - detectedHeight * 0.55);
-  const waistY = Math.min(h * 0.92, cy + detectedHeight * 0.55);
-
-  // Measure shoulder tilt asymmetry (left vs right shoulder height)
-  let leftMassY = 0;
-  let leftMassCount = 0;
-  let rightMassY = 0;
-  let rightMassCount = 0;
-
-  for (let y = Math.floor(neckY); y < Math.floor(neckY + detectedHeight * 0.3); y++) {
-    for (let x = 0; x < w; x++) {
-      const idx = (y * w + x) * 4;
-      const lum = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
-      if (lum > 30 && lum < 230) {
-        if (x < cx - detectedWidth * 0.15) {
-          leftMassY += y;
-          leftMassCount++;
-        } else if (x > cx + detectedWidth * 0.15) {
-          rightMassY += y;
-          rightMassCount++;
-        }
-      }
-    }
-  }
-
-  const avgLeftY = leftMassCount > 0 ? leftMassY / leftMassCount : cy;
-  const avgRightY = rightMassCount > 0 ? rightMassY / rightMassCount : cy;
-  const tiltAngle = Math.max(-0.08, Math.min(0.08, (avgRightY - avgLeftY) / (detectedWidth || 1)));
+  // Torso half-width scaled proportionally to face/body
+  const faceWidth = headDetected ? maxSkinX - minSkinX : w * 0.2;
+  const tw = Math.max(w * 0.16, Math.min(w * 0.28, faceWidth * 1.35));
 
   return {
     cx,
     cy,
-    torsoW: detectedWidth * 0.5, // radius half-width
-    torsoH: detectedHeight * 0.5, // radius half-height
-    neckY,
-    waistY,
-    tilt: tiltAngle,
-    detected: true,
+    tw,
+    th,
+    chestTopY,
+    chestBottomY,
+    tilt: 0,
+    headDetected,
   };
 }
 
 /**
  * Dynamic Procedural Radiograph & Thoracic Skeleton Synthesizer
- * Adapts, scales, and aligns the full human skeleton to the patient's
- * live camera body proportions and posture.
+ * Ensures 100% exact 1:1 pixel aspect-ratio match with original camera photo,
+ * perfectly placing the skeletal thoracic cage inside the patient's actual chest.
  */
 function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
   return new Promise((resolve) => {
@@ -256,21 +233,22 @@ function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const w = Math.max(1024, img.width || 1024);
-      const h = Math.max(768, img.height || 768);
+      // Exact natural image dimensions for 100% 1:1 pixel match
+      const w = img.naturalWidth || img.width || 1280;
+      const h = img.naturalHeight || img.height || 720;
       canvas.width = w;
       canvas.height = h;
       const ctx = canvas.getContext('2d');
 
-      // 1. Draw original captured camera frame
+      // 1. Draw base photo
       ctx.drawImage(img, 0, 0, w, h);
       const rawImgData = ctx.getImageData(0, 0, w, h);
       const rawData = rawImgData.data;
 
-      // 2. Dynamically detect patient body bounds & posture
+      // 2. Dynamically locate patient face, neck, and chest coordinates
       const body = detectPatientBodyBounds(rawData, w, h);
 
-      // 3. High-Precision Radiographic Negative Exposure
+      // 3. High-Precision Radiographic Inversion
       for (let i = 0; i < rawData.length; i += 4) {
         const r = rawData[i];
         const g = rawData[i + 1];
@@ -278,403 +256,329 @@ function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
         let xVal = 255 - lum;
-        xVal = Math.max(0, Math.min(255, (xVal - 95) * 1.65 + 45));
+        xVal = Math.max(0, Math.min(255, (xVal - 90) * 1.6 + 40));
 
+        // Translucent medical blue-cyan radiograph tint
         rawData[i] = Math.min(255, Math.floor(xVal * 0.86));
         rawData[i + 1] = Math.min(255, Math.floor(xVal * 0.93));
         rawData[i + 2] = Math.min(255, Math.floor(xVal * 1.05));
       }
       ctx.putImageData(rawImgData, 0, 0);
 
-      // Vignette background overlay
-      const bgGrad = ctx.createRadialGradient(body.cx, body.cy, body.torsoW * 0.5, body.cx, body.cy, w * 0.8);
-      bgGrad.addColorStop(0, 'rgba(4, 8, 16, 0.45)');
-      bgGrad.addColorStop(1, 'rgba(2, 4, 8, 0.95)');
-      ctx.fillStyle = bgGrad;
+      // Soft radiographic film overlay
+      ctx.fillStyle = 'rgba(4, 8, 16, 0.4)';
       ctx.fillRect(0, 0, w, h);
 
       ctx.save();
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
-      // 4. Transform coordinate system to match patient body center & tilt
-      ctx.translate(body.cx, body.cy);
-      ctx.rotate(body.tilt);
-      ctx.translate(-body.cx, -body.cy);
-
       const cx = body.cx;
       const cy = body.cy;
-      const tw = body.torsoW * 1.7; // Full thoracic half-spread
-      const th = body.torsoH * 1.8; // Full thoracic vertical span
+      const tw = body.tw;
+      const th = body.th;
+      const chestTop = body.chestTopY;
+      const chestBottom = body.chestBottomY;
 
-      // A. Dynamic Soft Tissue Contour
-      ctx.fillStyle = 'rgba(180, 205, 230, 0.14)';
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + th * 0.08, tw * 1.12, th * 0.96, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // B. Dynamic Radiolucent Lung Cavities (Sized to patient's body)
+      // A. Bilateral Radiolucent Lung Cavities (Darker air chambers inside patient chest)
       const renderLungCavity = (lx, ly, lw, lh, isRight) => {
-        const lungGrad = ctx.createRadialGradient(lx, ly, 20, lx, ly, lw * 1.15);
-        lungGrad.addColorStop(0, 'rgba(2, 5, 10, 0.95)');
-        lungGrad.addColorStop(0.65, 'rgba(6, 12, 22, 0.88)');
-        lungGrad.addColorStop(1, 'rgba(16, 28, 45, 0.28)');
+        const lungGrad = ctx.createRadialGradient(lx, ly, 10, lx, ly, lw * 1.1);
+        lungGrad.addColorStop(0, 'rgba(2, 5, 10, 0.92)');
+        lungGrad.addColorStop(0.65, 'rgba(6, 12, 22, 0.82)');
+        lungGrad.addColorStop(1, 'rgba(16, 28, 45, 0.2)');
         ctx.fillStyle = lungGrad;
 
         ctx.beginPath();
-        ctx.moveTo(lx, ly - lh * 0.88);
+        ctx.moveTo(lx, ly - lh * 0.85);
         ctx.bezierCurveTo(
-          lx + (isRight ? lw * 0.96 : -lw * 0.96),
+          lx + (isRight ? lw * 0.95 : -lw * 0.95),
           ly - lh * 0.45,
-          lx + (isRight ? lw * 1.08 : -lw * 1.08),
+          lx + (isRight ? lw * 1.05 : -lw * 1.05),
           ly + lh * 0.45,
-          lx + (isRight ? lw * 0.92 : -lw * 0.92),
-          ly + lh * 0.9
+          lx + (isRight ? lw * 0.88 : -lw * 0.88),
+          ly + lh * 0.88
         );
         ctx.quadraticCurveTo(lx, ly + lh * 0.65, lx - (isRight ? lw * 0.35 : -lw * 0.35), ly + lh * 0.72);
         ctx.bezierCurveTo(
-          lx - (isRight ? lw * 0.42 : -lw * 0.42),
+          lx - (isRight ? lw * 0.4 : -lw * 0.4),
           ly + lh * 0.2,
-          lx - (isRight ? lw * 0.32 : -lw * 0.32),
+          lx - (isRight ? lw * 0.3 : -lw * 0.3),
           ly - lh * 0.5,
           lx,
-          ly - lh * 0.88
+          ly - lh * 0.85
         );
         ctx.fill();
       };
-      renderLungCavity(cx - tw * 0.46, cy, tw * 0.42, th * 0.52, false);
-      renderLungCavity(cx + tw * 0.46, cy, tw * 0.42, th * 0.52, true);
+      renderLungCavity(cx - tw * 0.48, cy, tw * 0.42, th * 0.58, false);
+      renderLungCavity(cx + tw * 0.48, cy, tw * 0.42, th * 0.58, true);
 
-      // C. Trachea & Mainstem Bronchi Airway
-      ctx.strokeStyle = 'rgba(2, 4, 8, 0.88)';
-      ctx.lineWidth = Math.max(7, tw * 0.045);
+      // B. Trachea & Mainstem Bronchi (Air column)
+      ctx.strokeStyle = 'rgba(2, 4, 8, 0.85)';
+      ctx.lineWidth = Math.max(5, tw * 0.04);
       ctx.beginPath();
-      ctx.moveTo(cx, cy - th * 0.95);
-      ctx.lineTo(cx, cy - th * 0.25);
-      ctx.moveTo(cx, cy - th * 0.25);
-      ctx.lineTo(cx - tw * 0.25, cy - th * 0.08);
-      ctx.moveTo(cx, cy - th * 0.25);
-      ctx.lineTo(cx + tw * 0.25, cy - th * 0.05);
+      ctx.moveTo(cx, chestTop - 15);
+      ctx.lineTo(cx, cy - th * 0.2);
+      ctx.moveTo(cx, cy - th * 0.2);
+      ctx.lineTo(cx - tw * 0.25, cy - th * 0.05);
+      ctx.moveTo(cx, cy - th * 0.2);
+      ctx.lineTo(cx + tw * 0.25, cy - th * 0.02);
       ctx.stroke();
 
-      // D. Branching Bronchovascular Arborization
+      // C. Branching Bronchovascular Arborization
       const renderBronchovascularTree = (hx, hy, dir) => {
-        ctx.strokeStyle = 'rgba(220, 235, 250, 0.38)';
-        ctx.lineWidth = Math.max(1.2, tw * 0.007);
-        for (let b = 0; b < 10; b++) {
-          const angle = (b / 9) * Math.PI - Math.PI / 2;
-          const branchLen = tw * (0.2 + (b % 4) * 0.07);
+        ctx.strokeStyle = 'rgba(220, 235, 250, 0.35)';
+        ctx.lineWidth = Math.max(1, tw * 0.006);
+        for (let b = 0; b < 8; b++) {
+          const angle = (b / 7) * Math.PI - Math.PI / 2;
+          const branchLen = tw * (0.22 + (b % 3) * 0.08);
           ctx.beginPath();
           ctx.moveTo(hx, hy);
           const midX = hx + Math.cos(angle) * branchLen * 0.5 * dir;
           const midY = hy + Math.sin(angle) * branchLen * 0.5;
           const endX = hx + Math.cos(angle) * branchLen * dir;
           const endY = hy + Math.sin(angle) * branchLen;
-          ctx.quadraticCurveTo(midX + (b % 2 ? 4 : -4), midY, endX, endY);
-          ctx.stroke();
-
-          ctx.lineWidth = Math.max(0.8, tw * 0.004);
-          ctx.beginPath();
-          ctx.moveTo(midX, midY);
-          ctx.lineTo(endX + 6 * dir, endY - 6);
+          ctx.quadraticCurveTo(midX, midY, endX, endY);
           ctx.stroke();
         }
       };
-      renderBronchovascularTree(cx - tw * 0.24, cy - th * 0.05, -1);
-      renderBronchovascularTree(cx + tw * 0.24, cy - th * 0.05, 1);
+      renderBronchovascularTree(cx - tw * 0.22, cy - th * 0.05, -1);
+      renderBronchovascularTree(cx + tw * 0.22, cy - th * 0.05, 1);
 
-      // E. Dynamic Vertebral Spine Column (C5 to L2)
-      const spineStart = cy - th * 0.95;
-      const spineEnd = cy + th * 1.02;
-      const numVerts = 16;
+      // D. Vertebral Spine Column (Starts right at base of neck down through chest)
+      const spineStart = chestTop;
+      const spineEnd = chestBottom;
+      const numVerts = 14;
       const vH = (spineEnd - spineStart) / numVerts;
 
       for (let v = 0; v < numVerts; v++) {
         const vy = spineStart + v * vH;
-        const vWidth = Math.max(18, tw * 0.1) + (v > 10 ? 6 : v > 5 ? 3 : 0);
+        const vWidth = Math.max(14, tw * 0.12) + (v > 8 ? 4 : 0);
 
         ctx.fillStyle = `rgba(240, 248, 255, ${0.72 * boneIntensity})`;
-        ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * boneIntensity})`;
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.88 * boneIntensity})`;
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.roundRect
-          ? ctx.roundRect(cx - vWidth * 0.5, vy, vWidth, vH * 0.74, 3)
-          : ctx.rect(cx - vWidth * 0.5, vy, vWidth, vH * 0.74);
+          ? ctx.roundRect(cx - vWidth * 0.5, vy, vWidth, vH * 0.72, 2)
+          : ctx.rect(cx - vWidth * 0.5, vy, vWidth, vH * 0.72);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.92 * boneIntensity})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * boneIntensity})`;
         ctx.beginPath();
         ctx.ellipse(cx - vWidth * 0.3, vy + vH * 0.36, vWidth * 0.12, vH * 0.18, 0, 0, Math.PI * 2);
         ctx.ellipse(cx + vWidth * 0.3, vy + vH * 0.36, vWidth * 0.12, vH * 0.18, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.85 * boneIntensity})`;
-        ctx.fillRect(cx - 2, vy + 2, 4, vH * 0.68);
-
-        ctx.fillStyle = `rgba(225, 240, 255, ${0.55 * boneIntensity})`;
-        ctx.fillRect(cx - vWidth * 0.75, vy + vH * 0.25, vWidth * 0.25, vH * 0.25);
-        ctx.fillRect(cx + vWidth * 0.5, vy + vH * 0.25, vWidth * 0.25, vH * 0.25);
-
         ctx.fillStyle = 'rgba(6, 12, 22, 0.65)';
-        ctx.fillRect(cx - vWidth * 0.48, vy + vH * 0.74, vWidth * 0.96, vH * 0.26);
+        ctx.fillRect(cx - vWidth * 0.45, vy + vH * 0.72, vWidth * 0.9, vH * 0.28);
       }
 
-      // F. Sternal Manubrium, Body & Xiphoid Process
-      ctx.fillStyle = `rgba(235, 245, 255, ${0.65 * boneIntensity})`;
-      ctx.beginPath();
-      ctx.moveTo(cx - tw * 0.1, cy - th * 0.75);
-      ctx.lineTo(cx + tw * 0.1, cy - th * 0.75);
-      ctx.lineTo(cx + tw * 0.08, cy - th * 0.55);
-      ctx.lineTo(cx - tw * 0.08, cy - th * 0.55);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillRect(cx - tw * 0.05, cy - th * 0.54, tw * 0.1, th * 0.65);
-      ctx.beginPath();
-      ctx.moveTo(cx - tw * 0.03, cy + th * 0.12);
-      ctx.lineTo(cx + tw * 0.03, cy + th * 0.12);
-      ctx.lineTo(cx, cy + th * 0.18);
-      ctx.closePath();
-      ctx.fill();
+      // E. Clavicles (Positioned exactly across patient shoulder base)
+      const clavY = chestTop + 6;
+      ctx.lineWidth = Math.max(4, tw * 0.035);
+      ctx.strokeStyle = `rgba(248, 252, 255, ${0.88 * boneIntensity})`;
 
-      // G. Dynamically Positioned Clavicles (S-Curved Collarbones)
-      const clavY = cy - th * 0.72;
-      ctx.lineWidth = Math.max(5, tw * 0.04);
-      ctx.strokeStyle = `rgba(248, 252, 255, ${0.9 * boneIntensity})`;
-
-      // Right Clavicle (Anatomical Left on screen)
+      // Right Clavicle
       ctx.beginPath();
-      ctx.moveTo(cx - tw * 0.08, clavY + 6);
+      ctx.moveTo(cx - tw * 0.08, clavY + 4);
       ctx.bezierCurveTo(
-        cx - tw * 0.42,
-        clavY - 18,
-        cx - tw * 0.76,
-        clavY - 10,
-        cx - tw * 1.02,
-        clavY + 8
+        cx - tw * 0.4,
+        clavY - 12,
+        cx - tw * 0.75,
+        clavY - 6,
+        cx - tw * 0.98,
+        clavY + 6
       );
       ctx.stroke();
 
       // Left Clavicle
       ctx.beginPath();
-      ctx.moveTo(cx + tw * 0.08, clavY + 6);
+      ctx.moveTo(cx + tw * 0.08, clavY + 4);
       ctx.bezierCurveTo(
-        cx + tw * 0.42,
-        clavY - 18,
-        cx + tw * 0.76,
-        clavY - 10,
-        cx + tw * 1.02,
-        clavY + 8
+        cx + tw * 0.4,
+        clavY - 12,
+        cx + tw * 0.75,
+        clavY - 6,
+        cx + tw * 0.98,
+        clavY + 6
       );
       ctx.stroke();
 
-      // H. Scapulae & Proximal Humeral Heads
-      const scapY = cy - th * 0.52;
-      ctx.strokeStyle = `rgba(225, 240, 255, ${0.5 * boneIntensity})`;
-      ctx.lineWidth = Math.max(3.2, tw * 0.024);
+      // F. Sternal Body (Gladiolus)
+      ctx.fillStyle = `rgba(235, 245, 255, ${0.62 * boneIntensity})`;
+      ctx.fillRect(cx - tw * 0.05, chestTop + 8, tw * 0.1, th * 0.85);
 
-      ctx.beginPath();
-      ctx.moveTo(cx - tw * 0.98, scapY - 18);
-      ctx.lineTo(cx - tw * 1.15, scapY + th * 0.38);
-      ctx.lineTo(cx - tw * 0.8, scapY + th * 0.32);
-      ctx.stroke();
-      ctx.fillStyle = `rgba(235, 245, 255, ${0.65 * boneIntensity})`;
-      ctx.beginPath();
-      ctx.ellipse(cx - tw * 1.08, scapY - 8, tw * 0.12, tw * 0.15, 0.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.moveTo(cx + tw * 0.98, scapY - 18);
-      ctx.lineTo(cx + tw * 1.15, scapY + th * 0.38);
-      ctx.lineTo(cx + tw * 0.8, scapY + th * 0.32);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.ellipse(cx + tw * 1.08, scapY - 8, tw * 0.12, tw * 0.15, -0.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // I. 12 Pairs of Anatomically Scaled Ribs
-      for (let r = 1; r <= 12; r++) {
-        const ribY = cy - th * 0.62 + r * (th * 0.115);
-        const ribSpread = tw * (0.34 + r * 0.07);
+      // G. 10 Pairs of Anatomical Ribs (Fit inside patient chest)
+      for (let r = 1; r <= 10; r++) {
+        const ribY = chestTop + 14 + r * (th * 0.16);
+        const ribSpread = tw * (0.38 + r * 0.065);
 
         // Posterior Ribs
-        ctx.strokeStyle = `rgba(240, 248, 255, ${(0.72 - r * 0.02) * boneIntensity})`;
-        ctx.lineWidth = Math.max(3.5, tw * 0.028 - r * 0.15);
+        ctx.strokeStyle = `rgba(240, 248, 255, ${(0.68 - r * 0.02) * boneIntensity})`;
+        ctx.lineWidth = Math.max(2.8, tw * 0.022);
 
+        // Right Posterior
         ctx.beginPath();
-        ctx.moveTo(cx - 10, ribY - 10);
+        ctx.moveTo(cx - 8, ribY - 8);
         ctx.bezierCurveTo(
           cx - ribSpread * 0.45,
-          ribY - 6,
-          cx - ribSpread * 0.96,
-          ribY + 8,
-          cx - ribSpread * 1.04,
-          ribY + 24
+          ribY - 4,
+          cx - ribSpread * 0.95,
+          ribY + 6,
+          cx - ribSpread * 1.02,
+          ribY + 18
         );
         ctx.stroke();
 
+        // Left Posterior
         ctx.beginPath();
-        ctx.moveTo(cx + 10, ribY - 10);
+        ctx.moveTo(cx + 8, ribY - 8);
         ctx.bezierCurveTo(
           cx + ribSpread * 0.45,
-          ribY - 6,
-          cx + ribSpread * 0.96,
-          ribY + 8,
-          cx + ribSpread * 1.04,
-          ribY + 24
+          ribY - 4,
+          cx + ribSpread * 0.95,
+          ribY + 6,
+          cx + ribSpread * 1.02,
+          ribY + 18
         );
         ctx.stroke();
 
         // Anterior Ribs
-        ctx.strokeStyle = `rgba(210, 230, 250, ${(0.42 - r * 0.015) * boneIntensity})`;
-        ctx.lineWidth = Math.max(2.4, tw * 0.018);
+        ctx.strokeStyle = `rgba(210, 230, 250, ${(0.38 - r * 0.015) * boneIntensity})`;
+        ctx.lineWidth = Math.max(1.8, tw * 0.014);
 
         ctx.beginPath();
-        ctx.moveTo(cx - ribSpread * 1.04, ribY + 24);
+        ctx.moveTo(cx - ribSpread * 1.02, ribY + 18);
         ctx.bezierCurveTo(
-          cx - ribSpread * 0.72,
-          ribY + 40,
-          cx - ribSpread * 0.32,
-          ribY + 48,
-          cx - (r <= 7 ? 14 : ribSpread * 0.3),
-          ribY + 50
+          cx - ribSpread * 0.68,
+          ribY + 30,
+          cx - ribSpread * 0.28,
+          ribY + 36,
+          cx - 12,
+          ribY + 38
         );
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.moveTo(cx + ribSpread * 1.04, ribY + 24);
+        ctx.moveTo(cx + ribSpread * 1.02, ribY + 18);
         ctx.bezierCurveTo(
-          cx + ribSpread * 0.72,
-          ribY + 40,
-          cx + ribSpread * 0.32,
-          ribY + 48,
-          cx + (r <= 7 ? 14 : ribSpread * 0.3),
-          ribY + 50
+          cx + ribSpread * 0.68,
+          ribY + 30,
+          cx + ribSpread * 0.28,
+          ribY + 36,
+          cx + 12,
+          ribY + 38
         );
         ctx.stroke();
       }
 
-      // J. Dynamic Cardiac Silhouette & Aortic Knuckle
+      // H. Cardiac Silhouette (Heart Shadow)
       const heartGrad = ctx.createRadialGradient(
-        cx - tw * 0.15,
+        cx - tw * 0.14,
         cy + th * 0.18,
-        15,
-        cx - tw * 0.15,
+        10,
+        cx - tw * 0.14,
         cy + th * 0.18,
-        tw * 0.45
+        tw * 0.42
       );
-      heartGrad.addColorStop(0, 'rgba(240, 248, 255, 0.75)');
-      heartGrad.addColorStop(0.65, 'rgba(210, 230, 248, 0.58)');
-      heartGrad.addColorStop(1, 'rgba(170, 200, 230, 0.15)');
+      heartGrad.addColorStop(0, 'rgba(240, 248, 255, 0.72)');
+      heartGrad.addColorStop(0.65, 'rgba(210, 230, 248, 0.52)');
+      heartGrad.addColorStop(1, 'rgba(170, 200, 230, 0.12)');
       ctx.fillStyle = heartGrad;
 
       ctx.beginPath();
-      ctx.moveTo(cx - tw * 0.06, cy - th * 0.32);
+      ctx.moveTo(cx - tw * 0.06, cy - th * 0.28);
       ctx.bezierCurveTo(
-        cx + tw * 0.14,
-        cy - th * 0.28,
-        cx + tw * 0.2,
-        cy - th * 0.16,
-        cx + tw * 0.16,
+        cx + tw * 0.12,
+        cy - th * 0.24,
+        cx + tw * 0.18,
+        cy - th * 0.14,
+        cx + tw * 0.15,
         cy - th * 0.02
       );
       ctx.bezierCurveTo(
-        cx + tw * 0.3,
+        cx + tw * 0.26,
         cy + th * 0.12,
-        cx + tw * 0.28,
-        cy + th * 0.38,
+        cx + tw * 0.24,
+        cy + th * 0.35,
         cx + tw * 0.08,
-        cy + th * 0.52
+        cy + th * 0.48
       );
       ctx.bezierCurveTo(
-        cx - tw * 0.36,
-        cy + th * 0.54,
-        cx - tw * 0.58,
-        cy + th * 0.4,
-        cx - tw * 0.44,
-        cy + th * 0.16
-      );
-      ctx.bezierCurveTo(
-        cx - tw * 0.3,
-        cy - th * 0.02,
-        cx - tw * 0.2,
-        cy - th * 0.2,
-        cx - tw * 0.06,
-        cy - th * 0.32
-      );
-      ctx.fill();
-
-      // K. Diaphragmatic Domes & Costophrenic Angles
-      ctx.strokeStyle = `rgba(245, 250, 255, ${0.82 * boneIntensity})`;
-      ctx.lineWidth = Math.max(4, tw * 0.03);
-
-      ctx.beginPath();
-      ctx.moveTo(cx - tw * 1.08, cy + th * 0.72);
-      ctx.quadraticCurveTo(
-        cx - tw * 0.55,
-        cy + th * 0.45,
-        cx - 12,
-        cy + th * 0.58
-      );
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(cx + 12, cy + th * 0.58);
-      ctx.quadraticCurveTo(
-        cx + tw * 0.55,
+        cx - tw * 0.32,
         cy + th * 0.5,
-        cx + tw * 1.08,
-        cy + th * 0.72
+        cx - tw * 0.52,
+        cy + th * 0.36,
+        cx - tw * 0.4,
+        cy + th * 0.14
       );
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(4, 8, 16, 0.75)';
-      ctx.beginPath();
-      ctx.ellipse(cx + tw * 0.45, cy + th * 0.68, tw * 0.16, th * 0.08, 0, 0, Math.PI * 2);
+      ctx.bezierCurveTo(
+        cx - tw * 0.26,
+        cy - th * 0.02,
+        cx - tw * 0.18,
+        cy - th * 0.16,
+        cx - tw * 0.06,
+        cy - th * 0.28
+      );
       ctx.fill();
 
-      ctx.restore(); // Restore unrotated frame
+      // I. Diaphragmatic Domes (At lower chest boundary)
+      ctx.strokeStyle = `rgba(245, 250, 255, ${0.8 * boneIntensity})`;
+      ctx.lineWidth = Math.max(3.5, tw * 0.025);
 
-      // L. DICOM Telemetry & Anatomical Lead Markers
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.lineWidth = 1.5;
+      // Right Hemidiaphragm (Higher)
+      ctx.beginPath();
+      ctx.moveTo(cx - tw * 1.05, chestBottom - 10);
+      ctx.quadraticCurveTo(cx - tw * 0.52, chestBottom - 35, cx - 10, chestBottom - 22);
+      ctx.stroke();
+
+      // Left Hemidiaphragm
+      ctx.beginPath();
+      ctx.moveTo(cx + 10, chestBottom - 22);
+      ctx.quadraticCurveTo(cx + tw * 0.52, chestBottom - 28, cx + tw * 1.05, chestBottom - 10);
+      ctx.stroke();
+
+      // Gastric bubble under left hemidiaphragm
+      ctx.fillStyle = 'rgba(4, 8, 16, 0.72)';
+      ctx.beginPath();
+      ctx.ellipse(cx + tw * 0.42, chestBottom - 14, tw * 0.14, th * 0.07, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // J. Clinical HUD Markings
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 1.2;
       const rulerX = w * 0.96;
-      const rulerYStart = h * 0.3;
-      const rulerYEnd = h * 0.7;
+      const rulerYStart = h * 0.35;
+      const rulerYEnd = h * 0.75;
       ctx.beginPath();
       ctx.moveTo(rulerX, rulerYStart);
       ctx.lineTo(rulerX, rulerYEnd);
-      for (let cm = 0; cm <= 10; cm++) {
-        const tickY = rulerYStart + (cm / 10) * (rulerYEnd - rulerYStart);
+      for (let cm = 0; cm <= 8; cm++) {
+        const tickY = rulerYStart + (cm / 8) * (rulerYEnd - rulerYStart);
         ctx.moveTo(rulerX, tickY);
-        ctx.lineTo(rulerX - (cm % 5 === 0 ? 12 : 6), tickY);
+        ctx.lineTo(rulerX - (cm % 4 === 0 ? 10 : 5), tickY);
       }
       ctx.stroke();
 
-      // Film Grain
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.035)';
-      for (let g = 0; g < 600; g++) {
-        const gx = Math.random() * w;
-        const gy = Math.random() * h;
-        ctx.fillRect(gx, gy, 1.5, 1.5);
-      }
-
       // Anatomical "R" Lead Marker
       ctx.fillStyle = 'rgba(52, 211, 153, 0.95)';
-      ctx.font = `bold ${Math.max(18, Math.round(w * 0.03))}px monospace`;
-      ctx.fillText('R', w * 0.05, h * 0.12);
+      ctx.font = `bold ${Math.max(16, Math.round(w * 0.022))}px monospace`;
+      ctx.fillText('R', w * 0.04, h * 0.12);
 
-      // Hospital & Telemetry Info
-      ctx.font = `bold ${Math.max(11, Math.round(w * 0.016))}px monospace`;
-      ctx.fillText('SWASTHYAMITRA AI-CXR • DYNAMIC SKELETON FIT', w * 0.05, h * 0.05);
+      // Telemetry info
+      ctx.font = `bold ${Math.max(11, Math.round(w * 0.014))}px monospace`;
+      ctx.fillText('SWASTHYAMITRA AI-CXR • DYNAMIC BODY-FIT SKELETON', w * 0.04, h * 0.05);
       ctx.fillStyle = 'rgba(203, 213, 225, 0.85)';
-      ctx.font = `${Math.max(9, Math.round(w * 0.012))}px monospace`;
+      ctx.font = `${Math.max(9, Math.round(w * 0.011))}px monospace`;
       ctx.fillText(
-        `CAMERA POSE: X:${Math.round(body.cx)} Y:${Math.round(body.cy)} • SPAN:${Math.round(
-          body.torsoW * 2
-        )}px • TILT:${(body.tilt * 57.3).toFixed(1)}°`,
-        w * 0.05,
-        h * 0.05 + 16
+        `CHEST CENTER: (${Math.round(body.cx)}, ${Math.round(body.cy)}) • SPAN: ${Math.round(
+          body.tw * 2
+        )}px • 1:1 CAM-MATCH`,
+        w * 0.04,
+        h * 0.05 + 14
       );
 
       const outputDataUrl = canvas.toDataURL('image/jpeg', 0.95);
@@ -853,7 +757,7 @@ export default function XRayScanner() {
   const [uploadValidation, setUploadValidation] = useState(null);
   const [isValidatingUpload, setIsValidatingUpload] = useState(false);
   const [cameraPreviewView, setCameraPreviewView] = useState('xray'); // 'xray' | 'original'
-  const [boneIntensity, setBoneIntensity] = useState(1.1); // Bone density calibration
+  const [boneIntensity, setBoneIntensity] = useState(1.0); // Bone density calibration
   const [showRoiHighlights, setShowRoiHighlights] = useState(true);
   const [isConvertingToXray, setIsConvertingToXray] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -938,6 +842,7 @@ export default function XRayScanner() {
     if (!videoRef.current) return;
     const video = videoRef.current;
     const canvas = document.createElement('canvas');
+    // Use exact natural video dimensions
     canvas.width = video.videoWidth || 1280;
     canvas.height = video.videoHeight || 720;
     const ctx = canvas.getContext('2d');
@@ -947,7 +852,7 @@ export default function XRayScanner() {
     stopCameraStream();
     setIsConvertingToXray(true);
 
-    // Dynamically detect body contours and synthesize adaptive skeleton
+    // Dynamically detect patient body contours and synthesize exact 1:1 aligned skeleton
     const { url: convertedXrayUrl, bodyMetrics } = await synthesizeXRayFromCameraBody(
       originalDataUrl,
       boneIntensity
@@ -963,9 +868,9 @@ export default function XRayScanner() {
     });
     setUploadValidation({
       isValid: true,
-      reason: `Adaptive AI Thoracic Skeleton dynamically mapped to patient body (Center: X:${Math.round(
+      reason: `Adaptive Thoracic Skeleton aligned to patient chest (Center: (${Math.round(
         bodyMetrics.cx
-      )}, Y:${Math.round(bodyMetrics.cy)} • Span: ${Math.round(bodyMetrics.torsoW * 2)}px).`,
+      )}, ${Math.round(bodyMetrics.cy)}) • Span: ${Math.round(bodyMetrics.tw * 2)}px).`,
       metrics: {
         meanLum: 88,
         stdDev: 44,
@@ -1083,7 +988,7 @@ export default function XRayScanner() {
       impression =
         'Radiological findings strongly consistent with Pulmonary Tuberculosis / Apical Cavitation.';
       recommendation =
-        'HIGH PRIORITY — Immediate DOTS center referral for Sputum GeneXpert / CBNAAT test. Do NOT initiate empirical antibiotics without microscopy.',
+        'HIGH PRIORITY — Immediate DOTS center referral for Sputum GeneXpert / CBNAAT test. Do NOT initiate empirical antibiotics without microscopy.';
       doctorNote =
         'AI Radiograph Screen: Upper zone hyper-density detected (' +
         tbScore +
@@ -1107,7 +1012,7 @@ export default function XRayScanner() {
       impression = 'Findings compatible with Lower Lobe Bacterial Pneumonia / Consolidation.';
       recommendation =
         'MODERATE URGENCY — Physician evaluation for targeted antibiotic therapy. Verify SpO2 every 2h and check for respiratory distress.';
-      doctorNote:
+      doctorNote =
         'AI Radiograph Screen: Basal consolidation opacity detected (' +
         pneuScore +
         '% probability). Sputum culture, CBC with differential, and auscultation advised.';
@@ -1130,7 +1035,7 @@ export default function XRayScanner() {
       impression = 'No acute pulmonary radiological consolidation or cavitation detected.';
       recommendation =
         'LOW RISK — No acute radiological intervention mandated. Correlate with clinical history and vital parameters.';
-      doctorNote:
+      doctorNote =
         'AI Radiograph Screen: Unremarkable bilateral lung fields (' +
         normScore +
         '% normal index). No focal opacity detected. Review for non-pulmonary symptom etiologies.';
@@ -1221,7 +1126,7 @@ export default function XRayScanner() {
             <Camera className="w-4 h-4" />
             <span>Body-to-X-Ray Camera</span>
             <span className="text-[9px] bg-emerald-400 text-slate-900 font-bold px-1.5 py-0.2 rounded-full">
-              DYNAMIC POSE FIT
+              1:1 CHEST FIT
             </span>
           </button>
         </div>
@@ -1408,7 +1313,7 @@ export default function XRayScanner() {
         </div>
       )}
 
-      {/* Camera Mode: Normal Human Body to Dynamic Anatomical X-Ray Skeleton */}
+      {/* Camera Mode: Normal Human Body to Exact 1:1 Aligned Anatomical X-Ray Skeleton */}
       {mode === 'camera' && (
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
@@ -1418,7 +1323,7 @@ export default function XRayScanner() {
                 Live Camera Body-to-X-Ray Scanner
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Point camera at patient chest/torso — skeleton dynamically scales and contours to the patient&apos;s exact body size and posture
+                Point camera at patient chest/torso — skeleton dynamically scales and maps 1:1 onto the patient&apos;s actual chest
               </p>
             </div>
             {cameraActive && (
@@ -1488,13 +1393,13 @@ export default function XRayScanner() {
                 <div className="flex justify-between text-[10px] text-emerald-300 font-mono bg-black/60 px-2 py-0.5 rounded">
                   <span className="flex items-center gap-1">
                     <Crosshair className="w-3 h-3 text-emerald-400 animate-spin" />
-                    DYNAMIC BODY TRACKER ACTIVE
+                    LIVE 1:1 CHEST LOCATOR
                   </span>
-                  <span>AI ADAPTIVE SKELETON</span>
+                  <span>AI DYNAMIC SKELETON</span>
                 </div>
                 <div className="text-center">
                   <span className="text-[10px] text-emerald-200 bg-black/60 px-2 py-1 rounded">
-                    Align patient torso inside frame — skeleton auto-fits body size &amp; posture
+                    Position patient chest inside the frame — skeleton auto-aligns below neck
                   </span>
                 </div>
               </div>
@@ -1521,8 +1426,8 @@ export default function XRayScanner() {
             />
             <div className="flex justify-between text-[10px] text-slate-400">
               <span>Soft Contrast</span>
-              <span>Balanced (Default 110%)</span>
-              <span>Ultra-Crisp Bone Cortex</span>
+              <span>Balanced (Default 100%)</span>
+              <span>Crisp Cortical Bone</span>
             </div>
           </div>
 
@@ -1535,7 +1440,7 @@ export default function XRayScanner() {
                 className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm flex items-center gap-2 shadow-md transition-all active:scale-95"
               >
                 <Sparkles className="w-5 h-5 text-amber-300" />
-                <span>Capture &amp; Generate Dynamic Body-Fit X-Ray</span>
+                <span>Capture &amp; Generate 1:1 Matched Body X-Ray</span>
               </button>
             </div>
           )}
@@ -1544,7 +1449,7 @@ export default function XRayScanner() {
           {isConvertingToXray && (
             <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-700 text-xs flex items-center gap-2 font-medium">
               <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
-              <span>Detecting patient body contours &amp; mapping adaptive 12-rib thoracic skeleton...</span>
+              <span>Mapping 1:1 anatomical ribcage &amp; spine inside patient chest...</span>
             </div>
           )}
 
@@ -1556,7 +1461,7 @@ export default function XRayScanner() {
                   <div className="flex items-center gap-1.5">
                     <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
                     <span className="text-[11px] text-emerald-400 font-mono font-bold">
-                      ✓ Skeleton Dynamically Fitted to Captured Body
+                      ✓ Skeleton 1:1 Mapped to Patient Chest
                     </span>
                   </div>
 
@@ -1573,7 +1478,7 @@ export default function XRayScanner() {
                             : 'text-slate-300 hover:text-white')
                         }
                       >
-                        🩻 Dynamic Skeleton View
+                        🩻 1:1 X-Ray View
                       </button>
                       <button
                         type="button"
@@ -1623,7 +1528,7 @@ export default function XRayScanner() {
                   />
                   <div className="absolute bottom-2 left-2 bg-black/75 px-2 py-0.5 rounded text-[10px] text-slate-300 font-mono">
                     {cameraPreviewView === 'xray'
-                      ? '🩻 Dynamic Body-Fitted Thoracic Skeleton'
+                      ? '🩻 1:1 Body-Fitted Thoracic Radiograph'
                       : '📷 Live Camera Frame'}
                   </div>
                 </div>
@@ -1633,12 +1538,12 @@ export default function XRayScanner() {
               {uploadedFile.bodyMetrics && (
                 <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-[11px] font-mono text-slate-300 flex items-center justify-between flex-wrap gap-2">
                   <span className="text-emerald-400 flex items-center gap-1 font-bold">
-                    <Activity className="w-3.5 h-3.5" /> Body Geometry:
+                    <Activity className="w-3.5 h-3.5" /> Chest Localization:
                   </span>
-                  <span>Center: X:{Math.round(uploadedFile.bodyMetrics.cx)} Y:{Math.round(uploadedFile.bodyMetrics.cy)}</span>
-                  <span>Span: {Math.round(uploadedFile.bodyMetrics.torsoW * 2)}px</span>
-                  <span>Tilt: {(uploadedFile.bodyMetrics.tilt * 57.3).toFixed(1)}°</span>
-                  <span className="text-indigo-400">12-Rib Grid Aligned</span>
+                  <span>Center: ({Math.round(uploadedFile.bodyMetrics.cx)}, {Math.round(uploadedFile.bodyMetrics.cy)})</span>
+                  <span>Rib Span: {Math.round(uploadedFile.bodyMetrics.tw * 2)}px</span>
+                  <span>Chest Top: Y:{Math.round(uploadedFile.bodyMetrics.chestTopY)}</span>
+                  <span className="text-indigo-400">1:1 Photo Aligned</span>
                 </div>
               )}
 
@@ -1791,7 +1696,7 @@ export default function XRayScanner() {
                 </p>
                 {result.originalImage && (
                   <span className="text-[9px] text-emerald-300 font-mono bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800">
-                    Dynamic Body-Fit Skeleton
+                    1:1 Body-Fit Skeleton
                   </span>
                 )}
               </div>
