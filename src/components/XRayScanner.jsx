@@ -345,29 +345,88 @@ function extractPatientLimbPose(canvas) {
  * Real-Time 12-Module Anatomical Computer Vision Classifier
  */
 function classifyMultiBodyPart(canvas) {
-  const pose = extractPatientLimbPose(canvas);
-  const { blobW, blobH, aspect, skinRatio, armEntry } = pose;
+  const w = 120;
+  const h = 120;
+  const hc = document.createElement('canvas');
+  hc.width = w;
+  hc.height = h;
+  const ctx = hc.getContext('2d');
+  ctx.drawImage(canvas, 0, 0, w, h);
+  const d = ctx.getImageData(0, 0, w, h).data;
 
-  // 1. Hand / Wrist / Forearm (Module 1 / 2 / 3) — Extended limbs
-  if (aspect >= 0.95 || armEntry === 'right' || armEntry === 'left' || (armEntry === 'bottom' && blobH >= 0.4)) {
-    return { moduleId: 'm1_hand', confidence: 98, label: 'Module 1: Hand & Forearm' };
+  let totalSkin = 0;
+  let minX = w, maxX = 0, minY = h, maxY = 0;
+  let sumX = 0, sumY = 0;
+  let edgeSkin = { left: 0, right: 0, top: 0, bottom: 0 };
+  let darkHairCount = 0; // dark pixels in upper half above skin centroid
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = (y * w + x) * 4;
+      const r = d[idx], g = d[idx + 1], b = d[idx + 2];
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+
+      const isSkin =
+        r > 35 && g > 20 && b > 10 &&
+        r > g && r > b && (r - g) > 5 &&
+        Math.abs(r - g) < 160 &&
+        (r - b) / (r + g + b + 0.001) > 0.025;
+
+      if (isSkin) {
+        totalSkin++;
+        sumX += x;
+        sumY += y;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+
+        if (x < 8) edgeSkin.left++;
+        if (x > w - 9) edgeSkin.right++;
+        if (y < 8) edgeSkin.top++;
+        if (y > h - 9) edgeSkin.bottom++;
+      }
+
+      // Check dark hair/shadow in upper half of frame
+      if (y < h * 0.55 && lum < 45) {
+        darkHairCount++;
+      }
+    }
   }
 
-  // 2. Knee & Lower Leg (Module 10 / 9)
-  if (pose.centerY > 0.55 && aspect < 0.85 && skinRatio > 0.08) {
+  const skinRatio = totalSkin / (w * h);
+  const blobW = (maxX - minX) / w;
+  const blobH = (maxY - minY) / h;
+  const cx = totalSkin > 0 ? (sumX / totalSkin) / w : 0.5;
+  const cy = totalSkin > 0 ? (sumY / totalSkin) / h : 0.5;
+  const aspect = blobW / Math.max(0.05, blobH);
+
+  const leftEdge = edgeSkin.left > 8;
+  const rightEdge = edgeSkin.right > 8;
+  const horizontalLimb = (leftEdge && !rightEdge) || (rightEdge && !leftEdge) || aspect > 1.45;
+
+  // 1. Head / Skull / Facial Portrait Detection (Module 11)
+  // Characteristic: Face centered in frame, compact oval/trapezoid, dark hair above/around, no horizontal limb edge entry
+  const isFacePosition = cx > 0.30 && cx < 0.70 && cy > 0.30 && cy < 0.80;
+  const isHeadAspect = aspect >= 0.50 && aspect <= 1.40;
+  const hasNoSideLimbEntry = !leftEdge && !rightEdge;
+  const hasHairOrFaceShape = darkHairCount > (w * h * 0.03) || (blobW > 0.20 && blobH > 0.25);
+
+  if (isFacePosition && isHeadAspect && hasNoSideLimbEntry && hasHairOrFaceShape && skinRatio >= 0.04) {
+    return { moduleId: 'm11_skull', confidence: 97, label: 'Module 11: Head / Skull' };
+  }
+
+  // 2. Chest / Torso (Module 12)
+  if (skinRatio > 0.45 && blobW > 0.65 && cx > 0.35 && cx < 0.65) {
+    return { moduleId: 'm12_chest', confidence: 96, label: 'Module 12: Chest (CXR)' };
+  }
+
+  // 3. Knee & Lower Leg (Module 10 / 9)
+  if (cy > 0.58 && aspect < 0.80 && !horizontalLimb) {
     return { moduleId: 'm10_knee', confidence: 93, label: 'Module 10: Knee' };
   }
 
-  // 3. Head / Skull (Module 11) - isolated centered oval
-  if (skinRatio >= 0.12 && skinRatio <= 0.60 && aspect >= 0.80 && aspect <= 1.25 && pose.centerY < 0.48) {
-    return { moduleId: 'm11_skull', confidence: 94, label: 'Module 11: Head / Skull' };
-  }
-
-  // 4. Chest / Torso (Module 12)
-  if (skinRatio > 0.55 && aspect > 1.35) {
-    return { moduleId: 'm12_chest', confidence: 95, label: 'Module 12: Chest (CXR)' };
-  }
-
+  // 4. Hand / Wrist / Forearm (Module 1)
   return { moduleId: 'm1_hand', confidence: 96, label: 'Module 1: Hand & Forearm' };
 }
 
