@@ -33,6 +33,7 @@ import ClinicalRiskScoreSuite from './ClinicalRiskScoreSuite';
 import AshaVoiceAssistSuite from './AshaVoiceAssistSuite';
 
 const DrugAllergySafetyGuard = React.lazy(() => import('./DrugAllergySafetyGuard'));
+const NmcReferralPrescriptionSuite = React.lazy(() => import('./NmcReferralPrescriptionSuite'));
 // ─── Differential Triage Module (Feature 12) ────────────────────────────────
 const SYMPTOM_PRESETS = [
   {
@@ -792,6 +793,14 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
             >
               <Baby className="w-3.5 h-3.5 text-pink-300" /> 20-22. ANC & Citizen SMS
             </button>
+            <button
+              onClick={() => setActiveSubTab('nmc_referral')}
+              className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all ${
+                activeSubTab === 'nmc_referral' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5 text-indigo-300" /> 29. NMC Rx & QR Referral
+            </button>
           </div>
         </div>
       )}
@@ -1143,6 +1152,13 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
             </div>
           </div>
         </div>
+      )}
+
+      {/* Feature 29: PDF Referral Slips & NMC Prescriptions with verifiable QR Codes */}
+      {activeSubTab === 'nmc_referral' && (
+        <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading NMC Suite...</div>}>
+          <NmcReferralPrescriptionSuite appLang={lang} currentUser={currentUser} />
+        </React.Suspense>
       )}
     </div>
   );

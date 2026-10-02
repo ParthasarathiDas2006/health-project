@@ -24,7 +24,7 @@ import { getHospitalPartners } from '../data/hospitalPartners';
  * 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
  * Displays human-in-the-loop clinical prioritization, triage tickets, and official referral generation.
  */
-export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLang }) {
+export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLang, onOpenNmcSuite }) {
   const activeLang = appLang || currentUser?.preferredLanguage || 'or-IN';
   const [filterUrgency, setFilterUrgency] = useState('ALL');
   const [showReferralModal, setShowReferralModal] = useState(false);
@@ -870,16 +870,28 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
                     <Building2 className="w-4 h-4 text-slate-500" />
                     {txt.targetFacility} <strong>{selectedTicket.referralRecommendation}</strong>
                   </span>
-                  <button
-                    onClick={() => {
-                      setCustomSwasthyaMitraHospital(selectedTicket.referralRecommendation);
-                      setShowReferralModal(true);
-                    }}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded font-medium transition-colors flex items-center gap-1"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    {txt.generateReferral}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {onOpenNmcSuite && (
+                      <button
+                        onClick={onOpenNmcSuite}
+                        className="bg-purple-700 hover:bg-purple-800 text-white px-3 py-1.5 rounded font-bold transition-colors flex items-center gap-1.5 shadow-2xs"
+                        title="Open Full NMC Prescription & Verifiable QR Referral Suite"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-purple-200" />
+                        <span>NMC Rx / QR Referral</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setCustomSwasthyaMitraHospital(selectedTicket.referralRecommendation);
+                        setShowReferralModal(true);
+                      }}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded font-medium transition-colors flex items-center gap-1"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      {txt.generateReferral}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-2">
@@ -1030,13 +1042,28 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
 
             {/* Modal Actions */}
             <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-between items-center">
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                {txt.btnPrintSlip}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  {txt.btnPrintSlip}
+                </button>
+
+                {onOpenNmcSuite && (
+                  <button
+                    onClick={() => {
+                      setShowReferralModal(false);
+                      onOpenNmcSuite();
+                    }}
+                    className="px-3.5 py-2 bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-900 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                    <span>NMC Verifiable QR Suite</span>
+                  </button>
+                )}
+              </div>
 
               <button
                 onClick={() => {
