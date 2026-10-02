@@ -380,6 +380,7 @@ export default function App() {
       scenariosTab: '୮. ସ୍ୱାସ୍ଥ୍ୟ କ୍ଷେତ୍ର ନିୟମ',
       medicineExpiryTab: '୯. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
       nearestMedicalTab: '୧୦. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
+      ambulanceTab: '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ବୁକିଂ',
       t11_history: '୧୧. ABHA ଐତିହାସିକ ଗ୍ରାଫ୍',
       t12_differential: '୧୨. ନିରାପଦ ଡିଫରେନ୍ସିଆଲ୍ ଟ୍ରାଏଜ୍',
       t13_drugallergy: '୧୩. ଔଷଧ ଆଲର୍ଜି ଚେତାବନୀ',
@@ -447,6 +448,7 @@ export default function App() {
       scenariosTab: '8. फील्ड परिदृश्य',
       medicineExpiryTab: '9. दवा एक्सपायरी जांच',
       nearestMedicalTab: '10. निकटतम अस्पताल (GPS Map)',
+      ambulanceTab: '108 एम्बुलेंस बुकिंग',
       t11_history: '11. ABHA ट्रेंड ग्राफ',
       t12_differential: '12. डिफरेंशियल ट्रायज',
       t13_drugallergy: '13. ड्रग एलर्जी अलर्ट',
@@ -514,6 +516,7 @@ export default function App() {
       scenariosTab: '8. Field Scenarios',
       medicineExpiryTab: '9. Medicine Expiry Checker',
       nearestMedicalTab: '10. Nearest Medical & GPS Map',
+      ambulanceTab: '108 Ambulance Booking',
       t11_history: '11. ABHA History Builder',
       t12_differential: '12. Safe Differential Triage',
       t13_drugallergy: '13. Drug Allergy Alert',
@@ -892,6 +895,21 @@ export default function App() {
               {uiText.nearestMedicalTab}
               <span className="bg-rose-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
                 GPS
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('ambulance')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'ambulance'
+                  ? 'bg-gradient-to-r from-rose-700 to-red-800 text-white shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5 text-rose-300" />
+              {uiText.ambulanceTab}
+              <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
+                108
               </span>
             </button>
 
@@ -1546,6 +1564,28 @@ export default function App() {
           </div>
         )}
 
+        {/* TAB: 108 AMBULANCE BOOKING SYSTEM */}
+        {activeTab === 'ambulance' && (
+          <div className="space-y-6">
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+                  <div className="w-10 h-10 border-4 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-600 animate-pulse">
+                    {appLang === 'or-IN' ? '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ବୁକିଂ ସିଷ୍ଟମ୍ ଲୋଡ୍ ହେଉଛି...' : (appLang === 'hi-IN' ? '108 एम्बुलेंस बुकिंग सिस्टम लोड हो रहा है...' : 'Loading 108 Ambulance Booking System...')}
+                  </p>
+                </div>
+              }
+            >
+              <AmbulanceBooking
+                currentUser={currentUser}
+                appLang={appLang}
+                onNavigateToNearest={() => setActiveTab('nearest')}
+              />
+            </Suspense>
+          </div>
+        )}
+
         {/* TAB 8: NEAREST MEDICAL & EMERGENCY AMBULANCE GPS */}
         {activeTab === 'nearest' && (
           <div className="space-y-6">
@@ -1562,6 +1602,7 @@ export default function App() {
               <NearestMedicalGPS
                 currentUser={currentUser}
                 appLang={appLang}
+                onNavigateToAmbulance={() => setActiveTab('ambulance')}
               />
             </Suspense>
           </div>

@@ -32,8 +32,9 @@ import {
   calculateDistanceKm,
   getRouteSimulation
 } from '../utils/nearestMedicalData';
+import { saveAmbulanceRequest } from '../utils/authStorage';
 
-export default function NearestMedicalGPS({ currentUser, appLang }) {
+export default function NearestMedicalGPS({ currentUser, appLang, onNavigateToAmbulance }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   // Selected User Location State (Default: Bhubaneswar Master Canteen)
@@ -290,6 +291,25 @@ export default function NearestMedicalGPS({ currentUser, appLang }) {
     };
 
     setConfirmedDispatchToken(token);
+    try {
+      saveAmbulanceRequest({
+        id: token.id,
+        emergencyType: patientCondition,
+        ambulanceType: dispatchAmbulance.type,
+        patientName: currentUser?.name || 'Emergency GPS Caller',
+        patientPhone: callerPhone || currentUser?.phone || '108',
+        patientAbha: currentUser?.staffId || '',
+        pickupAddress: pickupLandmark || 'Current GPS Location / Odisha Network',
+        pickupDistrict: currentUser?.district || 'Khordha',
+        destinationHospital: activeHospital?.name || 'Nearest District Hospital',
+        vehicleNo: dispatchAmbulance.vehicleNo,
+        eta: `~${dispatchAmbulance.etaMins} mins`,
+        paramedic: `${dispatchAmbulance.driverName} (${dispatchAmbulance.driverPhone})`,
+        status: 'DISPATCHED'
+      });
+    } catch (err) {
+      console.warn('Syncing ambulance dispatch to storage', err);
+    }
     setDispatchAmbulance(null);
   };
 
@@ -320,9 +340,20 @@ export default function NearestMedicalGPS({ currentUser, appLang }) {
 
           {/* GPS Status & 108 Emergency Call Pill */}
           <div className="flex flex-wrap items-center gap-2.5">
+            {onNavigateToAmbulance && (
+              <button
+                type="button"
+                onClick={onNavigateToAmbulance}
+                className="flex items-center gap-1.5 bg-rose-600/90 hover:bg-rose-600 text-white px-3.5 py-2 rounded-xl text-xs font-black shadow-sm transition-all border border-rose-400/40"
+              >
+                <Ambulance className="w-4 h-4 text-rose-200" />
+                <span>Book 108 Ambulance</span>
+              </button>
+            )}
+
             <a
               href="tel:108"
-              className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm transition-all"
+              className="flex items-center gap-2 bg-rose-700 hover:bg-rose-800 text-white px-4 py-2 rounded-xl text-xs font-black shadow-sm transition-all"
             >
               <Phone className="w-4 h-4 text-rose-200 fill-white" />
               <span>Dial 108 Toll-Free</span>

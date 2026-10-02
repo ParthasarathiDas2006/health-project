@@ -23,7 +23,7 @@ import { getAmbulanceRequests, saveAmbulanceRequest, cancelAmbulanceRequest } fr
  * 5. "My Requests" manager with cancel & re-print support.
  * 6. 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
  */
-export default function AmbulanceBooking({ currentUser, appLang }) {
+export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNearest }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('book');
@@ -311,6 +311,16 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
             {tab.label}
           </button>
         ))}
+        {onNavigateToNearest && (
+          <button
+            type="button"
+            onClick={onNavigateToNearest}
+            className="ml-auto px-4 py-2 rounded-xl text-sm font-semibold transition-all bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 flex items-center gap-1.5 shadow-2xs"
+          >
+            <Navigation className="w-4 h-4 text-emerald-600" />
+            <span>📍 Nearest Hospital GPS Map</span>
+          </button>
+        )}
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
