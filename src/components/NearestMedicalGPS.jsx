@@ -33,6 +33,8 @@ import {
   getRouteSimulation
 } from '../utils/nearestMedicalData';
 import { saveAmbulanceRequest } from '../utils/authStorage';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 export default function NearestMedicalGPS({ currentUser, appLang, onNavigateToAmbulance }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
@@ -63,8 +65,19 @@ export default function NearestMedicalGPS({ currentUser, appLang, onNavigateToAm
   const [isNavigating, setIsNavigating] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
 
-  // Map Zoom State
+  // Map Zoom & View State
   const [mapZoom, setMapZoom] = useState(13);
+  const [mapTileStyle, setMapTileStyle] = useState('standard'); // 'standard' | 'dark' | 'voyager'
+  const [showAmbulances, setShowAmbulances] = useState(true);
+  const [showTrafficCorridors, setShowTrafficCorridors] = useState(true);
+
+  // Leaflet DOM and instance refs
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const tileLayerRef = useRef(null);
+  const markersLayerRef = useRef(null);
+  const routeLayerRef = useRef(null);
+  const accuracyCircleRef = useRef(null);
 
   // Multilingual UI Text Dictionary
   const txt = {
@@ -311,6 +324,424 @@ export default function NearestMedicalGPS({ currentUser, appLang, onNavigateToAm
       console.warn('Syncing ambulance dispatch to storage', err);
     }
     setDispatchAmbulance(null);
+  };
+
+  // ─── LEAFLET MAP TILE PROVIDERS & LOGIC ────────────────────────────────
+  const TILE_PROVIDERS = {
+    standard: {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      options: {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }
+    },
+    dark: {
+      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      options: {
+        maxZoom: 19,
+        subdomains: 'abcd',
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+      }
+    },
+    voyager: {
+      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      options: {
+        maxZoom: 19,
+        subdomains: 'abcd',
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+      }
+    }
+  };
+
+  // 1. Initialize Map when in map-view and DOM is available
+  useEffect(() => {
+    if (activeView !== 'map-view') return;
+    if (!mapContainerRef.current) return;
+
+    if (!mapInstanceRef.current) {
+      const map = L.map(mapContainerRef.current, {
+        center: [userCoords.lat, userCoords.lng],
+        zoom: mapZoom,
+        zoomControl: false
+      });
+
+      const provider = TILE_PROVIDERS[mapTileStyle] || TILE_PROVIDERS.standard;
+      const tileLayer = L.tileLayer(provider.url, provider.options).addTo(map);
+      const markersLayer = L.layerGroup().addTo(map);
+      const routeLayer = L.layerGroup().addTo(map);
+
+      mapInstanceRef.current = map;
+      tileLayerRef.current = tileLayer;
+      markersLayerRef.current = markersLayer;
+      routeLayerRef.current = routeLayer;
+
+      map.on('zoomend', () => {
+        setMapZoom(map.getZoom());
+      });
+    }
+
+    // Invalidate size immediately and with staged timeouts to guarantee no blank/gray tiles
+    const invalidate = () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    };
+    invalidate();
+    const t1 = setTimeout(invalidate, 120);
+    const t2 = setTimeout(invalidate, 400);
+    const t3 = setTimeout(invalidate, 1000);
+
+    let resizeObserver;
+    if (window.ResizeObserver && mapContainerRef.current) {
+      resizeObserver = new ResizeObserver(() => invalidate());
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      if (resizeObserver) resizeObserver.disconnect();
+    };
+  }, [activeView]);
+
+  // Teardown map on component unmount
+  useEffect(() => {
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  // 2. Change Tile Layer when mapTileStyle changes
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    if (tileLayerRef.current) {
+      mapInstanceRef.current.removeLayer(tileLayerRef.current);
+    }
+    const provider = TILE_PROVIDERS[mapTileStyle] || TILE_PROVIDERS.standard;
+    const newTileLayer = L.tileLayer(provider.url, provider.options).addTo(mapInstanceRef.current);
+    tileLayerRef.current = newTileLayer;
+    newTileLayer.bringToBack();
+  }, [mapTileStyle]);
+
+  // 3. Render Markers, Accuracy Circle & Routes
+  useEffect(() => {
+    if (!mapInstanceRef.current || !markersLayerRef.current || !routeLayerRef.current) return;
+
+    const markersGroup = markersLayerRef.current;
+    const routeGroup = routeLayerRef.current;
+    markersGroup.clearLayers();
+    routeGroup.clearLayers();
+
+    // A. User Pin
+    const userIcon = L.divIcon({
+      className: 'custom-leaflet-pin',
+      html: `
+        <div style="position:relative; width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+          <div style="position:absolute; width:36px; height:36px; border-radius:50%; background:rgba(59,130,246,0.35); animation:leafletPulse 2s infinite;"></div>
+          <div style="position:relative; width:24px; height:24px; border-radius:50%; background:#2563eb; border:3px solid #ffffff; box-shadow:0 2px 8px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px;">
+            📍
+          </div>
+          <div style="position:absolute; bottom:-18px; white-space:nowrap; background:#0f172a; color:#93c5fd; font-size:9px; font-weight:800; padding:1px 6px; border-radius:10px; border:1px solid #3b82f6; box-shadow:0 2px 6px rgba(0,0,0,0.5);">
+            ${userCoords.isLiveGps ? 'LIVE GPS' : 'YOU'}
+          </div>
+        </div>
+      `,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      popupAnchor: [0, -18]
+    });
+
+    const userMarker = L.marker([userCoords.lat, userCoords.lng], { icon: userIcon, zIndexOffset: 900 }).addTo(markersGroup);
+    userMarker.bindPopup(`
+      <div style="font-family:sans-serif; min-width:180px;">
+        <div style="font-size:12px; font-weight:800; color:#38bdf8; display:flex; align-items:center; gap:6px;">
+          <span>📍 Your Location</span>
+          <span style="font-size:10px; color:#93c5fd; background:rgba(59,130,246,0.2); padding:1px 5px; border-radius:4px;">
+            ${userCoords.isLiveGps ? 'High Accuracy GPS' : 'Odisha Landmark'}
+          </span>
+        </div>
+        <div style="font-size:11px; color:#cbd5e1; margin-top:5px;">
+          Lat: <strong>${userCoords.lat.toFixed(4)}</strong>, Lng: <strong>${userCoords.lng.toFixed(4)}</strong>
+        </div>
+        <div style="font-size:10px; color:#94a3b8; margin-top:3px;">
+          Estimated Accuracy: ±${userCoords.accuracy || 15}m
+        </div>
+      </div>
+    `);
+
+    // Accuracy Circle
+    L.circle([userCoords.lat, userCoords.lng], {
+      radius: (userCoords.accuracy || 15) * 6,
+      color: '#3b82f6',
+      weight: 1.5,
+      opacity: 0.6,
+      fillColor: '#60a5fa',
+      fillOpacity: 0.12
+    }).addTo(markersGroup);
+
+    // B. Destination / Active Target Hospital
+    if (activeHospital && activeHospital.lat && activeHospital.lng) {
+      const activeHospIcon = L.divIcon({
+        className: 'custom-leaflet-pin',
+        html: `
+          <div style="position:relative; width:44px; height:44px; display:flex; align-items:center; justify-content:center;">
+            <div style="position:absolute; width:44px; height:44px; border-radius:50%; background:rgba(16,185,129,0.3); animation:leafletPulse 2s infinite;"></div>
+            <div style="position:relative; width:32px; height:32px; border-radius:12px; background:linear-gradient(135deg, #059669, #0d9488); border:3px solid #ffffff; box-shadow:0 4px 14px rgba(5,150,105,0.6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:900;">
+              🏥
+            </div>
+            <div style="position:absolute; bottom:-20px; white-space:nowrap; background:#064e3b; color:#a7f3d0; font-size:9px; font-weight:800; padding:2px 8px; border-radius:10px; border:1px solid #10b981; box-shadow:0 2px 8px rgba(0,0,0,0.5); max-width:150px; overflow:hidden; text-overflow:ellipsis;">
+              🎯 ${activeHospital.name.slice(0, 16)}...
+            </div>
+          </div>
+        `,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
+        popupAnchor: [0, -22]
+      });
+
+      const activeMarker = L.marker([activeHospital.lat, activeHospital.lng], { icon: activeHospIcon, zIndexOffset: 1000 }).addTo(markersGroup);
+      activeMarker.bindPopup(`
+        <div style="font-family:sans-serif; min-width:230px;">
+          <div style="font-size:10px; font-weight:800; color:#34d399; text-transform:uppercase; letter-spacing:0.5px;">
+            🎯 TARGET HOSPITAL
+          </div>
+          <div style="font-size:13px; font-weight:800; color:#ffffff; margin-top:2px;">
+            ${activeHospital.name}
+          </div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+            📍 ${activeHospital.address}
+          </div>
+          <div style="margin-top:8px; display:grid; grid-template-columns:1fr 1fr; gap:6px; background:rgba(6,78,59,0.4); padding:6px 8px; border-radius:8px; border:1px solid rgba(52,211,153,0.3);">
+            <div>
+              <span style="color:#94a3b8; display:block; font-size:9px; font-weight:700;">ETA</span>
+              <strong style="color:#34d399; font-size:13px;">${activeHospital.route.optimalEtaMinutes} mins</strong>
+            </div>
+            <div>
+              <span style="color:#94a3b8; display:block; font-size:9px; font-weight:700;">DISTANCE</span>
+              <strong style="color:#34d399; font-size:13px;">${activeHospital.distanceKm} km</strong>
+            </div>
+          </div>
+          <div style="margin-top:6px; font-size:11px; color:#e2e8f0; display:flex; justify-content:space-between; background:rgba(30,41,59,0.6); padding:4px 8px; border-radius:6px;">
+            <span>Emergency Beds: <strong style="color:#38bdf8;">${activeHospital.beds.emergency}</strong></span>
+            <span>ICU: <strong style="color:#fbbf24;">${activeHospital.beds.icuVentilator}</strong></span>
+          </div>
+        </div>
+      `);
+    }
+
+    // C. Other Odisha Hospitals
+    rankedHospitals.forEach((hosp) => {
+      if (hosp.id === activeHospital?.id) return;
+      if (!hosp.lat || !hosp.lng) return;
+
+      const hospIcon = L.divIcon({
+        className: 'custom-leaflet-pin',
+        html: `
+          <div style="position:relative; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+            <div style="width:24px; height:24px; border-radius:8px; background:#0f172a; border:2px solid #10b981; box-shadow:0 2px 6px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px;">
+              🏥
+            </div>
+            <div style="position:absolute; top:-6px; right:-6px; background:#059669; color:#fff; font-size:8px; font-weight:900; padding:1px 4px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.4);">
+              ${hosp.beds.emergency}
+            </div>
+          </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -15]
+      });
+
+      const marker = L.marker([hosp.lat, hosp.lng], { icon: hospIcon }).addTo(markersGroup);
+      const popupHtml = `
+        <div style="font-family:sans-serif; min-width:210px;">
+          <div style="font-size:13px; font-weight:800; color:#ffffff;">
+            ${hosp.name}
+          </div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+            ${hosp.distanceKm} km away • ~${hosp.route.optimalEtaMinutes} mins
+          </div>
+          <div style="margin-top:6px; font-size:11px; color:#34d399; font-weight:700;">
+            ✓ ${hosp.beds.emergency} Emergency Beds Available
+          </div>
+          <button id="btn-select-hosp-${hosp.id}" style="margin-top:8px; width:100%; background:#059669; color:#fff; border:none; border-radius:8px; padding:6px 10px; font-size:11px; font-weight:800; cursor:pointer;">
+            🎯 Set as Active Destination
+          </button>
+        </div>
+      `;
+      marker.bindPopup(popupHtml);
+      marker.on('popupopen', () => {
+        const btn = document.getElementById(`btn-select-hosp-${hosp.id}`);
+        if (btn) {
+          btn.onclick = () => {
+            setSelectedHospitalId(hosp.id);
+            marker.closePopup();
+          };
+        }
+      });
+    });
+
+    // D. 108 / 102 Ambulances
+    if (showAmbulances) {
+      rankedAmbulances.forEach((amb) => {
+        if (!amb.lat || !amb.lng) return;
+
+        const ambIcon = L.divIcon({
+          className: 'custom-leaflet-pin',
+          html: `
+            <div style="position:relative; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+              <div style="position:absolute; width:30px; height:30px; border-radius:50%; background:rgba(225,29,72,0.3); animation:leafletPulse 1.6s infinite;"></div>
+              <div style="position:relative; width:22px; height:22px; border-radius:50%; background:#e11d48; border:2px solid #ffffff; box-shadow:0 2px 6px rgba(225,29,72,0.6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px;">
+                🚑
+              </div>
+              <div style="position:absolute; bottom:-15px; white-space:nowrap; background:#881337; color:#fecdd3; font-size:8px; font-weight:800; padding:0px 4px; border-radius:6px; border:1px solid #f43f5e;">
+                ${amb.code.split(' ')[1] || amb.code} (${amb.etaMins}m)
+              </div>
+            </div>
+          `,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+          popupAnchor: [0, -16]
+        });
+
+        const ambMarker = L.marker([amb.lat, amb.lng], { icon: ambIcon }).addTo(markersGroup);
+        const ambPopupHtml = `
+          <div style="font-family:sans-serif; min-width:220px;">
+            <div style="font-size:10px; font-weight:800; color:#fb7185; text-transform:uppercase;">
+              🚨 108 EMERGENCY AMBULANCE
+            </div>
+            <div style="font-size:13px; font-weight:800; color:#ffffff; margin-top:2px;">
+              ${amb.code} (${amb.vehicleNo})
+            </div>
+            <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">
+              Type: <strong>${amb.type}</strong>
+            </div>
+            <div style="font-size:11px; color:#cbd5e1;">
+              Driver: ${amb.driverName} (${amb.driverPhone})
+            </div>
+            <div style="margin-top:6px; background:rgba(136,19,55,0.4); padding:5px 8px; border-radius:6px; border:1px solid rgba(244,63,94,0.4); display:flex; justify-content:space-between; font-size:11px;">
+              <span style="color:#cbd5e1;">Distance: <strong>${amb.distanceKm} km</strong></span>
+              <span style="color:#f43f5e; font-weight:800;">ETA: ~${amb.etaMins} mins</span>
+            </div>
+            <button id="btn-dispatch-amb-${amb.id}" style="margin-top:8px; width:100%; background:#e11d48; color:#fff; border:none; border-radius:8px; padding:6px 10px; font-size:11px; font-weight:800; cursor:pointer;">
+              🚨 1-Click Dispatch This Unit
+            </button>
+          </div>
+        `;
+        ambMarker.bindPopup(ambPopupHtml);
+        ambMarker.on('popupopen', () => {
+          const btn = document.getElementById(`btn-dispatch-amb-${amb.id}`);
+          if (btn) {
+            btn.onclick = () => {
+              setDispatchAmbulance(amb);
+              ambMarker.closePopup();
+            };
+          }
+        });
+      });
+    }
+
+    // E. Route Polylines
+    if (activeHospital && activeHospital.lat && activeHospital.lng) {
+      const midLat = (userCoords.lat + activeHospital.lat) / 2 + 0.003;
+      const midLng = (userCoords.lng + activeHospital.lng) / 2 - 0.004;
+
+      const greenRoutePoints = [
+        [userCoords.lat, userCoords.lng],
+        [userCoords.lat + (midLat - userCoords.lat) * 0.6, userCoords.lng + (midLng - userCoords.lng) * 0.6],
+        [midLat, midLng],
+        [midLat + (activeHospital.lat - midLat) * 0.5, midLng + (activeHospital.lng - midLng) * 0.5],
+        [activeHospital.lat, activeHospital.lng]
+      ];
+
+      L.polyline(greenRoutePoints, {
+        color: '#10b981',
+        weight: 8,
+        opacity: 0.6,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(routeGroup);
+
+      L.polyline(greenRoutePoints, {
+        color: '#ffffff',
+        weight: 3,
+        opacity: 0.95,
+        dashArray: '8, 8',
+        lineCap: 'round'
+      }).addTo(routeGroup);
+
+      if (showTrafficCorridors) {
+        const congestedMidLat = (userCoords.lat + activeHospital.lat) / 2 - 0.006;
+        const congestedMidLng = (userCoords.lng + activeHospital.lng) / 2 + 0.007;
+
+        const congestedPoints = [
+          [userCoords.lat, userCoords.lng],
+          [congestedMidLat, congestedMidLng],
+          [activeHospital.lat, activeHospital.lng]
+        ];
+
+        L.polyline(congestedPoints, {
+          color: '#ef4444',
+          weight: 4,
+          opacity: 0.5,
+          dashArray: '6, 10'
+        }).addTo(routeGroup);
+      }
+
+      // Fit Bounds
+      try {
+        const bounds = L.latLngBounds([
+          [userCoords.lat, userCoords.lng],
+          [activeHospital.lat, activeHospital.lng]
+        ]);
+        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+      } catch (err) {
+        console.warn('fitBounds error', err);
+      }
+    }
+  }, [userCoords, activeHospital, rankedHospitals, rankedAmbulances, showAmbulances, showTrafficCorridors]);
+
+  // Handle map panning during simulated turn-by-turn navigation
+  useEffect(() => {
+    if (isNavigating && mapInstanceRef.current && activeHospital) {
+      const stepsCount = activeHospital.route.steps.length;
+      const progress = activeStepIndex / (stepsCount - 1 || 1);
+      const currLat = userCoords.lat + (activeHospital.lat - userCoords.lat) * progress;
+      const currLng = userCoords.lng + (activeHospital.lng - userCoords.lng) * progress;
+      mapInstanceRef.current.panTo([currLat, currLng], { animate: true, duration: 1 });
+    }
+  }, [isNavigating, activeStepIndex, activeHospital, userCoords]);
+
+  // Toolbar Actions
+  const handleCenterOnUser = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setView([userCoords.lat, userCoords.lng], 15, { animate: true });
+    }
+  };
+
+  const handleFitRoute = () => {
+    if (mapInstanceRef.current && activeHospital) {
+      const bounds = L.latLngBounds([
+        [userCoords.lat, userCoords.lng],
+        [activeHospital.lat, activeHospital.lng]
+      ]);
+      mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
+    }
+  };
+
+  const handleZoomIn = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.zoomOut();
+    }
   };
 
   return (
@@ -576,190 +1007,197 @@ export default function NearestMedicalGPS({ currentUser, appLang, onNavigateToAm
       {activeView === 'map-view' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Map Viewport Box (2 cols on large screen) */}
-          <div className="lg:col-span-2 bg-slate-900 rounded-2xl overflow-hidden border border-slate-700 shadow-md relative flex flex-col min-h-[460px]">
-            {/* Map Header Overlay */}
-            <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between gap-2 pointer-events-none">
-              <div className="bg-slate-900/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-white text-xs font-bold pointer-events-auto flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Odisha Emergency Traffic Corridors</span>
+          <div className="lg:col-span-2 bg-slate-900 rounded-2xl overflow-hidden border border-slate-700 shadow-md relative flex flex-col min-h-[500px]">
+            {/* CSS Styles for Leaflet */}
+            <style>{`
+              .leaflet-container {
+                width: 100% !important;
+                height: 100% !important;
+                z-index: 1 !important;
+                font-family: inherit !important;
+              }
+              .leaflet-pane {
+                z-index: 400 !important;
+              }
+              .leaflet-top, .leaflet-bottom {
+                z-index: 500 !important;
+              }
+              .leaflet-container img.leaflet-tile {
+                max-width: none !important;
+                max-height: none !important;
+              }
+              .leaflet-popup-content-wrapper {
+                background: #0f172a !important;
+                color: #f1f5f9 !important;
+                border-radius: 14px !important;
+                padding: 2px !important;
+                border: 1px solid rgba(16, 185, 129, 0.4) !important;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+              }
+              .leaflet-popup-tip {
+                background: #0f172a !important;
+              }
+              .leaflet-popup-content {
+                margin: 12px 14px !important;
+                line-height: 1.4 !important;
+              }
+              @keyframes leafletPulse {
+                0% { transform: scale(0.9); opacity: 0.85; }
+                50% { transform: scale(1.45); opacity: 0.2; }
+                100% { transform: scale(0.9); opacity: 0.85; }
+              }
+            `}</style>
+
+            {/* Interactive Top Overlays on the Map */}
+            <div className="absolute top-3 left-3 right-3 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+              {/* Left: Mode Badge */}
+              <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-white text-xs font-bold pointer-events-auto flex items-center gap-2 shadow-lg">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="font-extrabold text-emerald-300">Live Leaflet GPS</span>
+                <span className="text-[10px] text-slate-300 bg-white/10 px-1.5 py-0.5 rounded">
+                  {mapTileStyle === 'standard' ? 'OSM Standard' : mapTileStyle === 'dark' ? 'Dark Medical' : 'Voyager Clean'}
+                </span>
               </div>
 
-              {/* Zoom & Reset Controls */}
-              <div className="flex items-center gap-1 bg-slate-900/85 backdrop-blur-md p-1 rounded-xl border border-white/20 pointer-events-auto">
+              {/* Right Controls: Tile switcher, Center on Me, Fit Route, Zoom +/- */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-white/20 pointer-events-auto shadow-lg">
+                {/* Map Tile Style Selector */}
+                <div className="flex items-center bg-slate-800/80 rounded-lg p-0.5 text-[10px] font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setMapTileStyle('standard')}
+                    className={`px-2 py-1 rounded-md transition-all ${mapTileStyle === 'standard' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:text-white'}`}
+                    title="OpenStreetMap Standard"
+                  >
+                    Street
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMapTileStyle('dark')}
+                    className={`px-2 py-1 rounded-md transition-all ${mapTileStyle === 'dark' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:text-white'}`}
+                    title="CartoDB Dark Matter (Night Emergency)"
+                  >
+                    Dark
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMapTileStyle('voyager')}
+                    className={`px-2 py-1 rounded-md transition-all ${mapTileStyle === 'voyager' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:text-white'}`}
+                    title="Voyager Light"
+                  >
+                    Voyager
+                  </button>
+                </div>
+
+                {/* Center on My GPS */}
                 <button
-                  onClick={() => setMapZoom((z) => Math.min(z + 1, 16))}
-                  className="w-7 h-7 flex items-center justify-center text-white font-bold hover:bg-white/20 rounded-lg text-sm"
-                  title="Zoom In"
+                  type="button"
+                  onClick={handleCenterOnUser}
+                  className="px-2 py-1 rounded-lg bg-blue-600/90 hover:bg-blue-600 text-white text-[11px] font-bold flex items-center gap-1 transition-all"
+                  title="Center Map on My GPS Location"
                 >
-                  +
+                  <LocateFixed className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Me</span>
                 </button>
+
+                {/* Fit Route */}
                 <button
-                  onClick={() => setMapZoom((z) => Math.max(z - 1, 10))}
-                  className="w-7 h-7 flex items-center justify-center text-white font-bold hover:bg-white/20 rounded-lg text-sm"
-                  title="Zoom Out"
+                  type="button"
+                  onClick={handleFitRoute}
+                  className="px-2 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-[11px] font-bold flex items-center gap-1 transition-all"
+                  title="Fit Route to User and Hospital"
                 >
-                  -
+                  <Navigation className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Fit Route</span>
                 </button>
+
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-1 border-l border-slate-700 pl-1">
+                  <button
+                    type="button"
+                    onClick={handleZoomIn}
+                    className="w-6 h-6 flex items-center justify-center text-white font-bold hover:bg-white/20 rounded-md text-sm"
+                    title="Zoom In"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleZoomOut}
+                    className="w-6 h-6 flex items-center justify-center text-white font-bold hover:bg-white/20 rounded-md text-sm"
+                    title="Zoom Out"
+                  >
+                    -
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Simulated High-Fidelity Vector Road Map Canvas */}
-            <div className="flex-1 w-full relative bg-[#0b132b] flex items-center justify-center p-4">
-              <svg
-                viewBox="0 0 800 500"
-                className="w-full h-full max-h-[440px] select-none"
-                style={{ filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.5))' }}
+            {/* Filter Pill Row over map */}
+            <div className="absolute top-14 left-3 z-10 flex items-center gap-2 pointer-events-auto">
+              <button
+                type="button"
+                onClick={() => setShowAmbulances(!showAmbulances)}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all flex items-center gap-1.5 shadow-md ${
+                  showAmbulances
+                    ? 'bg-rose-950/80 border-rose-500 text-rose-200'
+                    : 'bg-slate-900/80 border-slate-700 text-slate-400'
+                }`}
               >
-                {/* Background Grid Roads */}
-                <defs>
-                  <pattern id="roadGrid" width="80" height="80" patternUnits="userSpaceOnUse">
-                    <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#1c2541" strokeWidth="1.5" />
-                  </pattern>
-                  <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#10b981" />
-                    <stop offset="50%" stopColor="#34d399" />
-                    <stop offset="100%" stopColor="#059669" />
-                  </linearGradient>
-                  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="3" result="blur" />
-                    <feMerge>
-                      <feMergeNode in="blur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
+                <span className={`w-2 h-2 rounded-full ${showAmbulances ? 'bg-rose-400 animate-ping' : 'bg-slate-500'}`}></span>
+                <span>108 Ambulances ({rankedAmbulances.length})</span>
+              </button>
 
-                {/* Grid Background */}
-                <rect width="800" height="500" fill="#0b132b" />
-                <rect width="800" height="500" fill="url(#roadGrid)" />
-
-                {/* Major Odisha Expressways (Simulated Vectors) */}
-                <path d="M 50,450 Q 250,300 450,220 T 750,80" fill="none" stroke="#1f293d" strokeWidth="18" />
-                <path d="M 50,450 Q 250,300 450,220 T 750,80" fill="none" stroke="#334155" strokeWidth="12" />
-                <path d="M 50,450 Q 250,300 450,220 T 750,80" fill="none" stroke="#64748b" strokeWidth="1" strokeDasharray="6,6" />
-
-                <path d="M 120,50 Q 300,180 400,280 T 700,420" fill="none" stroke="#1f293d" strokeWidth="14" />
-                <path d="M 120,50 Q 300,180 400,280 T 700,420" fill="none" stroke="#334155" strokeWidth="8" />
-
-                <path d="M 680,50 L 320,450" fill="none" stroke="#1f293d" strokeWidth="12" />
-                <path d="M 680,50 L 320,450" fill="none" stroke="#334155" strokeWidth="6" />
-
-                {/* Heavy Traffic Congestion Zones (Red Avoided Lines) */}
-                <path d="M 280,310 Q 330,340 380,330" fill="none" stroke="#ef4444" strokeWidth="6" opacity="0.8" />
-                <text x="310" y="360" fill="#f87171" fontSize="10" fontWeight="bold">City Center Traffic Jam (Avoided)</text>
-
-                {/* The OPTIMAL GREEN CORRIDOR PATH from User (200, 320) to Hospital (550, 150) */}
-                <path
-                  d="M 200,320 C 230,260 360,240 440,210 S 510,170 550,150"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  filter="url(#glow)"
-                />
-                <path
-                  d="M 200,320 C 230,260 360,240 440,210 S 510,170 550,150"
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  strokeDasharray="8,8"
-                />
-
-                {/* Intermediate Traffic Checkpoints */}
-                <circle cx="340" cy="245" r="4" fill="#34d399" />
-                <circle cx="470" cy="190" r="4" fill="#34d399" />
-
-                {/* USER LOCATION PIN (200, 320) */}
-                <g transform="translate(200, 320)">
-                  <circle r="22" fill="#3b82f6" opacity="0.25">
-                    <animate attributeName="r" values="12;28;12" dur="2s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite" />
-                  </circle>
-                  <circle r="10" fill="#2563eb" stroke="#ffffff" strokeWidth="2.5" />
-                  <circle r="4" fill="#ffffff" />
-                  <rect x="-45" y="-34" width="90" height="20" rx="6" fill="#1e3a8a" stroke="#60a5fa" strokeWidth="1" />
-                  <text x="0" y="-20" fill="#ffffff" fontSize="10" fontWeight="bold" textAnchor="middle">
-                    You Are Here
-                  </text>
-                </g>
-
-                {/* TARGET HOSPITAL PIN (550, 150) */}
-                <g transform="translate(550, 150)">
-                  <circle r="26" fill="#10b981" opacity="0.3">
-                    <animate attributeName="r" values="18;34;18" dur="2.5s" repeatCount="indefinite" />
-                  </circle>
-                  <circle r="16" fill="#059669" stroke="#ffffff" strokeWidth="3" />
-                  <path d="M -6,0 L 6,0 M 0,-6 L 0,6" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
-                  <rect x="-70" y="-46" width="140" height="24" rx="8" fill="#064e3b" stroke="#34d399" strokeWidth="1.5" />
-                  <text x="0" y="-30" fill="#a7f3d0" fontSize="10" fontWeight="extrabold" textAnchor="middle">
-                    {activeHospital.name.slice(0, 18)}...
-                  </text>
-                </g>
-
-                {/* OTHER SURROUNDING HOSPITALS (Static Markers) */}
-                <g transform="translate(680, 280)" opacity="0.85">
-                  <circle r="10" fill="#3b82f6" stroke="#ffffff" strokeWidth="2" />
-                  <path d="M -4,0 L 4,0 M 0,-4 L 0,4" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-                  <rect x="-40" y="-24" width="80" height="16" rx="4" fill="#1e293b" />
-                  <text x="0" y="-13" fill="#cbd5e1" fontSize="8" textAnchor="middle">Apex Trauma</text>
-                </g>
-
-                <g transform="translate(130, 120)" opacity="0.85">
-                  <circle r="10" fill="#3b82f6" stroke="#ffffff" strokeWidth="2" />
-                  <path d="M -4,0 L 4,0 M 0,-4 L 0,4" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-                  <rect x="-40" y="-24" width="80" height="16" rx="4" fill="#1e293b" />
-                  <text x="0" y="-13" fill="#cbd5e1" fontSize="8" textAnchor="middle">Super Specialty</text>
-                </g>
-
-                {/* LIVE 108 AMBULANCES ON MAP */}
-                <g transform="translate(280, 270)">
-                  <circle r="12" fill="#e11d48" opacity="0.4">
-                    <animate attributeName="r" values="8;16;8" dur="1.5s" repeatCount="indefinite" />
-                  </circle>
-                  <circle r="8" fill="#e11d48" stroke="#ffffff" strokeWidth="1.5" />
-                  <text x="0" y="3" fill="#ffffff" fontSize="8" fontWeight="bold" textAnchor="middle">108</text>
-                  <rect x="-35" y="-22" width="70" height="14" rx="4" fill="#881337" />
-                  <text x="0" y="-12" fill="#fda4af" fontSize="8" fontWeight="bold" textAnchor="middle">ALS-01 (4 min)</text>
-                </g>
-
-                <g transform="translate(420, 130)">
-                  <circle r="8" fill="#e11d48" stroke="#ffffff" strokeWidth="1.5" />
-                  <text x="0" y="3" fill="#ffffff" fontSize="8" fontWeight="bold" textAnchor="middle">102</text>
-                  <rect x="-35" y="-22" width="70" height="14" rx="4" fill="#881337" />
-                  <text x="0" y="-12" fill="#fda4af" fontSize="8" fontWeight="bold" textAnchor="middle">Janani (6 min)</text>
-                </g>
-              </svg>
+              <button
+                type="button"
+                onClick={() => setShowTrafficCorridors(!showTrafficCorridors)}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all flex items-center gap-1.5 shadow-md ${
+                  showTrafficCorridors
+                    ? 'bg-emerald-950/80 border-emerald-500 text-emerald-200'
+                    : 'bg-slate-900/80 border-slate-700 text-slate-400'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${showTrafficCorridors ? 'bg-emerald-400' : 'bg-slate-500'}`}></span>
+                <span>Green Corridor Flow</span>
+              </button>
             </div>
 
-            {/* Bottom Map Legend Bar */}
-            <div className="bg-slate-950 px-4 py-2.5 border-t border-slate-800 flex flex-wrap items-center justify-between text-[11px] text-slate-300 gap-2">
-              <div className="flex items-center gap-4">
+            {/* Real Leaflet Map DOM Node */}
+            <div className="flex-1 w-full relative min-h-[480px]">
+              <div
+                ref={mapContainerRef}
+                id="odisha-nearest-leaflet-map"
+                className="w-full h-full min-h-[480px] bg-slate-950"
+              />
+            </div>
+
+            {/* Bottom Map Legend & Real GPS Status Bar */}
+            <div className="bg-slate-950 px-4 py-2.5 border-t border-slate-800 flex flex-wrap items-center justify-between text-[11px] text-slate-300 gap-2 z-10">
+              <div className="flex flex-wrap items-center gap-3">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                  <span>Green Corridor (Clear Flow)</span>
+                  <span className="w-3 h-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span>
+                  <span className="font-semibold text-emerald-300">Green Corridor Expressway</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-                  <span>Moderate Traffic</span>
+                  <span className="w-3 h-1.5 rounded-full bg-rose-500"></span>
+                  <span className="font-semibold text-rose-300">Congested Road Avoided</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-rose-500"></span>
-                  <span>High Congestion Avoided</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 border border-white"></span>
+                  <span>You ({userCoords.isLiveGps ? "Live GPS" : "Landmark"})</span>
                 </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                  <span>You</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-md bg-emerald-600 border border-white"></span>
+                  <span>Target Hospital</span>
                 </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span>Hospital</span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-rose-600"></span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-600 border border-white"></span>
                   <span>108 Ambulance</span>
                 </span>
+              </div>
+              <div className="flex items-center gap-3 font-mono text-[10px] text-slate-400">
+                <span>📍 GPS: {userCoords.lat.toFixed(4)}°N, {userCoords.lng.toFixed(4)}°E</span>
+                <span className="text-emerald-400 font-bold">⚡ Optimal ETA: {activeHospital.route.optimalEtaMinutes} mins</span>
               </div>
             </div>
           </div>
