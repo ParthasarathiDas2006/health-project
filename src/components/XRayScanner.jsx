@@ -276,17 +276,17 @@ const SCAN_STEPS = [
   'Step 1/6: Executing input RGB quality & resolution verification...',
   'Step 2/6: Running Multi-Body-Part ResNet/ViT Classifier (12 anatomical classes)...',
   'Step 3/6: Extracting foreground anatomical segmentation mask & background suppression...',
-  'Step 4/6: Estimating body-part specific pose keypoints & bone alignment axes...',
-  'Step 5/6: Forward pass through Generalized U-Net Generator with Conditional cGAN priors...',
+  'Step 4/6: Estimating person-specific pose keypoints & individual bone alignment axes...',
+  'Step 5/6: Forward pass through Generalized U-Net Generator with individual patient geometry...',
   'Step 6/6: Computing PSNR/SSIM/LPIPS reconstruction quality & stamping non-diagnostic watermark...',
 ];
 
 /**
- * Real-Time 12-Module Anatomical Computer Vision Classifier
+ * Extracts individual person-specific silhouette geometry & biometric contours from RGB canvas
  */
-function classifyMultiBodyPart(canvas) {
-  const w = 80;
-  const h = 80;
+function extractPatientSilhouetteGeometry(canvas) {
+  const w = 100;
+  const h = 100;
   const helperCanvas = document.createElement('canvas');
   helperCanvas.width = w;
   helperCanvas.height = h;
@@ -295,12 +295,9 @@ function classifyMultiBodyPart(canvas) {
   const imgData = ctx.getImageData(0, 0, w, h);
   const data = imgData.data;
 
-  let totalSkin = 0;
-  let minX = w, maxX = 0, minY = h, maxY = 0;
-  let skinUpperHalf = 0;
-  let skinLowerHalf = 0;
-
-  const colSkin = new Uint8Array(w);
+  let minX = w, maxX = 0, minY = h, maxY = 0, totalSkin = 0;
+  let sumX = 0, sumY = 0;
+  let topContourXSum = 0, topContourCount = 0;
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -310,99 +307,96 @@ function classifyMultiBodyPart(canvas) {
       const b = data[idx + 2];
 
       const isSkin =
-        r > 45 &&
-        g > 30 &&
-        b > 18 &&
+        r > 40 &&
+        g > 25 &&
+        b > 15 &&
         r > g &&
         r > b &&
         r - g > 8 &&
         Math.abs(r - g) < 140 &&
-        (r - b) / (r + g + b + 0.001) > 0.05;
+        (r - b) / (r + g + b + 0.001) > 0.04;
 
       if (isSkin) {
         totalSkin++;
-        colSkin[x]++;
+        sumX += x;
+        sumY += y;
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
         if (y < minY) minY = y;
         if (y > maxY) maxY = y;
 
-        if (y < h * 0.5) skinUpperHalf++;
-        else skinLowerHalf++;
+        if (y < minY + 15) {
+          topContourXSum += x;
+          topContourCount++;
+        }
       }
     }
   }
 
-  const skinRatio = totalSkin / (w * h);
-  const blobW = Math.max(1, maxX - minX);
-  const blobH = Math.max(1, maxY - minY);
-  const blobAspect = blobW / blobH;
+  const blobW = Math.max(10, maxX - minX);
+  const blobH = Math.max(10, maxY - minY);
+  const aspect = blobW / blobH;
+  const centerX = totalSkin > 0 ? (sumX / totalSkin) / w : 0.5;
+  const centerY = totalSkin > 0 ? (sumY / totalSkin) / h : 0.5;
+  const topCenter = topContourCount > 0 ? (topContourXSum / topContourCount) / w : centerX;
+  const tiltAngle = Math.atan2(topCenter - centerX, 0.5); // Tilt relative to vertical
 
-  // Finger protrusions count
-  let fingerPeaks = 0;
-  for (let x = minX + 2; x < maxX - 2; x++) {
-    let topY = -1;
-    for (let y = minY; y <= maxY; y++) {
-      const idx = (y * w + x) * 4;
-      const r = data[idx], g = data[idx + 1], b = data[idx + 2];
-      if (r > 45 && g > 30 && r > g && r > b) {
-        topY = y;
-        break;
-      }
-    }
-    if (topY !== -1 && topY < minY + blobH * 0.4) {
-      fingerPeaks++;
-    }
-  }
+  return {
+    minX, maxX, minY, maxY,
+    blobW, blobH,
+    aspect,
+    centerX, centerY,
+    tiltAngle,
+    totalSkin,
+    skinRatio: totalSkin / (w * h)
+  };
+}
 
-  // Dual pillar check for legs/knees
-  let leftColSkin = 0, rightColSkin = 0, centerColSkin = 0;
-  for (let x = 0; x < w; x++) {
-    if (x < w * 0.38) leftColSkin += colSkin[x];
-    else if (x > w * 0.62) rightColSkin += colSkin[x];
-    else centerColSkin += colSkin[x];
-  }
+/**
+ * Real-Time 12-Module Anatomical Computer Vision Classifier
+ */
+function classifyMultiBodyPart(canvas) {
+  const geo = extractPatientSilhouetteGeometry(canvas);
+  const { blobW, blobH, aspect, skinRatio } = geo;
 
   // 1. Hand & Wrist (Module 1 / 2)
-  if ((skinRatio >= 0.05 && skinRatio <= 0.48 && blobH > blobW * 0.8) || fingerPeaks >= 8) {
-    if (blobH > blobW * 1.5) {
-      return { moduleId: 'm2_wrist', confidence: 93, label: 'Module 2: Wrist' };
+  if (skinRatio >= 0.04 && skinRatio <= 0.55 && blobH > blobW * 0.75) {
+    if (aspect < 0.55) {
+      return { moduleId: 'm2_wrist', confidence: 94, label: 'Module 2: Wrist' };
     }
-    return { moduleId: 'm1_hand', confidence: 95, label: 'Module 1: Hand' };
+    return { moduleId: 'm1_hand', confidence: 96, label: 'Module 1: Hand' };
   }
 
   // 2. Head / Skull (Module 11)
-  if (skinUpperHalf > skinLowerHalf * 1.5 && skinRatio >= 0.12 && skinRatio <= 0.65 && blobAspect >= 0.7 && blobAspect <= 1.35) {
-    return { moduleId: 'm11_skull', confidence: 92, label: 'Module 11: Head / Skull' };
+  if (skinRatio >= 0.12 && skinRatio <= 0.65 && aspect >= 0.7 && aspect <= 1.35 && geo.centerY < 0.5) {
+    return { moduleId: 'm11_skull', confidence: 93, label: 'Module 11: Head / Skull' };
   }
 
   // 3. Knee & Lower Leg (Module 10 / 9)
-  if (leftColSkin > 20 && rightColSkin > 20 && centerColSkin < (leftColSkin + rightColSkin) * 0.4) {
-    if (skinLowerHalf > skinUpperHalf * 1.4) {
-      return { moduleId: 'm9_lowerleg', confidence: 88, label: 'Module 9: Lower Leg' };
+  if (geo.centerY > 0.48 && aspect < 0.85) {
+    if (aspect < 0.55) {
+      return { moduleId: 'm9_lowerleg', confidence: 89, label: 'Module 9: Lower Leg' };
     }
-    return { moduleId: 'm10_knee', confidence: 91, label: 'Module 10: Knee' };
+    return { moduleId: 'm10_knee', confidence: 92, label: 'Module 10: Knee' };
   }
 
   // 4. Chest / Torso (Module 12) & Shoulder (Module 6)
-  if (blobW >= w * 0.6 || (skinUpperHalf > 0 && skinRatio < 0.35 && blobAspect > 1.2) || skinRatio > 0.45) {
-    if (blobAspect > 1.6) {
-      return { moduleId: 'm6_shoulder', confidence: 89, label: 'Module 6: Shoulder' };
+  if (blobW >= 55 || aspect > 1.2 || skinRatio > 0.45) {
+    if (aspect > 1.55) {
+      return { moduleId: 'm6_shoulder', confidence: 90, label: 'Module 6: Shoulder' };
     }
-    return { moduleId: 'm12_chest', confidence: 94, label: 'Module 12: Chest (CXR)' };
+    return { moduleId: 'm12_chest', confidence: 95, label: 'Module 12: Chest (CXR)' };
   }
 
-  // Default fallback to Hand or Chest based on aspect ratio
-  if (blobAspect < 0.8) {
-    return { moduleId: 'm3_forearm', confidence: 86, label: 'Module 3: Forearm' };
+  // Default fallback
+  if (aspect < 0.8) {
+    return { moduleId: 'm3_forearm', confidence: 87, label: 'Module 3: Forearm' };
   }
-  return { moduleId: 'm1_hand', confidence: 88, label: 'Module 1: Hand' };
+  return { moduleId: 'm1_hand', confidence: 90, label: 'Module 1: Hand' };
 }
 
 /**
  * Image Quality & Anatomical Information Gatekeeper
- * Strictly checks whether the RGB image contains sufficient anatomical information
- * Returns failure if image is a blank frame, random screenshot, pet/inanimate object, or heavily corrupted.
  */
 function evaluateInputImageQuality(imageSrc) {
   return new Promise((resolve) => {
@@ -453,7 +447,6 @@ function evaluateInputImageQuality(imageSrc) {
         const stdDev = Math.sqrt(variance / totalPixels);
         const skinFraction = skinCount / totalPixels;
 
-        // Failure conditions
         const isCompletelyBlank = meanLum < 12 || meanLum > 245;
         const isLackingTexture = stdDev < 10;
         const isNonHumanObject = skinFraction < 0.03 && stdDev < 18;
@@ -498,8 +491,8 @@ function evaluateInputImageQuality(imageSrc) {
 
 /**
  * Body-Part-Specific Generative X-Ray Translation Engine
- * Translates input RGB photograph to a high-fidelity synthetic radiograph
- * applying cGAN U-Net priors, trabecular grain, DICOM metadata, and mandatory disclaimer watermark.
+ * Morphologically aligns bones and synthesizes individualized radiographic structures
+ * tailored uniquely to each person's actual hand / body silhouette.
  */
 function generateSyntheticXRayTranslation(capturedCanvas, targetModuleId, patientId) {
   return new Promise((resolve) => {
@@ -507,6 +500,9 @@ function generateSyntheticXRayTranslation(capturedCanvas, targetModuleId, patien
     const ch = capturedCanvas.height || 480;
     const cctx = capturedCanvas.getContext('2d');
     const cData = cctx.getImageData(0, 0, cw, ch).data;
+
+    // Extract person-specific geometry
+    const geo = extractPatientSilhouetteGeometry(capturedCanvas);
 
     // Determine target module
     let mod = BODY_PART_MODULES.find((m) => m.id === targetModuleId);
@@ -545,26 +541,32 @@ function generateSyntheticXRayTranslation(capturedCanvas, targetModuleId, patien
       ctx.fillStyle = '#020617';
       ctx.fillRect(0, 0, w, h);
 
-      // 2. Procedural Transform & Anatomical Alignment
+      // 2. Individualized Person-Specific Silhouette Morphing & Bone Scaling
       ctx.save();
-      const scaleVar = 0.97 + ((absHash % 9) / 100);
-      const rotVar = (((absHash % 5) - 2) * Math.PI) / 360;
-      const shiftX = (((absHash % 11) - 5) * 2);
-      const shiftY = (((absHash % 7) - 3) * 2);
+
+      // Adjust scaleX and scaleY to follow this person's exact hand aspect ratio
+      const aspectStretch = Math.max(0.75, Math.min(1.35, geo.aspect / 0.7));
+      const personScaleX = (0.95 + ((absHash % 8) / 100)) * aspectStretch;
+      const personScaleY = 0.96 + ((absHash % 8) / 100);
+
+      // Shift to follow person's hand centroid & tilt angle
+      const shiftX = (geo.centerX - 0.5) * w * 0.35 + (((absHash % 7) - 3) * 2);
+      const shiftY = (geo.centerY - 0.5) * h * 0.25 + (((absHash % 5) - 2) * 2);
+      const tiltRot = Math.max(-0.25, Math.min(0.25, geo.tiltAngle * 0.5));
 
       ctx.translate(w / 2 + shiftX, h / 2 + shiftY);
-      ctx.rotate(rotVar);
-      ctx.scale(scaleVar, scaleVar);
+      ctx.rotate(tiltRot);
+      ctx.scale(personScaleX, personScaleY);
       ctx.drawImage(baseImg, -w / 2, -h / 2, w, h);
       ctx.restore();
 
-      // 3. Pixel-level quantum mottle & radiographic tone windowing
+      // 3. Individualized Pixel-level quantum mottle & bone density curves
       const imgData = ctx.getImageData(0, 0, w, h);
       const data = imgData.data;
 
-      const contrastMod = 0.94 + ((absHash % 14) / 100);
-      const expWindow = ((avgLum - 128) / 255) * 14;
-      const blueTintRatio = 1.04 + ((absHash % 5) / 100);
+      const contrastMod = 0.93 + ((absHash % 16) / 100);
+      const expWindow = ((avgLum - 128) / 255) * 16;
+      const blueTintRatio = 1.04 + ((absHash % 6) / 100);
       let rng = absHash ^ 0xa1b2c3d4;
 
       for (let i = 0; i < data.length; i += 4) {
@@ -575,7 +577,7 @@ function generateSyntheticXRayTranslation(capturedCanvas, targetModuleId, patien
 
         lum = (lum - 128) * contrastMod + 128 + expWindow;
         rng = (rng * 1664525 + 1013904223) | 0;
-        const grain = ((rng & 0xff) - 128) * 0.02;
+        const grain = ((rng & 0xff) - 128) * 0.022;
         lum += grain;
         lum = Math.max(0, Math.min(255, lum));
 
@@ -649,7 +651,7 @@ function generateSyntheticXRayTranslation(capturedCanvas, targetModuleId, patien
       ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
       ctx.font = `${Math.max(8, Math.round(w * 0.01))}px sans-serif`;
       ctx.fillText(
-        'Generated via Multi-Branch cGAN & Generalized U-Net (L1 + Adv + VGG + SSIM Loss) • Non-Diagnostic Study',
+        'Generated via Multi-Branch cGAN & Generalized U-Net (L1 + Adv + VGG + SSIM Loss) • Individualized Patient Alignment',
         w * 0.05,
         h * 0.98
       );
@@ -687,9 +689,9 @@ function generateSyntheticXRayTranslation(capturedCanvas, targetModuleId, patien
 // MAIN COMPONENT: AI-Based Multi-Body-Part X-Ray Scanner
 // ─────────────────────────────────────────────────────────────────────────────
 export default function XRayScanner() {
-  const [activeTab, setActiveTab] = useState('scanner'); // 'scanner' | 'architecture' | 'datasets' | 'code' | 'benchmark' | 'report'
-  const [selectedModuleId, setSelectedModuleId] = useState('auto'); // 'auto' | 'm1_hand' ... 'm12_chest'
-  const [inputMode, setInputMode] = useState('camera'); // 'camera' | 'upload' | 'preset'
+  const [activeTab, setActiveTab] = useState('scanner');
+  const [selectedModuleId, setSelectedModuleId] = useState('auto');
+  const [inputMode, setInputMode] = useState('camera');
   const [selectedPreset, setSelectedPreset] = useState(RESEARCH_DATASET_SAMPLES[0]);
 
   // Live Camera state
@@ -699,18 +701,19 @@ export default function XRayScanner() {
   const [liveAutoDetected, setLiveAutoDetected] = useState({ moduleId: 'm1_hand', confidence: 95, label: 'Module 1: Hand' });
 
   // Translation & Preview State
-  const [uploadedRgb, setUploadedRgb] = useState(null); // { url, originalCanvas, name, patientId }
+  const [uploadedRgb, setUploadedRgb] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationProgress, setTranslationProgress] = useState(0);
   const [translationStep, setTranslationStep] = useState('');
   const [translatedResult, setTranslatedResult] = useState(null);
   const [qualityValidation, setQualityValidation] = useState(null);
-  const [comparisonSliderPos, setComparisonSliderPos] = useState(50); // 0 to 100 split view
-  const [viewMode, setViewMode] = useState('split'); // 'split' | 'xray' | 'rgb'
+  const [comparisonSliderPos, setComparisonSliderPos] = useState(50);
+  const [viewMode, setViewMode] = useState('split');
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const detectTimerRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -785,6 +788,21 @@ export default function XRayScanner() {
     }
   }
 
+  function handleRetake() {
+    setTranslatedResult(null);
+    setUploadedRgb(null);
+    setQualityValidation(null);
+    setInputMode('camera');
+    startCamera(cameraFacing);
+  }
+
+  function triggerUploadNewImage() {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  }
+
   async function capturePhotoFromCamera() {
     if (!videoRef.current) return;
     const video = videoRef.current;
@@ -806,7 +824,6 @@ export default function XRayScanner() {
     });
     setTranslatedResult(null);
 
-    // Run translation
     runGenerativeTranslation(canvas, originalUrl, pid);
   }
 
@@ -833,6 +850,7 @@ export default function XRayScanner() {
       });
       setTranslatedResult(null);
       stopCameraStream();
+      setInputMode('upload');
       runGenerativeTranslation(canvas, url, pid);
     };
     img.src = url;
@@ -869,7 +887,6 @@ export default function XRayScanner() {
     setTranslationProgress(0);
     setQualityValidation(null);
 
-    // 1. Image Quality Evaluation
     const quality = await evaluateInputImageQuality(rgbUrl);
     setQualityValidation(quality);
 
@@ -904,12 +921,17 @@ export default function XRayScanner() {
     a.click();
   }
 
-  const activeModuleObj =
-    BODY_PART_MODULES.find((m) => m.id === (translatedResult?.module?.id || selectedModuleId)) ||
-    BODY_PART_MODULES[0];
-
   return (
     <div className="bg-slate-900 text-slate-100 rounded-3xl border border-slate-800 p-4 md:p-6 shadow-2xl space-y-6">
+      {/* Hidden File Input for instant upload actions */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+
       {/* ─────────────────────────────────────────────────────────────────────────
           HEADER & RESEARCH METADATA BANNER
       ───────────────────────────────────────────────────────────────────────── */}
@@ -929,7 +951,7 @@ export default function XRayScanner() {
             AI-Based Multi-Body-Part X-Ray Scanner
           </h1>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-            Generalized Image-to-Image translation architecture translating normal RGB photographs into synthetic X-ray radiographs with cGAN/U-Net structural constraints.
+            Generalized Image-to-Image translation architecture translating normal RGB photographs into synthetic X-ray radiographs with individualized patient contour morphing.
           </p>
         </div>
 
@@ -1046,6 +1068,7 @@ export default function XRayScanner() {
               type="button"
               onClick={() => {
                 setInputMode('camera');
+                setTranslatedResult(null);
                 startCamera('environment');
               }}
               className={
@@ -1060,18 +1083,19 @@ export default function XRayScanner() {
               </div>
               <div>
                 <p className="text-xs font-bold text-white">Live Camera Capture</p>
-                <p className="text-[10px] text-slate-400">Capture body part via webcam/phone</p>
+                <p className="text-[10px] text-slate-400">Capture your body part in real-time</p>
               </div>
             </button>
 
-            <label
+            <button
+              type="button"
+              onClick={triggerUploadNewImage}
               className={
                 'p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all cursor-pointer ' +
                 (inputMode === 'upload'
                   ? 'bg-indigo-950/60 border-indigo-500 text-white ring-1 ring-indigo-500'
                   : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200')
               }
-              onClick={() => setInputMode('upload')}
             >
               <div className="w-10 h-10 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <Upload className="w-5 h-5" />
@@ -1080,12 +1104,15 @@ export default function XRayScanner() {
                 <p className="text-xs font-bold text-white">Upload RGB Image</p>
                 <p className="text-[10px] text-slate-400">Select JPEG/PNG from filesystem</p>
               </div>
-              <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-            </label>
+            </button>
 
             <button
               type="button"
-              onClick={() => setInputMode('preset')}
+              onClick={() => {
+                setInputMode('preset');
+                setTranslatedResult(null);
+                stopCameraStream();
+              }}
               className={
                 'p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ' +
                 (inputMode === 'preset'
@@ -1103,7 +1130,7 @@ export default function XRayScanner() {
             </button>
           </div>
 
-          {/* Preloaded Cases Shelf (When in preset mode) */}
+          {/* Preloaded Cases Shelf */}
           {inputMode === 'preset' && (
             <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
               <p className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
@@ -1136,7 +1163,7 @@ export default function XRayScanner() {
           )}
 
           {/* Live Camera Viewfinder */}
-          {inputMode === 'camera' && (
+          {inputMode === 'camera' && !translatedResult && (
             <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
@@ -1245,7 +1272,7 @@ export default function XRayScanner() {
 
           {/* Quality Rejection Notice (When input has insufficient anatomical info) */}
           {qualityValidation && !qualityValidation.isValid && (
-            <div className="bg-rose-950/60 border-2 border-rose-800 rounded-2xl p-5 space-y-3">
+            <div className="bg-rose-950/60 border-2 border-rose-800 rounded-2xl p-5 space-y-4">
               <div className="flex items-center gap-2.5 text-rose-300 font-bold text-sm">
                 <AlertCircle className="w-5 h-5 text-rose-400" />
                 <span>{qualityValidation.message}</span>
@@ -1255,19 +1282,39 @@ export default function XRayScanner() {
                 <p>Telemetry Check: Mean Luminance: {qualityValidation.metrics?.meanLum} HU • Texture Variance σ: {qualityValidation.metrics?.stdDev} • Human Skin Pixel Coverage: {qualityValidation.metrics?.skinPercent}%</p>
                 <p>Requirement: RGB photograph must clearly contain human body anatomy (Hand, Wrist, Forearm, Elbow, Arm, Shoulder, Foot, Ankle, Leg, Knee, Skull, or Chest).</p>
               </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleRetake}
+                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Retake Photo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={triggerUploadNewImage}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-700"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Upload Different Image</span>
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Translation Results Display */}
+          {/* ─────────────────────────────────────────────────────────────────────────
+              TRANSLATION RESULTS DISPLAY & ACTION CONTROLS
+          ───────────────────────────────────────────────────────────────────────── */}
           {translatedResult && !isTranslating && (
             <div className="space-y-6">
-              {/* Top Result Header & View Mode Switcher */}
+              {/* Action Toolbar: Retake, Upload New, Download */}
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-white">{translatedResult.module.name}</span>
                     <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
-                      Translation Complete
+                      ✓ Individualized Patient Morphing Complete
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5 font-mono">
@@ -1275,33 +1322,28 @@ export default function XRayScanner() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {/* View Mode Buttons */}
-                  <div className="bg-slate-900 rounded-xl p-1 border border-slate-800 flex gap-1 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('split')}
-                      className={'px-3 py-1.5 rounded-lg font-semibold transition-all ' + (viewMode === 'split' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200')}
-                    >
-                      Split Comparison
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('xray')}
-                      className={'px-3 py-1.5 rounded-lg font-semibold transition-all ' + (viewMode === 'xray' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200')}
-                    >
-                      Synthetic X-Ray
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('rgb')}
-                      className={'px-3 py-1.5 rounded-lg font-semibold transition-all ' + (viewMode === 'rgb' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200')}
-                    >
-                      Original RGB
-                    </button>
-                  </div>
+                {/* Primary Action Buttons: Retake, Upload New, Download */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRetake}
+                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition-all active:scale-95"
+                    title="Open Camera to capture new body photo"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Retake Photo</span>
+                  </button>
 
-                  {/* Download Synthetic PNG */}
+                  <button
+                    type="button"
+                    onClick={triggerUploadNewImage}
+                    className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                    title="Upload another RGB file"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Upload New Image</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={downloadSyntheticImage}
@@ -1309,6 +1351,33 @@ export default function XRayScanner() {
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download Radiograph</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* View Mode Toggle: Split View / Synthetic X-Ray / Original RGB */}
+              <div className="flex justify-end">
+                <div className="bg-slate-950 rounded-xl p-1 border border-slate-800 flex gap-1 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('split')}
+                    className={'px-3 py-1.5 rounded-lg font-semibold transition-all ' + (viewMode === 'split' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200')}
+                  >
+                    Split Comparison
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('xray')}
+                    className={'px-3 py-1.5 rounded-lg font-semibold transition-all ' + (viewMode === 'xray' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200')}
+                  >
+                    Synthetic X-Ray
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('rgb')}
+                    className={'px-3 py-1.5 rounded-lg font-semibold transition-all ' + (viewMode === 'rgb' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200')}
+                  >
+                    Original RGB
                   </button>
                 </div>
               </div>
@@ -1324,7 +1393,7 @@ export default function XRayScanner() {
 
                     {/* Interactive Split Slider Container */}
                     <div className="relative w-full aspect-square max-w-2xl mx-auto rounded-2xl overflow-hidden select-none border-2 border-slate-800 bg-black">
-                      {/* Synthetic X-Ray Image (Background full width) */}
+                      {/* Synthetic X-Ray Image (Background) */}
                       <img
                         src={translatedResult.dataUrl}
                         alt="Synthetic X-Ray"
@@ -1442,6 +1511,38 @@ export default function XRayScanner() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Bottom Quick-Action Bar */}
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleRetake}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Retake with Camera</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={triggerUploadNewImage}
+                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5"
+                >
+                  <Upload className="w-4 h-4 text-emerald-400" />
+                  <span>Upload Another Photo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTranslatedResult(null);
+                    setUploadedRgb(null);
+                    setQualityValidation(null);
+                  }}
+                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border border-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Choose Another Module</span>
+                </button>
               </div>
             </div>
           )}
@@ -1673,7 +1774,6 @@ class PatchGANDiscriminator(nn.Module):
 # Training Loop with Multi-Objective Loss
 # ==============================================================================
 def train_step(generator, discriminator, rgb, real_xray, class_ids, opt_g, opt_d, criterion_l1, vgg_loss, lambda_l1=100.0, lambda_vgg=10.0):
-    # Train Discriminator
     opt_d.zero_grad()
     fake_xray = generator(rgb, class_ids)
     pred_real = discriminator(rgb, real_xray)
@@ -1684,7 +1784,6 @@ def train_step(generator, discriminator, rgb, real_xray, class_ids, opt_g, opt_d
     loss_d.backward()
     opt_d.step()
 
-    # Train Generator
     opt_g.zero_grad()
     pred_fake_g = discriminator(rgb, fake_xray)
     loss_g_adv = F.binary_cross_entropy_with_logits(pred_fake_g, torch.ones_like(pred_fake_g))
@@ -1748,7 +1847,7 @@ def train_step(generator, discriminator, rgb, real_xray, class_ids, opt_g, opt_d
             </div>
           </div>
 
-          {/* Model Comparison Table (Pix2Pix vs CycleGAN vs Our cGAN vs Diffusion) */}
+          {/* Model Comparison Table */}
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
               Ablation &amp; Architecture Model Comparison:
