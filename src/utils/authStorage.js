@@ -1,7 +1,14 @@
 /**
  * Authentication & User Storage Utility
- * Manages user accounts and active sessions in localStorage
+ * Manages user accounts and active sessions with Cloud Firestore + localStorage
  */
+
+import {
+  saveFirestoreDoc,
+  deleteFirestoreDoc,
+  fetchFirestoreCollection,
+  FIRESTORE_COLLECTIONS
+} from '../services/firebaseDb';
 
 const USERS_STORAGE_KEY = 'triage_registered_users';
 const CURRENT_USER_KEY = 'triage_current_user';
@@ -569,6 +576,12 @@ export const saveUser = (newUser) => {
 
   users.push(userRecord);
   localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+
+  // Sync to Firestore
+  saveFirestoreDoc(FIRESTORE_COLLECTIONS.USERS, userRecord.id, userRecord).catch((err) => {
+    console.warn('Firestore user sync note:', err);
+  });
+
   return userRecord;
 };
 
@@ -1423,6 +1436,14 @@ export const saveAppointment = (appointment) => {
   const current = getBookedAppointments();
   const updated = [appointment, ...current];
   localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(updated));
+
+  // Sync to Firestore
+  if (appointment?.id) {
+    saveFirestoreDoc(FIRESTORE_COLLECTIONS.APPOINTMENTS, appointment.id, appointment).catch((err) => {
+      console.warn('Firestore appointment sync note:', err);
+    });
+  }
+
   return updated;
 };
 
@@ -1430,6 +1451,11 @@ export const cancelAppointment = (appointmentId) => {
   const current = getBookedAppointments();
   const updated = current.filter((a) => a.id !== appointmentId);
   localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(updated));
+
+  deleteFirestoreDoc(FIRESTORE_COLLECTIONS.APPOINTMENTS, appointmentId).catch((err) => {
+    console.warn('Firestore appointment delete note:', err);
+  });
+
   return updated;
 };
 
@@ -1456,6 +1482,13 @@ export const saveAmbulanceRequest = (request) => {
   const current = getAmbulanceRequests();
   const updated = [request, ...current];
   localStorage.setItem(AMBULANCE_STORAGE_KEY, JSON.stringify(updated));
+
+  if (request?.id) {
+    saveFirestoreDoc(FIRESTORE_COLLECTIONS.AMBULANCE_REQUESTS, request.id, request).catch((err) => {
+      console.warn('Firestore ambulance sync note:', err);
+    });
+  }
+
   return updated;
 };
 
@@ -1463,6 +1496,11 @@ export const cancelAmbulanceRequest = (requestId) => {
   const current = getAmbulanceRequests();
   const updated = current.filter((r) => r.id !== requestId);
   localStorage.setItem(AMBULANCE_STORAGE_KEY, JSON.stringify(updated));
+
+  deleteFirestoreDoc(FIRESTORE_COLLECTIONS.AMBULANCE_REQUESTS, requestId).catch((err) => {
+    console.warn('Firestore ambulance delete note:', err);
+  });
+
   return updated;
 };
 
@@ -1470,6 +1508,14 @@ export const updateAmbulanceStatus = (requestId, newStatus) => {
   const current = getAmbulanceRequests();
   const updated = current.map((r) => (r.id === requestId ? { ...r, status: newStatus } : r));
   localStorage.setItem(AMBULANCE_STORAGE_KEY, JSON.stringify(updated));
+
+  const target = updated.find((r) => r.id === requestId);
+  if (target) {
+    saveFirestoreDoc(FIRESTORE_COLLECTIONS.AMBULANCE_REQUESTS, requestId, target).catch((err) => {
+      console.warn('Firestore ambulance update note:', err);
+    });
+  }
+
   return updated;
 };
 
@@ -1496,6 +1542,13 @@ export const saveBedBooking = (booking) => {
   const current = getBedBookings();
   const updated = [booking, ...current];
   localStorage.setItem(BED_STORAGE_KEY, JSON.stringify(updated));
+
+  if (booking?.id) {
+    saveFirestoreDoc(FIRESTORE_COLLECTIONS.BED_BOOKINGS, booking.id, booking).catch((err) => {
+      console.warn('Firestore bed booking sync note:', err);
+    });
+  }
+
   return updated;
 };
 
@@ -1503,6 +1556,11 @@ export const cancelBedBooking = (bookingId) => {
   const current = getBedBookings();
   const updated = current.filter((b) => b.id !== bookingId);
   localStorage.setItem(BED_STORAGE_KEY, JSON.stringify(updated));
+
+  deleteFirestoreDoc(FIRESTORE_COLLECTIONS.BED_BOOKINGS, bookingId).catch((err) => {
+    console.warn('Firestore bed booking delete note:', err);
+  });
+
   return updated;
 };
 
@@ -1531,6 +1589,11 @@ export const saveHospitalTransfer = (transfer) => {
   };
   const updated = [record, ...current];
   localStorage.setItem(HOSPITAL_TRANSFERS_KEY, JSON.stringify(updated));
+
+  saveFirestoreDoc(FIRESTORE_COLLECTIONS.HOSPITAL_TRANSFERS, record.id, record).catch((err) => {
+    console.warn('Firestore transfer sync note:', err);
+  });
+
   return updated;
 };
 
@@ -1538,6 +1601,11 @@ export const cancelHospitalTransfer = (transferId) => {
   const current = getHospitalTransfers();
   const updated = current.filter((t) => t.id !== transferId);
   localStorage.setItem(HOSPITAL_TRANSFERS_KEY, JSON.stringify(updated));
+
+  deleteFirestoreDoc(FIRESTORE_COLLECTIONS.HOSPITAL_TRANSFERS, transferId).catch((err) => {
+    console.warn('Firestore transfer delete note:', err);
+  });
+
   return updated;
 };
 
@@ -1562,6 +1630,11 @@ export const deleteStoredUser = (userId) => {
     description: `User ${userId} was deleted from database`,
     severity: 'warning'
   });
+
+  deleteFirestoreDoc(FIRESTORE_COLLECTIONS.USERS, userId).catch((err) => {
+    console.warn('Firestore user delete note:', err);
+  });
+
   return filtered;
 };
 
@@ -1578,6 +1651,11 @@ export const updateStoredUser = (userId, updatedFields) => {
     description: `User account ${users[index].name} (${userId}) was updated`,
     severity: 'info'
   });
+
+  saveFirestoreDoc(FIRESTORE_COLLECTIONS.USERS, userId, users[index]).catch((err) => {
+    console.warn('Firestore user update note:', err);
+  });
+
   return users[index];
 };
 
@@ -1637,10 +1715,45 @@ export const logSystemEvent = ({ type, actor = 'System Admin', description, seve
     };
     const updated = [newEntry, ...logs.slice(0, 99)]; // Keep latest 100
     localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(updated));
+
+    saveFirestoreDoc(FIRESTORE_COLLECTIONS.AUDIT_LOGS, newEntry.id, newEntry).catch((err) => {
+      console.warn('Firestore audit log sync note:', err);
+    });
+
     return updated;
   } catch (e) {
     console.error('Failed to log audit event:', e);
     return [];
+  }
+};
+
+/**
+ * Sync and hydrate local storage cache from Cloud Firestore
+ */
+export const syncAllAuthFromFirestore = async () => {
+  try {
+    const remoteUsers = await fetchFirestoreCollection(FIRESTORE_COLLECTIONS.USERS);
+    if (remoteUsers && remoteUsers.length > 0) {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(remoteUsers));
+    }
+    const remoteAppts = await fetchFirestoreCollection(FIRESTORE_COLLECTIONS.APPOINTMENTS);
+    if (remoteAppts && remoteAppts.length > 0) {
+      localStorage.setItem(APPOINTMENTS_STORAGE_KEY, JSON.stringify(remoteAppts));
+    }
+    const remoteBeds = await fetchFirestoreCollection(FIRESTORE_COLLECTIONS.BED_BOOKINGS);
+    if (remoteBeds && remoteBeds.length > 0) {
+      localStorage.setItem(BED_STORAGE_KEY, JSON.stringify(remoteBeds));
+    }
+    const remoteAmbs = await fetchFirestoreCollection(FIRESTORE_COLLECTIONS.AMBULANCE_REQUESTS);
+    if (remoteAmbs && remoteAmbs.length > 0) {
+      localStorage.setItem(AMBULANCE_STORAGE_KEY, JSON.stringify(remoteAmbs));
+    }
+    const remoteTransfers = await fetchFirestoreCollection(FIRESTORE_COLLECTIONS.HOSPITAL_TRANSFERS);
+    if (remoteTransfers && remoteTransfers.length > 0) {
+      localStorage.setItem(HOSPITAL_TRANSFERS_KEY, JSON.stringify(remoteTransfers));
+    }
+  } catch (err) {
+    console.warn('Firestore hydration note:', err);
   }
 };
 

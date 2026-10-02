@@ -17,6 +17,11 @@ const BedBookingSystem = lazy(() => import('./components/BedBookingSystem'));
 const AmbulanceBooking = lazy(() => import('./components/AmbulanceBooking'));
 const AdminPage = lazy(() => import('./components/AdminPage'));
 const DrugAllergySafetyGuard = lazy(() => import('./components/DrugAllergySafetyGuard'));
+import FirebaseConfigModal from './components/FirebaseConfigModal';
+import { isFirebaseConfigured } from './config/firebase';
+import { saveFirestoreDoc, FIRESTORE_COLLECTIONS } from './services/firebaseDb';
+import { syncAllAuthFromFirestore } from './utils/authStorage';
+import { syncBloodBankFromFirestore } from './utils/bloodBankStorage';
 import {
   Activity,
   Brain,
@@ -43,7 +48,8 @@ import {
   Truck,
   Sun,
   Moon,
-  BookOpen
+  BookOpen,
+  Flame
 } from 'lucide-react';
 
 export default function App() {
@@ -68,6 +74,27 @@ export default function App() {
   const [themeMode, setThemeMode] = useState(() => {
     return localStorage.getItem('nhp_theme_mode') || 'light';
   });
+
+  // Firebase Cloud Firestore integration state
+  const [showFirebaseModal, setShowFirebaseModal] = useState(false);
+  const [isFirebaseReady, setIsFirebaseReady] = useState(() => isFirebaseConfigured());
+
+  useEffect(() => {
+    if (isFirebaseConfigured()) {
+      setIsFirebaseReady(true);
+      syncAllAuthFromFirestore();
+      syncBloodBankFromFirestore();
+    }
+  }, []);
+
+  const handleFirebaseConfigSaved = (cfg) => {
+    const ready = Boolean(cfg && cfg.apiKey && cfg.projectId);
+    setIsFirebaseReady(ready);
+    if (ready) {
+      syncAllAuthFromFirestore();
+      syncBloodBankFromFirestore();
+    }
+  };
 
   useEffect(() => {
     const root = document.documentElement;
@@ -331,6 +358,11 @@ export default function App() {
       };
 
       setGeneratedTriageNote(note);
+      if (note?.ticketId) {
+        saveFirestoreDoc(FIRESTORE_COLLECTIONS.TRIAGE_NOTES, note.ticketId, note).catch((e) =>
+          console.warn('Firestore triage note save note:', e)
+        );
+      }
       setIsGeneratingNote(false);
       setActiveTab('dashboard');
     }, 800);
@@ -381,28 +413,28 @@ export default function App() {
       medicineExpiryTab: '୯. ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
       nearestMedicalTab: '୧୦. ନିକଟସ୍ଥ ଚିକିତ୍ସାଳୟ (GPS Map)',
       ambulanceTab: '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ବୁକିଂ',
-      t11_history: '୧୧. ABHA ଐତିହାସିକ ଗ୍ରାଫ୍',
-      t12_differential: '୧୨. ନିରାପଦ ଡିଫରେନ୍ସିଆଲ୍ ଟ୍ରାଏଜ୍',
-      t13_drugallergy: '୧୩. ଔଷଧ ଆଲର୍ଜି ଚେତାବନୀ',
-      t14_riskscores: '୧୪. କ୍ଲିନିକାଲ୍ ରିସ୍କ ସ୍କୋର (qSOFA/GCS)',
-      t15_followup: '୧୫. ସ୍ମାର୍ଟ ଫଲୋ-ଅପ୍ Engine',
-      t16_whatsapp_ussd: '୧୬. WhatsApp & USSD *123# Portal',
-      t17_asha_voice: '୧୭. ଆଶା ଭଏସ୍ କୋପାଇଲଟ୍',
-      t18_pain_map: '୧୮. ପେନ୍ ମ୍ୟାପ୍ ଓ ସ୍ମାଇଲି Scale',
-      t19_family_triage: '୧୯. ପରିବାର ମଲ୍ଟି-ଟ୍ରାଏଜ୍ କ୍ୟାମ୍ପ',
-      t20_opd_balancer: '୨୦. ସ୍ମାର୍ଟ OPD ଲୋଡ୍ ବାଲାନ୍ସର୍',
-      t21_counterfeit: '୨୧. ନକଲି ରିପୋର୍ଟ ସ୍କାନର୍ AI',
-      t22_kiosk: '୨୨. ଜିରୋ-ଟଚ୍ ABHA Kiosk',
-      t23_outbreak: '୨୩. IDSP ମହାମାରୀ ରାଡାର',
-      t24_inventory: '୨୪. ଔଷଧ ଷ୍ଟକ୍ ଲିଙ୍କେଜ୍',
-      t25_dpdp_consent: '୨୫. DPDP Act ଅଡିଓ Consent',
-      t26_federated: '୨୬. ଫେଡେରେଟେଡ୍ ପ୍ରାଇଭେସୀ Node',
-      t27_fairness: '୨୭. AI ନିରପେକ୍ଷତା Dashboard',
-      t28_rlhf: '୨୮. ଡାକ୍ତର ଫିଡବ୍ୟାକ୍ RLHF',
-      t29_discharge: '୨୯. ଡିଜିଟାଲ୍ ଡିସଚାର୍ଜ Summary',
-      t30_anc_maternal: '୩୦. ANC ଗର୍ଭବତୀ ମାତୃ ସୁରକ୍ଷା',
-      t31_mental_health: '୩୧. PHQ-2 ମାନସିକ ସ୍ୱାସ୍ଥ୍ୟ Screen',
-      t32_carbon_sms: '୩୨. ନାଗରିକ Carbon SMS Receipt',
+      t11_history: 'ABHA ଐତିହାସିକ ଗ୍ରାଫ୍',
+      t12_differential: 'ନିରାପଦ ଡିଫରେନ୍ସିଆଲ୍ ଟ୍ରାଏଜ୍',
+      t13_drugallergy: 'ଔଷଧ ଆଲର୍ଜି ଚେତାବନୀ',
+      t14_riskscores: 'କ୍ଲିନିକାଲ୍ ରିସ୍କ ସ୍କୋର (qSOFA/GCS)',
+      t15_followup: 'ସ୍ମାର୍ଟ ଫଲୋ-ଅପ୍ Engine',
+      t16_whatsapp_ussd: 'WhatsApp & USSD Portal',
+      t17_asha_voice: 'ଆଶା ଭଏସ୍ କୋପାଇଲଟ୍',
+      t18_pain_map: 'ପେନ୍ ମ୍ୟାପ୍ ଓ ସ୍ମାଇଲି Scale',
+      t19_family_triage: 'ପରିବାର ମଲ୍ଟି-ଟ୍ରାଏଜ୍ କ୍ୟାମ୍ପ',
+      t20_opd_balancer: 'ସ୍ମାର୍ଟ OPD ଲୋଡ୍ ବାଲାନ୍ସର୍',
+      t21_counterfeit: 'ନକଲି ରିପୋର୍ଟ ସ୍କାନର୍ AI',
+      t22_kiosk: 'ଜିରୋ-ଟଚ୍ ABHA Kiosk',
+      t23_outbreak: 'IDSP ମହାମାରୀ ରାଡାର',
+      t24_inventory: 'ଔଷଧ ଷ୍ଟକ୍ ଲିଙ୍କେଜ୍',
+      t25_dpdp_consent: 'DPDP Act ଅଡିଓ Consent',
+      t26_federated: 'ଫେଡେରେଟେଡ୍ ପ୍ରାଇଭେସୀ Node',
+      t27_fairness: 'AI ନିରପେକ୍ଷତା Dashboard',
+      t28_rlhf: 'ଡାକ୍ତର ଫିଡବ୍ୟାକ୍ RLHF',
+      t29_discharge: 'ଡିଜିଟାଲ୍ ଡିସଚାର୍ଜ Summary',
+      t30_anc_maternal: 'ANC ଗର୍ଭବତୀ ମାତୃ ସୁରକ୍ଷା',
+      t31_mental_health: 'PHQ-2 ମାନସିକ ସ୍ୱାସ୍ଥ୍ୟ Screen',
+      t32_carbon_sms: 'ନାଗରିକ Carbon SMS Receipt',
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
@@ -449,28 +481,28 @@ export default function App() {
       medicineExpiryTab: '9. दवा एक्सपायरी जांच',
       nearestMedicalTab: '10. निकटतम अस्पताल (GPS Map)',
       ambulanceTab: '108 एम्बुलेंस बुकिंग',
-      t11_history: '11. ABHA ट्रेंड ग्राफ',
-      t12_differential: '12. डिफरेंशियल ट्रायज',
-      t13_drugallergy: '13. ड्रग एलर्जी अलर्ट',
-      t14_riskscores: '14. क्लिनिकल रिस्क स्कोर (qSOFA/GCS)',
-      t15_followup: '15. स्मार्ट फॉलो-अप इंजन',
-      t16_whatsapp_ussd: '16. व्हाट्सएप एवं USSD मोड (*123#)',
-      t17_asha_voice: '17. आशा वॉइस कोपायलट',
-      t18_pain_map: '18. दर्द नक्शा एवं स्माइली स्केल',
-      t19_family_triage: '19. परिवार कैंप ट्रायज',
-      t20_opd_balancer: '20. स्मार्ट ओपीडी लोड बैलेंसर',
-      t21_counterfeit: '21. नकली रिपोर्ट डिटेक्टर AI',
-      t22_kiosk: '22. ज़ीरो-टच ABHA कियोस्क',
-      t23_outbreak: '23. IDSP आउटब्रेक रडार',
-      t24_inventory: '24. दवा स्टॉक लिंकेज',
-      t25_dpdp_consent: '25. DPDP एक्ट ऑडियो सहमति',
-      t26_federated: '26. फेडेरेटेड गोपनीयता नोड',
-      t27_fairness: '27. AI निष्पक्षता डैशबोर्ड',
-      t28_rlhf: '28. डॉक्टर फीडबैक RLHF',
-      t29_discharge: '29. डिजिटल डिस्चार्ज सारांश',
-      t30_anc_maternal: '30. मातृ स्वास्थ्य एवं ANC',
-      t31_mental_health: '31. PHQ-2 मानसिक स्वास्थ्य',
-      t32_carbon_sms: '32. नागरिक कार्बन एसएमएस',
+      t11_history: 'ABHA ट्रेंड ग्राफ',
+      t12_differential: 'डिफरेंशियल ट्रायज',
+      t13_drugallergy: 'ड्रग एलर्जी अलर्ट',
+      t14_riskscores: 'क्लिनिकल रिस्क स्कोर (qSOFA/GCS)',
+      t15_followup: 'स्मार्ट फॉलो-अप इंजन',
+      t16_whatsapp_ussd: 'व्हाट्सएप एवं USSD मोड',
+      t17_asha_voice: 'आशा वॉइस कोपायलट',
+      t18_pain_map: 'दर्द नक्शा एवं स्माइली स्केल',
+      t19_family_triage: 'परिवार कैंप ट्रायज',
+      t20_opd_balancer: 'स्मार्ट ओपीडी लोड बैलेंसर',
+      t21_counterfeit: 'नकली रिपोर्ट डिटेक्टर AI',
+      t22_kiosk: 'ज़ीरो-टच ABHA कियोस्क',
+      t23_outbreak: 'IDSP आउटब्रेक रडार',
+      t24_inventory: 'दवा स्टॉक लिंकेज',
+      t25_dpdp_consent: 'DPDP एक्ट ऑडियो सहमति',
+      t26_federated: 'फेडेरेटेड गोपनीयता नोड',
+      t27_fairness: 'AI निष्पक्षता डैशबोर्ड',
+      t28_rlhf: 'डॉक्टर फीडबैक RLHF',
+      t29_discharge: 'डिजिटल डिस्चार्ज सारांश',
+      t30_anc_maternal: 'मातृ स्वास्थ्य एवं ANC',
+      t31_mental_health: 'PHQ-2 मानसिक स्वास्थ्य',
+      t32_carbon_sms: 'नागरिक कार्बन एसएमएस',
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
@@ -517,28 +549,28 @@ export default function App() {
       medicineExpiryTab: '9. Medicine Expiry Checker',
       nearestMedicalTab: '10. Nearest Medical & GPS Map',
       ambulanceTab: '108 Ambulance Booking',
-      t11_history: '11. ABHA History Builder',
-      t12_differential: '12. Safe Differential Triage',
-      t13_drugallergy: '13. Drug Allergy Alert',
-      t14_riskscores: '14. Clinical Risk Scores (qSOFA/GCS)',
-      t15_followup: '15. Smart Follow-Up Engine',
-      t16_whatsapp_ussd: '16. WhatsApp & USSD Mode (*123#)',
-      t17_asha_voice: '17. ASHA Copilot Voice',
-      t18_pain_map: '18. Pictorial Pain Map & Scale',
-      t19_family_triage: '19. Multi-Member Family Triage',
-      t20_opd_balancer: '20. Smart OPD Load Balancer',
-      t21_counterfeit: '21. Counterfeit Report AI Detector',
-      t22_kiosk: '22. Zero-Touch ABHA Kiosk',
-      t23_outbreak: '23. IDSP Outbreak Radar',
-      t24_inventory: '24. Drug Stock Linkage',
-      t25_dpdp_consent: '25. DPDP Act 2023 Audio Consent',
-      t26_federated: '26. Federated AI Privacy Node',
-      t27_fairness: '27. AI Bias & Fairness Audit',
-      t28_rlhf: '28. Doctor Feedback RLHF',
-      t29_discharge: '29. Digital Discharge Summary',
-      t30_anc_maternal: '30. Maternal ANC High-Risk Module',
-      t31_mental_health: '31. PHQ-2 Mental Health & NCD',
-      t32_carbon_sms: '32. Carbon Copy Citizen SMS',
+      t11_history: 'ABHA History Builder',
+      t12_differential: 'Safe Differential Triage',
+      t13_drugallergy: 'Drug Allergy Alert',
+      t14_riskscores: 'Clinical Risk Scores (qSOFA/GCS)',
+      t15_followup: 'Smart Follow-Up Engine',
+      t16_whatsapp_ussd: 'WhatsApp & USSD Portal',
+      t17_asha_voice: 'ASHA Copilot Voice',
+      t18_pain_map: 'Pictorial Pain Map & Scale',
+      t19_family_triage: 'Multi-Member Family Triage',
+      t20_opd_balancer: 'Smart OPD Load Balancer',
+      t21_counterfeit: 'Counterfeit Report AI Detector',
+      t22_kiosk: 'Zero-Touch ABHA Kiosk',
+      t23_outbreak: 'IDSP Outbreak Radar',
+      t24_inventory: 'Drug Stock Linkage',
+      t25_dpdp_consent: 'DPDP Act Audio Consent',
+      t26_federated: 'Federated AI Privacy Node',
+      t27_fairness: 'AI Bias & Fairness Audit',
+      t28_rlhf: 'Doctor Feedback RLHF',
+      t29_discharge: 'Digital Discharge Summary',
+      t30_anc_maternal: 'Maternal ANC High-Risk Module',
+      t31_mental_health: 'PHQ-2 Mental Health & NCD',
+      t32_carbon_sms: 'Carbon Copy Citizen SMS',
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
@@ -564,30 +596,30 @@ export default function App() {
     }
   }[appLang] || {};
 
-  // Left sidebar menu items for GovTech Features 11 through 32
+  // Left sidebar menu items for GovTech Clinical Modules
   const leftSidebarItems = [
-    { id: 't11_history', num: 11, label: uiText.t11_history || '11. ABHA Trend Analysis', icon: Activity },
-    { id: 't12_differential', num: 12, label: uiText.t12_differential || '12. Differential Triage', icon: FileText },
-    { id: 't13_drugallergy', num: 13, label: uiText.t13_drugallergy || '13. Drug-Allergy Guard', icon: AlertTriangle },
-    { id: 't14_riskscores', num: 14, label: uiText.t14_riskscores || '14. Risk Score Calculator', icon: Activity },
-    { id: 't15_followup', num: 15, label: uiText.t15_followup || '15. Smart Follow-up Engine', icon: Phone },
-    { id: 't16_whatsapp_ussd', num: 16, label: uiText.t16_whatsapp_ussd || '16. WhatsApp & USSD Triage', icon: Mail },
-    { id: 't17_asha_voice', num: 17, label: uiText.t17_asha_voice || '17. ASHA Voice Copilot', icon: Stethoscope },
-    { id: 't18_pain_map', num: 18, label: uiText.t18_pain_map || '18. Pictorial Pain Map', icon: Activity },
-    { id: 't19_family_triage', num: 19, label: uiText.t19_family_triage || '19. Family Camp Triage', icon: Building },
-    { id: 't20_opd_balancer', num: 20, label: uiText.t20_opd_balancer || '20. OPD Load Balancer', icon: Building2 },
-    { id: 't21_counterfeit', num: 21, label: uiText.t21_counterfeit || '21. Counterfeit Drug Detector', icon: UploadCloud },
-    { id: 't22_kiosk', num: 22, label: uiText.t22_kiosk || '22. Zero-Touch Kiosk', icon: ShieldCheck },
-    { id: 't23_outbreak', num: 23, label: uiText.t23_outbreak || '23. IDSP Outbreak Radar', icon: AlertTriangle },
-    { id: 't24_inventory', num: 24, label: uiText.t24_inventory || '24. Inventory Auto-Order', icon: Pill },
-    { id: 't25_dpdp_consent', num: 25, label: uiText.t25_dpdp_consent || '25. DPDP Audio Consent', icon: ShieldCheck },
-    { id: 't26_federated', num: 26, label: uiText.t26_federated || '26. Federated Privacy Model', icon: ShieldCheck },
-    { id: 't27_fairness', num: 27, label: uiText.t27_fairness || '27. AI Bias & Fairness', icon: Activity },
-    { id: 't28_rlhf', num: 28, label: uiText.t28_rlhf || '28. Doctor Feedback Loop (RLHF)', icon: Stethoscope },
-    { id: 't29_discharge', num: 29, label: uiText.t29_discharge || '29. Multilingual Discharge Summary', icon: FileText },
-    { id: 't30_anc_maternal', num: 30, label: uiText.t30_anc_maternal || '30. ANC High-Risk Pregnancy', icon: Activity },
-    { id: 't31_mental_health', num: 31, label: uiText.t31_mental_health || '31. PHQ-2 Mental Health Screener', icon: Stethoscope },
-    { id: 't32_carbon_sms', num: 32, label: uiText.t32_carbon_sms || '32. Citizen SMS Receipts', icon: Mail }
+    { id: 't11_history', label: uiText.t11_history || 'ABHA Trend Analysis', icon: Activity },
+    { id: 't12_differential', label: uiText.t12_differential || 'Differential Triage', icon: FileText },
+    { id: 't13_drugallergy', label: uiText.t13_drugallergy || 'Drug-Allergy Guard', icon: AlertTriangle },
+    { id: 't14_riskscores', label: uiText.t14_riskscores || 'Risk Score Calculator', icon: Activity },
+    { id: 't15_followup', label: uiText.t15_followup || 'Smart Follow-up Engine', icon: Phone },
+    { id: 't16_whatsapp_ussd', label: uiText.t16_whatsapp_ussd || 'WhatsApp & USSD Triage', icon: Mail },
+    { id: 't17_asha_voice', label: uiText.t17_asha_voice || 'ASHA Voice Copilot', icon: Stethoscope },
+    { id: 't18_pain_map', label: uiText.t18_pain_map || 'Pictorial Pain Map', icon: Activity },
+    { id: 't19_family_triage', label: uiText.t19_family_triage || 'Family Camp Triage', icon: Building },
+    { id: 't20_opd_balancer', label: uiText.t20_opd_balancer || 'OPD Load Balancer', icon: Building2 },
+    { id: 't21_counterfeit', label: uiText.t21_counterfeit || 'Counterfeit Drug Detector', icon: UploadCloud },
+    { id: 't22_kiosk', label: uiText.t22_kiosk || 'Zero-Touch Kiosk', icon: ShieldCheck },
+    { id: 't23_outbreak', label: uiText.t23_outbreak || 'IDSP Outbreak Radar', icon: AlertTriangle },
+    { id: 't24_inventory', label: uiText.t24_inventory || 'Inventory Auto-Order', icon: Pill },
+    { id: 't25_dpdp_consent', label: uiText.t25_dpdp_consent || 'DPDP Audio Consent', icon: ShieldCheck },
+    { id: 't26_federated', label: uiText.t26_federated || 'Federated Privacy Model', icon: ShieldCheck },
+    { id: 't27_fairness', label: uiText.t27_fairness || 'AI Bias & Fairness', icon: Activity },
+    { id: 't28_rlhf', label: uiText.t28_rlhf || 'Doctor Feedback Loop (RLHF)', icon: Stethoscope },
+    { id: 't29_discharge', label: uiText.t29_discharge || 'Multilingual Discharge Summary', icon: FileText },
+    { id: 't30_anc_maternal', label: uiText.t30_anc_maternal || 'ANC High-Risk Pregnancy', icon: Activity },
+    { id: 't31_mental_health', label: uiText.t31_mental_health || 'PHQ-2 Mental Health Screener', icon: Stethoscope },
+    { id: 't32_carbon_sms', label: uiText.t32_carbon_sms || 'Citizen SMS Receipts', icon: Mail }
   ];
 
   return (
@@ -957,6 +989,24 @@ export default function App() {
               </button>
             </div>
 
+            {/* Firebase Cloud Firestore Button */}
+            <button
+              type="button"
+              onClick={() => setShowFirebaseModal(true)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold shadow-2xs transition-all cursor-pointer ${
+                isFirebaseReady
+                  ? 'bg-amber-50 hover:bg-amber-100/70 border-amber-300 text-amber-900'
+                  : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700'
+              }`}
+              title="Firebase Cloud Database Settings & Live Sync"
+            >
+              <Flame className={`w-3.5 h-3.5 ${isFirebaseReady ? 'text-amber-500 fill-amber-500' : 'text-slate-500'}`} />
+              <span className="hidden sm:inline font-bold">
+                {isFirebaseReady ? 'Firestore: Connected' : 'Link Firebase'}
+              </span>
+              <span className={`w-2 h-2 rounded-full ${isFirebaseReady ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
+            </button>
+
             {/* App-wide Language Switcher */}
             <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs shadow-2xs">
               <Globe className="w-3.5 h-3.5 text-emerald-700" />
@@ -1127,15 +1177,15 @@ export default function App() {
 
       {/* Container with Left Sidebar for GovTech Enterprise Features 11 to 32 */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        {/* LEFT SIDEBAR BAR FOR FEATURES 11 TO 32 */}
+        {/* LEFT SIDEBAR BAR FOR GOVTECH CLINICAL SUITE */}
         <aside className="w-full md:w-64 shrink-0 bg-white border-b md:border-b-0 md:border-r border-slate-200 p-3 overflow-y-auto max-h-56 md:max-h-none flex flex-col space-y-1 shadow-2xs">
-          <div className="px-2 py-1.5 mb-1 border-b border-slate-100 flex items-center justify-between">
+          <div className="px-2.5 py-2 mb-1.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 rounded-xl">
             <span className="text-[11px] font-extrabold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
               <Brain className="w-4 h-4 text-indigo-600" />
-              {appLang === 'or-IN' ? 'GovTech ଫିଚର ୧୧-୩୨' : (appLang === 'hi-IN' ? 'GovTech फीचर्स 11-32' : 'GovTech Features (11 - 32)')}
+              {appLang === 'or-IN' ? 'GovTech କ୍ଲିନିକାଲ୍ ସୁଇଟ୍' : (appLang === 'hi-IN' ? 'GovTech क्लिनिकल सुइट' : 'GovTech Clinical Suite')}
             </span>
-            <span className="text-[10px] font-black bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
-              22 Features
+            <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-full">
+              {appLang === 'or-IN' ? 'ମଡ୍ୟୁଲ୍' : (appLang === 'hi-IN' ? 'मॉड्यूल' : 'Modules')}
             </span>
           </div>
 
@@ -1147,14 +1197,18 @@ export default function App() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all ${
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2.5 transition-all group ${
                     isActive
-                      ? 'bg-indigo-600 text-white shadow-xs font-extrabold'
-                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-sm font-bold ring-1 ring-indigo-500/30'
+                      : 'text-slate-700 hover:bg-slate-100/80 hover:text-indigo-900'
                   }`}
                 >
-                  <IconComp className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-indigo-600'}`} />
-                  <span className="truncate">{item.label}</span>
+                  <div className={`p-1 rounded-lg transition-colors ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100'
+                  }`}>
+                    <IconComp className="w-3.5 h-3.5 shrink-0" />
+                  </div>
+                  <span className="truncate flex-1 tracking-tight">{item.label}</span>
                 </button>
               );
             })}
@@ -1654,6 +1708,13 @@ export default function App() {
           />
         </Suspense>
       )}
+
+      {/* Firebase Cloud Firestore Config & Live Sync Modal */}
+      <FirebaseConfigModal
+        isOpen={showFirebaseModal}
+        onClose={() => setShowFirebaseModal(false)}
+        onConfigSaved={handleFirebaseConfigSaved}
+      />
     </div>
   );
 }
