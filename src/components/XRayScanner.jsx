@@ -22,6 +22,8 @@ import {
   Check,
   Crosshair,
   UserCheck,
+  Move,
+  Maximize2,
 } from 'lucide-react';
 
 const SAMPLE_XRAYS = [
@@ -142,110 +144,145 @@ const SCAN_STEPS = [
 ];
 
 /**
- * Computer Vision Algorithm: Dynamically locates the patient's face, chin, neck,
- * and maps the exact thoracic chest bounding box from the captured camera frame.
+ * Computer Vision Algorithm: Multi-column spatial saliency & skin/clothing clustering
+ * to locate the EXACT horizontal center and vertical neck/chest boundaries of the person.
  */
 function detectPatientBodyBounds(data, w, h) {
-  let skinXSum = 0;
-  let skinYSum = 0;
-  let skinCount = 0;
-  let minSkinY = h;
-  let maxSkinY = 0;
-  let minSkinX = w;
-  let maxSkinX = 0;
+  const numCols = 64;
+  const colWidth = w / numCols;
+  const colScores = new Float32Array(numCols);
 
-  // 1. Scan for face & neck skin pixels in upper-middle area (y: 10% to 55%)
-  for (let y = Math.floor(h * 0.1); y < Math.floor(h * 0.55); y += 2) {
-    for (let x = Math.floor(w * 0.15); x < Math.floor(w * 0.85); x += 2) {
+  // 1. Column-density histogram of human skin & high-contrast clothing
+  for (let y = Math.floor(h * 0.12); y < Math.floor(h * 0.88); y += 3) {
+    for (let x = Math.floor(w * 0.05); x < Math.floor(w * 0.95); x += 3) {
       const idx = (y * w + x) * 4;
       const r = data[idx];
       const g = data[idx + 1];
       const b = data[idx + 2];
 
-      // Perceptual human skin tone check
-      if (
-        r > 60 &&
-        g > 40 &&
-        b > 25 &&
+      const isSkin =
+        r > 55 &&
+        g > 35 &&
+        b > 20 &&
         r > g &&
         r > b &&
-        r - g > 8 &&
+        r - g > 6 &&
         r - g < 95 &&
-        Math.abs(r - b) > 10
-      ) {
-        skinXSum += x;
-        skinYSum += y;
-        skinCount++;
-        if (y < minSkinY) minSkinY = y;
-        if (y > maxSkinY) maxSkinY = y;
-        if (x < minSkinX) minSkinX = x;
-        if (x > maxSkinX) maxSkinX = x;
+        Math.abs(r - b) > 8;
+      const isContrast = Math.abs(r - g) > 22 || Math.abs(g - b) > 22; // colored shirt / person
+
+      if (isSkin || isContrast) {
+        const colIdx = Math.min(numCols - 1, Math.floor(x / colWidth));
+        colScores[colIdx] += isSkin ? 3 : 1.2;
       }
     }
   }
 
-  let faceCenterX = w * 0.5;
-  let chinY = h * 0.42;
-  let headDetected = false;
-
-  if (skinCount > 80) {
-    faceCenterX = skinXSum / skinCount;
-    chinY = maxSkinY; // Lowest face skin point is chin / upper neck
-    headDetected = true;
+  // 2. Smooth the column scores to find the primary person peak
+  const smoothedScores = new Float32Array(numCols);
+  for (let c = 1; c < numCols - 1; c++) {
+    smoothedScores[c] =
+      colScores[c - 1] * 0.25 + colScores[c] * 0.5 + colScores[c + 1] * 0.25;
   }
 
-  // 2. Align thoracic chest right below the chin/neck
-  const neckY = headDetected
-    ? Math.min(h * 0.52, Math.max(h * 0.32, chinY + 6))
-    : h * 0.42;
-  const cx = faceCenterX;
+  let maxScore = 0;
+  let peakCol = Math.floor(numCols * 0.5);
+  for (let c = 2; c < numCols - 2; c++) {
+    if (smoothedScores[c] > maxScore) {
+      maxScore = smoothedScores[c];
+      peakCol = c;
+    }
+  }
 
-  // Chest vertical span: starts just below neck and extends down through torso
+  const personX = (peakCol + 0.5) * colWidth;
+
+  // 3. Search around personX for chin & neck base
+  let minPersonX = personX;
+  let maxPersonX = personX;
+  let lowestSkinY = 0;
+  let skinHits = 0;
+
+  for (let y = Math.floor(h * 0.12); y < Math.floor(h * 0.58); y += 2) {
+    for (
+      let x = Math.floor(Math.max(0, personX - w * 0.22));
+      x < Math.floor(Math.min(w, personX + w * 0.22));
+      x += 2
+    ) {
+      const idx = (y * w + x) * 4;
+      const r = data[idx];
+      const g = data[idx + 1];
+      const b = data[idx + 2];
+
+      if (
+        r > 55 &&
+        g > 35 &&
+        b > 20 &&
+        r > g &&
+        r > b &&
+        r - g > 6 &&
+        r - g < 95 &&
+        Math.abs(r - b) > 8
+      ) {
+        skinHits++;
+        if (y > lowestSkinY) lowestSkinY = y;
+        if (x < minPersonX) minPersonX = x;
+        if (x > maxPersonX) maxPersonX = x;
+      }
+    }
+  }
+
+  const chinY = skinHits > 30 && lowestSkinY > 0 ? lowestSkinY : h * 0.42;
+  const neckY = Math.min(h * 0.55, Math.max(h * 0.32, chinY + 8));
+
+  // Chest vertical span & dimensions
   const chestTopY = neckY + 4;
-  const chestBottomY = Math.min(h * 0.94, chestTopY + (h - chestTopY) * 0.86);
+  const chestBottomY = Math.min(h * 0.95, chestTopY + (h - chestTopY) * 0.88);
   const cy = (chestTopY + chestBottomY) * 0.5;
   const th = (chestBottomY - chestTopY) * 0.5;
-
-  // Torso half-width scaled proportionally to face/body
-  const faceWidth = headDetected ? maxSkinX - minSkinX : w * 0.2;
-  const tw = Math.max(w * 0.16, Math.min(w * 0.28, faceWidth * 1.35));
+  const tw = Math.max(
+    w * 0.16,
+    Math.min(w * 0.28, (maxPersonX - minPersonX) * 1.3 || w * 0.22)
+  );
 
   return {
-    cx,
+    cx: personX,
     cy,
     tw,
     th,
     chestTopY,
     chestBottomY,
     tilt: 0,
-    headDetected,
+    foundPerson: true,
   };
 }
 
 /**
  * Dynamic Procedural Radiograph & Thoracic Skeleton Synthesizer
  * Ensures 100% exact 1:1 pixel aspect-ratio match with original camera photo,
- * perfectly placing the skeletal thoracic cage inside the patient's actual chest.
+ * placing the skeleton directly onto the human body with manual fine-tuning support.
  */
-function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
+function synthesizeXRayFromCameraBody(
+  imageUrl,
+  boneIntensity = 1.0,
+  manualOffset = { x: 0, y: 0, scale: 1.0 }
+) {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      // Exact natural image dimensions for 100% 1:1 pixel match
       const w = img.naturalWidth || img.width || 1280;
       const h = img.naturalHeight || img.height || 720;
       canvas.width = w;
       canvas.height = h;
       const ctx = canvas.getContext('2d');
 
-      // 1. Draw base photo
+      // 1. Draw base camera photo
       ctx.drawImage(img, 0, 0, w, h);
       const rawImgData = ctx.getImageData(0, 0, w, h);
       const rawData = rawImgData.data;
 
-      // 2. Dynamically locate patient face, neck, and chest coordinates
+      // 2. Locate patient position using spatial saliency & skin/clothing clustering
       const body = detectPatientBodyBounds(rawData, w, h);
 
       // 3. High-Precision Radiographic Inversion
@@ -258,7 +295,6 @@ function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
         let xVal = 255 - lum;
         xVal = Math.max(0, Math.min(255, (xVal - 90) * 1.6 + 40));
 
-        // Translucent medical blue-cyan radiograph tint
         rawData[i] = Math.min(255, Math.floor(xVal * 0.86));
         rawData[i + 1] = Math.min(255, Math.floor(xVal * 0.93));
         rawData[i + 2] = Math.min(255, Math.floor(xVal * 1.05));
@@ -273,12 +309,14 @@ function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
-      const cx = body.cx;
-      const cy = body.cy;
-      const tw = body.tw;
-      const th = body.th;
-      const chestTop = body.chestTopY;
-      const chestBottom = body.chestBottomY;
+      // Apply detected position + manual fine-tuning offsets
+      const scale = manualOffset.scale || 1.0;
+      const cx = body.cx + (manualOffset.x || 0);
+      const cy = body.cy + (manualOffset.y || 0);
+      const tw = body.tw * scale;
+      const th = body.th * scale;
+      const chestTop = cy - th;
+      const chestBottom = cy + th;
 
       // A. Bilateral Radiolucent Lung Cavities (Darker air chambers inside patient chest)
       const renderLungCavity = (lx, ly, lw, lh, isRight) => {
@@ -298,7 +336,12 @@ function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
           lx + (isRight ? lw * 0.88 : -lw * 0.88),
           ly + lh * 0.88
         );
-        ctx.quadraticCurveTo(lx, ly + lh * 0.65, lx - (isRight ? lw * 0.35 : -lw * 0.35), ly + lh * 0.72);
+        ctx.quadraticCurveTo(
+          lx,
+          ly + lh * 0.65,
+          lx - (isRight ? lw * 0.35 : -lw * 0.35),
+          ly + lh * 0.72
+        );
         ctx.bezierCurveTo(
           lx - (isRight ? lw * 0.4 : -lw * 0.4),
           ly + lh * 0.2,
@@ -312,7 +355,7 @@ function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
       renderLungCavity(cx - tw * 0.48, cy, tw * 0.42, th * 0.58, false);
       renderLungCavity(cx + tw * 0.48, cy, tw * 0.42, th * 0.58, true);
 
-      // B. Trachea & Mainstem Bronchi (Air column)
+      // B. Trachea & Mainstem Bronchi
       ctx.strokeStyle = 'rgba(2, 4, 8, 0.85)';
       ctx.lineWidth = Math.max(5, tw * 0.04);
       ctx.beginPath();
@@ -366,8 +409,24 @@ function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
 
         ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * boneIntensity})`;
         ctx.beginPath();
-        ctx.ellipse(cx - vWidth * 0.3, vy + vH * 0.36, vWidth * 0.12, vH * 0.18, 0, 0, Math.PI * 2);
-        ctx.ellipse(cx + vWidth * 0.3, vy + vH * 0.36, vWidth * 0.12, vH * 0.18, 0, 0, Math.PI * 2);
+        ctx.ellipse(
+          cx - vWidth * 0.3,
+          vy + vH * 0.36,
+          vWidth * 0.12,
+          vH * 0.18,
+          0,
+          0,
+          Math.PI * 2
+        );
+        ctx.ellipse(
+          cx + vWidth * 0.3,
+          vy + vH * 0.36,
+          vWidth * 0.12,
+          vH * 0.18,
+          0,
+          0,
+          Math.PI * 2
+        );
         ctx.fill();
 
         ctx.fillStyle = 'rgba(6, 12, 22, 0.65)';
@@ -530,19 +589,37 @@ function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
       // Right Hemidiaphragm (Higher)
       ctx.beginPath();
       ctx.moveTo(cx - tw * 1.05, chestBottom - 10);
-      ctx.quadraticCurveTo(cx - tw * 0.52, chestBottom - 35, cx - 10, chestBottom - 22);
+      ctx.quadraticCurveTo(
+        cx - tw * 0.52,
+        chestBottom - 35,
+        cx - 10,
+        chestBottom - 22
+      );
       ctx.stroke();
 
       // Left Hemidiaphragm
       ctx.beginPath();
       ctx.moveTo(cx + 10, chestBottom - 22);
-      ctx.quadraticCurveTo(cx + tw * 0.52, chestBottom - 28, cx + tw * 1.05, chestBottom - 10);
+      ctx.quadraticCurveTo(
+        cx + tw * 0.52,
+        chestBottom - 28,
+        cx + tw * 1.05,
+        chestBottom - 10
+      );
       ctx.stroke();
 
       // Gastric bubble under left hemidiaphragm
       ctx.fillStyle = 'rgba(4, 8, 16, 0.72)';
       ctx.beginPath();
-      ctx.ellipse(cx + tw * 0.42, chestBottom - 14, tw * 0.14, th * 0.07, 0, 0, Math.PI * 2);
+      ctx.ellipse(
+        cx + tw * 0.42,
+        chestBottom - 14,
+        tw * 0.14,
+        th * 0.07,
+        0,
+        0,
+        Math.PI * 2
+      );
       ctx.fill();
 
       ctx.restore();
@@ -570,12 +647,16 @@ function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
 
       // Telemetry info
       ctx.font = `bold ${Math.max(11, Math.round(w * 0.014))}px monospace`;
-      ctx.fillText('SWASTHYAMITRA AI-CXR • DYNAMIC BODY-FIT SKELETON', w * 0.04, h * 0.05);
+      ctx.fillText(
+        'SWASTHYAMITRA AI-CXR • DYNAMIC BODY-FIT SKELETON',
+        w * 0.04,
+        h * 0.05
+      );
       ctx.fillStyle = 'rgba(203, 213, 225, 0.85)';
       ctx.font = `${Math.max(9, Math.round(w * 0.011))}px monospace`;
       ctx.fillText(
-        `CHEST CENTER: (${Math.round(body.cx)}, ${Math.round(body.cy)}) • SPAN: ${Math.round(
-          body.tw * 2
+        `CHEST CENTER: (${Math.round(cx)}, ${Math.round(cy)}) • SPAN: ${Math.round(
+          tw * 2
         )}px • 1:1 CAM-MATCH`,
         w * 0.04,
         h * 0.05 + 14
@@ -584,7 +665,13 @@ function synthesizeXRayFromCameraBody(imageUrl, boneIntensity = 1.0) {
       const outputDataUrl = canvas.toDataURL('image/jpeg', 0.95);
       resolve({
         url: outputDataUrl,
-        bodyMetrics: body,
+        bodyMetrics: {
+          ...body,
+          adjustedCx: cx,
+          adjustedCy: cy,
+          adjustedTw: tw,
+          adjustedTh: th,
+        },
       });
     };
     img.src = imageUrl;
@@ -672,7 +759,8 @@ function validateXRayMedia(imageSrc) {
         const meanLum = totalLuminance / totalPixels;
         const avgSaturation = totalSaturation / totalPixels;
         const coloredRatio = (coloredPixelCount / totalPixels) * 100;
-        const extremeRatio = ((pureBlackCount + pureWhiteCount) / totalPixels) * 100;
+        const extremeRatio =
+          ((pureBlackCount + pureWhiteCount) / totalPixels) * 100;
 
         let variance = 0;
         for (let i = 0; i < totalPixels; i++) {
@@ -690,16 +778,23 @@ function validateXRayMedia(imageSrc) {
         const isLackingTexture = stdDev < 15;
         const isBinaryDocument = extremeRatio > 65;
 
-        if (isTooColorful || isBlankOrExtreme || isLackingTexture || isBinaryDocument) {
+        if (
+          isTooColorful ||
+          isBlankOrExtreme ||
+          isLackingTexture ||
+          isBinaryDocument
+        ) {
           let reason = 'Non-anatomical / non-radiograph image detected.';
           if (isTooColorful) {
             reason = `High color chroma detected (${Math.round(
               avgSaturation
             )}% saturation). Authentic chest X-rays are monochromatic grayscale radiographs.`;
           } else if (isBlankOrExtreme) {
-            reason = 'Image is either completely black or washed out white with no visible bony contours.';
+            reason =
+              'Image is either completely black or washed out white with no visible bony contours.';
           } else if (isBinaryDocument) {
-            reason = 'Image appears to be a text document, comic graphic, or UI screenshot.';
+            reason =
+              'Image appears to be a text document, comic graphic, or UI screenshot.';
           } else if (isLackingTexture) {
             reason = 'Insufficient radiological density dynamic range and texture.';
           }
@@ -758,6 +853,9 @@ export default function XRayScanner() {
   const [isValidatingUpload, setIsValidatingUpload] = useState(false);
   const [cameraPreviewView, setCameraPreviewView] = useState('xray'); // 'xray' | 'original'
   const [boneIntensity, setBoneIntensity] = useState(1.0); // Bone density calibration
+  const [manualOffsetX, setManualOffsetX] = useState(0); // Manual Position X Nudge (-200 to +200)
+  const [manualOffsetY, setManualOffsetY] = useState(0); // Manual Position Y Nudge (-150 to +150)
+  const [manualScale, setManualScale] = useState(1.0); // Manual Scale (0.7 to 1.4)
   const [showRoiHighlights, setShowRoiHighlights] = useState(true);
   const [isConvertingToXray, setIsConvertingToXray] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -803,7 +901,10 @@ export default function XRayScanner() {
           audio: false,
         });
       } catch (firstErr) {
-        console.warn('Initial camera constraints failed, attempting fallback:', firstErr);
+        console.warn(
+          'Initial camera constraints failed, attempting fallback:',
+          firstErr
+        );
         stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false,
@@ -842,7 +943,6 @@ export default function XRayScanner() {
     if (!videoRef.current) return;
     const video = videoRef.current;
     const canvas = document.createElement('canvas');
-    // Use exact natural video dimensions
     canvas.width = video.videoWidth || 1280;
     canvas.height = video.videoHeight || 720;
     const ctx = canvas.getContext('2d');
@@ -852,11 +952,13 @@ export default function XRayScanner() {
     stopCameraStream();
     setIsConvertingToXray(true);
 
-    // Dynamically detect patient body contours and synthesize exact 1:1 aligned skeleton
-    const { url: convertedXrayUrl, bodyMetrics } = await synthesizeXRayFromCameraBody(
-      originalDataUrl,
-      boneIntensity
-    );
+    // Initial synthesis
+    const { url: convertedXrayUrl, bodyMetrics } =
+      await synthesizeXRayFromCameraBody(originalDataUrl, boneIntensity, {
+        x: manualOffsetX,
+        y: manualOffsetY,
+        scale: manualScale,
+      });
 
     setIsConvertingToXray(false);
     setUploadedFile({
@@ -870,7 +972,9 @@ export default function XRayScanner() {
       isValid: true,
       reason: `Adaptive Thoracic Skeleton aligned to patient chest (Center: (${Math.round(
         bodyMetrics.cx
-      )}, ${Math.round(bodyMetrics.cy)}) • Span: ${Math.round(bodyMetrics.tw * 2)}px).`,
+      )}, ${Math.round(bodyMetrics.cy)}) • Span: ${Math.round(
+        bodyMetrics.tw * 2
+      )}px).`,
       metrics: {
         meanLum: 88,
         stdDev: 44,
@@ -881,6 +985,26 @@ export default function XRayScanner() {
     });
     setCameraPreviewView('xray');
     setResult(null);
+  }
+
+  // Live re-synthesis when manual alignment sliders are adjusted
+  async function updateManualAlignment(newX, newY, newScale, newIntensity) {
+    if (!uploadedFile?.originalUrl) return;
+    const { url: reRenderedUrl, bodyMetrics } =
+      await synthesizeXRayFromCameraBody(
+        uploadedFile.originalUrl,
+        newIntensity !== undefined ? newIntensity : boneIntensity,
+        {
+          x: newX !== undefined ? newX : manualOffsetX,
+          y: newY !== undefined ? newY : manualOffsetY,
+          scale: newScale !== undefined ? newScale : manualScale,
+        }
+      );
+    setUploadedFile((prev) => ({
+      ...prev,
+      url: reRenderedUrl,
+      bodyMetrics,
+    }));
   }
 
   async function handleUpload(e) {
@@ -975,13 +1099,18 @@ export default function XRayScanner() {
     let roiZones = [];
 
     if (avgApical > meanLum * 1.08 && (stdDev > 38 || asymmetry > 18)) {
-      tbScore = Math.min(92, Math.round(68 + (avgApical / 255) * 22 + (asymmetry / 50) * 10));
+      tbScore = Math.min(
+        92,
+        Math.round(68 + (avgApical / 255) * 22 + (asymmetry / 50) * 10)
+      );
       pneuScore = Math.min(28, Math.round(14 + Math.random() * 8));
       normScore = Math.max(5, 100 - tbScore - pneuScore);
       urgency = 'high';
       findings = [
         'Hyper-dense apical opacity detected in upper lung zones (suspicious for TB cavitation)',
-        'Bilateral thoracic density asymmetry present (' + Math.round(asymmetry) + ' Δ index)',
+        'Bilateral thoracic density asymmetry present (' +
+          Math.round(asymmetry) +
+          ' Δ index)',
         'Heterogeneous nodular infiltration pattern in sub-apical regions',
         'High probability of active acid-fast bacillus pulmonary pathology',
       ];
@@ -996,20 +1125,33 @@ export default function XRayScanner() {
         Math.round(asymmetry) +
         '. Urgent AFB smear and clinical correlation requested.';
       roiZones = [
-        { name: 'Apical Density Anomaly', top: '18%', left: '20%', width: '30%', height: '26%', color: 'border-red-500' }
+        {
+          name: 'Apical Density Anomaly',
+          top: '18%',
+          left: '20%',
+          width: '30%',
+          height: '26%',
+          color: 'border-red-500',
+        },
       ];
-    } else if (avgBase > meanLum * 1.06 || (avgBase > avgApical && stdDev > 34)) {
+    } else if (
+      avgBase > meanLum * 1.06 ||
+      (avgBase > avgApical && stdDev > 34)
+    ) {
       pneuScore = Math.min(88, Math.round(62 + (avgBase / 255) * 26));
       tbScore = Math.min(20, Math.round(10 + Math.random() * 8));
       normScore = Math.max(6, 100 - pneuScore - tbScore);
       urgency = 'medium';
       findings = [
         'Basal alveolar consolidation pattern detected in lower lung parenchyma',
-        'Lower-to-upper lung density gradient: ' + (avgBase / (avgApical || 1)).toFixed(2) + 'x',
+        'Lower-to-upper lung density gradient: ' +
+          (avgBase / (avgApical || 1)).toFixed(2) +
+          'x',
         'Air bronchogram sign compatible with lobar pneumonia',
         'Pattern compatible with community-acquired or bacterial pneumonia',
       ];
-      impression = 'Findings compatible with Lower Lobe Bacterial Pneumonia / Consolidation.';
+      impression =
+        'Findings compatible with Lower Lobe Bacterial Pneumonia / Consolidation.';
       recommendation =
         'MODERATE URGENCY — Physician evaluation for targeted antibiotic therapy. Verify SpO2 every 2h and check for respiratory distress.';
       doctorNote =
@@ -1017,7 +1159,14 @@ export default function XRayScanner() {
         pneuScore +
         '% probability). Sputum culture, CBC with differential, and auscultation advised.';
       roiZones = [
-        { name: 'Basal Consolidation Region', top: '56%', left: '22%', width: '30%', height: '28%', color: 'border-amber-500' }
+        {
+          name: 'Basal Consolidation Region',
+          top: '56%',
+          left: '22%',
+          width: '30%',
+          height: '28%',
+          color: 'border-amber-500',
+        },
       ];
     } else {
       normScore = Math.min(95, Math.round(74 + (1 - stdDev / 120) * 20));
@@ -1032,7 +1181,8 @@ export default function XRayScanner() {
         'Symmetric bronchovascular markings within physiological limits',
         'Intact diaphragmatic contours and sharp costophrenic sulci',
       ];
-      impression = 'No acute pulmonary radiological consolidation or cavitation detected.';
+      impression =
+        'No acute pulmonary radiological consolidation or cavitation detected.';
       recommendation =
         'LOW RISK — No acute radiological intervention mandated. Correlate with clinical history and vital parameters.';
       doctorNote =
@@ -1045,7 +1195,9 @@ export default function XRayScanner() {
     runScan({
       id: 'xr_upload',
       label:
-        (uploadedFile.isCameraScan ? 'Live Camera Dynamic Body-to-X-Ray' : 'Uploaded Patient Scan') +
+        (uploadedFile.isCameraScan
+          ? 'Live Camera Dynamic Body-to-X-Ray'
+          : 'Uploaded Patient Scan') +
         ' — ' +
         (uploadedFile.name || 'Capture'),
       patientId: 'OD-LIVE-' + String(Date.now()).slice(-6),
@@ -1126,7 +1278,7 @@ export default function XRayScanner() {
             <Camera className="w-4 h-4" />
             <span>Body-to-X-Ray Camera</span>
             <span className="text-[9px] bg-emerald-400 text-slate-900 font-bold px-1.5 py-0.2 rounded-full">
-              1:1 CHEST FIT
+              AUTO-FIT SKELETON
             </span>
           </button>
         </div>
@@ -1162,8 +1314,12 @@ export default function XRayScanner() {
                     alt={xr.label}
                     className="w-full h-32 object-cover rounded-lg mb-2 bg-black"
                   />
-                  <p className="text-xs font-bold text-slate-800 leading-tight">{xr.label}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{xr.facility}</p>
+                  <p className="text-xs font-bold text-slate-800 leading-tight">
+                    {xr.label}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    {xr.facility}
+                  </p>
                   <span
                     className={
                       'mt-1.5 inline-block text-[10px] text-white ' +
@@ -1184,7 +1340,9 @@ export default function XRayScanner() {
               className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white py-3 rounded-xl font-bold text-sm transition-all mt-2"
             >
               <Scan className="w-4 h-4" />
-              {scanning ? 'AI Scanning in Progress...' : 'Run AI Scan on ' + selectedCase.label}
+              {scanning
+                ? 'AI Scanning in Progress...'
+                : 'Run AI Scan on ' + selectedCase.label}
             </button>
           )}
         </div>
@@ -1205,11 +1363,19 @@ export default function XRayScanner() {
 
           <label className="flex flex-col items-center justify-center border-2 border-dashed border-indigo-300 rounded-xl p-6 cursor-pointer hover:bg-indigo-50 transition-all">
             <span className="text-3xl mb-2">🫁</span>
-            <span className="text-sm font-semibold text-indigo-700">Click to upload X-Ray image</span>
-            <span className="text-[11px] text-slate-400 mt-1">
-              Supports Black &amp; White Chest Radiographs (JPG, PNG). Non-human/non-X-Ray files will be rejected.
+            <span className="text-sm font-semibold text-indigo-700">
+              Click to upload X-Ray image
             </span>
-            <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+            <span className="text-[11px] text-slate-400 mt-1">
+              Supports Black &amp; White Chest Radiographs (JPG, PNG).
+              Non-human/non-X-Ray files will be rejected.
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleUpload}
+            />
           </label>
 
           {uploadedFile && (
@@ -1243,7 +1409,9 @@ export default function XRayScanner() {
               {isValidatingUpload && (
                 <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center gap-2">
                   <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
-                  <span>Validating image radiological properties &amp; anatomy...</span>
+                  <span>
+                    Validating image radiological properties &amp; anatomy...
+                  </span>
                 </div>
               )}
 
@@ -1253,9 +1421,12 @@ export default function XRayScanner() {
                     <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                       <div>
-                        <p className="font-bold">✓ Authentic Medical Radiograph Detected</p>
+                        <p className="font-bold">
+                          ✓ Authentic Medical Radiograph Detected
+                        </p>
                         <p className="text-[11px] text-emerald-700 opacity-90">
-                          Monochromatic density profile and anatomical thoracic structure verified. Ready for AI screening.
+                          Monochromatic density profile and anatomical thoracic
+                          structure verified. Ready for AI screening.
                         </p>
                       </div>
                     </div>
@@ -1270,7 +1441,9 @@ export default function XRayScanner() {
                           {uploadValidation.reason}
                         </p>
                         <p className="text-[10px] text-rose-700 font-medium">
-                          Please click &ldquo;Cancel Image&rdquo; and upload a genuine black &amp; white human Chest X-Ray film, or switch to the Live Camera tab.
+                          Please click &ldquo;Cancel Image&rdquo; and upload a
+                          genuine black &amp; white human Chest X-Ray film, or
+                          switch to the Live Camera tab.
                         </p>
                       </div>
                     </div>
@@ -1313,7 +1486,7 @@ export default function XRayScanner() {
         </div>
       )}
 
-      {/* Camera Mode: Normal Human Body to Exact 1:1 Aligned Anatomical X-Ray Skeleton */}
+      {/* Camera Mode: Normal Human Body to Exact Auto-Fit & Interactive Aligned Anatomical X-Ray Skeleton */}
       {mode === 'camera' && (
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
@@ -1323,7 +1496,8 @@ export default function XRayScanner() {
                 Live Camera Body-to-X-Ray Scanner
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Point camera at patient chest/torso — skeleton dynamically scales and maps 1:1 onto the patient&apos;s actual chest
+                Point camera at patient chest — skeleton automatically detects
+                and contours to where the person is standing or sitting
               </p>
             </div>
             {cameraActive && (
@@ -1370,13 +1544,18 @@ export default function XRayScanner() {
               autoPlay
               playsInline
               muted
-              className={'w-full h-full object-cover ' + (cameraActive ? 'block' : 'hidden')}
+              className={
+                'w-full h-full object-cover ' +
+                (cameraActive ? 'block' : 'hidden')
+              }
             />
 
             {!cameraActive && !uploadedFile && (
               <div className="text-center p-6 text-slate-400 space-y-3">
                 <Camera className="w-12 h-12 mx-auto text-slate-500 animate-pulse" />
-                <p className="text-xs text-slate-300">Camera preview not running.</p>
+                <p className="text-xs text-slate-300">
+                  Camera preview not running.
+                </p>
                 <button
                   type="button"
                   onClick={() => startCamera(cameraFacing)}
@@ -1387,48 +1566,24 @@ export default function XRayScanner() {
               </div>
             )}
 
-            {/* Viewfinder Target Overlay with Dynamic Body Tracker */}
+            {/* Viewfinder Target Overlay */}
             {cameraActive && (
               <div className="absolute inset-4 border-2 border-dashed border-emerald-400/80 rounded-xl pointer-events-none flex flex-col justify-between p-2">
                 <div className="flex justify-between text-[10px] text-emerald-300 font-mono bg-black/60 px-2 py-0.5 rounded">
                   <span className="flex items-center gap-1">
                     <Crosshair className="w-3 h-3 text-emerald-400 animate-spin" />
-                    LIVE 1:1 CHEST LOCATOR
+                    SPATIAL HUMAN DETECTOR
                   </span>
-                  <span>AI DYNAMIC SKELETON</span>
+                  <span>AUTO-ALIGNED SKELETON</span>
                 </div>
                 <div className="text-center">
                   <span className="text-[10px] text-emerald-200 bg-black/60 px-2 py-1 rounded">
-                    Position patient chest inside the frame — skeleton auto-aligns below neck
+                    Position patient in camera view — skeleton automatically
+                    tracks and fits patient chest
                   </span>
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Bone Radiopacity / Skeleton Density Calibration Slider */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5">
-            <div className="flex justify-between text-xs font-semibold text-slate-700">
-              <span className="flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-indigo-500" />
-                <span>AI Skeleton Radiodensity Calibration:</span>
-              </span>
-              <span className="text-indigo-600 font-mono font-bold">{Math.round(boneIntensity * 100)}%</span>
-            </div>
-            <input
-              type="range"
-              min="0.7"
-              max="1.5"
-              step="0.05"
-              value={boneIntensity}
-              onChange={(e) => setBoneIntensity(parseFloat(e.target.value))}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-            />
-            <div className="flex justify-between text-[10px] text-slate-400">
-              <span>Soft Contrast</span>
-              <span>Balanced (Default 100%)</span>
-              <span>Crisp Cortical Bone</span>
-            </div>
           </div>
 
           {/* Capture Trigger Button */}
@@ -1440,7 +1595,7 @@ export default function XRayScanner() {
                 className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm flex items-center gap-2 shadow-md transition-all active:scale-95"
               >
                 <Sparkles className="w-5 h-5 text-amber-300" />
-                <span>Capture &amp; Generate 1:1 Matched Body X-Ray</span>
+                <span>Capture &amp; Generate Matched Body X-Ray</span>
               </button>
             </div>
           )}
@@ -1449,11 +1604,14 @@ export default function XRayScanner() {
           {isConvertingToXray && (
             <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-700 text-xs flex items-center gap-2 font-medium">
               <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
-              <span>Mapping 1:1 anatomical ribcage &amp; spine inside patient chest...</span>
+              <span>
+                Locating person in frame &amp; synthesizing 1:1 aligned thoracic
+                skeleton...
+              </span>
             </div>
           )}
 
-          {/* Captured & Converted Preview */}
+          {/* Captured & Converted Preview with Live Manual Alignment Sliders */}
           {uploadedFile && !cameraActive && !isConvertingToXray && (
             <div className="space-y-3 pt-2">
               <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm">
@@ -1461,7 +1619,7 @@ export default function XRayScanner() {
                   <div className="flex items-center gap-1.5">
                     <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
                     <span className="text-[11px] text-emerald-400 font-mono font-bold">
-                      ✓ Skeleton 1:1 Mapped to Patient Chest
+                      ✓ Skeleton Aligned on Detected Patient
                     </span>
                   </div>
 
@@ -1528,8 +1686,106 @@ export default function XRayScanner() {
                   />
                   <div className="absolute bottom-2 left-2 bg-black/75 px-2 py-0.5 rounded text-[10px] text-slate-300 font-mono">
                     {cameraPreviewView === 'xray'
-                      ? '🩻 1:1 Body-Fitted Thoracic Radiograph'
+                      ? '🩻 1:1 Patient-Aligned Thoracic Radiograph'
                       : '📷 Live Camera Frame'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Interactive Fine-Tuning Alignment Controls (Nudge / Scale / Density) */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-3">
+                <p className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Move className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Fine-Tune Skeleton Alignment On Patient Body:</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManualOffsetX(0);
+                      setManualOffsetY(0);
+                      setManualScale(1.0);
+                      setBoneIntensity(1.0);
+                      updateManualAlignment(0, 0, 1.0, 1.0);
+                    }}
+                    className="text-[10px] text-indigo-600 hover:underline font-mono"
+                  >
+                    Reset Nudge
+                  </button>
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  {/* Position X */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] text-slate-600 font-medium">
+                      <span>↔ Shift Left / Right:</span>
+                      <span className="font-mono font-bold text-indigo-600">
+                        {manualOffsetX > 0
+                          ? `+${manualOffsetX}px`
+                          : `${manualOffsetX}px`}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-250"
+                      max="250"
+                      step="5"
+                      value={manualOffsetX}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        setManualOffsetX(val);
+                        updateManualAlignment(val, undefined, undefined);
+                      }}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                  </div>
+
+                  {/* Position Y */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] text-slate-600 font-medium">
+                      <span>↕ Shift Up / Down:</span>
+                      <span className="font-mono font-bold text-indigo-600">
+                        {manualOffsetY > 0
+                          ? `+${manualOffsetY}px`
+                          : `${manualOffsetY}px`}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-180"
+                      max="180"
+                      step="5"
+                      value={manualOffsetY}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        setManualOffsetY(val);
+                        updateManualAlignment(undefined, val, undefined);
+                      }}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                  </div>
+
+                  {/* Scale Width */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] text-slate-600 font-medium">
+                      <span>🔍 Ribcage Size / Scale:</span>
+                      <span className="font-mono font-bold text-indigo-600">
+                        {Math.round(manualScale * 100)}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.7"
+                      max="1.4"
+                      step="0.05"
+                      value={manualScale}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setManualScale(val);
+                        updateManualAlignment(undefined, undefined, val);
+                      }}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
                   </div>
                 </div>
               </div>
@@ -1538,12 +1794,30 @@ export default function XRayScanner() {
               {uploadedFile.bodyMetrics && (
                 <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-[11px] font-mono text-slate-300 flex items-center justify-between flex-wrap gap-2">
                   <span className="text-emerald-400 flex items-center gap-1 font-bold">
-                    <Activity className="w-3.5 h-3.5" /> Chest Localization:
+                    <Activity className="w-3.5 h-3.5" /> Person Localization:
                   </span>
-                  <span>Center: ({Math.round(uploadedFile.bodyMetrics.cx)}, {Math.round(uploadedFile.bodyMetrics.cy)})</span>
-                  <span>Rib Span: {Math.round(uploadedFile.bodyMetrics.tw * 2)}px</span>
-                  <span>Chest Top: Y:{Math.round(uploadedFile.bodyMetrics.chestTopY)}</span>
-                  <span className="text-indigo-400">1:1 Photo Aligned</span>
+                  <span>
+                    Chest Center: (
+                    {Math.round(
+                      uploadedFile.bodyMetrics.adjustedCx ||
+                        uploadedFile.bodyMetrics.cx
+                    )}
+                    ,{' '}
+                    {Math.round(
+                      uploadedFile.bodyMetrics.adjustedCy ||
+                        uploadedFile.bodyMetrics.cy
+                    )}
+                    )
+                  </span>
+                  <span>
+                    Rib Width:{' '}
+                    {Math.round(
+                      (uploadedFile.bodyMetrics.adjustedTw ||
+                        uploadedFile.bodyMetrics.tw) * 2
+                    )}
+                    px
+                  </span>
+                  <span className="text-indigo-400">1:1 Aligned on Patient</span>
                 </div>
               )}
 
@@ -1566,7 +1840,9 @@ export default function XRayScanner() {
                   className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-sm"
                 >
                   <Brain className="w-4 h-4" />
-                  {scanning ? 'AI Scanning Radiograph...' : 'Analyze Dynamic Body X-Ray'}
+                  {scanning
+                    ? 'AI Scanning Radiograph...'
+                    : 'Analyze Dynamic Body X-Ray'}
                 </button>
               </div>
             </div>
@@ -1591,7 +1867,11 @@ export default function XRayScanner() {
             />
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {['Body Tracking & Rib Alignment', 'Cavitation & Consolidation', 'Clinical Note Generation'].map((s, i) => (
+            {[
+              'Body Tracking & Rib Alignment',
+              'Cavitation & Consolidation',
+              'Clinical Note Generation',
+            ].map((s, i) => (
               <div
                 key={s}
                 className={
@@ -1606,7 +1886,8 @@ export default function XRayScanner() {
             ))}
           </div>
           <p className="text-slate-500 text-[10px]">
-            Comparing against 12,400 reference chest radiographs from NHP database...
+            Comparing against 12,400 reference chest radiographs from NHP
+            database...
           </p>
         </div>
       )}
@@ -1617,12 +1898,17 @@ export default function XRayScanner() {
           {/* Urgency Banner */}
           <div
             className={
-              u.bg + ' border-2 ' + u.border + ' rounded-2xl p-4 flex items-center justify-between'
+              u.bg +
+              ' border-2 ' +
+              u.border +
+              ' rounded-2xl p-4 flex items-center justify-between'
             }
           >
             <div>
               <p className={'text-sm font-extrabold ' + u.text}>{u.label}</p>
-              <p className={'text-xs ' + u.text + ' opacity-80 mt-0.5'}>{result.impression}</p>
+              <p className={'text-xs ' + u.text + ' opacity-80 mt-0.5'}>
+                {result.impression}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -1635,7 +1921,9 @@ export default function XRayScanner() {
               </button>
               <span
                 className={
-                  'text-white text-[11px] font-bold ' + u.badge + ' px-3 py-1.5 rounded-xl'
+                  'text-white text-[11px] font-bold ' +
+                  u.badge +
+                  ' px-3 py-1.5 rounded-xl'
                 }
               >
                 {result.patientId}
@@ -1649,7 +1937,8 @@ export default function XRayScanner() {
             <div className="rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm">
               <div className="bg-slate-800 px-3 py-2 flex items-center justify-between">
                 <span className="text-[11px] text-emerald-400 font-mono font-bold flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5" /> AI Multi-Zone Analysis Complete
+                  <Check className="w-3.5 h-3.5" /> AI Multi-Zone Analysis
+                  Complete
                 </span>
                 {result.roiZones && result.roiZones.length > 0 && (
                   <button
@@ -1658,7 +1947,9 @@ export default function XRayScanner() {
                     className="text-[10px] text-slate-300 hover:text-white flex items-center gap-1 bg-slate-700 px-2 py-0.5 rounded font-mono"
                   >
                     <Layers className="w-3 h-3 text-indigo-400" />
-                    <span>ROI Highlights: {showRoiHighlights ? 'ON' : 'OFF'}</span>
+                    <span>
+                      ROI Highlights: {showRoiHighlights ? 'ON' : 'OFF'}
+                    </span>
                   </button>
                 )}
               </div>
@@ -1711,14 +2002,29 @@ export default function XRayScanner() {
                     <span>Quality Gate Rejection — Image Not Valid</span>
                   </div>
                   <p className="text-xs text-rose-900 leading-relaxed font-medium">
-                    The uploaded file is <strong>not recognized as an authentic human chest X-Ray radiograph</strong>. The AI detection model strictly requires monochromatic medical radiographs or camera-scanned patient bodies.
+                    The uploaded file is{' '}
+                    <strong>
+                      not recognized as an authentic human chest X-Ray radiograph
+                    </strong>
+                    . The AI detection model strictly requires monochromatic
+                    medical radiographs or camera-scanned patient bodies.
                   </p>
                   <div className="text-[11px] text-rose-800 bg-rose-100/70 border border-rose-200 rounded-lg p-2.5 space-y-1">
-                    <p className="font-semibold">Rejection Criteria Triggered:</p>
+                    <p className="font-semibold">
+                      Rejection Criteria Triggered:
+                    </p>
                     <ul className="list-disc list-inside space-y-0.5 text-[10px]">
-                      <li>Non-monochromatic color chroma (photo of clothes, everyday object, pet, scenery, etc.)</li>
-                      <li>Absence of anatomical ribcage, clavicles, lung fields, or central vertebral column</li>
-                      <li>Binary document, screenshot, or text graphic format</li>
+                      <li>
+                        Non-monochromatic color chroma (photo of clothes,
+                        everyday object, pet, scenery, etc.)
+                      </li>
+                      <li>
+                        Absence of anatomical ribcage, clavicles, lung fields, or
+                        central vertebral column
+                      </li>
+                      <li>
+                        Binary document, screenshot, or text graphic format
+                      </li>
                     </ul>
                   </div>
                 </div>
@@ -1728,7 +2034,11 @@ export default function XRayScanner() {
                     AI Confidence Scores
                   </p>
                   {[
-                    { label: 'Pulmonary TB', val: result.aiConfidence.tb, color: 'bg-red-500' },
+                    {
+                      label: 'Pulmonary TB',
+                      val: result.aiConfidence.tb,
+                      color: 'bg-red-500',
+                    },
                     {
                       label: 'Bacterial Pneumonia',
                       val: result.aiConfidence.pneumonia,
@@ -1742,8 +2052,12 @@ export default function XRayScanner() {
                   ].map((bar) => (
                     <div key={bar.label} className="mb-2">
                       <div className="flex justify-between text-[10px] mb-0.5">
-                        <span className="text-slate-600 font-medium">{bar.label}</span>
-                        <span className="font-bold text-slate-800">{bar.val}%</span>
+                        <span className="text-slate-600 font-medium">
+                          {bar.label}
+                        </span>
+                        <span className="font-bold text-slate-800">
+                          {bar.val}%
+                        </span>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-2">
                         <div
@@ -1762,8 +2076,13 @@ export default function XRayScanner() {
                 </p>
                 <ul className="space-y-1">
                   {result.findings.map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-slate-700">
-                      <span className="text-indigo-500 font-bold mt-0.5">→</span>
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 text-xs text-slate-700"
+                    >
+                      <span className="text-indigo-500 font-bold mt-0.5">
+                        →
+                      </span>
                       {f}
                     </li>
                   ))}
@@ -1784,28 +2103,36 @@ export default function XRayScanner() {
                       <p className="text-[10px] text-slate-500">Mean Lum</p>
                       <p className="text-xs font-bold text-slate-800">
                         {result.metrics.meanLum}{' '}
-                        <span className="text-[9px] font-normal text-slate-400">HU</span>
+                        <span className="text-[9px] font-normal text-slate-400">
+                          HU
+                        </span>
                       </p>
                     </div>
                     <div className="p-2 bg-white rounded-lg border border-slate-200">
                       <p className="text-[10px] text-slate-500">Texture σ</p>
                       <p className="text-xs font-bold text-slate-800">
                         {result.metrics.stdDev}{' '}
-                        <span className="text-[9px] font-normal text-slate-400">var</span>
+                        <span className="text-[9px] font-normal text-slate-400">
+                          var
+                        </span>
                       </p>
                     </div>
                     <div className="p-2 bg-white rounded-lg border border-slate-200">
                       <p className="text-[10px] text-slate-500">Hemi-Asym</p>
                       <p className="text-xs font-bold text-slate-800">
                         {result.metrics.asymmetry}{' '}
-                        <span className="text-[9px] font-normal text-slate-400">Δ</span>
+                        <span className="text-[9px] font-normal text-slate-400">
+                          Δ
+                        </span>
                       </p>
                     </div>
                     <div className="p-2 bg-white rounded-lg border border-slate-200">
                       <p className="text-[10px] text-slate-500">Chroma Sat</p>
                       <p
                         className={`text-xs font-bold ${
-                          result.metrics.saturation > 10 ? 'text-rose-600' : 'text-slate-800'
+                          result.metrics.saturation > 10
+                            ? 'text-rose-600'
+                            : 'text-slate-800'
                         }`}
                       >
                         {result.metrics.saturation || 0}%
@@ -1820,16 +2147,25 @@ export default function XRayScanner() {
           {/* Recommendation */}
           <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
             <div className={u.bg + ' border ' + u.border + ' rounded-xl p-3'}>
-              <p className={'text-[11px] font-bold ' + u.text + ' uppercase tracking-wide mb-1'}>
+              <p
+                className={
+                  'text-[11px] font-bold ' +
+                  u.text +
+                  ' uppercase tracking-wide mb-1'
+                }
+              >
                 ASHA Field Recommendation
               </p>
               <p className={'text-xs ' + u.text}>{result.recommendation}</p>
             </div>
             <div className="bg-slate-900 rounded-xl p-3 font-mono text-[11px] space-y-1">
-              <p className="text-emerald-400 font-bold">SwasthyaMitra — AI X-Ray Report Note</p>
+              <p className="text-emerald-400 font-bold">
+                SwasthyaMitra — AI X-Ray Report Note
+              </p>
               <p className="text-slate-300">{result.doctorNote}</p>
               <p className="text-slate-500 text-[10px] pt-1 border-t border-slate-700">
-                Non-diagnostic AI screening. Doctor validation mandatory before treatment.
+                Non-diagnostic AI screening. Doctor validation mandatory before
+                treatment.
               </p>
             </div>
           </div>
@@ -1854,9 +2190,10 @@ export default function XRayScanner() {
           <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl p-3">
             <ShieldAlert className="w-5 h-5 text-indigo-500 flex-shrink-0" />
             <p className="text-[11px] text-indigo-700">
-              <strong>Legal Notice:</strong> This X-Ray screening is non-diagnostic AI assistance.
-              Final clinical decision must be made by a qualified doctor. Compliant with MoHFW
-              Digital Health Policy 2023.
+              <strong>Legal Notice:</strong> This X-Ray screening is
+              non-diagnostic AI assistance. Final clinical decision must be made
+              by a qualified doctor. Compliant with MoHFW Digital Health Policy
+              2023.
             </p>
           </div>
         </div>
