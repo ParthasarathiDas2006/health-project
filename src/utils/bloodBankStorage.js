@@ -1,6 +1,9 @@
 /**
  * Storage utility for Blood Requests & Donor Pledges
+ * Synchronized with Cloud Firestore and localStorage
  */
+
+import { saveFirestoreDoc, fetchFirestoreCollection, FIRESTORE_COLLECTIONS } from '../services/firebaseDb';
 
 const BLOOD_REQUESTS_KEY = 'triage_blood_requests';
 const DONOR_PLEDGES_KEY = 'triage_blood_donor_pledges';
@@ -19,12 +22,18 @@ export const saveBloodRequest = (requestData) => {
   const current = getBloodRequests();
   const newReq = {
     ...requestData,
-    id: `REQ-BLD-${Math.floor(100000 + Math.random() * 900000)}`,
-    createdAt: new Date().toISOString(),
-    status: 'CONFIRMED'
+    id: requestData.id || `REQ-BLD-${Math.floor(100000 + Math.random() * 900000)}`,
+    createdAt: requestData.createdAt || new Date().toISOString(),
+    status: requestData.status || 'CONFIRMED'
   };
   const updated = [newReq, ...current];
   localStorage.setItem(BLOOD_REQUESTS_KEY, JSON.stringify(updated));
+
+  // Asynchronously sync to Cloud Firestore
+  saveFirestoreDoc(FIRESTORE_COLLECTIONS.BLOOD_REQUESTS, newReq.id, newReq).catch((err) => {
+    console.warn('Firestore sync note for blood request:', err);
+  });
+
   return newReq;
 };
 
@@ -42,11 +51,35 @@ export const saveDonorPledge = (donorData) => {
   const current = getDonorPledges();
   const newPledge = {
     ...donorData,
-    id: `DNR-OD-${Math.floor(100000 + Math.random() * 900000)}`,
-    pledgeDate: new Date().toISOString(),
-    status: 'ACTIVE'
+    id: donorData.id || `DNR-OD-${Math.floor(100000 + Math.random() * 900000)}`,
+    pledgeDate: donorData.pledgeDate || new Date().toISOString(),
+    status: donorData.status || 'ACTIVE'
   };
   const updated = [newPledge, ...current];
   localStorage.setItem(DONOR_PLEDGES_KEY, JSON.stringify(updated));
+
+  // Asynchronously sync to Cloud Firestore
+  saveFirestoreDoc(FIRESTORE_COLLECTIONS.BLOOD_DONORS, newPledge.id, newPledge).catch((err) => {
+    console.warn('Firestore sync note for donor pledge:', err);
+  });
+
   return newPledge;
+};
+
+/**
+ * Hydrate blood bank data from Cloud Firestore if available
+ */
+export const syncBloodBankFromFirestore = async () => {
+  try {
+    const remoteRequests = await fetchFirestoreCollection(FIRESTORE_COLLECTIONS.BLOOD_REQUESTS);
+    if (remoteRequests && remoteRequests.length > 0) {
+      localStorage.setItem(BLOOD_REQUESTS_KEY, JSON.stringify(remoteRequests));
+    }
+    const remoteDonors = await fetchFirestoreCollection(FIRESTORE_COLLECTIONS.BLOOD_DONORS);
+    if (remoteDonors && remoteDonors.length > 0) {
+      localStorage.setItem(DONOR_PLEDGES_KEY, JSON.stringify(remoteDonors));
+    }
+  } catch (e) {
+    console.warn('Remote blood bank sync skipped:', e);
+  }
 };

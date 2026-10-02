@@ -28,7 +28,7 @@ import 'leaflet/dist/leaflet.css';
 import { getAmbulanceRequests, saveAmbulanceRequest, cancelAmbulanceRequest } from '../utils/authStorage';
 import { ODISHA_MEDICAL_FACILITIES, ODISHA_LOCATIONS, calculateDistanceKm } from '../utils/nearestMedicalData';
 
-export default function AmbulanceBooking({ currentUser, appLang }) {
+export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNearest }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('book'); // 'book' | 'track' | 'my-requests'
@@ -472,7 +472,7 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
       </div>
 
       {/* ── Sub-Tabs Bar ────────────────────────────────────────────── */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setActiveSubTab('book')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -514,6 +514,17 @@ export default function AmbulanceBooking({ currentUser, appLang }) {
             </span>
           )}
         </button>
+
+        {onNavigateToNearest && (
+          <button
+            type="button"
+            onClick={onNavigateToNearest}
+            className="ml-auto px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 flex items-center gap-1.5 shadow-2xs cursor-pointer"
+          >
+            <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+            <span>📍 Nearest Hospital GPS Map</span>
+          </button>
+        )}
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════

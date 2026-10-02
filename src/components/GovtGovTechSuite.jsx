@@ -30,6 +30,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import ClinicalRiskScoreSuite from './ClinicalRiskScoreSuite';
+import AshaVoiceAssistSuite from './AshaVoiceAssistSuite';
 
 const DrugAllergySafetyGuard = React.lazy(() => import('./DrugAllergySafetyGuard'));
 // ─── Differential Triage Module (Feature 12) ────────────────────────────────
@@ -980,123 +981,9 @@ export default function GovtGovTechSuite({ currentUser, appLang, initialFeature 
         <ClinicalRiskScoreSuite appLang={lang} currentUser={currentUser} />
       )}
 
-      {/* Feature 6-9: ASHA Voice, Pain Map & Family Triage */}
+      {/* Feature 6-9 / Tab 16-17: Multilingual ASHA Voice Assist & Community Triage */}
       {activeSubTab === 'asha_copilot' && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <Mic className="w-5 h-5 text-amber-600" />
-              6-9. ASHA Low-Literacy Voice Copilot &amp; Multi-Member Camp Triage
-            </h3>
-            <p className="text-xs text-slate-500">Voice-first handsfree intake for community health workers, pictorial pain scales, and family camp batch processing.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* ASHA Voice Copilot & Pain Map */}
-            <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-extrabold text-amber-900 text-sm flex items-center gap-2">
-                    <Mic className="w-4 h-4 text-amber-600" />
-                    7. ASHA Voice Copilot (Odia / Hindi Guided Voice Intake)
-                  </h4>
-                  <span className="text-[10px] font-black bg-amber-200 text-amber-900 px-2 py-0.5 rounded">No Typing Needed</span>
-                </div>
-
-                <div className="p-3 bg-white rounded-xl border border-amber-200 flex items-center gap-3">
-                  <button className="p-3 bg-amber-600 text-white rounded-full shadow-md animate-bounce shrink-0">
-                    <Mic className="w-5 h-5" />
-                  </button>
-                  <div className="text-xs text-amber-900">
-                    <p className="font-bold text-slate-900">"କଣ ଛାତି ପୋଡା କିମ୍ବା କଷ୍ଟ ହେଉଛି?"</p>
-                    <p className="text-[11px] text-slate-500">ASHA holds mic button and speaks in Odia/Hindi. AI asks logical next triage question.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pictorial Pain Map */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <h4 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-                  <Smile className="w-4 h-4 text-indigo-600" />
-                  8. Pictorial Pain Scale &amp; Triage Body Map
-                </h4>
-                <p className="text-xs text-slate-500">Tap body region and select pain intensity smiley (Ideal for children and non-literate patients).</p>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Body Location:</label>
-                    <select
-                      value={selectedBodyPart}
-                      onChange={(e) => setSelectedBodyPart(e.target.value)}
-                      className="w-full p-2 bg-white border border-slate-200 rounded-lg font-bold"
-                    >
-                      <option value="Chest / Thorax">🫁 Chest / Thorax</option>
-                      <option value="Abdomen / Stomach">🫄 Abdomen / Stomach</option>
-                      <option value="Head / Cranial">🧠 Head / Cranial</option>
-                      <option value="Lower Back / Spine">🦴 Lower Back / Spine</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Pain Rating (1-10):</label>
-                    <div className="p-2 bg-white border border-slate-200 rounded-lg text-center font-extrabold text-indigo-700">
-                      Level {painLevel}/10 ({smileys[Math.min(4, Math.floor(painLevel/2))]})
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature 9: Family Triage */}
-            <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="font-extrabold text-indigo-900 text-sm flex items-center gap-2">
-                  <Users className="w-4 h-4 text-indigo-600" />
-                  9. Multi-Member Family Triage &amp; Camp Mode
-                </h4>
-                <span className="text-[10px] font-black bg-indigo-600 text-white px-2 py-0.5 rounded">Single Household Batch</span>
-              </div>
-              <p className="text-xs text-indigo-800">Allows ASHA workers to triage entire households in one camp session (e.g. viral fever outbreaks).</p>
-
-              <div className="space-y-2">
-                {familyMembers.map((m, i) => (
-                  <div key={i} className="p-2.5 bg-white rounded-xl border border-indigo-100 flex items-center justify-between text-xs">
-                    <div>
-                      <p className="font-bold text-slate-900">{m.name} ({m.age} yrs)</p>
-                      <p className="text-slate-500 text-[11px]">{m.symptom}</p>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                      m.status === 'RED' ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'
-                    }`}>
-                      {m.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-2 flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Family Member Name"
-                  value={newMemName}
-                  onChange={(e) => setNewMemName(e.target.value)}
-                  className="flex-1 p-2 bg-white border border-indigo-200 rounded-lg text-xs"
-                />
-                <button
-                  onClick={() => {
-                    if (newMemName) {
-                      setFamilyMembers([...familyMembers, { name: newMemName, age: 22, symptom: 'Fever & Fatigue', status: 'YELLOW' }]);
-                      setNewMemName('');
-                    }
-                  }}
-                  className="px-3 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg"
-                >
-                  + Add Member
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AshaVoiceAssistSuite appLang={lang} currentUser={currentUser} />
       )}
 
       {/* Feature 13: IDSP Outbreak Radar */}
