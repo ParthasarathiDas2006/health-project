@@ -534,13 +534,13 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
       const imgD = ictx.getImageData(0, 0, iw, ih);
       const px = imgD.data;
 
-      // Clean background pedestal while keeping all carpals, metacarpals, phalanges & distal bones 100% solid & intact
+      // Clean background pedestal completely so no rectangular box is visible
       for (let i = 0; i < px.length; i += 4) {
         const r = px[i], g = px[i + 1], b = px[i + 2];
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
-        if (lum < 46) {
-          px[i + 3] = Math.max(0, Math.min(255, (lum - 12) * 7.5));
+        if (lum < 65) {
+          px[i + 3] = Math.max(0, Math.min(255, (lum - 32) * 7.5));
         }
       }
       ictx.putImageData(imgD, 0, 0);
@@ -570,28 +570,28 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
       const isHandMod = mod.id === 'm1_hand' || mod.id === 'm2_wrist' || mod.id === 'm3_forearm' || mod.id === 'm4_elbow' || mod.id === 'm5_upperarm';
       const cleanRef = prepareCleanRadiograph(refImg, cropBottom);
 
-      // Helper to draw realistic anatomical curved forearm bones matching radiograph density & wrist attachment
+      // Helper to draw realistic anatomical curved forearm bones matching radiograph density & exact upper/lower wrist alignment
       function drawAnatomicalForearmBone(isRadius, startY, endY, handW) {
         const steps = 30;
         const dy = (endY - startY) / steps;
-        // Exact anatomical alignment with distal radius & ulna of cleanRef
-        const radStartX = -0.055 * handW;
-        const ulnStartX = 0.045 * handW;
-        const radWidth = 0.065 * handW;
-        const ulnWidth = 0.050 * handW;
+        // Exact anatomical alignment: upper bone (Radius) matches upper palm, lower bone (Ulna) matches lower palm
+        const radStartX = -0.110 * handW;
+        const ulnStartX = 0.080 * handW;
+        const radWidth = 0.090 * handW;
+        const ulnWidth = 0.075 * handW;
 
         ctx.save();
 
         // 1. Cortical Wall (soft radiopaque blue-gray matching genuine radiograph)
-        ctx.fillStyle = 'rgba(215, 235, 255, 0.82)';
+        ctx.fillStyle = 'rgba(215, 235, 255, 0.85)';
         ctx.beginPath();
         for (let s = 0; s <= steps; s++) {
           const y = startY + s * dy;
           const t = s / steps;
           const baseX = isRadius
-            ? radStartX - 2.5 * Math.sin(t * Math.PI)
-            : ulnStartX + 1.5 * Math.sin(t * Math.PI);
-          const halfThick = (isRadius ? radWidth * (1 - t * 0.12) : ulnWidth * (1 + t * 0.08)) * 0.5;
+            ? radStartX - 3.0 * Math.sin(t * Math.PI)
+            : ulnStartX + 2.0 * Math.sin(t * Math.PI);
+          const halfThick = (isRadius ? radWidth * (1 - t * 0.10) : ulnWidth * (1 + t * 0.08)) * 0.5;
           const x = baseX - halfThick;
           if (s === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
@@ -600,9 +600,9 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
           const y = startY + s * dy;
           const t = s / steps;
           const baseX = isRadius
-            ? radStartX - 2.5 * Math.sin(t * Math.PI)
-            : ulnStartX + 1.5 * Math.sin(t * Math.PI);
-          const halfThick = (isRadius ? radWidth * (1 - t * 0.12) : ulnWidth * (1 + t * 0.08)) * 0.5;
+            ? radStartX - 3.0 * Math.sin(t * Math.PI)
+            : ulnStartX + 2.0 * Math.sin(t * Math.PI);
+          const halfThick = (isRadius ? radWidth * (1 - t * 0.10) : ulnWidth * (1 + t * 0.08)) * 0.5;
           const x = baseX + halfThick;
           ctx.lineTo(x, y);
         }
@@ -610,15 +610,15 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
         ctx.fill();
 
         // 2. Medullary Canal Core (cancellous trabeculae matching X-ray density)
-        ctx.fillStyle = 'rgba(120, 160, 205, 0.40)';
+        ctx.fillStyle = 'rgba(115, 155, 200, 0.42)';
         ctx.beginPath();
         for (let s = 0; s <= steps; s++) {
           const y = startY + s * dy;
           const t = s / steps;
           const baseX = isRadius
-            ? radStartX - 2.5 * Math.sin(t * Math.PI)
-            : ulnStartX + 1.5 * Math.sin(t * Math.PI);
-          const halfThick = (isRadius ? radWidth * (1 - t * 0.12) : ulnWidth * (1 + t * 0.08)) * 0.32;
+            ? radStartX - 3.0 * Math.sin(t * Math.PI)
+            : ulnStartX + 2.0 * Math.sin(t * Math.PI);
+          const halfThick = (isRadius ? radWidth * (1 - t * 0.10) : ulnWidth * (1 + t * 0.08)) * 0.32;
           const x = baseX - halfThick;
           if (s === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
@@ -627,9 +627,9 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
           const y = startY + s * dy;
           const t = s / steps;
           const baseX = isRadius
-            ? radStartX - 2.5 * Math.sin(t * Math.PI)
-            : ulnStartX + 1.5 * Math.sin(t * Math.PI);
-          const halfThick = (isRadius ? radWidth * (1 - t * 0.12) : ulnWidth * (1 + t * 0.08)) * 0.32;
+            ? radStartX - 3.0 * Math.sin(t * Math.PI)
+            : ulnStartX + 2.0 * Math.sin(t * Math.PI);
+          const halfThick = (isRadius ? radWidth * (1 - t * 0.10) : ulnWidth * (1 + t * 0.08)) * 0.32;
           const x = baseX + halfThick;
           ctx.lineTo(x, y);
         }
@@ -637,7 +637,7 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
         ctx.fill();
 
         // 3. Subtle fine longitudinal trabeculae
-        ctx.strokeStyle = 'rgba(235, 245, 255, 0.35)';
+        ctx.strokeStyle = 'rgba(235, 245, 255, 0.38)';
         ctx.lineWidth = 1.0;
         for (let r = -1; r <= 1; r++) {
           ctx.beginPath();
@@ -645,9 +645,9 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
             const y = startY + s * dy;
             const t = s / steps;
             const baseX = isRadius
-              ? radStartX - 2.5 * Math.sin(t * Math.PI)
-              : ulnStartX + 1.5 * Math.sin(t * Math.PI);
-            const x = baseX + r * 2.5;
+              ? radStartX - 3.0 * Math.sin(t * Math.PI)
+              : ulnStartX + 2.0 * Math.sin(t * Math.PI);
+            const x = baseX + r * 3.0;
             if (s === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
@@ -678,12 +678,12 @@ function generatePoseAdaptiveSyntheticRadiograph(capturedCanvas, targetModuleId,
         // A. Forearm Soft-Tissue Envelope (subtle organic gray attenuation around forearm)
         ctx.fillStyle = 'rgba(40, 60, 85, 0.22)';
         ctx.beginPath();
-        ctx.ellipse(0, fl * 0.45, hw * 0.20, fl * 0.52, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, fl * 0.45, hw * 0.22, fl * 0.52, 0, 0, Math.PI * 2);
         ctx.fill();
 
         // B. Draw Forearm continuation bones extending directly from Y = 0 (base of distal radius/ulna) to Y = fl
-        drawAnatomicalForearmBone(true, 0, fl, hw);  // Radius shaft attached to lateral wrist
-        drawAnatomicalForearmBone(false, 0, fl, hw); // Ulna shaft attached to medial wrist
+        drawAnatomicalForearmBone(true, 0, fl, hw);  // Upper bone (Radius) matching upper palm
+        drawAnatomicalForearmBone(false, 0, fl, hw); // Lower bone (Ulna) matching lower palm
 
         // C. Draw authentic clinical hand radiograph from Y = -hl to Y = 0 (100% solid, fully intact carpal wrist!)
         ctx.drawImage(
