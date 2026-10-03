@@ -1,8 +1,8 @@
 // SwasthyaMitra Service Worker — Ultra-Reliable Rural PHC Offline Triage & Clinic Suite
-// Version: v2.1.0 (Odisha Health Portal & ABDM Mission - Network-First for Fast Deployments)
+// Version: v2.3.0 (Odisha Health Portal & ABDM Mission - Network-First for Fast Deployments)
 
-const CACHE_NAME = 'swasthyamitra-phc-v2.1.0';
-const DYNAMIC_CACHE_NAME = 'swasthyamitra-dynamic-v2.1.0';
+const CACHE_NAME = 'swasthyamitra-phc-v2.3.0';
+const DYNAMIC_CACHE_NAME = 'swasthyamitra-dynamic-v2.3.0';
 
 const STATIC_ASSETS = [
   '/',

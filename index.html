@@ -51,6 +51,25 @@
     </script>
 
     <style>
+      /* Guaranteed instant responsive layout on mobile screens without waiting for JS/CDN */
+      @media (max-width: 1023px) {
+        .lg\:hidden {
+          display: block !important;
+        }
+        .hidden.lg\:flex,
+        .lg\:flex {
+          display: none !important;
+        }
+      }
+      @media (min-width: 1024px) {
+        .lg\:hidden {
+          display: none !important;
+        }
+        .hidden.lg\:flex {
+          display: flex !important;
+        }
+      }
+
       body {
         font-family: 'Inter', 'Noto Sans Oriya', 'Noto Sans Devanagari', sans-serif;
         background-color: #f8fafc;
