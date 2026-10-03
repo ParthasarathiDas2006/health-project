@@ -911,9 +911,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 1. MOBILE SMARTPHONE VIEW (SCREEN < 768px — Android & iPhone)       */}
+      {/* 1. MOBILE & TABLET VIEW (SCREEN < 1024px — iPhone, Android & Tablets)*/}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="block md:hidden">
+      <div className="block lg:hidden">
         <MobileAppView
           currentUser={currentUser}
           appLang={appLang}
@@ -931,9 +931,9 @@ export default function App() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 2. DESKTOP & LAPTOP WORKSPACE (SCREEN >= 768px — Full Multi-Hub)    */}
+      {/* 2. DESKTOP & LAPTOP WORKSPACE (SCREEN >= 1024px — Full Multi-Hub)   */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="hidden md:flex md:flex-col min-h-screen">
+      <div className="hidden lg:flex lg:flex-col min-h-screen">
         {/* 1. TOP STATUS & CLINICAL SAFETY BANNER (ROLE-TAILORED) */}
         <div className="bg-slate-900 text-slate-200 px-4 py-2 text-xs flex flex-wrap items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-2">
