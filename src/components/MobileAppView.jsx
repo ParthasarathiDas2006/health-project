@@ -107,6 +107,7 @@ export default function MobileAppView({
         adminSub: '30-District Health Governance',
         teleconsultTitle: 'ଭିଡିଓ ଟେଲିକନସଲଟେସନ୍',
         teleconsultSub: 'ଲାଇଭ୍ WebRTC ଭିଡିଓ କଲ୍ ଓ ଡିଜିଟାଲ୍ Rx',
+        teleconsultNav: 'ଭିଡିଓ OPD',
         home: 'Home',
         services: 'Services',
         records: 'Health Records',
@@ -147,6 +148,7 @@ export default function MobileAppView({
         adminSub: '30 जिला कमान एवं टेलीमेट्री',
         teleconsultTitle: 'लाइव वीडियो टेलीपरामर्श',
         teleconsultSub: 'WebRTC वीडियो कॉल एवं डिजिटल पर्ची',
+        teleconsultNav: 'वीडियो OPD',
         home: 'Home',
         services: 'Services',
         records: 'Health Records',
@@ -187,6 +189,7 @@ export default function MobileAppView({
         adminSub: '30-District Health Governance',
         teleconsultTitle: 'Live Video Teleconsult',
         teleconsultSub: 'In-App WebRTC Video & AI SOAP Scribe',
+        teleconsultNav: 'Video OPD',
         home: 'Home',
         services: 'Services',
         records: 'Health Records',
@@ -759,14 +762,25 @@ export default function MobileAppView({
                   </button>
                 </div>
 
-                {/* 🚨 Full-Width Red Emergency SOS Button */}
-                <a
-                  href="tel:108"
-                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-rose-950/20 active:scale-98 transition-all cursor-pointer border border-rose-400/60"
-                >
-                  <Phone className="w-3.5 h-3.5 text-white animate-bounce" />
-                  <span className="tracking-wide">{t.emergency108}</span>
-                </a>
+                {/* 🚨 Emergency 108 SOS & Live Video Teleconsultation Grid */}
+                <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <a
+                    href="tel:108"
+                    className="py-2.5 px-2 rounded-xl bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-700 text-white font-black text-[11px] flex items-center justify-center gap-1.5 shadow-md shadow-rose-950/20 active:scale-98 transition-all cursor-pointer border border-rose-400/60"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-white animate-bounce shrink-0" />
+                    <span className="tracking-wide truncate">{t.emergency108}</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => handleOpenModule('teleconsult', 'citizen')}
+                    className="py-2.5 px-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 text-white font-black text-[11px] flex items-center justify-center gap-1.5 shadow-md shadow-purple-950/20 active:scale-98 transition-all cursor-pointer border border-purple-400/60"
+                  >
+                    <Video className="w-3.5 h-3.5 text-white animate-pulse shrink-0" />
+                    <span className="tracking-wide truncate">{t.teleconsultTitle}</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -884,7 +898,24 @@ export default function MobileAppView({
               <span className="text-[10px] font-bold">{t.services}</span>
             </button>
 
-            {/* 3. Health Records */}
+            {/* 3. Live Video Tele-OPD (WebRTC) */}
+            <button
+              type="button"
+              onClick={() => handleOpenModule('teleconsult', 'citizen')}
+              className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-2xl transition-all cursor-pointer ${
+                selectedMobileTab === 'teleconsult'
+                  ? 'text-purple-600 dark:text-purple-400 font-bold'
+                  : 'text-slate-500 hover:text-purple-600 dark:hover:text-purple-300'
+              }`}
+            >
+              <div className={`p-1.5 rounded-xl relative ${selectedMobileTab === 'teleconsult' ? 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 shadow-2xs' : 'bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400'}`}>
+                <Video className="w-5 h-5 stroke-[2.2]" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500 absolute top-1 right-1 animate-pulse" />
+              </div>
+              <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300">{t.teleconsultNav}</span>
+            </button>
+
+            {/* 4. Health Records */}
             <button
               type="button"
               onClick={() => {

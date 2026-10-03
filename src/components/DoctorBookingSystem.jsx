@@ -35,7 +35,7 @@ import {
 import { getBookedAppointments, saveAppointment, cancelAppointment } from '../utils/authStorage';
 import { getDoctorsList, ODISHA_DISTRICTS } from '../data/doctorsData';
 import { DoctorAvatar, getDoctorPhotoUrl } from '../utils/doctorPhotos';
-import TeleConsultationSuite from './TeleConsultationSuite';
+import TelemedicineVideoSuite from './TelemedicineVideoSuite';
 
 /**
  * Doctor Directory & Appointment Booking System
@@ -2399,15 +2399,23 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
 
       {/* FULL-SCREEN WEBRTC TELE-CONSULTATION MODAL */}
       {activeVideoCallDoctor && (
-        <TeleConsultationSuite
-          currentUser={currentUser}
-          appLang={lang}
-          initialDoctor={activeVideoCallDoctor}
-          onClose={() => setActiveVideoCallDoctor(null)}
-          onPrescriptionGenerated={(rx) => {
-            console.log('[TeleConsultation] Rx Issued:', rx);
-          }}
-        />
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md overflow-y-auto p-2 sm:p-4">
+          <div className="max-w-6xl mx-auto relative pt-8">
+            <button
+              onClick={() => setActiveVideoCallDoctor(null)}
+              className="absolute top-2 right-2 z-50 p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-white cursor-pointer shadow-lg border border-slate-700"
+              title="Close Telemedicine Suite"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <TelemedicineVideoSuite
+              currentUser={currentUser}
+              appLang={lang}
+              initialDoctor={activeVideoCallDoctor}
+              onNavigateBack={() => setActiveVideoCallDoctor(null)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
