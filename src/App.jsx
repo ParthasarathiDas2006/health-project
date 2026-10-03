@@ -9,6 +9,7 @@ import {
   getStoredUsers
 } from './utils/authStorage';
 import { DoctorAvatar } from './utils/doctorPhotos';
+import MobileAppView from './components/MobileAppView';
 
 // Code-split heavy & secondary components to load on demand for instant site loading
 const GovtGovTechSuite = lazy(() => import('./components/GovtGovTechSuite'));
@@ -643,12 +644,298 @@ export default function App() {
     }
   }[appLang] || {};
 
+  // Helper function to render active workspace component for both desktop & mobile views
+  const renderActiveWorkspace = () => (
+    <>
+      {/* ─── CITIZEN MODULES ─── */}
+      {activeTab === 'intake' && (
+        <div>
+          <MultimodalIntakeForm
+            currentUser={{ ...currentUser, preferredLanguage: appLang }}
+            appLang={appLang}
+            onLanguageChange={handleLanguageChange}
+            onIntakeComplete={handleIntakeComplete}
+          />
+        </div>
+      )}
+
+      {activeTab === 'ocr' && (
+        <div>
+          {currentIntake && (
+            <div className="max-w-2xl mx-auto mb-4 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+              <span>
+                <strong>{uiText.linkedIntakeLabel} </strong>
+                {currentIntake.translatedSummary?.slice(0, 70)}...
+              </span>
+              <span className="font-semibold text-emerald-700 dark:text-emerald-400">{uiText.vitalsAttached}</span>
+            </div>
+          )}
+
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading OCR Uploader...</div>}>
+            <OcrUploader appLang={appLang} onOcrComplete={handleOcrComplete} />
+          </Suspense>
+
+          <div className="max-w-2xl mx-auto mt-6 text-center">
+            <button
+              onClick={handleGenerateTriage}
+              disabled={isGeneratingNote}
+              className="w-full py-3.5 bg-slate-900 hover:bg-black text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
+            >
+              {isGeneratingNote ? (
+                <span>{uiText.btnGeneratingNote}</span>
+              ) : (
+                <>
+                  <Activity className="w-4 h-4 text-emerald-400" />
+                  {uiText.btnGenerateNote}
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(activeTab === 'booking' || activeTab === 'doctors') && (
+        <div>
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Doctor Directory...</div>}>
+            <DoctorBookingSystem
+              currentUser={currentUser}
+              appLang={appLang}
+              onBookedCountChange={(cnt) => setBookedCount(cnt)}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {activeTab === 'nearest' && (
+        <div className="space-y-6">
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading GPS Emergency Map...</div>}>
+            <NearestMedicalGPS
+              currentUser={currentUser}
+              appLang={appLang}
+              onNavigateToAmbulance={() => handleNavigateTab('ambulance')}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {activeTab === 'ambulance' && (
+        <div className="space-y-6">
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading 108 Ambulance System...</div>}>
+            <AmbulanceBooking
+              currentUser={currentUser}
+              appLang={appLang}
+              onNavigateToNearest={() => handleNavigateTab('nearest')}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {(activeTab === 'expiry' || activeTab === 'medicines') && (
+        <div className="space-y-6">
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Medicine Expiry Scanner...</div>}>
+            <MedicineExpiryChecker
+              appLang={appLang}
+              currentUser={currentUser}
+              onBookDoctor={() => handleNavigateTab('booking')}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {/* ─── DOCTOR CLINICAL MODULES ─── */}
+      {activeTab === 'dashboard' && (
+        <div>
+          {generatedTriageNote && (
+            <div className="max-w-7xl mx-auto mb-4 p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-rose-900 dark:text-rose-200">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>
+                  <strong>{uiText.priorityAlertPrefix} </strong>
+                  {uiText.ticketLabel} #{generatedTriageNote.id} ({generatedTriageNote.urgency} {uiText.urgencyLabel} - {generatedTriageNote.urgencyReason})
+                </span>
+              </div>
+              <span className="bg-rose-600 text-white font-bold px-2 py-0.5 rounded text-[11px]">
+                {uiText.doctorValidationReq}
+              </span>
+            </div>
+          )}
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Doctor Dashboard...</div>}>
+            <TriageDoctorDashboard
+              currentUser={{ ...currentUser, preferredLanguage: appLang }}
+              appLang={appLang}
+              onSwitchUser={() => setShowAuthPage(true)}
+              onNavigateToNmc={() => handleNavigateTab('nmc_referral')}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {(activeTab === 'nmc_referral' || activeTab === 't29_nmc_referral' || activeTab === 't29_discharge') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading NMC Prescription Suite...</div>}>
+          <NmcReferralPrescriptionSuite
+            appLang={appLang}
+            currentUser={currentUser}
+            onNavigateBack={() => handleNavigateTab('dashboard')}
+          />
+        </Suspense>
+      )}
+
+      {(activeTab === 'drugallergy' || activeTab === 't13_drugallergy') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Drug Allergy Safety Guard...</div>}>
+          <DrugAllergySafetyGuard
+            currentUser={currentUser}
+            appLang={appLang}
+          />
+        </Suspense>
+      )}
+
+      {(activeTab === 'differential' || activeTab === 't12_differential' || activeTab === 'xray') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Differential Triage & X-Ray...</div>}>
+          <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="differential" />
+        </Suspense>
+      )}
+
+      {(activeTab === 'riskscores' || activeTab === 't14_riskscores') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Clinical Risk Scores...</div>}>
+          <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="scores" />
+        </Suspense>
+      )}
+
+      {(activeTab === 'abha_history' || activeTab === 't11_abha_history') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading ABHA Temporal History...</div>}>
+          <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />
+        </Suspense>
+      )}
+
+      {(activeTab === 'hospitals' || activeTab === 'transfers') && (
+        <div>
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Hospital Tie-ups...</div>}>
+            <HospitalTieUpSystem
+              currentUser={currentUser}
+              appLang={appLang}
+              onTransfersCountChange={(cnt) => setTransfersCount(cnt)}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {/* ─── RURAL PHC & ASHA MODULES ─── */}
+      {activeTab === 'phc_offline' && (
+        <div>
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Rural PHC Offline Suite...</div>}>
+            <PhcOfflineSyncSuite appLang={appLang} themeMode={themeMode} />
+          </Suspense>
+        </div>
+      )}
+
+      {(activeTab === 'asha_voice' || activeTab === 't17_asha_voice') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading ASHA Voice Copilot...</div>}>
+          <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />
+        </Suspense>
+      )}
+
+      {(activeTab === 'family_triage' || activeTab === 't19_family_triage') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Family Camp Triage...</div>}>
+          <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />
+        </Suspense>
+      )}
+
+      {(activeTab === 'maternal_anc' || activeTab === 't30_anc_maternal') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Maternal ANC Module...</div>}>
+          <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />
+        </Suspense>
+      )}
+
+      {(activeTab === 'pain_map' || activeTab === 't18_pain_map') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Pictorial Pain Map...</div>}>
+          <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />
+        </Suspense>
+      )}
+
+      {/* ─── STATE ADMIN & LOGISTICS MODULES ─── */}
+      {activeTab === 'admin' && (
+        <div>
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Admin Portal...</div>}>
+            <AdminPage
+              currentUser={currentUser}
+              appLang={appLang}
+              onNavigateTab={(tab) => handleNavigateTab(tab)}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {activeTab === 'beds' && (
+        <div>
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Bed Reservation...</div>}>
+            <BedBookingSystem
+              currentUser={currentUser}
+              appLang={appLang}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {(activeTab === 'bloodbank' || activeTab === 'blood') && (
+        <div>
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Blood Bank Portal...</div>}>
+            <BloodBankSystem
+              currentUser={currentUser}
+              appLang={appLang}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {(activeTab === 'outbreak' || activeTab === 't23_outbreak') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading IDSP Outbreak Radar...</div>}>
+          <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="outbreak" />
+        </Suspense>
+      )}
+
+      {(activeTab === 'inventory' || activeTab === 't24_inventory') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Drug Inventory Linkage...</div>}>
+          <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />
+        </Suspense>
+      )}
+
+      {(activeTab === 'compliance' || activeTab === 't15_compliance') && (
+        <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading DPDP Compliance & RLHF...</div>}>
+          <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />
+        </Suspense>
+      )}
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 1. TOP STATUS & CLINICAL SAFETY BANNER (ROLE-TAILORED) */}
+      {/* 1. MOBILE SMARTPHONE VIEW (SCREEN < 768px — Android & iPhone)       */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="bg-slate-900 text-slate-200 px-4 py-2 text-xs flex flex-wrap items-center justify-between border-b border-slate-800">
+      <div className="block md:hidden">
+        <MobileAppView
+          currentUser={currentUser}
+          appLang={appLang}
+          setAppLang={handleLanguageChange}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          activeHub={activeHub}
+          setActiveHub={setActiveHub}
+          onOpenAuth={() => setShowAuthPage(true)}
+          onLogout={handleLogout}
+          renderActiveComponent={renderActiveWorkspace}
+        />
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* 2. DESKTOP & LAPTOP WORKSPACE (SCREEN >= 768px — Full Multi-Hub)    */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <div className="hidden md:flex md:flex-col min-h-screen">
+        {/* 1. TOP STATUS & CLINICAL SAFETY BANNER (ROLE-TAILORED) */}
+        <div className="bg-slate-900 text-slate-200 px-4 py-2 text-xs flex flex-wrap items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-2">
           {isAdmin ? (
             <Shield className="w-4 h-4 text-purple-400" />
@@ -1534,276 +1821,16 @@ export default function App() {
         </div>
       </header>
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 4. MAIN WORKSPACE CONTENT AREA (ROLE-FILTERED & RESPONSIVE) */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* 4. MAIN WORKSPACE CONTENT AREA (DESKTOP) */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 overflow-y-auto">
-        {/* ─── CITIZEN MODULES ─── */}
-        {activeTab === 'intake' && (
-          <div>
-            <MultimodalIntakeForm
-              currentUser={{ ...currentUser, preferredLanguage: appLang }}
-              appLang={appLang}
-              onLanguageChange={handleLanguageChange}
-              onIntakeComplete={handleIntakeComplete}
-            />
-          </div>
-        )}
-
-        {activeTab === 'ocr' && (
-          <div>
-            {currentIntake && (
-              <div className="max-w-2xl mx-auto mb-4 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
-                <span>
-                  <strong>{uiText.linkedIntakeLabel} </strong>
-                  {currentIntake.translatedSummary?.slice(0, 70)}...
-                </span>
-                <span className="font-semibold text-emerald-700 dark:text-emerald-400">{uiText.vitalsAttached}</span>
-              </div>
-            )}
-
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading OCR Uploader...</div>}>
-              <OcrUploader appLang={appLang} onOcrComplete={handleOcrComplete} />
-            </Suspense>
-
-            <div className="max-w-2xl mx-auto mt-6 text-center">
-              <button
-                onClick={handleGenerateTriage}
-                disabled={isGeneratingNote}
-                className="w-full py-3.5 bg-slate-900 hover:bg-black text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
-              >
-                {isGeneratingNote ? (
-                  <span>{uiText.btnGeneratingNote}</span>
-                ) : (
-                  <>
-                    <Activity className="w-4 h-4 text-emerald-400" />
-                    {uiText.btnGenerateNote}
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'booking' && (
-          <div>
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Doctor Directory...</div>}>
-              <DoctorBookingSystem
-                currentUser={currentUser}
-                appLang={appLang}
-                onBookedCountChange={(cnt) => setBookedCount(cnt)}
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {activeTab === 'nearest' && (
-          <div className="space-y-6">
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading GPS Emergency Map...</div>}>
-              <NearestMedicalGPS
-                currentUser={currentUser}
-                appLang={appLang}
-                onNavigateToAmbulance={() => handleNavigateTab('ambulance')}
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {activeTab === 'ambulance' && (
-          <div className="space-y-6">
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading 108 Ambulance System...</div>}>
-              <AmbulanceBooking
-                currentUser={currentUser}
-                appLang={appLang}
-                onNavigateToNearest={() => handleNavigateTab('nearest')}
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {activeTab === 'expiry' && (
-          <div className="space-y-6">
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Medicine Expiry Scanner...</div>}>
-              <MedicineExpiryChecker
-                appLang={appLang}
-                currentUser={currentUser}
-                onBookDoctor={() => handleNavigateTab('booking')}
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {/* ─── DOCTOR CLINICAL MODULES ─── */}
-        {activeTab === 'dashboard' && (
-          <div>
-            {generatedTriageNote && (
-              <div className="max-w-7xl mx-auto mb-4 p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-xl flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-rose-900 dark:text-rose-200">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>
-                    <strong>{uiText.priorityAlertPrefix} </strong>
-                    {uiText.ticketLabel} #{generatedTriageNote.id} ({generatedTriageNote.urgency} {uiText.urgencyLabel} - {generatedTriageNote.urgencyReason})
-                  </span>
-                </div>
-                <span className="bg-rose-600 text-white font-bold px-2 py-0.5 rounded text-[11px]">
-                  {uiText.doctorValidationReq}
-                </span>
-              </div>
-            )}
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Doctor Dashboard...</div>}>
-              <TriageDoctorDashboard
-                currentUser={{ ...currentUser, preferredLanguage: appLang }}
-                appLang={appLang}
-                onSwitchUser={() => setShowAuthPage(true)}
-                onNavigateToNmc={() => handleNavigateTab('nmc_referral')}
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {(activeTab === 'nmc_referral' || activeTab === 't29_nmc_referral' || activeTab === 't29_discharge') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading NMC Prescription Suite...</div>}>
-            <NmcReferralPrescriptionSuite
-              appLang={appLang}
-              currentUser={currentUser}
-              onNavigateBack={() => handleNavigateTab('dashboard')}
-            />
-          </Suspense>
-        )}
-
-        {(activeTab === 'drugallergy' || activeTab === 't13_drugallergy') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Drug Allergy Safety Guard...</div>}>
-            <DrugAllergySafetyGuard
-              currentUser={currentUser}
-              appLang={appLang}
-            />
-          </Suspense>
-        )}
-
-        {(activeTab === 'differential' || activeTab === 't12_differential' || activeTab === 'xray') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Differential Triage & X-Ray...</div>}>
-            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="differential" />
-          </Suspense>
-        )}
-
-        {(activeTab === 'riskscores' || activeTab === 't14_riskscores') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Clinical Risk Scores...</div>}>
-            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="scores" />
-          </Suspense>
-        )}
-
-        {(activeTab === 'abha_history' || activeTab === 't11_abha_history') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading ABHA Temporal History...</div>}>
-            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />
-          </Suspense>
-        )}
-
-        {activeTab === 'hospitals' && (
-          <div>
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Hospital Tie-ups...</div>}>
-              <HospitalTieUpSystem
-                currentUser={currentUser}
-                appLang={appLang}
-                onTransfersCountChange={(cnt) => setTransfersCount(cnt)}
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {/* ─── RURAL PHC & ASHA MODULES ─── */}
-        {activeTab === 'phc_offline' && (
-          <div>
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Rural PHC Offline Suite...</div>}>
-              <PhcOfflineSyncSuite appLang={appLang} themeMode={themeMode} />
-            </Suspense>
-          </div>
-        )}
-
-        {(activeTab === 'asha_voice' || activeTab === 't17_asha_voice') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading ASHA Voice Copilot...</div>}>
-            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />
-          </Suspense>
-        )}
-
-        {(activeTab === 'family_triage' || activeTab === 't19_family_triage') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Family Camp Triage...</div>}>
-            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />
-          </Suspense>
-        )}
-
-        {(activeTab === 'maternal_anc' || activeTab === 't30_anc_maternal') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Maternal ANC Module...</div>}>
-            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />
-          </Suspense>
-        )}
-
-        {(activeTab === 'pain_map' || activeTab === 't18_pain_map') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Pictorial Pain Map...</div>}>
-            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="asha_copilot" />
-          </Suspense>
-        )}
-
-        {/* ─── STATE ADMIN & LOGISTICS MODULES ─── */}
-        {activeTab === 'admin' && (
-          <div>
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Admin Portal...</div>}>
-              <AdminPage
-                currentUser={currentUser}
-                appLang={appLang}
-                onNavigateTab={(tab) => handleNavigateTab(tab)}
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {activeTab === 'beds' && (
-          <div>
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Bed Reservation...</div>}>
-              <BedBookingSystem
-                currentUser={currentUser}
-                appLang={appLang}
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {activeTab === 'bloodbank' && (
-          <div>
-            <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Blood Bank Portal...</div>}>
-              <BloodBankSystem
-                currentUser={currentUser}
-                appLang={appLang}
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {(activeTab === 'outbreak' || activeTab === 't23_outbreak') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading IDSP Outbreak Radar...</div>}>
-            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="outbreak" />
-          </Suspense>
-        )}
-
-        {(activeTab === 'inventory' || activeTab === 't24_inventory') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Drug Inventory Linkage...</div>}>
-            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />
-          </Suspense>
-        )}
-
-        {(activeTab === 'compliance' || activeTab === 't15_compliance') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading DPDP Compliance & RLHF...</div>}>
-            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />
-          </Suspense>
-        )}
+        {renderActiveWorkspace()}
       </main>
 
-      {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 5. FOOTER & MODALS */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* 5. FOOTER */}
       <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-3 text-center text-xs text-slate-400">
         {uiText.footerText}
       </footer>
+    </div>
 
       {/* Auth / Switch User Modal */}
       {showAuthPage && (
