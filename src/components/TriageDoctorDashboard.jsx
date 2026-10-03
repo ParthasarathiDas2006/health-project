@@ -16,7 +16,8 @@ import {
   Stethoscope,
   X,
   MapPin,
-  QrCode
+  QrCode,
+  Video
 } from 'lucide-react';
 import { DoctorAvatar } from '../utils/doctorPhotos';
 import { getHospitalPartners } from '../data/hospitalPartners';
@@ -26,7 +27,7 @@ import { getHospitalPartners } from '../data/hospitalPartners';
  * 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
  * Displays human-in-the-loop clinical prioritization, triage tickets, and official referral generation.
  */
-export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLang, onOpenNmcSuite }) {
+export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLang, onOpenNmcSuite, onOpenTeleconsult }) {
   const activeLang = appLang || currentUser?.preferredLanguage || 'or-IN';
   const [filterUrgency, setFilterUrgency] = useState('ALL');
   const [showReferralModal, setShowReferralModal] = useState(false);
@@ -911,6 +912,22 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
                     {txt.targetFacility} <strong>{selectedTicket.referralRecommendation}</strong>
                   </span>
                   <div className="flex items-center gap-2">
+                    {onOpenTeleconsult && (
+                      <button
+                        onClick={() => onOpenTeleconsult({
+                          patientName: selectedTicket.patientName,
+                          facility: selectedTicket.facility,
+                          urgency: selectedTicket.urgency,
+                          urgencyReason: selectedTicket.urgencyReason,
+                          reason: selectedTicket.urgencyReason
+                        })}
+                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-3 py-1.5 rounded font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        title="Start In-App WebRTC Video Consultation with this Patient"
+                      >
+                        <Video className="w-3.5 h-3.5 text-indigo-200" />
+                        <span>Video Consult</span>
+                      </button>
+                    )}
                     {onOpenNmcSuite && (
                       <button
                         onClick={onOpenNmcSuite}

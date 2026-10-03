@@ -32,6 +32,7 @@ import { syncAllAuthFromFirestore } from './utils/authStorage';
 import { syncBloodBankFromFirestore } from './utils/bloodBankStorage';
 const NmcReferralPrescriptionSuite = lazy(() => import('./components/NmcReferralPrescriptionSuite'));
 const PhcOfflineSyncSuite = lazy(() => import('./components/PhcOfflineSyncSuite'));
+const TelemedicineVideoSuite = lazy(() => import('./components/TelemedicineVideoSuite'));
 
 import {
   Activity,
@@ -76,11 +77,13 @@ import {
   ExternalLink,
   TrendingUp,
   Smartphone,
-  Monitor
+  Monitor,
+  Video
 } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setLoggedInUser] = useState(() => getCurrentUser());
+  const [teleconsultSession, setTeleconsultSession] = useState(null);
   const [appLang, setAppLang] = useState(() => currentUser?.preferredLanguage || 'or-IN');
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -269,15 +272,22 @@ export default function App() {
     }
   };
 
+  const handleOpenTeleconsult = (sessionContext = null) => {
+    if (sessionContext) {
+      setTeleconsultSession(sessionContext);
+    }
+    setActiveTab('teleconsult');
+  };
+
   // Switch Hub Controller
   const switchHub = (hubId) => {
     setActiveHub(hubId);
     if (hubId === 'citizen') {
-      if (!['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry', 'beds', 'bloodbank'].includes(activeTab)) {
+      if (!['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry', 'beds', 'bloodbank', 'teleconsult'].includes(activeTab)) {
         setActiveTab('intake');
       }
     } else if (hubId === 'doctor') {
-      if (!['dashboard', 'nmc_referral', 'drugallergy', 'differential', 'xray', 'riskscores', 'hospitals', 'abha_history'].includes(activeTab)) {
+      if (!['dashboard', 'nmc_referral', 'drugallergy', 'differential', 'xray', 'riskscores', 'hospitals', 'abha_history', 'teleconsult'].includes(activeTab)) {
         setActiveTab('dashboard');
       }
     } else if (hubId === 'phc') {
@@ -302,6 +312,10 @@ export default function App() {
       setActiveHub('phc');
     } else if (['admin', 'beds', 'bloodbank', 'outbreak', 't23_outbreak', 'inventory', 't24_inventory', 'compliance', 'abha_history'].includes(tab)) {
       setActiveHub('admin');
+    } else if (tab === 'teleconsult') {
+      if (!['citizen', 'doctor'].includes(activeHub)) {
+        setActiveHub(currentUser?.roleCategory === 'doctor' ? 'doctor' : 'citizen');
+      }
     }
   };
 
@@ -539,6 +553,7 @@ export default function App() {
       sub_nearest: 'ନିକଟସ୍ଥ ହସ୍ପିଟାଲ୍ (GPS)',
       sub_ambulance: '୧୦୮ ଆମ୍ବୁଲାନ୍ସ',
       sub_expiry: 'ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
+      sub_teleconsult: 'ଭିଡିଓ ଟେଲି-ପରାମର୍ଶ (WebRTC)',
       // Doctor Subtabs
       sub_review: 'ଟ୍ରାଏଜ୍ ରିଭ୍ୟୁ ଡେସ୍କ',
       sub_nmc_rx: 'NMC QR ପ୍ରେସକ୍ରିପସନ୍',
@@ -599,6 +614,7 @@ export default function App() {
       sub_nearest: 'निकटतम अस्पताल (GPS Map)',
       sub_ambulance: '108 एम्बुलेंस बुकिंग',
       sub_expiry: 'दवा एक्सपायरी जांच',
+      sub_teleconsult: 'वीडियो टेलीमेडिसिन (WebRTC)',
       // Doctor Subtabs
       sub_review: 'ट्रायज समीक्षा डेस्क',
       sub_nmc_rx: 'NMC QR प्रिस्क्रिप्शन',
@@ -659,6 +675,7 @@ export default function App() {
       sub_nearest: 'Nearest Medical (GPS)',
       sub_ambulance: '108 Ambulance',
       sub_expiry: 'Medicine Expiry Checker',
+      sub_teleconsult: 'Video Teleconsultation (WebRTC)',
       // Doctor Subtabs
       sub_review: 'Triage Review Desk',
       sub_nmc_rx: 'NMC QR Prescriptions',
@@ -760,6 +777,8 @@ export default function App() {
               currentUser={currentUser}
               appLang={appLang}
               onBookedCountChange={(cnt) => setBookedCount(cnt)}
+              onOpenNmcSuite={() => handleNavigateTab('nmc_referral')}
+              onOpenTeleconsult={handleOpenTeleconsult}
             />
           </Suspense>
         </div>
@@ -824,6 +843,67 @@ export default function App() {
               appLang={appLang}
               onSwitchUser={() => setShowAuthPage(true)}
               onNavigateToNmc={() => handleNavigateTab('nmc_referral')}
+              onOpenTeleconsult={handleOpenTeleconsult}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {/* ─── WEBRTC TELEMEDICINE VIDEO CONSULTATION (CROSS-HUB) ─── */}
+      {activeTab === 'teleconsult' && (
+        <div>
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Telemedicine Suite...</div>}>
+            <TelemedicineVideoSuite
+              currentUser={currentUser}
+              appLang={appLang}
+              initialPatient={
+                teleconsultSession?.patient ||
+                (teleconsultSession?.patientName
+                  ? {
+                      name: teleconsultSession.patientName,
+                      age: teleconsultSession.patientAge || 48,
+                      gender: teleconsultSession.patientGender || 'Male',
+                      abhaId: teleconsultSession.patientAbha || '91-4412-8820-1945',
+                      phone: teleconsultSession.patientPhone || '+91 94371 90214',
+                      district: teleconsultSession.district || 'Cuttack',
+                      bloodGroup: teleconsultSession.bloodGroup || 'B+',
+                      chiefComplaint:
+                        teleconsultSession.reason ||
+                        teleconsultSession.urgencyReason ||
+                        'Acute symptoms requiring teleconsultation',
+                      vitals: teleconsultSession.vitals || {
+                        bp: '104/68 mmHg',
+                        pulse: '106 bpm',
+                        spo2: '97%',
+                        temp: '101.4°F',
+                        rr: '20/min'
+                      },
+                      acuity: teleconsultSession.urgency || 'YELLOW'
+                    }
+                  : null)
+              }
+              initialDoctor={
+                teleconsultSession?.doctorName
+                  ? {
+                      name:
+                        typeof teleconsultSession.doctorName === 'object'
+                          ? teleconsultSession.doctorName[appLang] || teleconsultSession.doctorName['en-IN']
+                          : teleconsultSession.doctorName,
+                      degrees: teleconsultSession.doctorQualifications || 'MBBS, MD (Internal Medicine)',
+                      regNo: teleconsultSession.doctorRegNo || 'OMC-2017-66431',
+                      facility:
+                        typeof teleconsultSession.facility === 'object'
+                          ? teleconsultSession.facility[appLang] || teleconsultSession.facility['en-IN']
+                          : teleconsultSession.facility,
+                      department:
+                        typeof teleconsultSession.department === 'object'
+                          ? teleconsultSession.department[appLang] || teleconsultSession.department['en-IN']
+                          : teleconsultSession.department
+                    }
+                  : null
+              }
+              onNavigateToNmc={() => handleNavigateTab('nmc_referral')}
+              onNavigateBack={() => handleNavigateTab(activeHub === 'doctor' ? 'dashboard' : 'booking')}
             />
           </Suspense>
         </div>
@@ -1622,6 +1702,21 @@ export default function App() {
                   <Droplet className="w-3.5 h-3.5 text-rose-300" />
                   <span>{uiText.sub_blood}</span>
                 </button>
+
+                <button
+                  onClick={() => setActiveTab('teleconsult')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'teleconsult'
+                      ? 'bg-purple-700 text-white shadow-sm ring-2 ring-purple-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <Video className="w-3.5 h-3.5 text-purple-300" />
+                  <span>{uiText.sub_teleconsult}</span>
+                  <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
+                    LIVE
+                  </span>
+                </button>
               </>
             )}
 
@@ -1720,6 +1815,21 @@ export default function App() {
                   <span>{uiText.sub_transfers}</span>
                   <span className="bg-indigo-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                     {transfersCount > 0 ? transfersCount : '110'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('teleconsult')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'teleconsult'
+                      ? 'bg-purple-700 text-white shadow-sm ring-2 ring-purple-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <Video className="w-3.5 h-3.5 text-purple-300" />
+                  <span>{uiText.sub_teleconsult}</span>
+                  <span className="bg-indigo-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                    WebRTC
                   </span>
                 </button>
               </>

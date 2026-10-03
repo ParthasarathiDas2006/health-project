@@ -47,7 +47,7 @@ import TeleConsultationSuite from './TeleConsultationSuite';
  * 5. High-performance client-side pagination with useMemo search caching.
  * 6. 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
  */
-export default function DoctorBookingSystem({ currentUser, appLang, onBookedCountChange, onOpenNmcSuite }) {
+export default function DoctorBookingSystem({ currentUser, appLang, onBookedCountChange, onOpenNmcSuite, onOpenTeleconsult }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('directory'); // 'directory', 'recommendations', or 'my-bookings'
@@ -1667,6 +1667,25 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                     </div>
 
                     <div className="flex items-center gap-2 self-end md:self-center">
+                      {onOpenTeleconsult && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onOpenTeleconsult({
+                              ...b,
+                              doctorName: docName,
+                              facility: facilityName,
+                              department: deptName,
+                              room: roomName
+                            })
+                          }
+                          className="px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-lg flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                          title="Join In-App WebRTC Video Consultation"
+                        >
+                          <Video className="w-3.5 h-3.5" />
+                          <span>Video Consult</span>
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() =>
@@ -2333,6 +2352,22 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
               </button>
 
               <div className="flex items-center gap-2">
+                {onOpenTeleconsult && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const slip = confirmedSlip;
+                      setConfirmedSlip(null);
+                      onOpenTeleconsult(slip);
+                    }}
+                    className="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    title="Launch Live WebRTC Video Consultation"
+                  >
+                    <Video className="w-3.5 h-3.5 text-indigo-200" />
+                    <span>Join Video Call</span>
+                  </button>
+                )}
+
                 {onOpenNmcSuite && (
                   <button
                     type="button"
