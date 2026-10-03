@@ -24,6 +24,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             fontFamily: {
@@ -32,6 +33,18 @@
           },
         },
       };
+      (function() {
+        try {
+          const saved = localStorage.getItem('nhp_theme_mode') || 'light';
+          const root = document.documentElement;
+          root.classList.remove('theme-dark', 'theme-reading', 'dark');
+          if (saved === 'dark') {
+            root.classList.add('theme-dark', 'dark');
+          } else if (saved === 'reading') {
+            root.classList.add('theme-reading');
+          }
+        } catch (e) {}
+      })();
     </script>
 
     <style>
