@@ -494,7 +494,7 @@ export default function MobileAppView({
               <button
                 type="button"
                 onClick={handleBackToDashboard}
-                className="flex items-center gap-1.5 text-xs font-black bg-emerald-700 hover:bg-emerald-600 text-white py-2 px-3.5 rounded-xl shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 text-xs font-black bg-emerald-700 hover:bg-emerald-600 text-white py-2 px-3 rounded-xl shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
               >
                 <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
                 <span>{t.backToHome}</span>
@@ -507,22 +507,46 @@ export default function MobileAppView({
                 </span>
               </div>
 
-              {/* Language Switcher */}
-              <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-xl text-[10px] font-black border border-slate-700 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setAppLang('or-IN')}
-                  className={`px-2 py-0.5 rounded-lg ${appLang === 'or-IN' ? 'bg-emerald-600 text-white' : 'text-slate-400'}`}
-                >
-                  ଓଡ଼ିଆ
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAppLang('en-IN')}
-                  className={`px-2 py-0.5 rounded-lg ${appLang === 'en-IN' ? 'bg-emerald-600 text-white' : 'text-slate-400'}`}
-                >
-                  EN
-                </button>
+              {/* Right Controls: Language & Instant Sign Out */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-0.5 bg-slate-800 p-1 rounded-xl text-[10px] font-black border border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => setAppLang('or-IN')}
+                    className={`px-1.5 py-0.5 rounded-lg ${appLang === 'or-IN' ? 'bg-emerald-600 text-white' : 'text-slate-400'}`}
+                  >
+                    ଓଡ଼ିଆ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAppLang('en-IN')}
+                    className={`px-1.5 py-0.5 rounded-lg ${appLang === 'en-IN' ? 'bg-emerald-600 text-white' : 'text-slate-400'}`}
+                  >
+                    EN
+                  </button>
+                </div>
+
+                {currentUser ? (
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="p-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer shadow-md active:scale-95 flex items-center gap-1"
+                    title="Sign Out of Session"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span className="text-[10px] hidden xs:inline">Sign Out</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onOpenAuth}
+                    className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-md active:scale-95 flex items-center gap-1"
+                    title="Sign In / Staff Portal"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span className="text-[10px] hidden xs:inline">Sign In</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -795,6 +819,30 @@ export default function MobileAppView({
             </div>
           </div>
 
+          {/* Quick Switch Staff Role / Persona */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider block">
+                Instant Role Switch (Live Demo)
+              </span>
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className="text-xs font-black text-emerald-600 dark:text-emerald-400 underline cursor-pointer"
+              >
+                Full Staff Login →
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer active:scale-95"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Open Staff Portal & Switch Roles</span>
+            </button>
+          </div>
+
           {/* Authentication */}
           <div className="pt-2">
             {currentUser ? (
@@ -804,7 +852,7 @@ export default function MobileAppView({
                 className="w-full py-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-900 text-rose-800 dark:text-rose-300 hover:bg-rose-100 font-black text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer shadow-sm"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Sign Out / Switch Staff Role</span>
+                <span>Sign Out ({currentUser.name})</span>
               </button>
             ) : (
               <button
@@ -840,26 +888,40 @@ export default function MobileAppView({
                 </div>
               </div>
 
-              {/* Language Switcher */}
-              <div className="flex items-center gap-1 bg-emerald-950 p-1 rounded-xl text-xs font-black border border-emerald-700">
-                <button
-                  type="button"
-                  onClick={() => setAppLang('or-IN')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                    appLang === 'or-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200'
-                  }`}
-                >
-                  ଓଡ଼ିଆ
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAppLang('en-IN')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                    appLang === 'en-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200'
-                  }`}
-                >
-                  EN
-                </button>
+              {/* Language Switcher & Quick Sign Out */}
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 bg-emerald-950 p-1 rounded-xl text-xs font-black border border-emerald-700">
+                  <button
+                    type="button"
+                    onClick={() => setAppLang('or-IN')}
+                    className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
+                      appLang === 'or-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200'
+                    }`}
+                  >
+                    ଓଡ଼ିଆ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAppLang('en-IN')}
+                    className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
+                      appLang === 'en-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200'
+                    }`}
+                  >
+                    EN
+                  </button>
+                </div>
+
+                {currentUser && currentUser.roleCategory !== 'patient' && (
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="flex items-center gap-1 bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 rounded-xl text-[10px] font-black shadow-md cursor-pointer active:scale-95"
+                    title="Sign Out of Session"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    <span>OUT</span>
+                  </button>
+                )}
               </div>
             </div>
 

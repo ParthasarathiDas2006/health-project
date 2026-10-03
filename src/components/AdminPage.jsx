@@ -39,7 +39,9 @@ import {
   Globe,
   Flame,
   BarChart3,
-  AlertOctagon
+  AlertOctagon,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { getDoctorsList, ODISHA_DISTRICTS } from '../data/doctorsData';
 import { DoctorAvatar } from '../utils/doctorPhotos';
@@ -110,7 +112,7 @@ export const APEX_MEDICAL_COLLEGES_TELEMETRY = [
  * Central Command & Governance Portal for State Healthcare Operations
  * Supports Odia, Hindi, English and Light/Dark/Reading theme modes
  */
-export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTab }) {
+export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTab, onLogout, onSwitchUser }) {
   // State Command Overview is the primary default view for Administrator
   const [activeSubTab, setActiveSubTab] = useState('overview'); // 'overview' | 'users' | 'doctors' | 'beds' | 'ambulance' | 'advisory' | 'cdmo' | 'appointments' | 'transfers' | 'audit'
   const [usersList, setUsersList] = useState([]);
@@ -868,17 +870,68 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
 
           {/* Logged in Admin Identity & Controls */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="bg-slate-800/80 border border-slate-700 px-4 py-2.5 rounded-xl text-xs">
-              <div className="flex items-center gap-2 text-purple-300 font-bold">
-                <ShieldCheck className="w-4 h-4 text-amber-400" />
-                <span>{currentUser?.name || 'Super Administrator'}</span>
+            <div className="bg-slate-800/90 border border-slate-700 px-4 py-2.5 rounded-xl text-xs flex items-center justify-between sm:block gap-3">
+              <div>
+                <div className="flex items-center gap-2 text-purple-300 font-bold">
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <span>{currentUser?.name || 'Super Administrator'}</span>
+                </div>
+                <div className="text-slate-400 text-[11px] mt-0.5">
+                  {currentUser?.staffId || 'ADMIN-OD-2026'} • {currentUser?.facility?.slice(0, 32)}...
+                </div>
               </div>
-              <div className="text-slate-400 text-[11px] mt-0.5">
-                {currentUser?.staffId || 'ADMIN-OD-2026'} • {currentUser?.facility?.slice(0, 32)}...
+
+              {/* Mobile Quick Sign Out & Switch Buttons */}
+              <div className="flex items-center gap-1.5 sm:hidden">
+                {onSwitchUser && (
+                  <button
+                    type="button"
+                    onClick={onSwitchUser}
+                    className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-purple-200 cursor-pointer"
+                    title="Switch User Role"
+                  >
+                    <LogIn className="w-4 h-4" />
+                  </button>
+                )}
+                {onLogout && (
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="p-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white cursor-pointer font-bold"
+                    title="Sign Out"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {/* Desktop / Tablet Explicit Sign Out & Switch Buttons */}
+              {onSwitchUser && (
+                <button
+                  type="button"
+                  onClick={onSwitchUser}
+                  className="hidden sm:flex px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-purple-200 hover:text-white border border-purple-500/40 rounded-xl text-xs font-bold items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                  title="Switch Role"
+                >
+                  <LogIn className="w-4 h-4 text-purple-300" />
+                  <span>Switch Role</span>
+                </button>
+              )}
+
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="hidden sm:flex px-3.5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-950/40 cursor-pointer"
+                  title="Sign Out of Session"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setShowBroadcastModal(true)}

@@ -861,6 +861,8 @@ export default function App() {
               currentUser={currentUser}
               appLang={appLang}
               onNavigateTab={(tab) => handleNavigateTab(tab)}
+              onLogout={handleLogout}
+              onSwitchUser={() => setShowAuthPage(true)}
             />
           </Suspense>
         </div>
