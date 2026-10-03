@@ -26,7 +26,8 @@ import {
   Printer,
   Search,
   SlidersHorizontal,
-  Flame
+  Flame,
+  FileText
 } from 'lucide-react';
 import {
   ODISHA_LOCATIONS,
@@ -38,7 +39,7 @@ import {
 import InteractiveLeafletMap from './InteractiveLeafletMap';
 import { saveAmbulanceRequest } from '../utils/authStorage';
 
-export default function NearestMedicalGPS({ currentUser, appLang, onNavigateToAmbulance }) {
+export default function NearestMedicalGPS({ currentUser, appLang, onNavigateToAmbulance, onOpenNmcSuite }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   // Selected User Location State (Default: Bhubaneswar Master Canteen)
@@ -1284,6 +1285,16 @@ export default function NearestMedicalGPS({ currentUser, appLang, onNavigateToAm
                   <Phone className="w-3.5 h-3.5 text-slate-600" />
                   <span>Call Hospital: {activeHospital.phone}</span>
                 </a>
+
+                {onOpenNmcSuite && (
+                  <button
+                    onClick={onOpenNmcSuite}
+                    className="w-full py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-emerald-200" />
+                    <span>Issue NMC Referral (QR Code)</span>
+                  </button>
+                )}
               </div>
 
               {/* Highway Corridor Details */}
@@ -1420,6 +1431,17 @@ export default function NearestMedicalGPS({ currentUser, appLang, onNavigateToAm
                   >
                     <Phone className="w-3.5 h-3.5 text-slate-600" />
                   </a>
+
+                  {onOpenNmcSuite && (
+                    <button
+                      onClick={onOpenNmcSuite}
+                      className="py-2 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer transition-all"
+                      title="Generate NMC Referral Slip &amp; Clinical Rx (Verifiable QR)"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-emerald-700" />
+                      <span className="hidden sm:inline">Referral</span>
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

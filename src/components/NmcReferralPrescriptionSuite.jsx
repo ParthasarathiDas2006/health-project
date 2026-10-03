@@ -49,7 +49,8 @@ import {
   CheckSquare,
   Square,
   Layers,
-  FileCheck
+  FileCheck,
+  Droplet
 } from 'lucide-react';
 import { getHospitalPartners } from '../data/hospitalPartners';
 
@@ -370,6 +371,60 @@ const CLINICAL_PRESETS = [
       { name: 'NEOSTIGMINE METHYLSULFATE', dosage: '0.5 mg', form: 'IV Injection', freq: 'With Atropine 0.6 mg STAT', duration: 'Challenge Dose', instruction: 'Evaluate response in 30 mins for neuromuscular improvement.' },
       { name: 'TETANUS TOXOID', dosage: '0.5 ml', form: 'IM Injection', freq: 'STAT', duration: '1 Dose', instruction: 'Deep intramuscular right deltoid.' }
     ]
+  },
+  {
+    id: 'CASE-07',
+    patientName: 'Pramila Das (ପ୍ରମିଳା ଦାସ)',
+    age: 26,
+    gender: 'Female',
+    abhaId: '91-4412-8820-1945',
+    phone: '+91 94371 90214',
+    district: 'Puri',
+    address: 'Brahmagiri Block, Puri - 752011',
+    bloodGroup: 'O-',
+    weight: '52 kg',
+    allergies: 'None (NKDA)',
+    acuity: 'RED',
+    provisionalDiagnosis: 'Severe Postpartum Hemorrhage (PPH) with Hypovolemic Shock (ICD-10: O72.1)',
+    chiefComplaints: 'Continuous profuse vaginal bleeding following delivery 3 hours ago, altered sensorium, severe pallor, cold clammy extremities.',
+    vitals: { bp: '78/44 mmHg', pulse: '136 bpm', spo2: '92%', temp: '97.4°F', rr: '28/min' },
+    originFacility: 'Community Health Centre (CHC), Brahmagiri, Puri',
+    referredTo: 'SCB Medical College & Hospital (SCBMCH), Cuttack - Emergency HDU',
+    referralReason: 'Uterine atony with active coagulopathy and hemorrhagic shock (Shock Index: 1.74); emergency laparotomy and emergency Form 27C Blood Requisition (PRBC 3 Units) needed.',
+    transitTransport: '108 ALS Mobile ICU with 2 wide-bore 16G IV lines and pressure infuser',
+    oxygenReq: 'Oxygen at 6 L/min via Non-Rebreather Face Mask (NRBM)',
+    medications: [
+      { name: 'OXYTOCIN', dosage: '20 IU', form: 'IV Infusion', freq: 'In 500 ml Ringer Lactate @ 60 drops/min', duration: 'Continuous', instruction: 'Monitor uterine tone continuously.' },
+      { name: 'TRANEXAMIC ACID', dosage: '1 g (10 ml)', form: 'Slow IV STAT', freq: 'Over 10 minutes', duration: 'Single Dose', instruction: 'Second dose after 30 mins if bleeding persists.' },
+      { name: 'MISOPROSTOL', dosage: '800 mcg (4 Tabs)', form: 'Sublingual / Rectal', freq: 'STAT', duration: 'Single Dose', instruction: 'Ensure rapid mucosal absorption.' }
+    ]
+  },
+  {
+    id: 'CASE-08',
+    patientName: 'Master Ansuman Barik (ମାଷ୍ଟର ଅଂଶୁମାନ ବାରିକ)',
+    age: 8,
+    gender: 'Male',
+    abhaId: '91-1120-7744-8832',
+    phone: '+91 94381 22904',
+    district: 'Ganjam',
+    address: 'Aska Road, Berhampur - 760001',
+    bloodGroup: 'B+',
+    weight: '22 kg',
+    allergies: 'None Reported (NKDA)',
+    acuity: 'RED',
+    provisionalDiagnosis: 'Severe Dengue with Severe Thrombocytopenia & Plasma Leakage (ICD-10: A97.2)',
+    chiefComplaints: 'High fever for 5 days, severe abdominal pain, persistent vomiting, spontaneous epistaxis (nosebleed), platelets 14,000/mcL.',
+    vitals: { bp: '86/56 mmHg', pulse: '124 bpm', spo2: '94%', temp: '101.8°F', rr: '30/min' },
+    originFacility: 'City Hospital, Berhampur, Ganjam',
+    referredTo: 'MKCG Medical College & Hospital, Berhampur - Obstetric ICU',
+    referralReason: 'Dengue Hemorrhagic Fever Grade III (Dengue Shock Syndrome) with microvascular permeability; requires urgent PICU bed, pediatric dose calibration & Platelet Concentrate requisition.',
+    transitTransport: '108 ALS Ambulance with pediatric monitoring cuff & IV infusion pump',
+    oxygenReq: 'Oxygen at 2 L/min via pediatric nasal cannula',
+    medications: [
+      { name: 'PARACETAMOL', dosage: '330 mg (15 mg/kg)', form: 'Oral Suspension', freq: 'SOS Q6H (Max 4 times/day)', duration: '3 Days', instruction: 'Strictly avoid NSAIDs like Ibuprofen/Aspirin.' },
+      { name: 'RINGER LACTATE (PEDIATRIC)', dosage: '150 ml (7 ml/kg/hr)', form: 'IV Infusion', freq: 'Titrate to urine output > 1 ml/kg/hr', duration: 'First 2 Hours', instruction: 'Reduce rate as hematocrit normalizes.' },
+      { name: 'ONDANSETRON', dosage: '3.3 mg (0.15 mg/kg)', form: 'Slow IV', freq: 'TDS (8 Hourly)', duration: '2 Days', instruction: 'To control intractable vomiting.' }
+    ]
   }
 ];
 
@@ -428,6 +483,17 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
   // Copy Set Mode: 'single' | 'triplicate'
   const [printCopyMode, setPrintCopyMode] = useState('single');
 
+  // Emergency Blood & Blood Component Requisition Voucher (Form 27C / National Blood Policy)
+  const [bloodRequisitionEnabled, setBloodRequisitionEnabled] = useState(false);
+  const [bloodGroupReq, setBloodGroupReq] = useState('O+');
+  const [bloodComponentReq, setBloodComponentReq] = useState('Packed Red Blood Cells (PRBC)');
+  const [bloodUnitsReq, setBloodUnitsReq] = useState(2);
+  const [bloodCrossmatchStatus, setBloodCrossmatchStatus] = useState('Pre-transfusion Cross-Match Pilot Tube Dispatched with 108 EMT');
+  const [bloodUrgency, setBloodUrgency] = useState('STAT Emergency (Immediate O- Negative Release)');
+
+  // Anti-Counterfeit State Security Watermark / Hologram Guard
+  const [securityWatermarkEnabled, setSecurityWatermarkEnabled] = useState(true);
+
   // Casualty Tele-Handover Call State
   const [teleCallAcknowledged, setTeleCallAcknowledged] = useState(false);
   const [teleCallOfficer, setTeleCallOfficer] = useState('');
@@ -476,6 +542,24 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     setTransportMode(currentCase.transitTransport);
     setOxygenReq(currentCase.oxygenReq);
     setVerifyStatus(null);
+
+    // Auto-configure Emergency Blood Requisition for severe bleeding / shock cases
+    if (currentCase.id === 'CASE-07') {
+      setBloodRequisitionEnabled(true);
+      setBloodGroupReq('O-');
+      setBloodComponentReq('Packed Red Blood Cells (PRBC)');
+      setBloodUnitsReq(3);
+      setBloodUrgency('STAT Emergency (Immediate O- Negative Release)');
+    } else if (currentCase.id === 'CASE-08') {
+      setBloodRequisitionEnabled(true);
+      setBloodGroupReq('B+');
+      setBloodComponentReq('Platelet Concentrate (RDP / SDP)');
+      setBloodUnitsReq(4);
+      setBloodUrgency('Urgent (Within 1 Hour / Crossmatched)');
+    } else {
+      setBloodRequisitionEnabled(false);
+      setBloodGroupReq(currentCase.bloodGroup || 'O+');
+    }
   }, [selectedCaseId]);
 
   // Generate Unique Cryptographic Token and Real Verifiable QR Code
@@ -627,6 +711,24 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
 
   const mewsScore = computeMewsScore();
 
+  // Pediatric Body-Weight & Dosing Calculation Logic (IAP Guidelines)
+  const isPediatricCase = (Number(patientAge) > 0 && Number(patientAge) <= 12) || (parseFloat(patientWeight) > 0 && parseFloat(patientWeight) <= 40);
+  const effectiveWeight = parseFloat(patientWeight) || (Number(patientAge) > 0 ? Math.min(40, Number(patientAge) * 2 + 8) : 20);
+
+  const handleAddPediatricMed = (name, dosage, form, freq, duration, instruction) => {
+    setMedications((prev) => [
+      ...prev,
+      {
+        name: name.toUpperCase(),
+        dosage,
+        form,
+        freq,
+        duration,
+        instruction
+      }
+    ]);
+  };
+
   // Generate ABDM FHIR R4 Bundle Object
   const generateAbdmFhirBundle = () => {
     const docId = verificationToken?.docId || `NMC-OD-2026-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -688,6 +790,19 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
             patient: { reference: `urn:uuid:patient-${patientAbha.replace(/[^0-9]/g, '') || '9123456789'}`, display: patientName }
           }
         },
+        ...(bloodRequisitionEnabled ? [{
+          fullUrl: `urn:uuid:blood-requisition-${docId}`,
+          resource: {
+            resourceType: "ServiceRequest",
+            status: "active",
+            intent: "order",
+            category: [{ coding: [{ system: "http://snomed.info/sct", code: "396152005", display: "Blood product order" }] }],
+            priority: bloodUrgency.includes('STAT') ? 'stat' : 'urgent',
+            code: { text: `Form 27C Blood Requisition: ${bloodUnitsReq} Units ${bloodComponentReq} (${bloodGroupReq})` },
+            note: [{ text: `Crossmatch status: ${bloodCrossmatchStatus}` }],
+            patient: { reference: `urn:uuid:patient-${patientAbha.replace(/[^0-9]/g, '') || '9123456789'}`, display: patientName }
+          }
+        }] : []),
         {
           fullUrl: `urn:uuid:condition-${currentCase.icdCode.replace(/[^a-zA-Z0-9]/g, '')}`,
           resource: {
@@ -1051,12 +1166,22 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
   const generateSmsText = () => {
     const docId = verificationToken?.docId || 'NMC-OD-2026-992144';
     const cadId = verificationToken?.cadToken || 'CAD-108-OD-44102';
+    const bloodLineOr = bloodRequisitionEnabled
+      ? `\nରକ୍ତ ଅନୁରୋଧ (Form 27C): ${bloodUnitsReq} ୟୁନିଟ୍ ${bloodComponentReq} (${bloodGroupReq})`
+      : '';
+    const bloodLineHi = bloodRequisitionEnabled
+      ? `\nब्लड मांग (Form 27C): ${bloodUnitsReq} यूनिट ${bloodComponentReq} (${bloodGroupReq})`
+      : '';
+    const bloodLineEn = bloodRequisitionEnabled
+      ? `\nBlood Requisition (Form 27C): ${bloodUnitsReq} Units ${bloodComponentReq} (${bloodGroupReq})`
+      : '';
+
     if (lang === 'or-IN') {
-      return `[ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଓଡ଼ିଶା ୧୦୮ ଜରୁରୀ ସ୍ଥାନାନ୍ତରଣ ଟୋକନ୍]\nରୋଗୀ: ${patientName} (${patientAge}ବର୍ଷ, ${patientGender})\nABHA: ${patientAbha}\nଡାକ୍ତରଖାନା: ${facilityName} ରୁ ${referralTarget}\nପ୍ରାଥମିକତା: ${currentCase.acuity} PRIORITY\nରୋଗ ନିର୍ଣ୍ଣୟ: ${diagnosis}\n୧୦୮ CAD ଟୋକନ୍: ${cadId}\nଡାକ୍ତର: ${doctorName} (OMC Reg: ${doctorRegNo})\nQR ଯାଞ୍ଚ ଲିଙ୍କ୍: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
+      return `[ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଓଡ଼ିଶା ୧୦୮ ଜରୁରୀ ସ୍ଥାନାନ୍ତରଣ ଟୋକନ୍]\nରୋଗୀ: ${patientName} (${patientAge}ବର୍ଷ, ${patientGender})\nABHA: ${patientAbha}\nଡାକ୍ତରଖାନା: ${facilityName} ରୁ ${referralTarget}\nପ୍ରାଥମିକତା: ${currentCase.acuity} PRIORITY\nରୋଗ ନିର୍ଣ୍ଣୟ: ${diagnosis}\n୧୦୮ CAD ଟୋକନ୍: ${cadId}\nଡାକ୍ତର: ${doctorName} (OMC Reg: ${doctorRegNo})${bloodLineOr}\nQR ଯାଞ୍ଚ ଲିଙ୍କ୍: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
     } else if (lang === 'hi-IN') {
-      return `[स्वास्थ्य मित्र ओडिशा 108 आपातकालीन ट्रांसफर टोकन]\nमरीज: ${patientName} (${patientAge} वर्ष, ${patientGender})\nABHA ID: ${patientAbha}\nअस्पताल: ${facilityName} से ${referralTarget}\nप्राथमिकता: ${currentCase.acuity} PRIORITY\nनिदान: ${diagnosis}\n108 CAD टोकन: ${cadId}\nडॉक्टर: ${doctorName} (OMC Reg: ${doctorRegNo})\nQR सत्यापन: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
+      return `[स्वास्थ्य मित्र ओडिशा 108 आपातकालीन ट्रांसफर टोकन]\nमरीज: ${patientName} (${patientAge} वर्ष, ${patientGender})\nABHA ID: ${patientAbha}\nअस्पताल: ${facilityName} से ${referralTarget}\nप्राथमिकता: ${currentCase.acuity} PRIORITY\nनिदान: ${diagnosis}\n108 CAD टोकन: ${cadId}\nडॉक्टर: ${doctorName} (OMC Reg: ${doctorRegNo})${bloodLineHi}\nQR सत्यापन: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
     }
-    return `[SwasthyaMitra Odisha 108 Emergency Transfer Token]\nPatient: ${patientName} (${patientAge}y, ${patientGender})\nABHA: ${patientAbha}\nTransfer: From ${facilityName} TO ${referralTarget}\nAcuity: ${currentCase.acuity} PRIORITY\nDiagnosis: ${diagnosis}\n108 CAD Token: ${cadId}\nRMP Doctor: ${doctorName} (OMC: ${doctorRegNo})\nVerify QR: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
+    return `[SwasthyaMitra Odisha 108 Emergency Transfer Token]\nPatient: ${patientName} (${patientAge}y, ${patientGender})\nABHA: ${patientAbha}\nTransfer: From ${facilityName} TO ${referralTarget}\nAcuity: ${currentCase.acuity} PRIORITY\nDiagnosis: ${diagnosis}\n108 CAD Token: ${cadId}\nRMP Doctor: ${doctorName} (OMC: ${doctorRegNo})${bloodLineEn}\nVerify QR: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
   };
 
   // WhatsApp 1-Click Dispatch Link
@@ -1498,8 +1623,8 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
             </div>
           )}
 
-          {/* Compliance, Live Apex Status & Print Stationery Toggle */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Compliance, Live Apex Status, Print Stationery & Security Watermark Toggle */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
             <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-center justify-between gap-2 shadow-2xs">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -1585,9 +1710,28 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                   }`}
                   title="Official 3-Copy Triplicate Set (Patient + Hospital MRD + 108 Ambulance)"
                 >
-                  Triplicate (3 Copies)
+                  Triplicate
                 </button>
               </div>
+            </div>
+
+            {/* Anti-Counterfeit State Security Watermark Switcher */}
+            <div className="p-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 text-xs flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
+                <span className="font-bold">Govt Seal:</span>
+              </div>
+              <button
+                onClick={() => setSecurityWatermarkEnabled(!securityWatermarkEnabled)}
+                className={`px-2 py-1 rounded font-bold text-[10px] cursor-pointer transition-all ${
+                  securityWatermarkEnabled
+                    ? 'bg-indigo-700 text-white shadow-2xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-200'
+                }`}
+                title="Toggle anti-tamper watermark & official government emblem"
+              >
+                {securityWatermarkEnabled ? '🔒 Watermark ON' : '⚪ Watermark OFF'}
+              </button>
             </div>
           </div>
 
@@ -1628,8 +1772,22 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
           {/* THE OFFICIAL SLIP (PRINTABLE REAL PDF FORMAT) */}
           <div
             id="printable-clinical-slip"
-            className="bg-white rounded-2xl border-2 border-slate-300 shadow-lg p-6 sm:p-8 space-y-6 text-slate-800 font-sans print:border-none print:shadow-none print:p-0 print:m-0"
+            className="bg-white rounded-2xl border-2 border-slate-300 shadow-lg p-6 sm:p-8 space-y-6 text-slate-800 font-sans print:border-none print:shadow-none print:p-0 print:m-0 relative overflow-hidden"
           >
+            {/* Anti-Counterfeit State Security Watermark */}
+            {securityWatermarkEnabled && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden opacity-[0.035] print:opacity-[0.055] z-0"
+              >
+                <div className="transform -rotate-25 text-center font-black tracking-widest text-slate-900 border-8 border-dashed border-slate-900 p-8 rounded-3xl">
+                  <div className="text-4xl sm:text-6xl font-black">GOVT OF ODISHA</div>
+                  <div className="text-2xl sm:text-3xl mt-2 font-extrabold tracking-normal">DEPT OF HEALTH &amp; FAMILY WELFARE</div>
+                  <div className="text-lg sm:text-2xl mt-2 font-bold text-rose-900">NMC 2023 COMPLIANT • ABDM CERTIFIED</div>
+                  <div className="text-sm mt-1 font-mono tracking-widest">{verificationToken?.docId || 'VERIFIED-DOC'}</div>
+                </div>
+              </div>
+            )}
             {/* 1. Official Letterhead Header (Can be hidden if printing onto pre-printed stationary) */}
             {printStationeryMode === 'full_letterhead' ? (
               <div className="border-b-2 border-slate-900 pb-4">
@@ -1893,6 +2051,115 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                   </div>
                 </div>
 
+                {/* Pediatric Body-Weight Auto-Dose Safety Guard & Calibrator */}
+                {isPediatricCase && (
+                  <div className="p-3.5 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border border-amber-300 rounded-xl space-y-2 text-xs shadow-2xs print:hidden">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          PEDIATRIC SAFETY GUARD (&lt;12 YRS / &lt;40 KG)
+                        </span>
+                        <span className="font-extrabold text-amber-950">
+                          Weight Calibrated: <strong>{effectiveWeight} kg</strong> (Age: {patientAge} yrs)
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-amber-800 font-semibold">
+                        Auto-calibrated per Indian Academy of Pediatrics (IAP) weight standards
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-1 text-[11px]">
+                      {/* Paracetamol */}
+                      <div className="bg-white/95 p-2.5 rounded-lg border border-amber-200 flex flex-col justify-between shadow-2xs">
+                        <div>
+                          <strong className="text-slate-900 block font-bold">PARACETAMOL</strong>
+                          <span className="text-[10px] text-slate-500 block">15 mg/kg/dose (Q6H PRN)</span>
+                          <span className="text-amber-900 font-extrabold text-xs block mt-1">
+                            {Math.round(effectiveWeight * 15)} mg / dose
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            ≈ {((effectiveWeight * 15) / 50).toFixed(1)} mL (250mg/5mL syrup)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAddPediatricMed('PARACETAMOL', `${Math.round(effectiveWeight * 15)} mg (${((effectiveWeight * 15) / 50).toFixed(1)} ml of 250mg/5ml)`, 'Syrup', 'Q6H SOS for fever > 100°F', '3 Days', 'Do not exceed 4 doses in 24 hours.')}
+                          className="mt-2 py-1 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-all"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Apply Dose to Rx</span>
+                        </button>
+                      </div>
+
+                      {/* Amoxicillin */}
+                      <div className="bg-white/95 p-2.5 rounded-lg border border-amber-200 flex flex-col justify-between shadow-2xs">
+                        <div>
+                          <strong className="text-slate-900 block font-bold">AMOXICILLIN</strong>
+                          <span className="text-[10px] text-slate-500 block">30 mg/kg/day (divided BD)</span>
+                          <span className="text-amber-900 font-extrabold text-xs block mt-1">
+                            {Math.round((effectiveWeight * 30) / 2)} mg / dose BD
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            ≈ {(((effectiveWeight * 30) / 2) / 50).toFixed(1)} mL (250mg/5mL susp)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAddPediatricMed('AMOXICILLIN', `${Math.round((effectiveWeight * 30) / 2)} mg`, 'Oral Suspension', 'BD after food', '5 Days', 'Complete 5-day course.')}
+                          className="mt-2 py-1 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-all"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Apply Dose to Rx</span>
+                        </button>
+                      </div>
+
+                      {/* Ondansetron */}
+                      <div className="bg-white/95 p-2.5 rounded-lg border border-amber-200 flex flex-col justify-between shadow-2xs">
+                        <div>
+                          <strong className="text-slate-900 block font-bold">ONDANSETRON</strong>
+                          <span className="text-[10px] text-slate-500 block">0.15 mg/kg/dose (TDS)</span>
+                          <span className="text-amber-900 font-extrabold text-xs block mt-1">
+                            {(effectiveWeight * 0.15).toFixed(1)} mg / dose
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            ≈ {(((effectiveWeight * 0.15) / 2) * 5).toFixed(1)} mL (2mg/5mL syrup)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAddPediatricMed('ONDANSETRON', `${(effectiveWeight * 0.15).toFixed(1)} mg`, 'Syrup', 'TDS (8 Hourly) before food', '2 Days', 'Stop when vomiting subsides.')}
+                          className="mt-2 py-1 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-all"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Apply Dose to Rx</span>
+                        </button>
+                      </div>
+
+                      {/* Oral Rehydration Salts */}
+                      <div className="bg-white/95 p-2.5 rounded-lg border border-amber-200 flex flex-col justify-between shadow-2xs">
+                        <div>
+                          <strong className="text-slate-900 block font-bold">ORS (WHO-FORMULA)</strong>
+                          <span className="text-[10px] text-slate-500 block">75 mL/kg over 4 hours</span>
+                          <span className="text-amber-900 font-extrabold text-xs block mt-1">
+                            {Math.round(effectiveWeight * 75)} mL total
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            + 50-100 mL after each loose stool
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAddPediatricMed('ORAL REHYDRATION SALTS (ORS)', `${Math.round(effectiveWeight * 75)} mL`, 'Oral Solution', 'Sip frequently over 4 hours', 'Till diarrhea resolves', 'Prepare in freshly boiled and cooled water.')}
+                          className="mt-2 py-1 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-all"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Apply Dose to Rx</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left border-collapse">
                     <thead>
@@ -2097,6 +2364,119 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                       <span>Staff Nurse / EMT Escort Named</span>
                     </label>
                   </div>
+                </div>
+
+                {/* Emergency Blood & Blood Component Requisition Voucher (Form 27C / National Blood Policy) */}
+                <div
+                  className={`p-4 rounded-xl border transition-all ${
+                    bloodRequisitionEnabled
+                      ? 'bg-rose-50/80 border-rose-300 ring-1 ring-rose-300 shadow-2xs'
+                      : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={bloodRequisitionEnabled}
+                        onChange={(e) => setBloodRequisitionEnabled(e.target.checked)}
+                        className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500"
+                      />
+                      <span className="font-extrabold text-xs sm:text-sm text-rose-950 flex items-center gap-1.5">
+                        <Droplet className="w-4 h-4 text-rose-600 fill-rose-600" />
+                        <span>Emergency Blood &amp; Component Requisition Voucher (Form 27C / National Blood Policy)</span>
+                      </span>
+                    </label>
+                    <span
+                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded shrink-0 ${
+                        bloodRequisitionEnabled
+                          ? 'bg-rose-600 text-white shadow-2xs animate-pulse'
+                          : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {bloodRequisitionEnabled ? 'VOUCHER ACTIVE (MANDATORY)' : 'STANDBY (OPTIONAL)'}
+                    </span>
+                  </div>
+
+                  {bloodRequisitionEnabled && (
+                    <div className="mt-3 pt-3 border-t border-rose-200 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                            Recipient ABO/Rh:
+                          </label>
+                          <select
+                            value={bloodGroupReq}
+                            onChange={(e) => setBloodGroupReq(e.target.value)}
+                            className="w-full p-2 bg-white border border-rose-300 rounded-lg font-black text-rose-900 text-xs outline-none"
+                          >
+                            {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'Bombay Oh (Unconfirmed)'].map((bg) => (
+                              <option key={bg} value={bg}>{bg}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                            Component Required:
+                          </label>
+                          <select
+                            value={bloodComponentReq}
+                            onChange={(e) => setBloodComponentReq(e.target.value)}
+                            className="w-full p-2 bg-white border border-rose-300 rounded-lg font-bold text-slate-800 text-xs outline-none"
+                          >
+                            <option value="Packed Red Blood Cells (PRBC)">Packed Red Cells (PRBC)</option>
+                            <option value="Platelet Concentrate (RDP / SDP)">Platelets (RDP / SDP)</option>
+                            <option value="Fresh Frozen Plasma (FFP)">Fresh Frozen Plasma (FFP)</option>
+                            <option value="Cryoprecipitate">Cryoprecipitate (Factor VIII)</option>
+                            <option value="Whole Blood">Whole Human Blood</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                            Units Requisitioned:
+                          </label>
+                          <select
+                            value={bloodUnitsReq}
+                            onChange={(e) => setBloodUnitsReq(Number(e.target.value))}
+                            className="w-full p-2 bg-white border border-rose-300 rounded-lg font-black text-slate-800 text-xs outline-none"
+                          >
+                            <option value={1}>1 Unit (350/450 mL)</option>
+                            <option value={2}>2 Units (Standard Transfusion)</option>
+                            <option value={3}>3 Units (Acute Anemia / Shock)</option>
+                            <option value={4}>4 Units (MTP Protocol Tier 1)</option>
+                            <option value={6}>6 Units (Massive Transfusion Protocol)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                            Clinical Urgency:
+                          </label>
+                          <select
+                            value={bloodUrgency}
+                            onChange={(e) => setBloodUrgency(e.target.value)}
+                            className="w-full p-2 bg-white border border-rose-300 rounded-lg font-bold text-rose-700 text-xs outline-none"
+                          >
+                            <option value="STAT Emergency (Immediate O- Negative Release)">STAT Emergency (O- Release)</option>
+                            <option value="Urgent (Within 1 Hour / Crossmatched)">Urgent (Within 1 Hour)</option>
+                            <option value="Elective Pre-Op Crossmatch Reserve">Elective Reserve (Pre-Op)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-rose-100/70 border border-rose-300 rounded-lg text-[11px] text-rose-950 font-medium">
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-rose-700 shrink-0" />
+                          <span><strong>Crossmatch Status:</strong> {bloodCrossmatchStatus}</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-rose-800 bg-white px-2 py-0.5 rounded border border-rose-200">
+                          Apex Bank Reserve: {apexStatus.bloodBankUnits || 'Stocks Active'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

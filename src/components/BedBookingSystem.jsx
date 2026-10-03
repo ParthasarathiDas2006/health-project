@@ -22,7 +22,8 @@ import {
   User,
   Trash2,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  FileText
 } from 'lucide-react';
 import { getBedBookings, saveBedBooking, cancelBedBooking } from '../utils/authStorage';
 
@@ -304,7 +305,7 @@ const HOSPITALS_DATABASE = [
   }
 ];
 
-export default function BedBookingSystem({ currentUser, appLang }) {
+export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('inventory'); // 'inventory' | 'my-reservations'
@@ -1379,6 +1380,19 @@ export default function BedBookingSystem({ currentUser, appLang }) {
                   {txt.closeBtn}
                 </button>
               </div>
+
+              {onOpenNmcSuite && (
+                <button
+                  onClick={() => {
+                    setConfirmedSlip(null);
+                    onOpenNmcSuite();
+                  }}
+                  className="w-full mt-2 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs text-xs cursor-pointer transition-all"
+                >
+                  <FileText className="w-4 h-4 text-emerald-200" />
+                  <span>Generate NMC Referral Slip &amp; Clinical Rx (Verifiable QR)</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

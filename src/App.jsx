@@ -1431,6 +1431,7 @@ export default function App() {
               <BedBookingSystem
                 currentUser={currentUser}
                 appLang={appLang}
+                onOpenNmcSuite={() => setActiveTab('nmc_referral')}
               />
             </Suspense>
           </div>
@@ -1733,6 +1734,7 @@ export default function App() {
                 currentUser={currentUser}
                 appLang={appLang}
                 onNavigateToAmbulance={() => setActiveTab('ambulance')}
+                onOpenNmcSuite={() => setActiveTab('nmc_referral')}
               />
             </Suspense>
           </div>
