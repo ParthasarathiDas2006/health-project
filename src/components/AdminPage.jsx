@@ -1152,167 +1152,264 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
         </div>
       </div>
 
-      {/* Admin Module Sub-Navigation Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200 pb-2 text-xs font-bold">
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('overview')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
-            activeSubTab === 'overview'
-              ? 'bg-indigo-700 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Globe className="w-4 h-4 text-indigo-300" />
-          <span>{t.tabOverview}</span>
-          <span className="bg-indigo-900/40 text-indigo-100 text-[10px] px-1.5 py-0.2 rounded-full">
-            30 Dist.
-          </span>
-        </button>
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* ADMIN MODULE SUB-NAVIGATION BAR (MOBILE & DESKTOP ENHANCED)    */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="space-y-2.5">
+        {/* MOBILE SECTION PICKER & STEP NAVIGATOR (Visible on Small/Medium screens) */}
+        <div className="bg-slate-900 text-white p-3 rounded-2xl border border-slate-800 shadow-md space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] font-black uppercase tracking-wider text-purple-300">
+              Command Section Navigator ({['overview', 'users', 'doctors', 'beds', 'ambulance', 'advisory', 'cdmo', 'appointments', 'transfers', 'audit'].indexOf(activeSubTab) + 1} of 10)
+            </span>
+            <span className="text-[10px] text-emerald-400 font-mono font-bold">
+              10 Sections Available
+            </span>
+          </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('users')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
-            activeSubTab === 'users'
-              ? 'bg-purple-700 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          <span>{t.tabUsers}</span>
-          <span className="bg-purple-900/40 text-purple-100 text-[10px] px-1.5 py-0.2 rounded-full">
-            {usersList.length}
-          </span>
-        </button>
+          {/* Direct Dropdown Selector */}
+          <div className="relative">
+            <select
+              value={activeSubTab}
+              onChange={(e) => setActiveSubTab(e.target.value)}
+              className="w-full bg-slate-800 text-white font-bold text-xs py-2.5 px-3 rounded-xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer appearance-none"
+            >
+              <option value="overview">🌟 State Command Overview (30 Districts)</option>
+              <option value="users">1. User & Staff Management ({usersList.length} Accounts)</option>
+              <option value="doctors">2. Specialist Doctors Registry ({fullDoctorsRegistry.length} Specialists)</option>
+              <option value="beds">3. Hospital Bed Command ({bedBookings.length} Bookings)</option>
+              <option value="ambulance">4. Ambulance Dispatch Control ({ambulanceList.length} Trips)</option>
+              <option value="advisory">5. Statewide Advisories & Alerts ({advisoriesList.filter((a) => a.active).length} Active)</option>
+              <option value="cdmo">6. 30 District CDMOs & Directors (30 Officers)</option>
+              <option value="appointments">7. Scheduled Consultations ({appointments.length} OPD)</option>
+              <option value="transfers">8. Hospital Referrals & Slips ({transfers.length} Referrals)</option>
+              <option value="audit">9. System Security & Audit Trail ({auditLogs.length} Events)</option>
+            </select>
+            <ChevronRight className="w-4 h-4 text-purple-300 absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" />
+          </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('doctors')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
-            activeSubTab === 'doctors'
-              ? 'bg-blue-700 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Stethoscope className="w-4 h-4" />
-          <span>{t.tabDoctors}</span>
-          <span className="bg-blue-900/40 text-blue-100 text-[10px] px-1.5 py-0.2 rounded-full font-mono">
-            {fullDoctorsRegistry.length}
-          </span>
-        </button>
+          {/* Step Prev/Next Buttons + 10 Numbered Chips Row */}
+          <div className="flex items-center justify-between gap-1.5 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                const tabs = ['overview', 'users', 'doctors', 'beds', 'ambulance', 'advisory', 'cdmo', 'appointments', 'transfers', 'audit'];
+                const idx = tabs.indexOf(activeSubTab);
+                const prev = (idx - 1 + tabs.length) % tabs.length;
+                setActiveSubTab(tabs[prev]);
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 cursor-pointer active:scale-95 transition-all shrink-0"
+            >
+              ‹ Prev
+            </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('beds')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
-            activeSubTab === 'beds'
-              ? 'bg-emerald-700 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Bed className="w-4 h-4" />
-          <span>{t.tabBeds}</span>
-          <span className="bg-emerald-900/40 text-emerald-100 text-[10px] px-1.5 py-0.2 rounded-full">
-            {bedBookings.length}
-          </span>
-        </button>
+            {/* 10 Numbered Jump Chips */}
+            <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+              {[
+                { id: 'overview', label: '🌟' },
+                { id: 'users', label: '1' },
+                { id: 'doctors', label: '2' },
+                { id: 'beds', label: '3' },
+                { id: 'ambulance', label: '4' },
+                { id: 'advisory', label: '5' },
+                { id: 'cdmo', label: '6' },
+                { id: 'appointments', label: '7' },
+                { id: 'transfers', label: '8' },
+                { id: 'audit', label: '9' }
+              ].map((pill) => (
+                <button
+                  key={pill.id}
+                  type="button"
+                  onClick={() => setActiveSubTab(pill.id)}
+                  className={`w-7 h-7 rounded-lg text-xs font-black flex items-center justify-center transition-all cursor-pointer ${
+                    activeSubTab === pill.id
+                      ? 'bg-purple-600 text-white shadow-md ring-2 ring-purple-400'
+                      : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
+                  }`}
+                  title={`Jump to Section ${pill.label}`}
+                >
+                  {pill.label}
+                </button>
+              ))}
+            </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('ambulance')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
-            activeSubTab === 'ambulance'
-              ? 'bg-rose-700 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Truck className="w-4 h-4" />
-          <span>{t.tabAmbulance}</span>
-          <span className="bg-rose-900/40 text-rose-100 text-[10px] px-1.5 py-0.2 rounded-full">
-            {ambulanceList.length}
-          </span>
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                const tabs = ['overview', 'users', 'doctors', 'beds', 'ambulance', 'advisory', 'cdmo', 'appointments', 'transfers', 'audit'];
+                const idx = tabs.indexOf(activeSubTab);
+                const next = (idx + 1) % tabs.length;
+                setActiveSubTab(tabs[next]);
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 cursor-pointer active:scale-95 transition-all shrink-0"
+            >
+              Next ›
+            </button>
+          </div>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('advisory')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
-            activeSubTab === 'advisory'
-              ? 'bg-amber-600 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Megaphone className="w-4 h-4 text-amber-200" />
-          <span>{t.tabAdvisory}</span>
-          <span className="bg-amber-800 text-amber-100 text-[10px] px-1.5 py-0.2 rounded-full">
-            {advisoriesList.filter((a) => a.active).length}
-          </span>
-        </button>
+        {/* DESKTOP / TABLET HORIZONTAL TAB STRIP */}
+        <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200 dark:border-slate-800 pb-2 text-xs font-bold">
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('overview')}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'overview'
+                ? 'bg-indigo-700 text-white shadow-md'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Globe className="w-4 h-4 text-indigo-300" />
+            <span>{t.tabOverview}</span>
+            <span className="bg-indigo-900/40 text-indigo-100 text-[10px] px-1.5 py-0.2 rounded-full">
+              30 Dist.
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('cdmo')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
-            activeSubTab === 'cdmo'
-              ? 'bg-teal-700 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Building2 className="w-4 h-4 text-teal-200" />
-          <span>{t.tabCdmo}</span>
-          <span className="bg-teal-900 text-teal-100 text-[10px] px-1.5 py-0.2 rounded-full font-mono">
-            30 CDMO
-          </span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('users')}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'users'
+                ? 'bg-purple-700 text-white shadow-md'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>{t.tabUsers}</span>
+            <span className="bg-purple-900/40 text-purple-100 text-[10px] px-1.5 py-0.2 rounded-full">
+              {usersList.length}
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('appointments')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
-            activeSubTab === 'appointments'
-              ? 'bg-teal-700 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Calendar className="w-4 h-4" />
-          <span>{t.tabAppointments}</span>
-          <span className="bg-teal-900/40 text-teal-100 text-[10px] px-1.5 py-0.2 rounded-full">
-            {appointments.length}
-          </span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('doctors')}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'doctors'
+                ? 'bg-blue-700 text-white shadow-md'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Stethoscope className="w-4 h-4" />
+            <span>{t.tabDoctors}</span>
+            <span className="bg-blue-900/40 text-blue-100 text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+              {fullDoctorsRegistry.length}
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('transfers')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
-            activeSubTab === 'transfers'
-              ? 'bg-indigo-700 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>{t.tabTransfers}</span>
-          <span className="bg-indigo-900/40 text-indigo-100 text-[10px] px-1.5 py-0.2 rounded-full">
-            {transfers.length}
-          </span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('beds')}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'beds'
+                ? 'bg-emerald-700 text-white shadow-md'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Bed className="w-4 h-4" />
+            <span>{t.tabBeds}</span>
+            <span className="bg-emerald-900/40 text-emerald-100 text-[10px] px-1.5 py-0.2 rounded-full">
+              {bedBookings.length}
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveSubTab('audit')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
-            activeSubTab === 'audit'
-              ? 'bg-slate-900 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Server className="w-4 h-4 text-purple-400" />
-          <span>{t.tabAudit}</span>
-          <span className="bg-slate-700 text-slate-200 text-[10px] px-1.5 py-0.2 rounded-full">
-            {auditLogs.length}
-          </span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('ambulance')}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'ambulance'
+                ? 'bg-rose-700 text-white shadow-md'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Truck className="w-4 h-4" />
+            <span>{t.tabAmbulance}</span>
+            <span className="bg-rose-900/40 text-rose-100 text-[10px] px-1.5 py-0.2 rounded-full">
+              {ambulanceList.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('advisory')}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'advisory'
+                ? 'bg-amber-600 text-white shadow-md'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Megaphone className="w-4 h-4 text-amber-200" />
+            <span>{t.tabAdvisory}</span>
+            <span className="bg-amber-800 text-amber-100 text-[10px] px-1.5 py-0.2 rounded-full">
+              {advisoriesList.filter((a) => a.active).length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('cdmo')}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'cdmo'
+                ? 'bg-teal-700 text-white shadow-md'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Building2 className="w-4 h-4 text-teal-200" />
+            <span>{t.tabCdmo}</span>
+            <span className="bg-teal-900 text-teal-100 text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+              30 CDMO
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('appointments')}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'appointments'
+                ? 'bg-teal-700 text-white shadow-md'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            <span>{t.tabAppointments}</span>
+            <span className="bg-teal-900/40 text-teal-100 text-[10px] px-1.5 py-0.2 rounded-full">
+              {appointments.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('transfers')}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'transfers'
+                ? 'bg-indigo-700 text-white shadow-md'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            <span>{t.tabTransfers}</span>
+            <span className="bg-indigo-900/40 text-indigo-100 text-[10px] px-1.5 py-0.2 rounded-full">
+              {transfers.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('audit')}
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeSubTab === 'audit'
+                ? 'bg-slate-900 text-white shadow-md'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Server className="w-4 h-4 text-purple-400" />
+            <span>{t.tabAudit}</span>
+            <span className="bg-slate-700 text-slate-200 text-[10px] px-1.5 py-0.2 rounded-full">
+              {auditLogs.length}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
