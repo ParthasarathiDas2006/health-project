@@ -125,21 +125,40 @@ export default function App() {
   const [bookedCount, setBookedCount] = useState(() => getBookedAppointments().length);
   const [transfersCount, setTransfersCount] = useState(() => getHospitalTransfers().length);
 
-  // Purely automatic responsive screen detection (Mobile < 1024px, Desktop >= 1024px)
+  // Automatic responsive screen detection (Mobile < 1024px, Desktop >= 1024px)
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth < 1024;
+      return window.innerWidth < 1024 || window.matchMedia('(max-width: 1023px)').matches;
     }
     return false;
   });
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024);
+    const mql = window.matchMedia('(max-width: 1023px)');
+    const updateMobileState = () => {
+      setIsMobile(window.innerWidth < 1024 || mql.matches);
     };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
+
+    if (mql.addEventListener) {
+      mql.addEventListener('change', updateMobileState);
+    } else if (mql.addListener) {
+      mql.addListener(updateMobileState);
+    }
+    window.addEventListener('resize', updateMobileState);
+    window.addEventListener('orientationchange', updateMobileState);
+    
+    // Check immediately on mount
+    updateMobileState();
+
+    return () => {
+      if (mql.removeEventListener) {
+        mql.removeEventListener('change', updateMobileState);
+      } else if (mql.removeListener) {
+        mql.removeListener(updateMobileState);
+      }
+      window.removeEventListener('resize', updateMobileState);
+      window.removeEventListener('orientationchange', updateMobileState);
+    };
   }, []);
 
   // Monitor network online/offline state
@@ -954,7 +973,7 @@ export default function App() {
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 1. MOBILE & TABLET VIEW (SCREEN < 1024px — iPhone, Android & Tablets)*/}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {isMobile ? (
+      <div className="block lg:hidden w-full min-h-screen">
         <MobileAppView
           currentUser={currentUser}
           appLang={appLang}
@@ -969,11 +988,12 @@ export default function App() {
           onLogout={handleLogout}
           renderActiveComponent={renderActiveWorkspace}
         />
-      ) : (
-        /* ─────────────────────────────────────────────────────────────────── */
-        /* 2. DESKTOP & LAPTOP WORKSPACE (SCREEN >= 1024px — Full Multi-Hub)   */
-        /* ─────────────────────────────────────────────────────────────────── */
-        <div className="flex flex-col min-h-screen">
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* 2. DESKTOP & LAPTOP WORKSPACE (SCREEN >= 1024px — Full Multi-Hub)   */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <div className="hidden lg:flex flex-col min-h-screen">
         {/* 1. TOP STATUS & CLINICAL SAFETY BANNER (ROLE-TAILORED) */}
         <div className="bg-slate-900 text-slate-200 px-4 py-2 text-xs flex flex-wrap items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-2">
@@ -1871,7 +1891,6 @@ export default function App() {
         {uiText.footerText}
       </footer>
     </div>
-    )}
 
       {/* Auth / Switch User Modal */}
       {showAuthPage && (
