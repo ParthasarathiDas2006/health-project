@@ -128,18 +128,21 @@ export default function App() {
   const [bookedCount, setBookedCount] = useState(() => getBookedAppointments().length);
   const [transfersCount, setTransfersCount] = useState(() => getHospitalTransfers().length);
 
-  // Automatic responsive screen detection (Mobile < 1024px, Desktop >= 1024px)
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 1024 || window.matchMedia('(max-width: 1023px)').matches;
-    }
-    return false;
-  });
+  // Automatic responsive screen detection (Mobile < 1024px, Desktop >= 1024px, or Mobile Device UserAgent)
+  const checkIsMobileScreen = () => {
+    if (typeof window === 'undefined') return false;
+    const isTouchOrMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return isTouchOrMobileUA || window.innerWidth < 1024 || window.matchMedia('(max-width: 1023px)').matches;
+  };
+
+  const [isMobile, setIsMobile] = useState(checkIsMobileScreen);
+  const [viewModeOverride, setViewModeOverride] = useState(null); // 'mobile' | 'desktop' | null
+  const effectiveIsMobile = viewModeOverride === 'mobile' ? true : viewModeOverride === 'desktop' ? false : isMobile;
 
   useEffect(() => {
     const mql = window.matchMedia('(max-width: 1023px)');
     const updateMobileState = () => {
-      setIsMobile(window.innerWidth < 1024 || mql.matches);
+      setIsMobile(checkIsMobileScreen());
     };
 
     if (mql.addEventListener) {
@@ -1051,32 +1054,34 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 1. MOBILE & TABLET VIEW (SCREEN < 1024px — iPhone, Android & Tablets)*/}
+      {/* 1. MOBILE & TABLET VIEW (SCREEN < 1024px, iPhone, Android, Touch)   */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="block lg:hidden w-full min-h-screen">
-        <MobileAppView
-          currentUser={currentUser}
-          appLang={appLang}
-          setAppLang={handleLanguageChange}
-          themeMode={themeMode}
-          setThemeMode={setThemeMode}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          activeHub={activeHub}
-          setActiveHub={setActiveHub}
-          onOpenAuth={() => setShowAuthPage(true)}
-          onLogout={handleLogout}
-          renderActiveComponent={renderActiveWorkspace}
-        />
-      </div>
-
-      {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 2. DESKTOP & LAPTOP WORKSPACE (SCREEN >= 1024px — Full Multi-Hub)   */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="hidden lg:flex flex-col min-h-screen">
-        {/* 1. TOP STATUS & CLINICAL SAFETY BANNER (ROLE-TAILORED) */}
-        <div className="bg-slate-900 text-slate-200 px-4 py-2 text-xs flex flex-wrap items-center justify-between border-b border-slate-800">
-        <div className="flex items-center gap-2">
+      {effectiveIsMobile ? (
+        <div className="w-full min-h-screen">
+          <MobileAppView
+            currentUser={currentUser}
+            appLang={appLang}
+            setAppLang={handleLanguageChange}
+            themeMode={themeMode}
+            setThemeMode={setThemeMode}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            activeHub={activeHub}
+            setActiveHub={setActiveHub}
+            onOpenAuth={() => setShowAuthPage(true)}
+            onLogout={handleLogout}
+            renderActiveComponent={renderActiveWorkspace}
+            onSwitchToDesktop={() => setViewModeOverride('desktop')}
+          />
+        </div>
+      ) : (
+        /* ─────────────────────────────────────────────────────────────────── */
+        /* 2. DESKTOP & LAPTOP WORKSPACE (SCREEN >= 1024px — Full Multi-Hub)   */
+        /* ─────────────────────────────────────────────────────────────────── */
+        <div className="flex flex-col min-h-screen">
+          {/* 1. TOP STATUS & CLINICAL SAFETY BANNER (ROLE-TAILORED) */}
+          <div className="bg-slate-900 text-slate-200 px-4 py-2 text-xs flex flex-wrap items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-2">
           {isAdmin ? (
             <Shield className="w-4 h-4 text-purple-400" />
           ) : isDoctor ? (
@@ -1145,6 +1150,15 @@ export default function App() {
           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
             {uiText.portalTag}
           </span>
+          <span className="hidden sm:inline">|</span>
+          <button
+            onClick={() => setViewModeOverride('mobile')}
+            className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-900/80 hover:bg-indigo-800 text-indigo-200 border border-indigo-500/40 text-[10px] font-bold transition-all cursor-pointer shadow-xs"
+            title="Switch to Mobile Smartphone App View"
+          >
+            <Smartphone className="w-3 h-3 text-indigo-400" />
+            <span>Mobile App</span>
+          </button>
           <span className="hidden sm:inline">|</span>
           <button
             onClick={() => {
@@ -2001,6 +2015,7 @@ export default function App() {
         {uiText.footerText}
       </footer>
     </div>
+    )}
 
       {/* Auth / Switch User Modal */}
       {showAuthPage && (

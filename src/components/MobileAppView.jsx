@@ -53,7 +53,8 @@ export default function MobileAppView({
   setActiveHub,
   onOpenAuth,
   onLogout,
-  renderActiveComponent
+  renderActiveComponent,
+  onSwitchToDesktop
 }) {
   const [mobileSection, setMobileSection] = useState('home'); // 'home' | 'services' | 'records' | 'profile' | 'detail'
   const [showAdvisoryDetail, setShowAdvisoryDetail] = useState(false);
@@ -601,6 +602,17 @@ export default function MobileAppView({
               <LogIn className="w-4 h-4" />
               <span>Switch User / Staff Portal</span>
             </button>
+
+            {onSwitchToDesktop && (
+              <button
+                type="button"
+                onClick={onSwitchToDesktop}
+                className="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 shadow-sm active:scale-98 transition-all cursor-pointer"
+              >
+                <Monitor className="w-4 h-4 text-emerald-400" />
+                <span>Switch to Desktop Multi-Hub View</span>
+              </button>
+            )}
 
             {currentUser && (
               <button
