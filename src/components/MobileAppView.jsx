@@ -35,11 +35,11 @@ import {
   Radio,
   Clock,
   ExternalLink,
-  Mic,
-  Plus,
   Monitor,
-  Smartphone
+  Smartphone,
+  Video
 } from 'lucide-react';
+import TeleConsultationSuite from './TeleConsultationSuite';
 
 export default function MobileAppView({
   currentUser,
@@ -61,6 +61,7 @@ export default function MobileAppView({
   const [copiedAbha, setCopiedAbha] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMobileTab, setSelectedMobileTab] = useState(null);
+  const [showMobileTeleModal, setShowMobileTeleModal] = useState(false);
 
   const abhaNumber = currentUser?.staffId || '91-1234-5678-9012';
   const patientName = currentUser?.name || 'Ravi Kumar';
@@ -974,6 +975,15 @@ export default function MobileAppView({
               </button>
             </div>
           </div>
+        )}
+
+        {/* Live Emergency TeleConsultation Suite Modal */}
+        {showMobileTeleModal && (
+          <TeleConsultationSuite
+            currentUser={currentUser}
+            appLang={appLang}
+            onClose={() => setShowMobileTeleModal(false)}
+          />
         )}
       </div>
     </div>

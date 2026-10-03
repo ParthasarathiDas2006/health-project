@@ -35,6 +35,7 @@ import {
 import { getBookedAppointments, saveAppointment, cancelAppointment } from '../utils/authStorage';
 import { getDoctorsList, ODISHA_DISTRICTS } from '../data/doctorsData';
 import { DoctorAvatar, getDoctorPhotoUrl } from '../utils/doctorPhotos';
+import TeleConsultationSuite from './TeleConsultationSuite';
 
 /**
  * Doctor Directory & Appointment Booking System
@@ -98,6 +99,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
   const [patientGender, setPatientGender] = useState(currentUser?.gender || 'Male');
   const [visitReason, setVisitReason] = useState('');
   const [confirmedSlip, setConfirmedSlip] = useState(null);
+  const [activeVideoCallDoctor, setActiveVideoCallDoctor] = useState(null);
 
   // Stored Bookings
   const [bookings, setBookings] = useState(() => getBookedAppointments());
@@ -112,7 +114,8 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
   const txt = {
     'or-IN': {
       tabDirectory: 'ଡାକ୍ତର ତାଲିକା (Doctor Directory)',
-      tabRecommendations: 'ସ୍ମାର୍ଟ ସୁପାରିଶ (Smart AI Recommender)',
+      tabRecommendations: 'ସ୍ମାର୍ଟ ସୁପାରିଶ (Smart AI)',
+      tabTeleOPD: '📹 ଲାଇଭ୍ ଭିଡିଓ OPD (Live Video Call)',
       tabMyBookings: 'ମୋର ଆପଏଣ୍ଟମେଣ୍ଟ (My Bookings)',
       searchPlaceholder: 'ଡାକ୍ତରଙ୍କ ନାମ, ବିଭାଗ କିମ୍ବା ହସ୍ପିଟାଲ୍ ଖୋଜନ୍ତୁ...',
       allSpecialties: 'ସମସ୍ତ ବିଶେଷଜ୍ଞ ବିଭାଗ (All Specialties)',
@@ -223,7 +226,8 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
     },
     'hi-IN': {
       tabDirectory: 'डॉक्टर सूची (Doctor Directory)',
-      tabRecommendations: 'स्मार्ट सिफारिश (Smart AI Recommender)',
+      tabRecommendations: 'स्मार्ट सिफारिश (Smart AI)',
+      tabTeleOPD: '📹 लाइव वीडियो OPD (Live Video Call)',
       tabMyBookings: 'मेरी बुकिंग (My Bookings)',
       searchPlaceholder: 'डॉक्टर का नाम, विशेषज्ञता अथवा अस्पताल खोजें...',
       allSpecialties: 'सभी विशेषज्ञ विभाग (All Specialties)',
@@ -335,6 +339,7 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
     'en-IN': {
       tabDirectory: 'Doctor Directory',
       tabRecommendations: 'Smart AI Recommender',
+      tabTeleOPD: '📹 Live Video OPD (Teleconsultation)',
       tabMyBookings: 'My Bookings',
       searchPlaceholder: 'Search doctor by name, specialty, or facility...',
       allSpecialties: 'All Specialties',
@@ -863,6 +868,20 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
             {txt.tabRecommendations}
             <span className="bg-amber-400 text-slate-950 text-[9px] px-1.5 py-0.2 rounded-full font-black tracking-wider">
               AI
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveSubTab('tele-opd')}
+            className={`px-3.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 relative cursor-pointer ${
+              activeSubTab === 'tele-opd'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-blue-700 hover:bg-blue-50 bg-blue-100/60'
+            }`}
+          >
+            <Video className="w-3.5 h-3.5 text-blue-300 animate-pulse" />
+            {txt.tabTeleOPD}
+            <span className="bg-blue-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
+              E2EE
             </span>
           </button>
           <button
@@ -1682,6 +1701,118 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
         </div>
       )}
 
+      {/* SUB-TAB 4: LIVE TELE-OPD CONSULTATION SHOWCASE */}
+      {activeSubTab === 'tele-opd' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-2xl p-5 text-white shadow-lg border border-blue-600/40">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-blue-300 shrink-0">
+                  <Video className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-black text-white">
+                      Odisha Tele-Medicine &amp; Video OPD Hub
+                    </h2>
+                    <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full">
+                      LIVE E2EE
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-200 mt-1 max-w-2xl leading-relaxed">
+                    Peer-to-peer encrypted video consultation connecting rural patients with verified specialist doctors at SCB Medical College, AIIMS Bhubaneswar, and Capital Hospital. Features real-time Odia ↔️ English live translated captions and instant digital prescription slips.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveVideoCallDoctor({
+                    name: 'Dr. Soumya Ranjan Mohanty',
+                    specialty: 'MD (General Medicine), SCB Medical College',
+                    regNo: 'OMC-48921-2014',
+                    facility: 'SCB Medical College & Hospital, Cuttack',
+                    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&auto=format&fit=crop&q=80'
+                  })
+                }
+                className="px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs rounded-xl shadow-lg flex items-center gap-2 cursor-pointer shrink-0 active:scale-95 transition-all"
+              >
+                <Video className="w-4 h-4" />
+                <span>Start Live Video Call Now</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Tele-Specialist Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                name: 'Dr. Soumya Ranjan Mohanty',
+                specialty: 'MD (General Medicine)',
+                facility: 'SCB Medical College, Cuttack',
+                regNo: 'OMC-48921-2014',
+                status: 'Available Online Now',
+                rating: '4.9 ★ (412)',
+                avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&auto=format&fit=crop&q=80'
+              },
+              {
+                name: 'Dr. Anita Patnaik',
+                specialty: 'MD (Pediatrics & Neonatology)',
+                facility: 'AIIMS Bhubaneswar',
+                regNo: 'OMC-52119-2016',
+                status: 'Available Online Now',
+                rating: '4.95 ★ (528)',
+                avatar: 'https://images.unsplash.com/photo-1594824813515-580792a7e781?w=400&auto=format&fit=crop&q=80'
+              },
+              {
+                name: 'Dr. Rajesh Tripathy',
+                specialty: 'MS (Orthopedics & Joint Care)',
+                facility: 'Capital Hospital, Bhubaneswar',
+                regNo: 'OMC-39102-2011',
+                status: 'Available Online Now',
+                rating: '4.85 ★ (390)',
+                avatar: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&auto=format&fit=crop&q=80'
+              }
+            ].map((sp, idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3 flex flex-col justify-between hover:border-blue-300 transition-all"
+              >
+                <div className="flex items-start gap-3">
+                  <img
+                    src={sp.avatar}
+                    alt={sp.name}
+                    className="w-14 h-14 rounded-xl object-cover border border-slate-200 shadow-2xs shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate">{sp.name}</div>
+                    <div className="text-[11px] text-blue-700 font-semibold">{sp.specialty}</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">{sp.facility}</div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-[10px] font-bold text-emerald-700">{sp.status}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-slate-500">{sp.regNo}</span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveVideoCallDoctor(sp)}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-2xs cursor-pointer transition active:scale-95"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Connect Live</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* BOOKING MODAL WITH DATE & TIME SLOT SELECTOR */}
       {selectedDoctor && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
@@ -2229,6 +2360,19 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
             </div>
           </div>
         </div>
+      )}
+
+      {/* FULL-SCREEN WEBRTC TELE-CONSULTATION MODAL */}
+      {activeVideoCallDoctor && (
+        <TeleConsultationSuite
+          currentUser={currentUser}
+          appLang={lang}
+          initialDoctor={activeVideoCallDoctor}
+          onClose={() => setActiveVideoCallDoctor(null)}
+          onPrescriptionGenerated={(rx) => {
+            console.log('[TeleConsultation] Rx Issued:', rx);
+          }}
+        />
       )}
     </div>
   );

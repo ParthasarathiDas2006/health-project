@@ -21,12 +21,20 @@ import {
   ExternalLink,
   LocateFixed,
   Flame,
-  ArrowRight
+  ArrowRight,
+  Share2,
+  MessageSquare,
+  Sparkles,
+  Zap,
+  Gauge,
+  Video,
+  Check
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getAmbulanceRequests, saveAmbulanceRequest, cancelAmbulanceRequest } from '../utils/authStorage';
 import { ODISHA_MEDICAL_FACILITIES, ODISHA_LOCATIONS, calculateDistanceKm } from '../utils/nearestMedicalData';
+import TeleConsultationSuite from './TeleConsultationSuite';
 
 export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNearest, onOpenNmcSuite }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
@@ -34,10 +42,10 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
   const [activeSubTab, setActiveSubTab] = useState('book'); // 'book' | 'track' | 'my-requests'
   const [selectedEmergency, setSelectedEmergency] = useState('cardiac');
   const [ambulanceType, setAmbulanceType] = useState('ALS');
-  const [patientName, setPatientName] = useState(currentUser?.name || '');
-  const [patientPhone, setPatientPhone] = useState(currentUser?.phone || '');
-  const [patientAbha, setPatientAbha] = useState(currentUser?.staffId || '91-4829-1029-4821');
-  const [patientAge, setPatientAge] = useState(currentUser?.age || '48');
+  const [patientName, setPatientName] = useState(currentUser?.name || 'Pratap Mohanty');
+  const [patientPhone, setPatientPhone] = useState(currentUser?.phone || '+91 94370 12345');
+  const [patientAbha, setPatientAbha] = useState(currentUser?.staffId || '91-7712-4439-8021');
+  const [patientAge, setPatientAge] = useState(currentUser?.age || '42');
   const [patientGender, setPatientGender] = useState(currentUser?.gender || 'Male');
   const [pickupAddress, setPickupAddress] = useState('Master Canteen Square, Station Link');
   const [pickupDistrict, setPickupDistrict] = useState(currentUser?.district || 'Khordha');
@@ -49,16 +57,28 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
 
   // Active tracked mission state
   const [activeMission, setActiveMission] = useState(null);
-  const [missionStage, setMissionStage] = useState(1); // 1: Dispatched, 2: En Route, 3: Arrived, 4: Transporting
+  const [missionStage, setMissionStage] = useState(2); // 1: Dispatched, 2: En Route, 3: Arrived, 4: Transporting
   const [sirenActive, setSirenActive] = useState(true);
   const [confirmedSlip, setConfirmedSlip] = useState(null);
   const [requests, setRequests] = useState(() => getAmbulanceRequests());
+  const [sosSentToast, setSosSentToast] = useState(false);
+  const [showTeleModal, setShowTeleModal] = useState(false);
+
+  // Dynamic Telemetry & Second-by-Second Countdown Timer
+  const [etaSeconds, setEtaSeconds] = useState(380); // ~6 mins 20s
+  const [telemetryLogs, setTelemetryLogs] = useState([
+    { time: '10:42:00', text: '🚨 108 Emergency Dispatch Confirmed via Odisha NHM Command Bay.' },
+    { time: '10:42:15', text: '📡 Paramedic Sanjay Barik acknowledged mission. Green Corridor priority active.' },
+    { time: '10:42:40', text: '🚦 Smart Traffic Signal pre-emption enabled at Master Canteen intersection.' }
+  ]);
 
   // Leaflet map container for live tracking
   const trackMapRef = useRef(null);
   const trackMapInstanceRef = useRef(null);
   const ambMarkerRef = useRef(null);
   const routeLineRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const sirenIntervalRef = useRef(null);
 
   // Localization Dictionary
   const txt = {
@@ -244,6 +264,66 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     }
   }, [requests]);
 
+  // Web Audio API Emergency Siren Synthesizer
+  useEffect(() => {
+    if (!sirenActive || activeSubTab !== 'track' || !activeMission) {
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close();
+        } catch {}
+        audioContextRef.current = null;
+      }
+      if (sirenIntervalRef.current) {
+        clearInterval(sirenIntervalRef.current);
+      }
+      return;
+    }
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      audioContextRef.current = ctx;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(750, ctx.currentTime);
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+
+      let isHigh = false;
+      sirenIntervalRef.current = setInterval(() => {
+        if (ctx.state === 'closed') return;
+        isHigh = !isHigh;
+        osc.frequency.setTargetAtTime(isHigh ? 1150 : 750, ctx.currentTime, 0.25);
+      }, 600);
+    } catch (e) {
+      console.warn('[Web Audio Siren]', e);
+    }
+
+    return () => {
+      if (sirenIntervalRef.current) clearInterval(sirenIntervalRef.current);
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close();
+        } catch {}
+      }
+    };
+  }, [sirenActive, activeSubTab, activeMission?.id]);
+
+  // Second-by-Second ETA Countdown Timer
+  useEffect(() => {
+    if (activeSubTab !== 'track' || !activeMission) return;
+    const timer = setInterval(() => {
+      setEtaSeconds((prev) => Math.max(15, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [activeSubTab, activeMission]);
+
   // Handle Dispatch Form Submit
   const handleDispatch = (e) => {
     if (e) e.preventDefault();
@@ -275,8 +355,11 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       paramedicPhone: chosenVehicle.phone,
       baseStation: chosenVehicle.base,
       etaMins: ambulanceType === 'ALS' ? 7 : 5,
-      speedKmh: 54,
+      speedKmh: 58,
       distanceRemainingKm: 3.2,
+      oxygenBar: 94,
+      batteryVolt: '13.8V',
+      fuelLevel: '78%',
       patient: {
         name: patientName,
         phone: patientPhone,
@@ -301,6 +384,39 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     setConfirmedSlip(newSlip);
     setActiveSubTab('track');
     setMissionStage(2); // En route immediately
+    setEtaSeconds(420);
+  };
+
+  // Automated 1-Click WhatsApp SOS Trigger
+  const handleTriggerWhatsAppSos = () => {
+    if (!activeMission) return;
+    const coords = activeMission.pickupCoords || { lat: 20.2710, lng: 85.8440 };
+    const gMapsLink = `https://www.google.com/maps?q=${coords.lat},${coords.lng}`;
+    const message = `🚨 *EMERGENCY MEDICAL SOS — 108 AMBULANCE DISPATCHED*\n\n` +
+      `*Patient:* ${activeMission.patient?.name || 'Patient'} (${activeMission.patient?.age || '42'} yrs, ${activeMission.patient?.gender || 'Male'})\n` +
+      `*Condition:* ${activeMission.emergencyType} (${activeMission.ambulanceType})\n` +
+      `*Vehicle:* ${activeMission.vehicleNo} | *Pilot:* ${activeMission.driverName} (${activeMission.paramedicPhone})\n` +
+      `*Live ETA:* ~${Math.ceil(etaSeconds / 60)} Mins (${activeMission.distanceRemainingKm || 2.8} km away)\n` +
+      `*Pickup Location:* ${activeMission.pickup}\n` +
+      `*Destination Hospital:* ${activeMission.destination}\n` +
+      `*Live GPS Coordinates:* ${gMapsLink}\n\n` +
+      `_Sent via Odisha SwasthyaMitra National Health Mission (108 SOS)_`;
+
+    const encoded = encodeURIComponent(message);
+    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+    setSosSentToast(true);
+    setTimeout(() => setSosSentToast(false), 3000);
+  };
+
+  // Automated 1-Click SMS SOS Trigger
+  const handleTriggerSmsSos = () => {
+    if (!activeMission) return;
+    const coords = activeMission.pickupCoords || { lat: 20.2710, lng: 85.8440 };
+    const gMapsLink = `https://www.google.com/maps?q=${coords.lat},${coords.lng}`;
+    const message = `EMERGENCY 108 SOS: ${activeMission.patient?.name} (${activeMission.emergencyType}). Amb: ${activeMission.vehicleNo} arriving in ${Math.ceil(etaSeconds / 60)}m. GPS: ${gMapsLink}`;
+    window.location.href = `sms:?body=${encodeURIComponent(message)}`;
+    setSosSentToast(true);
+    setTimeout(() => setSosSentToast(false), 3000);
   };
 
   // Cancel Request
@@ -313,35 +429,52 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     }
   };
 
-  // Simulate Live Movement of the Dispatched Ambulance on Mission Tracker
+  // Simulate Live Movement along road waypoints
   useEffect(() => {
     if (activeSubTab !== 'track' || !activeMission) return;
 
+    const waypoints = [
+      [20.2640, 85.8390],
+      [20.2660, 85.8402],
+      [20.2680, 85.8418],
+      [20.2695, 85.8430],
+      [20.2710, 85.8440]
+    ];
+    let step = 0;
+
     const interval = setInterval(() => {
+      step = (step + 1) % waypoints.length;
+      const [currentLat, currentLng] = waypoints[step];
+
+      if (ambMarkerRef.current) {
+        ambMarkerRef.current.setLatLng([currentLat, currentLng]);
+      }
+
       setActiveMission((prev) => {
         if (!prev) return prev;
         const currentDist = prev.distanceRemainingKm || 3.0;
-        if (currentDist > 0.3) {
+        if (currentDist > 0.4) {
           return {
             ...prev,
             distanceRemainingKm: parseFloat((currentDist - 0.2).toFixed(1)),
-            etaMins: Math.max(1, Math.round(((currentDist - 0.2) / 45) * 60)),
-            speedKmh: Math.floor(48 + Math.random() * 12)
+            speedKmh: Math.floor(52 + Math.random() * 10),
+            oxygenBar: 93,
+            startCoords: { lat: currentLat, lng: currentLng }
           };
         } else {
           setMissionStage(3); // Arrived at scene!
           return {
             ...prev,
             distanceRemainingKm: 0.1,
-            etaMins: 1,
-            speedKmh: 10
+            speedKmh: 12,
+            startCoords: { lat: currentLat, lng: currentLng }
           };
         }
       });
-    }, 3000);
+    }, 3500);
 
     return () => clearInterval(interval);
-  }, [activeSubTab, activeMission]);
+  }, [activeSubTab, activeMission?.id]);
 
   // Leaflet Live Mission Map Renderer
   useEffect(() => {
@@ -350,9 +483,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     if (trackMapInstanceRef.current) {
       try {
         trackMapInstanceRef.current.remove();
-      } catch (e) {
-        // ignore cleanup error
-      }
+      } catch (e) {}
       trackMapInstanceRef.current = null;
     }
 
@@ -387,10 +518,10 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       html: `
         <div class="relative flex items-center justify-center">
           <span class="absolute w-8 h-8 rounded-full bg-blue-500/30 animate-ping"></span>
-          <div class="w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-lg flex items-center justify-center text-white text-xs">
+          <div class="w-7 h-7 rounded-full bg-blue-600 border-2 border-white shadow-xl flex items-center justify-center text-white text-xs font-bold">
             📍
           </div>
-          <div class="absolute -bottom-4 whitespace-nowrap bg-blue-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+          <div class="absolute -bottom-5 whitespace-nowrap bg-blue-950 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow">
             Patient Pickup
           </div>
         </div>
@@ -405,21 +536,21 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       className: 'live-amb-marker',
       html: `
         <div class="relative flex items-center justify-center">
-          <span class="absolute -inset-2 rounded-full bg-rose-500/40 animate-ping"></span>
-          <div class="w-10 h-10 rounded-full bg-rose-600 border-2 border-white shadow-2xl flex items-center justify-center text-white text-base">
+          <span class="absolute -inset-2.5 rounded-full bg-rose-500/50 animate-ping"></span>
+          <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-rose-600 to-red-600 border-2 border-white shadow-2xl flex items-center justify-center text-white text-lg">
             🚑
           </div>
-          <div class="absolute -bottom-4 whitespace-nowrap bg-rose-950 text-rose-200 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow">
-            108 Active Siren
+          <div class="absolute -bottom-5 whitespace-nowrap bg-rose-950 text-rose-200 text-[9px] font-mono font-black px-2 py-0.5 rounded-full shadow border border-rose-800">
+            108 SIREN ON
           </div>
         </div>
       `,
-      iconSize: [40, 40],
-      iconAnchor: [20, 20]
+      iconSize: [44, 44],
+      iconAnchor: [22, 22]
     });
     ambMarkerRef.current = L.marker([ambLat, ambLng], { icon: ambIcon, zIndexOffset: 1000 }).addTo(map);
 
-    // Connecting Route Line
+    // Connecting Route Polyline
     const latlngs = [
       [ambLat, ambLng],
       [(ambLat + pickupLat) / 2 + 0.002, (ambLng + pickupLng) / 2 - 0.002],
@@ -432,9 +563,8 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       opacity: 0.85
     }).addTo(map);
 
-    map.fitBounds(L.latLngBounds([[ambLat, ambLng], [pickupLat, pickupLng]]), { padding: [40, 40] });
+    map.fitBounds(L.latLngBounds([[ambLat, ambLng], [pickupLat, pickupLng]]), { padding: [50, 50] });
 
-    // Handle smooth sizing
     const animId = requestAnimationFrame(() => {
       map.invalidateSize({ animate: false });
     });
@@ -450,9 +580,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       if (trackMapInstanceRef.current) {
         try {
           trackMapInstanceRef.current.remove();
-        } catch (e) {
-          // ignore
-        }
+        } catch (e) {}
         trackMapInstanceRef.current = null;
       }
     };
@@ -529,29 +657,38 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
           )}
         </button>
 
-        {onOpenNmcSuite && (
+        {/* 1-Click WhatsApp SOS Dispatch Button */}
+        {activeMission && (
           <button
             type="button"
-            onClick={onOpenNmcSuite}
-            className="ml-auto px-4 py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-900 text-white flex items-center gap-1.5 shadow-2xs cursor-pointer"
-            title="Open NMC Referral & Verifiable QR Suite"
+            onClick={handleTriggerWhatsAppSos}
+            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#25D366] hover:bg-[#1EBE5D] text-white flex items-center gap-1.5 shadow-md cursor-pointer transition active:scale-95"
+            title="Send Automated Emergency WhatsApp SOS to Family & PHC Duty Doctor"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-            <span>NMC Referral &amp; Verifiable QR</span>
+            <Share2 className="w-3.5 h-3.5" />
+            <span>WhatsApp SOS</span>
           </button>
         )}
 
-        {onNavigateToNearest && (
-          <button
-            type="button"
-            onClick={onNavigateToNearest}
-            className="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 flex items-center gap-1.5 shadow-2xs cursor-pointer"
-          >
-            <Navigation className="w-3.5 h-3.5 text-emerald-600" />
-            <span>📍 Nearest Hospital GPS Map</span>
-          </button>
-        )}
+        {/* In-Mission Tele-Consultation Link */}
+        <button
+          type="button"
+          onClick={() => setShowTeleModal(true)}
+          className="ml-auto px-4 py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white flex items-center gap-1.5 shadow-md cursor-pointer"
+          title="Instant Video Consultation with Apex Hospital Doctor"
+        >
+          <Video className="w-3.5 h-3.5 text-blue-200" />
+          <span>Live Emergency Tele-OPD</span>
+        </button>
       </div>
+
+      {/* SOS Sent Toast Notification */}
+      {sosSentToast && (
+        <div className="bg-emerald-600 text-white p-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg animate-fadeIn">
+          <Check className="w-4 h-4 text-emerald-200" />
+          <span>Emergency SOS with Live GPS Coordinates dispatched successfully!</span>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           TAB 1: LIVE MISSION TRACKER
@@ -578,7 +715,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="bg-rose-600 text-white text-[10px] font-mono font-black px-2 py-0.5 rounded animate-pulse">
+                    <span className="bg-rose-600 text-white text-[10px] font-mono font-black px-2 py-0.5 rounded-full animate-pulse">
                       ACTIVE EMERGENCY MISSION
                     </span>
                     <span className="text-xs font-mono font-bold text-slate-700">
@@ -590,7 +727,27 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                   </h3>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Automated WhatsApp SOS */}
+                  <button
+                    onClick={handleTriggerWhatsAppSos}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white shadow-xs cursor-pointer"
+                    title="Send WhatsApp SOS"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>WhatsApp SOS</span>
+                  </button>
+
+                  {/* SMS SOS */}
+                  <button
+                    onClick={handleTriggerSmsSos}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-slate-800 hover:bg-black text-white shadow-xs cursor-pointer"
+                    title="Send SMS SOS"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>SMS SOS</span>
+                  </button>
+
                   {/* Siren Sound Toggle */}
                   <button
                     onClick={() => setSirenActive(!sirenActive)}
@@ -600,8 +757,8 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
-                    {sirenActive ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-                    <span>Siren {sirenActive ? 'Active' : 'Muted'}</span>
+                    {sirenActive ? <Volume2 className="w-3.5 h-3.5 text-rose-600" /> : <VolumeX className="w-3.5 h-3.5" />}
+                    <span>Siren {sirenActive ? 'Audio ON' : 'Muted'}</span>
                   </button>
 
                   <button
@@ -650,14 +807,15 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                 </div>
               </div>
 
-              {/* Telemetry Dashboard: ETA, Speed, Distance */}
+              {/* Telemetry Dashboard: Real-time Countdown, Speed, Distance, Oxygen */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-rose-50 p-3.5 rounded-xl border border-rose-200 text-center">
-                  <div className="text-[10px] text-rose-700 font-bold uppercase tracking-wider">Estimated Arrival</div>
-                  <div className="text-2xl font-black text-rose-950 font-mono mt-0.5">
-                    ~{activeMission.etaMins} <span className="text-xs font-semibold">mins</span>
+                <div className="bg-rose-50 p-3.5 rounded-xl border border-rose-200 text-center relative overflow-hidden">
+                  <div className="text-[10px] text-rose-700 font-bold uppercase tracking-wider">Live ETA Countdown</div>
+                  <div className="text-2xl font-black text-rose-950 font-mono mt-0.5 flex items-center justify-center gap-1">
+                    <span>{Math.floor(etaSeconds / 60).toString().padStart(2, '0')}:{(etaSeconds % 60).toString().padStart(2, '0')}</span>
+                    <span className="text-xs font-semibold">min</span>
                   </div>
-                  <div className="text-[10px] text-rose-600 font-medium">⚡ Priority Green Signal</div>
+                  <div className="text-[10px] text-rose-600 font-medium">⚡ Green Signal Corridor</div>
                 </div>
 
                 <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
@@ -665,7 +823,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                   <div className="text-2xl font-black text-slate-900 font-mono mt-0.5">
                     {activeMission.distanceRemainingKm} <span className="text-xs font-semibold">km</span>
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium">Direct Highway Track</div>
+                  <div className="text-[10px] text-slate-500 font-medium">Direct Highway Link</div>
                 </div>
 
                 <div className="bg-blue-50 p-3.5 rounded-xl border border-blue-200 text-center">
@@ -673,15 +831,15 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                   <div className="text-2xl font-black text-blue-950 font-mono mt-0.5">
                     {activeMission.speedKmh} <span className="text-xs font-semibold">km/h</span>
                   </div>
-                  <div className="text-[10px] text-blue-600 font-medium">Live Telemetry Link</div>
+                  <div className="text-[10px] text-blue-600 font-medium">GPS Telemetry Stream</div>
                 </div>
 
                 <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 text-center">
-                  <div className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">Hospital Desk</div>
-                  <div className="text-sm font-extrabold text-emerald-950 mt-1 truncate">
-                    Emergency Bay Alerted
+                  <div className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">On-Board Oxygen</div>
+                  <div className="text-2xl font-black text-emerald-950 font-mono mt-0.5">
+                    94% <span className="text-xs font-semibold">Full</span>
                   </div>
-                  <div className="text-[10px] text-emerald-600 font-medium">Trauma Team Standby</div>
+                  <div className="text-[10px] text-emerald-600 font-medium">2x Jumbo D-Cylinders</div>
                 </div>
               </div>
 
@@ -690,12 +848,34 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                 <div ref={trackMapRef} className="w-full h-full bg-slate-100 z-0" />
 
                 {/* Map Floating Status Card */}
-                <div className="absolute top-3 left-3 z-10 bg-slate-950/90 backdrop-blur-md px-3 py-2 rounded-xl border border-white/20 text-white text-xs font-bold shadow-lg flex items-center gap-2">
+                <div className="absolute top-3 left-3 z-10 bg-slate-950/90 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-white/20 text-white text-xs font-bold shadow-xl flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
-                  <span>Ambulance Vehicle: {activeMission.vehicleNo}</span>
-                  <span className="bg-rose-500/40 text-rose-200 text-[10px] px-1.5 py-0.2 rounded font-mono">
-                    SIREN ON
+                  <div>
+                    <div className="text-xs font-black text-white">Ambulance: {activeMission.vehicleNo}</div>
+                    <div className="text-[10px] text-emerald-400 font-mono font-medium">Pilot: {activeMission.driverName} • ALS Life Support</div>
+                  </div>
+                  <span className="bg-rose-600/80 text-white text-[9px] px-2 py-0.5 rounded-full font-mono font-black ml-2">
+                    SIREN ACTIVE
                   </span>
+                </div>
+              </div>
+
+              {/* Real-Time Telemetry Event Log Stream */}
+              <div className="bg-slate-900 text-slate-200 p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
+                <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 border-b border-slate-800 pb-1">
+                  <span className="flex items-center gap-1.5 text-emerald-400">
+                    <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                    Live Odisha 108 Mission Telemetry Stream
+                  </span>
+                  <span className="font-mono text-[10px]">WebSocket Connected</span>
+                </div>
+                <div className="space-y-1 text-[11px] font-mono">
+                  {telemetryLogs.map((log, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <span className="text-emerald-400 shrink-0">[{log.time}]</span>
+                      <span className="text-slate-300">{log.text}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -705,7 +885,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                   <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                     <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
                       <User className="w-4 h-4 text-rose-600" />
-                      Pilot & Paramedic Crew
+                      Pilot &amp; Paramedic Crew
                     </span>
                     <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                       ✓ EMT-Certified
@@ -729,7 +909,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                   <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                     <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
                       <Hospital className="w-4 h-4 text-blue-600" />
-                      Destination & Patient
+                      Destination &amp; Patient
                     </span>
                     <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                       BSKY Covered
@@ -751,27 +931,29 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          TAB 2: BOOKING FORM
+          TAB 2: BOOK AMBULANCE FORM
       ══════════════════════════════════════════════════════════════════════ */}
       {activeSubTab === 'book' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-6">
-          {/* Step 1 — Emergency Type Quick-Tiles */}
+          {/* 1. Emergency Condition Selector */}
           <div>
-            <p className="text-sm font-bold text-slate-800 mb-3">{txt.emergencyTypeLabel}</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <label className="block text-xs font-black text-slate-800 uppercase tracking-wide mb-2.5">
+              {txt.emergencyTypeLabel}
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               {emergencyTypes.map((et) => (
                 <button
-                  type="button"
                   key={et.id}
+                  type="button"
                   onClick={() => setSelectedEmergency(et.id)}
-                  className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer ${
+                  className={`p-3 rounded-2xl border text-left transition-all flex items-center gap-2.5 cursor-pointer ${
                     selectedEmergency === et.id
-                      ? et.color + ' ring-2 ring-offset-1 ring-rose-400 scale-[1.02] shadow-md'
-                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-slate-100'
+                      ? `${et.color} shadow-sm font-bold ring-2 ring-rose-500/50`
+                      : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
                   }`}
                 >
-                  <span className="text-2xl">{et.icon}</span>
-                  <span className="text-center leading-tight text-xs font-bold">
+                  <span className="text-xl shrink-0">{et.icon}</span>
+                  <span className="text-xs leading-tight">
                     {et.label[lang] || et.label['en-IN']}
                   </span>
                 </button>
@@ -779,87 +961,100 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
             </div>
           </div>
 
-          {/* Step 2 — Ambulance Configuration */}
+          {/* 2. Ambulance Configuration Selector */}
           <div>
-            <p className="text-sm font-bold text-slate-800 mb-3">{txt.ambulanceTypeLabel}</p>
+            <label className="block text-xs font-black text-slate-800 uppercase tracking-wide mb-2.5">
+              {txt.ambulanceTypeLabel}
+            </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {ambulanceTypeOptions.map((at) => (
+              {ambulanceTypeOptions.map((opt) => (
                 <button
+                  key={opt.id}
                   type="button"
-                  key={at.id}
-                  onClick={() => setAmbulanceType(at.id)}
-                  className={`text-left p-3.5 rounded-xl border-2 transition-all cursor-pointer ${
-                    ambulanceType === at.id
-                      ? at.selectedBorder + ' ring-2 ring-offset-1 ring-rose-400 shadow-md'
-                      : 'border-slate-200 bg-white hover:bg-slate-50'
+                  onClick={() => setAmbulanceType(opt.id)}
+                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer space-y-1.5 ${
+                    ambulanceType === opt.id
+                      ? `${opt.selectedBorder} shadow-sm ring-2 ring-rose-500/40 font-bold`
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xl">{at.icon}</span>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full text-white ${at.badgeColor}`}>
-                      {at.badge}
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl">{opt.icon}</span>
+                    <span className={`text-[9px] font-black text-white px-2 py-0.5 rounded-full ${opt.badgeColor}`}>
+                      {opt.badge}
                     </span>
                   </div>
-                  <p className="text-xs font-semibold text-slate-700 leading-tight">{at.label}</p>
+                  <div className="text-xs font-bold text-slate-900 leading-tight">
+                    {opt.label}
+                  </div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Step 3 — Patient & Location Details */}
-          <div>
-            <p className="text-sm font-bold text-slate-800 mb-3">{txt.patientDetailsLabel}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* 3. Patient Details & Location Form */}
+          <div className="space-y-4 pt-2 border-t border-slate-100">
+            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wide">
+              {txt.patientDetailsLabel}
+            </h4>
+
+            {formError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.nameLabel}</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{txt.nameLabel}</label>
                 <input
                   type="text"
-                  required
                   value={patientName}
                   onChange={(e) => setPatientName(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  placeholder="e.g. Pratap Mohanty"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-xs text-slate-900"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.phoneLabel}</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{txt.phoneLabel}</label>
                 <input
                   type="tel"
-                  required
                   value={patientPhone}
                   onChange={(e) => setPatientPhone(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  placeholder="+91 94370 12345"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-xs text-slate-900 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.abhaLabel}</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{txt.abhaLabel}</label>
                 <input
                   type="text"
                   value={patientAbha}
                   onChange={(e) => setPatientAbha(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  placeholder="91-7712-4439-8021"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-xs text-slate-900 font-mono"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.ageLabel}</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{txt.ageLabel}</label>
                   <input
                     type="number"
-                    min="0"
-                    max="120"
                     value={patientAge}
                     onChange={(e) => setPatientAge(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-xs text-slate-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.genderLabel}</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{txt.genderLabel}</label>
                   <select
                     value={patientGender}
                     onChange={(e) => setPatientGender(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-xs text-slate-900"
                   >
                     <option value="Male">{txt.male}</option>
                     <option value="Female">{txt.female}</option>
@@ -868,97 +1063,49 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.pickupLabel}</label>
-                <textarea
-                  rows={2}
-                  required
+                <label className="block text-xs font-bold text-slate-700 mb-1">{txt.pickupLabel}</label>
+                <input
+                  type="text"
                   value={pickupAddress}
                   onChange={(e) => setPickupAddress(e.target.value)}
                   placeholder={txt.pickupPlaceholder}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.districtLabel}</label>
-                <input
-                  type="text"
-                  required
-                  value={pickupDistrict}
-                  onChange={(e) => setPickupDistrict(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.stateLabel}</label>
-                <input
-                  type="text"
-                  required
-                  value={pickupState}
-                  onChange={(e) => setPickupState(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-xs text-slate-900"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.destinationLabel}</label>
-                <select
+                <label className="block text-xs font-bold text-slate-700 mb-1">{txt.destinationLabel}</label>
+                <input
+                  type="text"
                   value={destinationHospital}
                   onChange={(e) => setDestinationHospital(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white"
-                >
-                  {ODISHA_MEDICAL_FACILITIES.map((h) => (
-                    <option key={h.id} value={h.name}>
-                      {h.name} ({h.city} • {h.traumaLevel?.split(' ')[0]} {h.traumaLevel?.split(' ')[1]})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.attendantsLabel}</label>
-                <select
-                  value={attendants}
-                  onChange={(e) => setAttendants(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 bg-white"
-                >
-                  {['0', '1', '2', '3'].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
+                  placeholder={txt.destinationPlaceholder}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-xs text-slate-900"
+                />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-600 mb-1">{txt.notesLabel}</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{txt.notesLabel}</label>
                 <textarea
                   rows={2}
                   value={additionalNotes}
                   onChange={(e) => setAdditionalNotes(e.target.value)}
                   placeholder={txt.notesPlaceholder}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-xs text-slate-900"
                 />
               </div>
             </div>
+
+            {/* Dispatch Button */}
+            <button
+              type="button"
+              onClick={handleDispatch}
+              className="w-full py-3.5 bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 active:scale-[0.99] text-white font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm cursor-pointer border border-rose-500/40"
+            >
+              <Phone className="w-4 h-4 text-white" />
+              <span>{txt.dispatchBtn}</span>
+            </button>
           </div>
-
-          {/* Error Banner */}
-          {formError && (
-            <div className="flex items-center gap-2 bg-rose-50 border border-rose-300 text-rose-800 rounded-lg px-4 py-2.5 text-sm">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{formError}</span>
-            </div>
-          )}
-
-          {/* Dispatch Button */}
-          <button
-            type="button"
-            onClick={handleDispatch}
-            className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
-          >
-            <Phone className="w-4 h-4" />
-            <span>{txt.dispatchBtn}</span>
-          </button>
         </div>
       )}
 
@@ -1046,6 +1193,17 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
+          LIVE EMERGENCY TELECONSULTATION SUITE MODAL
+      ══════════════════════════════════════════════════════════════════════ */}
+      {showTeleModal && (
+        <TeleConsultationSuite
+          currentUser={currentUser}
+          appLang={lang}
+          onClose={() => setShowTeleModal(false)}
+        />
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
           DISPATCH CONFIRMATION SLIP MODAL
       ══════════════════════════════════════════════════════════════════════ */}
       {confirmedSlip && (
@@ -1085,6 +1243,25 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                     <span className={`text-xs font-semibold text-slate-800 text-right ${mono ? 'font-mono' : ''}`}>{value}</span>
                   </div>
                 ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleTriggerWhatsAppSos}
+                  className="py-2.5 px-3 bg-[#25D366] hover:bg-[#1EBE5D] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>WhatsApp SOS</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTriggerSmsSos}
+                  className="py-2.5 px-3 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>SMS SOS</span>
+                </button>
               </div>
 
               <a
