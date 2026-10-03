@@ -74,7 +74,9 @@ import {
   Shield,
   KeyRound,
   ExternalLink,
-  TrendingUp
+  TrendingUp,
+  Smartphone,
+  Monitor
 } from 'lucide-react';
 
 export default function App() {
@@ -123,21 +125,36 @@ export default function App() {
   const [bookedCount, setBookedCount] = useState(() => getBookedAppointments().length);
   const [transfersCount, setTransfersCount] = useState(() => getHospitalTransfers().length);
 
-  // Responsive screen detection: phone/tablet (< 1024px) vs desktop/laptop (>= 1024px)
-  const [isMobile, setIsMobile] = useState(() => {
+  // Responsive screen detection + Explicit View Mode Switcher
+  const [deviceView, setDeviceView] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nhp_device_view');
+      if (saved) return saved;
+    } catch {}
     if (typeof window !== 'undefined') {
-      return window.innerWidth < 1024;
+      return window.innerWidth < 1024 ? 'mobile' : 'desktop';
     }
-    return false;
+    return 'desktop';
   });
+
+  const [windowWidth, setWindowWidth] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024);
+      setWindowWidth(window.innerWidth);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const isMobile = deviceView === 'mobile' || (deviceView !== 'desktop' && windowWidth < 1024);
+
+  const toggleDeviceView = (mode) => {
+    setDeviceView(mode);
+    try {
+      localStorage.setItem('nhp_device_view', mode);
+    } catch {}
+  };
 
   // Monitor network online/offline state
   useEffect(() => {
@@ -962,6 +979,8 @@ export default function App() {
           setActiveTab={setActiveTab}
           activeHub={activeHub}
           setActiveHub={setActiveHub}
+          deviceView={deviceView}
+          toggleDeviceView={toggleDeviceView}
           onOpenAuth={() => setShowAuthPage(true)}
           onLogout={handleLogout}
           renderActiveComponent={renderActiveWorkspace}
@@ -1317,6 +1336,17 @@ export default function App() {
                 Eng
               </button>
             </div>
+
+            {/* Direct 1-Click Mobile App View Preview */}
+            <button
+              type="button"
+              onClick={() => toggleDeviceView('mobile')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-black shadow-sm active:scale-95 transition-all cursor-pointer"
+              title="Switch to Dedicated Smartphone Mobile App UI"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Mobile App</span>
+            </button>
 
             {/* User Profile Pill with Demo Persona Switcher */}
             <div className="relative">
