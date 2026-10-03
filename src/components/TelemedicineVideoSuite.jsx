@@ -41,7 +41,15 @@ import {
   Volume2,
   VolumeX,
   Users,
-  Plus
+  Plus,
+  Pill,
+  TestTube,
+  Image,
+  Play,
+  Pause,
+  HelpCircle,
+  Paperclip,
+  CheckCheck
 } from 'lucide-react';
 import { DoctorAvatar } from '../utils/doctorPhotos';
 import { getBookedAppointments } from '../utils/authStorage';
@@ -82,6 +90,14 @@ const playTone = (type = 'connect') => {
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
       osc.start();
       osc.stop(ctx.currentTime + 0.12);
+    } else if (type === 'audio_note') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(554.37, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
     }
   } catch (e) {
     // AudioContext blocked by browser autoplay policy before user interaction
@@ -91,18 +107,15 @@ const playTone = (type = 'connect') => {
 /**
  * In-App WebRTC Telemedicine Call Suite (Doctor-Patient Video Consultation)
  *
- * Improvised Clinical Capabilities:
- * - MoHFW Telemedicine Practice Guidelines (2020) & ABDM e-Sanjeevani Compliant
- * - Native WebRTC PeerConnection with STUN fallback
- * - BroadcastChannel / Cross-Tab peer signaling for realistic multi-user testing
- * - Live Multilingual Closed Captions (Live CC) in Odia, Hindi & English
- * - 3-Way Rural ASHA / CHO Multi-Party Triage Option
- * - Clinical Visual Examination Digital Zoom (1x to 3x) for throat/rash inspection
- * - Web Audio API live microphone VU analyser & harmonic call sound effects
- * - Live AI Clinical Speech Scribe with auto-generated SOAP notes
- * - 1-Click Common Remedies injection directly into clinical Plan
- * - Direct transition to official NMC e-Prescription with verifiable QR code
- * - 100% Localization in Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN')
+ * Improvised Message Types:
+ * - 'text': Standard conversational messages with read status (✓✓)
+ * - 'rx': Official e-Prescription advice cards with dosage and warnings
+ * - 'vitals': Live telemetry snapshot cards with BP, Pulse, SpO2, Temp & Acuity
+ * - 'lab': Diagnostic lab test requisition cards (STAT priority, specimen notes)
+ * - 'image': Clinical examination photos (throat / skin rash) with expand lightbox
+ * - 'audio': Voice consultation clips with interactive waveform & audio tone playback
+ * - 'triage_query': Interactive clinical questions with 1-click selectable responses
+ * - 'system': ABDM encrypted session audit and security banners
  */
 export default function TelemedicineVideoSuite({
   currentUser,
@@ -149,22 +162,118 @@ export default function TelemedicineVideoSuite({
 
   // Interactive Clinical Sidebar: 'chat' | 'vitals' | 'notes' | 'none'
   const [activeSidePanel, setActiveSidePanel] = useState('chat');
+  
+  // Improvised Chat States: Multiple Message Types, Action Menu & Lightbox
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  const [playingAudioId, setPlayingAudioId] = useState(null);
+  const [expandedImage, setExpandedImage] = useState(null);
+  const [inputChat, setInputChat] = useState('');
+
+  // Patient Clinical Telemetry Profile
+  const [patientData, setPatientData] = useState(() => {
+    if (initialPatient) return initialPatient;
+    return {
+      name: 'Rameshwar Lal (ରମେଶ୍ୱର ଲାଲ୍)',
+      age: 48,
+      gender: 'Male',
+      abhaId: '91-4412-8820-1945',
+      phone: '+91 94371 90214',
+      district: 'Cuttack',
+      bloodGroup: 'B+',
+      weight: '68 kg',
+      chiefComplaint: 'Continuous High Fever for 3 days with severe retro-orbital headache and joint pains',
+      vitals: {
+        bp: '104/68 mmHg',
+        pulse: '106 bpm',
+        spo2: '97%',
+        temp: '101.4°F',
+        rr: '20/min'
+      },
+      acuity: 'YELLOW'
+    };
+  });
+
+  // Doctor Clinical Profile
+  const doctorData = useMemo(() => {
+    if (initialDoctor) return initialDoctor;
+    return {
+      name: isDoctorUser ? currentUser?.name || 'Dr. Soumya Ranjan Nayak' : 'Dr. Soumya Ranjan Nayak',
+      degrees: 'MBBS, MD (Internal & Emergency Medicine)',
+      regNo: 'OMC-2017-66431',
+      facility: 'SCB Medical College & Hospital, Cuttack',
+      department: 'Telemedicine & Triage Unit'
+    };
+  }, [initialDoctor, isDoctorUser, currentUser]);
+
+  // Initial Multi-Type Chat Messages
   const [chatMessages, setChatMessages] = useState([
     {
       id: 'msg-1',
+      msgType: 'system',
       sender: 'system',
-      text: 'ABDM Encrypted Telemedicine Session Initialized (TLS 1.3 / DTLS-SRTP)',
+      text: 'ABDM Encrypted Telemedicine Session Initialized (TLS 1.3 / DTLS-SRTP • e-Sanjeevani Protocol)',
       time: '10:00 AM'
     },
     {
       id: 'msg-2',
+      msgType: 'text',
       sender: 'doctor',
       senderName: 'Dr. Soumya Ranjan Nayak',
-      text: 'Namaskar! I am reviewing your preliminary vitals and symptom intake. Can you hear and see me clearly?',
+      text: 'Namaskar Rameshwar ji! I am reviewing your preliminary intake. Can you hear and see me clearly?',
       time: '10:01 AM'
+    },
+    {
+      id: 'msg-3',
+      msgType: 'vitals',
+      sender: 'patient',
+      senderName: 'Rameshwar Lal (Patient)',
+      time: '10:01 AM',
+      data: {
+        bp: '104/68 mmHg',
+        pulse: '106 bpm',
+        spo2: '97%',
+        temp: '101.4°F',
+        acuity: 'YELLOW'
+      }
+    },
+    {
+      id: 'msg-4',
+      msgType: 'triage_query',
+      sender: 'doctor',
+      senderName: 'Dr. Soumya Ranjan Nayak',
+      time: '10:02 AM',
+      data: {
+        question: 'Have you noticed any spontaneous bleeding from gums, nose, or severe abdominal pain?',
+        options: ['No bleeding noticed', 'Mild abdominal discomfort', 'Severe pain / Bleeding']
+      }
+    },
+    {
+      id: 'msg-5',
+      msgType: 'lab',
+      sender: 'doctor',
+      senderName: 'Dr. Soumya Ranjan Nayak',
+      time: '10:03 AM',
+      data: {
+        testName: 'Dengue NS1 Antigen + Platelet Count (STAT)',
+        priority: 'STAT (Urgent - 2h Report)',
+        sample: 'Venous Blood (2 mL EDTA + Plain)',
+        notes: 'Fasting not required. Immediate collection at nearest CHC / PHC Tigiria.'
+      }
+    },
+    {
+      id: 'msg-6',
+      msgType: 'rx',
+      sender: 'doctor',
+      senderName: 'Dr. Soumya Ranjan Nayak',
+      time: '10:04 AM',
+      data: {
+        drugName: 'Tab. Paracetamol 650mg PO TID SOS',
+        regimen: '1 Tablet • 3 Times Daily • After Meals • 3 Days',
+        instructions: 'Strictly avoid Aspirin / Ibuprofen / NSAIDs. Maintain 2.5L ORS hydration.',
+        doctorReg: 'OMC-2017-66431'
+      }
     }
   ]);
-  const [inputChat, setInputChat] = useState('');
 
   // AI Scribe & Live Clinical Dialogue State
   const [activeCaptionIndex, setActiveCaptionIndex] = useState(0);
@@ -212,42 +321,6 @@ export default function TelemedicineVideoSuite({
     }
     return () => clearInterval(interval);
   }, [callState, showClosedCaptions, captionDialogues]);
-
-  // Patient Clinical Telemetry Profile
-  const [patientData, setPatientData] = useState(() => {
-    if (initialPatient) return initialPatient;
-    return {
-      name: 'Rameshwar Lal (ରମେଶ୍ୱର ଲାଲ୍)',
-      age: 48,
-      gender: 'Male',
-      abhaId: '91-4412-8820-1945',
-      phone: '+91 94371 90214',
-      district: 'Cuttack',
-      bloodGroup: 'B+',
-      weight: '68 kg',
-      chiefComplaint: 'Continuous High Fever for 3 days with severe retro-orbital headache and joint pains',
-      vitals: {
-        bp: '104/68 mmHg',
-        pulse: '106 bpm',
-        spo2: '97%',
-        temp: '101.4°F',
-        rr: '20/min'
-      },
-      acuity: 'YELLOW'
-    };
-  });
-
-  // Doctor Clinical Profile
-  const doctorData = useMemo(() => {
-    if (initialDoctor) return initialDoctor;
-    return {
-      name: isDoctorUser ? currentUser?.name || 'Dr. Soumya Ranjan Nayak' : 'Dr. Soumya Ranjan Nayak',
-      degrees: 'MBBS, MD (Internal & Emergency Medicine)',
-      regNo: 'OMC-2017-66431',
-      facility: 'SCB Medical College & Hospital, Cuttack',
-      department: 'Telemedicine & Triage Unit'
-    };
-  }, [initialDoctor, isDoctorUser, currentUser]);
 
   // Video & Stream DOM Refs
   const localVideoRef = useRef(null);
@@ -480,7 +553,6 @@ export default function TelemedicineVideoSuite({
       interval = setInterval(() => {
         setCallDuration((prev) => prev + 1);
         if (!analyserRef.current) {
-          // Fallback animated VU meter
           setAudioLevel((prev) => Math.min(95, Math.max(15, Math.floor(Math.random() * 80))));
         }
       }, 1000);
@@ -543,22 +615,30 @@ export default function TelemedicineVideoSuite({
     }
   };
 
-  // Send In-Call Chat Message
+  // Send In-Call Standard Chat Message
   const handleSendChat = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!inputChat.trim()) return;
 
+    handleSendSpecialMessage('text', {}, inputChat.trim());
+    setInputChat('');
+  };
+
+  // Send Multi-Type Clinical Message (Text, Rx, Vitals, Lab, Image, Audio, Triage Query)
+  const handleSendSpecialMessage = (msgType = 'text', data = {}, text = '') => {
     const newMsg = {
       id: `msg-${Date.now()}`,
+      msgType,
       sender: activeRole,
       senderName: activeRole === 'doctor' ? doctorData.name : patientData.name,
-      text: inputChat.trim(),
+      text: text || '',
+      data,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     setChatMessages((prev) => [...prev, newMsg]);
-    setInputChat('');
     playTone('message');
+    setShowAttachmentMenu(false);
 
     // Broadcast to remote peer
     if (signalingChannelRef.current) {
@@ -572,6 +652,19 @@ export default function TelemedicineVideoSuite({
         chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     }, 100);
+  };
+
+  // Handle Play Voice Note Simulation
+  const handlePlayVoiceNote = (msgId) => {
+    if (playingAudioId === msgId) {
+      setPlayingAudioId(null);
+    } else {
+      setPlayingAudioId(msgId);
+      playTone('audio_note');
+      setTimeout(() => {
+        setPlayingAudioId(null);
+      }, 3500);
+    }
   };
 
   // Copy Meeting Room Link
@@ -1363,47 +1456,444 @@ export default function TelemedicineVideoSuite({
               </button>
             </div>
 
-            {/* PANEL 1: IN-CALL REAL-TIME CHAT */}
+            {/* PANEL 1: IN-CALL MULTI-TYPE CLINICAL CHAT */}
             {activeSidePanel === 'chat' && (
               <div className="flex-1 flex flex-col justify-between p-3 overflow-hidden">
-                <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[380px]">
-                  {chatMessages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex flex-col text-xs ${
-                        msg.sender === 'system'
-                          ? 'items-center text-center text-slate-400 text-[10px] my-1'
-                          : msg.sender === activeRole
-                          ? 'items-end'
-                          : 'items-start'
-                      }`}
-                    >
-                      {msg.sender !== 'system' && (
-                        <div
-                          className={`max-w-[85%] rounded-2xl p-2.5 space-y-1 ${
-                            msg.sender === activeRole
-                              ? 'bg-indigo-600 text-white rounded-br-none shadow-sm'
-                              : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2 text-[10px] opacity-75 font-semibold">
-                            <span>{msg.senderName}</span>
-                            <span>{msg.time}</span>
+                {/* Scrollable Message List */}
+                <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[360px]">
+                  {chatMessages.map((msg) => {
+                    const isSelf = msg.sender === activeRole;
+
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex flex-col text-xs ${
+                          msg.msgType === 'system'
+                            ? 'items-center text-center my-1'
+                            : isSelf
+                            ? 'items-end'
+                            : 'items-start'
+                        }`}
+                      >
+                        {/* 1. SYSTEM AUDIT MESSAGE TYPE */}
+                        {msg.msgType === 'system' && (
+                          <div className="bg-slate-950/90 text-slate-400 text-[10px] px-3 py-1.5 rounded-full border border-slate-800 flex items-center gap-1.5 shadow-xs max-w-[95%]">
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span>{msg.text}</span>
                           </div>
-                          <p className="leading-relaxed">{msg.text}</p>
-                        </div>
-                      )}
-                      {msg.sender === 'system' && (
-                        <span className="bg-slate-950 px-2 py-0.5 rounded-full border border-slate-800">
-                          {msg.text}
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                        )}
+
+                        {/* 2. STANDARD TEXT MESSAGE TYPE */}
+                        {msg.msgType === 'text' && (
+                          <div
+                            className={`max-w-[85%] rounded-2xl p-2.5 space-y-1 shadow-sm ${
+                              isSelf
+                                ? 'bg-indigo-600 text-white rounded-br-none'
+                                : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2 text-[10px] opacity-75 font-semibold">
+                              <span>{msg.senderName}</span>
+                              <span className="flex items-center gap-0.5">
+                                <span>{msg.time}</span>
+                                {isSelf && <CheckCheck className="w-3 h-3 text-indigo-200" />}
+                              </span>
+                            </div>
+                            <p className="leading-relaxed text-xs">{msg.text}</p>
+                          </div>
+                        )}
+
+                        {/* 3. VITALS TELEMETRY SNAPSHOT MESSAGE TYPE */}
+                        {msg.msgType === 'vitals' && (
+                          <div
+                            className={`max-w-[90%] rounded-2xl p-3 border shadow-md space-y-2 ${
+                              isSelf
+                                ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-100 rounded-br-none'
+                                : 'bg-slate-900 border-slate-700 text-slate-100 rounded-bl-none'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                              <span className="flex items-center gap-1.5 text-[11px] font-black text-emerald-400">
+                                <HeartPulse className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                                <span>Vitals Snapshot</span>
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                {msg.data?.acuity || 'YELLOW'}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                              <div className="bg-black/30 p-1.5 rounded-lg border border-white/5">
+                                <span className="text-[9px] text-slate-400 block">Blood Pressure</span>
+                                <strong className="text-white text-xs">{msg.data?.bp || '104/68'}</strong>
+                              </div>
+                              <div className="bg-black/30 p-1.5 rounded-lg border border-white/5">
+                                <span className="text-[9px] text-slate-400 block">Pulse Rate</span>
+                                <strong className="text-amber-400 text-xs">{msg.data?.pulse || '106 bpm'}</strong>
+                              </div>
+                              <div className="bg-black/30 p-1.5 rounded-lg border border-white/5">
+                                <span className="text-[9px] text-slate-400 block">SpO2 Level</span>
+                                <strong className="text-emerald-400 text-xs">{msg.data?.spo2 || '97%'}</strong>
+                              </div>
+                              <div className="bg-black/30 p-1.5 rounded-lg border border-white/5">
+                                <span className="text-[9px] text-slate-400 block">Temperature</span>
+                                <strong className="text-rose-400 text-xs">{msg.data?.temp || '101.4°F'}</strong>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between text-[9px] text-slate-400 pt-0.5">
+                              <span>BLE Telemetry Hub</span>
+                              <span>{msg.time}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 4. DIGITAL PRESCRIPTION (RX) ADVICE MESSAGE TYPE */}
+                        {msg.msgType === 'rx' && (
+                          <div
+                            className={`max-w-[90%] rounded-2xl p-3 border shadow-md space-y-2 ${
+                              isSelf
+                                ? 'bg-indigo-950/80 border-indigo-500/50 text-indigo-100 rounded-br-none'
+                                : 'bg-slate-900 border-indigo-500/40 text-slate-100 rounded-bl-none'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between border-b border-indigo-500/30 pb-1.5">
+                              <span className="flex items-center gap-1.5 text-[11px] font-black text-indigo-300">
+                                <Pill className="w-3.5 h-3.5 text-amber-400" />
+                                <span>e-Prescription Order</span>
+                              </span>
+                              <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800">
+                                NMC Signed
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="font-bold text-xs text-white">
+                                {msg.data?.drugName || 'Tab. Paracetamol 650mg'}
+                              </div>
+                              <div className="text-[11px] text-slate-300">
+                                💊 {msg.data?.regimen || '1 tab TID after food'}
+                              </div>
+                              {msg.data?.instructions && (
+                                <div className="text-[10px] text-amber-300 bg-amber-950/40 p-1.5 rounded-lg border border-amber-500/30 mt-1">
+                                  ⚠️ {msg.data.instructions}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between text-[9px] text-slate-400 pt-0.5">
+                              <span>RMP Reg: {msg.data?.doctorReg || doctorData.regNo}</span>
+                              <span>{msg.time}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 5. DIAGNOSTIC LAB INVESTIGATION ORDER MESSAGE TYPE */}
+                        {msg.msgType === 'lab' && (
+                          <div
+                            className={`max-w-[90%] rounded-2xl p-3 border shadow-md space-y-2 ${
+                              isSelf
+                                ? 'bg-purple-950/80 border-purple-500/50 text-purple-100 rounded-br-none'
+                                : 'bg-slate-900 border-purple-500/40 text-slate-100 rounded-bl-none'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between border-b border-purple-500/30 pb-1.5">
+                              <span className="flex items-center gap-1.5 text-[11px] font-black text-purple-300">
+                                <TestTube className="w-3.5 h-3.5 text-purple-400" />
+                                <span>Diagnostic Lab Order</span>
+                              </span>
+                              <span className="text-[9px] font-mono font-bold text-rose-300 bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800 animate-pulse">
+                                {msg.data?.priority || 'STAT (2h)'}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="font-bold text-xs text-white">
+                                {msg.data?.testName || 'Dengue NS1 Antigen + CBC'}
+                              </div>
+                              <div className="text-[10px] text-slate-300">
+                                🧪 Specimen: {msg.data?.sample || 'Venous Blood'}
+                              </div>
+                              {msg.data?.notes && (
+                                <div className="text-[10px] text-slate-400 italic">
+                                  Note: {msg.data.notes}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between text-[9px] text-slate-400 pt-0.5">
+                              <span>Requisition: ODHM-LAB-882</span>
+                              <span>{msg.time}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 6. CLINICAL EXAMINATION PHOTO / IMAGE MESSAGE TYPE */}
+                        {msg.msgType === 'image' && (
+                          <div
+                            className={`max-w-[85%] rounded-2xl p-2.5 border shadow-md space-y-1.5 ${
+                              isSelf
+                                ? 'bg-indigo-950/70 border-indigo-500/40 text-white rounded-br-none'
+                                : 'bg-slate-900 border-slate-700 text-white rounded-bl-none'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between text-[10px] text-slate-400 pb-1">
+                              <span className="flex items-center gap-1 font-bold text-indigo-300">
+                                <Image className="w-3 h-3" />
+                                <span>Clinical Photo</span>
+                              </span>
+                              <span>{msg.time}</span>
+                            </div>
+                            <div
+                              onClick={() => setExpandedImage(msg.data?.imageUrl || 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=600&q=80')}
+                              className="w-full h-32 rounded-xl bg-slate-950 border border-slate-700 overflow-hidden relative cursor-pointer group"
+                            >
+                              <img
+                                src={msg.data?.imageUrl || 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=600&q=80'}
+                                alt="Clinical Exam"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold gap-1 text-white">
+                                <ZoomIn className="w-4 h-4" />
+                                <span>Click to Zoom</span>
+                              </div>
+                            </div>
+                            {msg.data?.caption && (
+                              <p className="text-[11px] text-slate-300 italic">{msg.data.caption}</p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 7. VOICE NOTE / AUDIO CONSULT CLIP MESSAGE TYPE */}
+                        {msg.msgType === 'audio' && (
+                          <div
+                            className={`max-w-[85%] rounded-2xl p-2.5 border shadow-md space-y-1.5 ${
+                              isSelf
+                                ? 'bg-indigo-900/80 border-indigo-500/40 text-white rounded-br-none'
+                                : 'bg-slate-800 border-slate-700 text-white rounded-bl-none'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between text-[10px] text-slate-400">
+                              <span>{msg.senderName}</span>
+                              <span>{msg.time}</span>
+                            </div>
+                            <div className="flex items-center gap-2.5 bg-black/30 p-2 rounded-xl border border-white/5">
+                              <button
+                                type="button"
+                                onClick={() => handlePlayVoiceNote(msg.id)}
+                                className="w-8 h-8 rounded-full bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center text-white cursor-pointer shadow-md shrink-0"
+                              >
+                                {playingAudioId === msg.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                              </button>
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-1 h-4">
+                                  {[12, 24, 18, 28, 14, 20, 32, 16, 22, 10, 26, 18, 14, 22].map((h, i) => (
+                                    <div
+                                      key={i}
+                                      className={`w-1 rounded-full transition-all duration-150 ${
+                                        playingAudioId === msg.id ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                                      }`}
+                                      style={{ height: `${playingAudioId === msg.id ? Math.max(6, (h * Math.random()).toFixed(0)) : h * 0.5}px` }}
+                                    />
+                                  ))}
+                                </div>
+                                <div className="flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                                  <span>{playingAudioId === msg.id ? 'Playing...' : 'Voice Note'}</span>
+                                  <span>{msg.data?.audioDuration || '0:14'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 8. INTERACTIVE CLINICAL TRIAGE QUERY MESSAGE TYPE */}
+                        {msg.msgType === 'triage_query' && (
+                          <div
+                            className={`max-w-[90%] rounded-2xl p-3 border shadow-md space-y-2 ${
+                              isSelf
+                                ? 'bg-amber-950/80 border-amber-500/50 text-amber-100 rounded-br-none'
+                                : 'bg-slate-900 border-amber-500/40 text-slate-100 rounded-bl-none'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between border-b border-amber-500/30 pb-1.5">
+                              <span className="flex items-center gap-1.5 text-[11px] font-black text-amber-300">
+                                <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                                <span>Clinical Triage Question</span>
+                              </span>
+                              <span className="text-[9px] text-slate-400">{msg.time}</span>
+                            </div>
+                            <p className="text-xs text-white font-medium">
+                              {msg.data?.question || msg.text}
+                            </p>
+                            {msg.data?.options && (
+                              <div className="space-y-1.5 pt-1">
+                                <span className="text-[9px] text-slate-400 font-bold block">SELECT TO RESPOND:</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {msg.data.options.map((opt, oIdx) => (
+                                    <button
+                                      key={oIdx}
+                                      type="button"
+                                      onClick={() => handleSendSpecialMessage('text', {}, `Response to query: "${opt}"`)}
+                                      className="px-2.5 py-1 bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-500/40 rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                                    >
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   <div ref={chatBottomRef} />
                 </div>
 
+                {/* Quick Clinical Tool Attachment Tray (Collapsible) */}
+                {showAttachmentMenu && (
+                  <div className="bg-slate-950 border border-slate-800 rounded-2xl p-2.5 mb-2 shadow-2xl space-y-2 animate-fadeIn">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 text-[10px] font-bold text-slate-400">
+                      <span>SEND SPECIAL CLINICAL MESSAGE:</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowAttachmentMenu(false)}
+                        className="text-slate-400 hover:text-white"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSendSpecialMessage('rx', {
+                            drugName: 'Tab. Paracetamol 650mg PO TID SOS',
+                            regimen: '1 Tablet • 3 Times Daily • After Meals • 3 Days',
+                            instructions: 'Strictly avoid Aspirin / NSAIDs. Hydrate with 2.5L ORS daily.',
+                            doctorReg: doctorData.regNo
+                          })
+                        }
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 flex flex-col items-center gap-1 text-[10px] font-bold text-indigo-300 transition-all cursor-pointer"
+                      >
+                        <Pill className="w-4 h-4 text-amber-400" />
+                        <span>Prescribe Rx</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSendSpecialMessage('vitals', {
+                            bp: patientData.vitals.bp,
+                            pulse: patientData.vitals.pulse,
+                            spo2: patientData.vitals.spo2,
+                            temp: patientData.vitals.temp,
+                            acuity: patientData.acuity
+                          })
+                        }
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 flex flex-col items-center gap-1 text-[10px] font-bold text-emerald-300 transition-all cursor-pointer"
+                      >
+                        <HeartPulse className="w-4 h-4 text-rose-400" />
+                        <span>Share Vitals</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSendSpecialMessage('lab', {
+                            testName: 'STAT Dengue NS1 + Platelet Count',
+                            priority: 'STAT (Urgent - 2h)',
+                            sample: 'Venous Blood (EDTA + Plain)',
+                            notes: 'Fasting not required. Immediate report.'
+                          })
+                        }
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 flex flex-col items-center gap-1 text-[10px] font-bold text-purple-300 transition-all cursor-pointer"
+                      >
+                        <TestTube className="w-4 h-4 text-purple-400" />
+                        <span>Order Lab</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSendSpecialMessage('image', {
+                            imageUrl: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=600&q=80',
+                            caption: 'Throat & Pharyngeal Erythema Inspection'
+                          })
+                        }
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-sky-500/50 flex flex-col items-center gap-1 text-[10px] font-bold text-sky-300 transition-all cursor-pointer"
+                      >
+                        <Image className="w-4 h-4 text-sky-400" />
+                        <span>Send Photo</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSendSpecialMessage('audio', {
+                            audioDuration: '0:18',
+                            note: 'Clinical audio instructions regarding fever management'
+                          })
+                        }
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-teal-500/50 flex flex-col items-center gap-1 text-[10px] font-bold text-teal-300 transition-all cursor-pointer"
+                      >
+                        <Mic className="w-4 h-4 text-teal-400" />
+                        <span>Voice Memo</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSendSpecialMessage('triage_query', {
+                            question: 'Do you feel severe dizziness or breathlessness right now?',
+                            options: ['No dizziness', 'Mild weakness when standing', 'Severe dizziness / Need urgent help']
+                          })
+                        }
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 flex flex-col items-center gap-1 text-[10px] font-bold text-amber-300 transition-all cursor-pointer"
+                      >
+                        <HelpCircle className="w-4 h-4 text-amber-400" />
+                        <span>Ask Query</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick Reply Chips Carousel */}
+                <div className="py-1.5 flex items-center gap-1.5 overflow-x-auto scrollbar-none text-[10px]">
+                  {(activeRole === 'doctor'
+                    ? [
+                        'Please open mouth & show throat',
+                        'Drink 2-3L ORS solution daily',
+                        'Any gum or nose bleeding?',
+                        'Take Tab Paracetamol 650mg SOS'
+                      ]
+                    : [
+                        'Fever is 101.4°F with chills',
+                        'Severe body ache behind eyes',
+                        'No bleeding noticed so far',
+                        'Feeling weak when standing up'
+                      ]
+                  ).map((phrase, pIdx) => (
+                    <button
+                      key={pIdx}
+                      type="button"
+                      onClick={() => handleSendSpecialMessage('text', {}, phrase)}
+                      className="px-2 py-0.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/40 text-slate-300 hover:text-white rounded-full whitespace-nowrap transition-all cursor-pointer"
+                    >
+                      {phrase}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Chat Input Bar */}
                 <form onSubmit={handleSendChat} className="pt-2 flex items-center gap-1.5 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowAttachmentMenu((prev) => !prev)}
+                    className={`p-2 rounded-xl transition-all cursor-pointer ${
+                      showAttachmentMenu
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+                    }`}
+                    title="Attach Clinical Card (Rx, Vitals, Lab, Photo, Voice)"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+
                   <input
                     type="text"
                     value={inputChat}
@@ -1411,9 +1901,10 @@ export default function TelemedicineVideoSuite({
                     placeholder={txt.typeMessage}
                     className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-indigo-500 outline-none"
                   />
+
                   <button
                     type="submit"
-                    className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all cursor-pointer"
+                    className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all cursor-pointer shadow-sm"
                   >
                     <Send className="w-3.5 h-3.5" />
                   </button>
@@ -1620,6 +2111,40 @@ export default function TelemedicineVideoSuite({
               <FileText className="w-4 h-4" />
               <span>Generate Official NMC e-Prescription (QR)</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 7. CLINICAL IMAGE LIGHTBOX MODAL                              */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {expandedImage && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-4 space-y-3 relative shadow-2xl">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                <Image className="w-4 h-4 text-indigo-400" />
+                <span>Clinical Visual Evidence Inspection</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setExpandedImage(null)}
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="max-h-[70vh] rounded-2xl overflow-hidden bg-black flex items-center justify-center">
+              <img
+                src={expandedImage}
+                alt="Enlarged Clinical Inspection"
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <span>Patient: {patientData.name} ({patientData.abhaId})</span>
+              <span>Encrypted ABDM Artifact</span>
+            </div>
           </div>
         </div>
       )}
