@@ -23,6 +23,7 @@ import { saveFirestoreDoc, FIRESTORE_COLLECTIONS } from './services/firebaseDb';
 import { syncAllAuthFromFirestore } from './utils/authStorage';
 import { syncBloodBankFromFirestore } from './utils/bloodBankStorage';
 const NmcReferralPrescriptionSuite = lazy(() => import('./components/NmcReferralPrescriptionSuite'));
+const PhcOfflineSyncSuite = lazy(() => import('./components/PhcOfflineSyncSuite'));
 import {
   Activity,
   Brain,
@@ -50,7 +51,10 @@ import {
   Sun,
   Moon,
   BookOpen,
-  Flame
+  Flame,
+  Database,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 
 export default function App() {
@@ -58,6 +62,7 @@ export default function App() {
   const [appLang, setAppLang] = useState(() => currentUser?.preferredLanguage || 'or-IN');
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [activeTab, setActiveTab] = useState(() => {
     const user = getCurrentUser();
     if (user?.roleCategory === 'admin') return 'admin';
@@ -70,6 +75,18 @@ export default function App() {
   const [isGeneratingNote, setIsGeneratingNote] = useState(false);
   const [bookedCount, setBookedCount] = useState(() => getBookedAppointments().length);
   const [transfersCount, setTransfersCount] = useState(() => getHospitalTransfers().length);
+
+  // Monitor network online/offline state
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Theme Mode: 'light', 'dark', or 'reading'
   const [themeMode, setThemeMode] = useState(() => {
@@ -437,6 +454,8 @@ export default function App() {
       t30_anc_maternal: '୩୦. ANC ଗର୍ଭବତୀ ମାତୃ ସୁରକ୍ଷା',
       t31_mental_health: '୩୧. PHQ-2 ମାନସିକ ସ୍ୱାସ୍ଥ୍ୟ Screen',
       t32_carbon_sms: '୩୨. ନାଗରିକ Carbon SMS Receipt',
+      phcOfflineTab: '୩୩. ଗ୍ରାମୀଣ PHC ଅଫଲାଇନ୍ ସିଙ୍କ୍ (PWA + DB)',
+      t33_phc_offline: '୩୩. ଗ୍ରାମୀଣ PHC ଅଫଲାଇନ୍ ସିଙ୍କ୍ (PWA)',
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
@@ -506,6 +525,8 @@ export default function App() {
       t30_anc_maternal: '30. मातृ स्वास्थ्य एवं ANC',
       t31_mental_health: '31. PHQ-2 मानसिक स्वास्थ्य',
       t32_carbon_sms: '32. नागरिक कार्बन एसएमएस',
+      phcOfflineTab: '33. ग्रामीण PHC ऑफलाइन सिंक (PWA + DB)',
+      t33_phc_offline: '33. ग्रामीण PHC ऑफलाइन सिंक (PWA)',
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
       verifiedDoctorBadge: 'RMP सत्यापित',
@@ -575,6 +596,8 @@ export default function App() {
       t30_anc_maternal: '30. Maternal ANC High-Risk Module',
       t31_mental_health: '31. PHQ-2 Mental Health & NCD',
       t32_carbon_sms: '32. Carbon Copy Citizen SMS',
+      phcOfflineTab: '33. Rural PHC Offline & IndexedDB Sync (PWA)',
+      t33_phc_offline: '33. Rural PHC Offline Sync (PWA)',
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
       verifiedDoctorBadge: 'Verified RMP',
@@ -600,7 +623,7 @@ export default function App() {
     }
   }[appLang] || {};
 
-  // Left sidebar menu items for GovTech Clinical Modules
+  // Left sidebar menu items for GovTech Clinical & Rural Offline Modules (Features 11 through 33)
   const leftSidebarItems = [
     { id: 't11_history', num: 11, label: uiText.t11_history || '11. ABHA Trend Analysis', icon: Activity },
     { id: 't12_differential', num: 12, label: uiText.t12_differential || '12. Differential Triage', icon: FileText },
@@ -623,7 +646,8 @@ export default function App() {
     { id: 't29_nmc_referral', num: 29, label: uiText.t29_discharge || '29. PDF Referral & NMC Prescriptions (QR)', icon: FileText },
     { id: 't30_anc_maternal', num: 30, label: uiText.t30_anc_maternal || '30. ANC High-Risk Pregnancy', icon: Activity },
     { id: 't31_mental_health', num: 31, label: uiText.t31_mental_health || '31. PHQ-2 Mental Health Screener', icon: Stethoscope },
-    { id: 't32_carbon_sms', num: 32, label: uiText.t32_carbon_sms || '32. Citizen SMS Receipts', icon: Mail }
+    { id: 't32_carbon_sms', num: 32, label: uiText.t32_carbon_sms || '32. Citizen SMS Receipts', icon: Mail },
+    { id: 'phc_offline', num: 33, label: uiText.t33_phc_offline || '33. Rural PHC Offline Sync (PWA)', icon: Database }
   ];
 
   return (
@@ -636,6 +660,20 @@ export default function App() {
           <span>{uiText.protocol}</span>
         </div>
         <div className="flex items-center gap-3 text-slate-400 text-[11px]">
+          {/* Offline / Online Sync Indicator */}
+          <button
+            onClick={() => setActiveTab('phc_offline')}
+            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+              isOnline
+                ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900'
+                : 'bg-amber-950/90 text-amber-300 border border-amber-500/60 animate-pulse hover:bg-amber-900'
+            }`}
+            title="Click to open Rural PHC Offline & IndexedDB Sync Suite"
+          >
+            {isOnline ? <Wifi className="w-3 h-3 text-emerald-400" /> : <WifiOff className="w-3 h-3 text-amber-400" />}
+            <span>{isOnline ? 'Cloud Synced' : 'Offline Mode (IndexedDB)'}</span>
+          </button>
+          <span className="hidden sm:inline">|</span>
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             {uiText.facilityLabel} <strong>{currentUser.facility?.split(',')[0]}</strong>
@@ -961,6 +999,21 @@ export default function App() {
               <span>{uiText.nmcReferralTab || 'NMC Rx & Referral'}</span>
               <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
                 QR
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('phc_offline')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                activeTab === 'phc_offline'
+                  ? 'bg-gradient-to-r from-emerald-700 to-teal-800 text-white shadow-xs ring-2 ring-emerald-400/40'
+                  : 'text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
+              }`}
+            >
+              <Database className="w-3.5 h-3.5 text-emerald-600" />
+              {uiText.phcOfflineTab}
+              <span className="bg-emerald-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                OFFLINE
               </span>
             </button>
 
@@ -1720,6 +1773,28 @@ export default function App() {
           {activeTab === 't31_mental_health' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
           {activeTab === 't32_carbon_sms' && <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="maternal" />}
         </Suspense>
+
+        {/* TAB 33: RURAL PHC OFFLINE PWA & INDEXEDDB SYNC SUITE */}
+        {activeTab === 'phc_offline' && (
+          <div>
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+                  <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-600 animate-pulse">
+                    {appLang === 'or-IN'
+                      ? 'ଗ୍ରାମୀଣ PHC ଅଫଲାଇନ୍ ସିଙ୍କ୍ ସୁଇଟ୍ ଲୋଡ୍ ହେଉଛି...'
+                      : appLang === 'hi-IN'
+                      ? 'ग्रामीण PHC ऑफ़लाइन सिंक सुइट लोड हो रहा है...'
+                      : 'Loading Rural PHC Offline Sync Suite...'}
+                  </p>
+                </div>
+              }
+            >
+              <PhcOfflineSyncSuite appLang={appLang} themeMode={themeMode} />
+            </Suspense>
+          </div>
+        )}
       </main>
       </div>
 
