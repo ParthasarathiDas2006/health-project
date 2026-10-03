@@ -123,6 +123,22 @@ export default function App() {
   const [bookedCount, setBookedCount] = useState(() => getBookedAppointments().length);
   const [transfersCount, setTransfersCount] = useState(() => getHospitalTransfers().length);
 
+  // Responsive screen detection: phone/tablet (< 1024px) vs desktop/laptop (>= 1024px)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 1024;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Monitor network online/offline state
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -935,7 +951,7 @@ export default function App() {
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 1. MOBILE & TABLET VIEW (SCREEN < 1024px — iPhone, Android & Tablets)*/}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="block lg:hidden">
+      {isMobile ? (
         <MobileAppView
           currentUser={currentUser}
           appLang={appLang}
@@ -950,12 +966,11 @@ export default function App() {
           onLogout={handleLogout}
           renderActiveComponent={renderActiveWorkspace}
         />
-      </div>
-
-      {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 2. DESKTOP & LAPTOP WORKSPACE (SCREEN >= 1024px — Full Multi-Hub)   */}
-      {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="hidden lg:flex lg:flex-col min-h-screen">
+      ) : (
+        /* ─────────────────────────────────────────────────────────────────── */
+        /* 2. DESKTOP & LAPTOP WORKSPACE (SCREEN >= 1024px — Full Multi-Hub)   */
+        /* ─────────────────────────────────────────────────────────────────── */
+        <div className="flex flex-col min-h-screen">
         {/* 1. TOP STATUS & CLINICAL SAFETY BANNER (ROLE-TAILORED) */}
         <div className="bg-slate-900 text-slate-200 px-4 py-2 text-xs flex flex-wrap items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-2">
@@ -1853,6 +1868,7 @@ export default function App() {
         {uiText.footerText}
       </footer>
     </div>
+    )}
 
       {/* Auth / Switch User Modal */}
       {showAuthPage && (
