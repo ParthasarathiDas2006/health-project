@@ -1,13 +1,16 @@
 // SwasthyaMitra Service Worker — Ultra-Reliable Rural PHC Offline Triage & Clinic Suite
-// Version: v1.1.0 (Odisha Health Portal & National Health Mission)
+// Version: v1.2.0 (Odisha Health Portal & National Health Mission)
 
-const CACHE_NAME = 'swasthyamitra-phc-v1.1.0';
-const DYNAMIC_CACHE_NAME = 'swasthyamitra-dynamic-v1.1.0';
+const CACHE_NAME = 'swasthyamitra-phc-v1.2.0';
+const DYNAMIC_CACHE_NAME = 'swasthyamitra-dynamic-v1.2.0';
 
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  'https://cdn.tailwindcss.com',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Oriya:wght@400;500;600;700&display=swap',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   '/images/cardiac_triage.jpg',
   '/images/respiratory_triage.jpg',
   '/images/maternal_triage.jpg',
@@ -22,7 +25,7 @@ const STATIC_ASSETS = [
   '/images/xray_fullbody.jpg'
 ];
 
-// Install Event: Cache core static assets one by one (fault-tolerant)
+// Install Event: Cache core static assets fault-tolerantly
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
@@ -31,7 +34,7 @@ self.addEventListener('install', (event) => {
         try {
           await cache.add(asset);
         } catch (err) {
-          console.warn('[ServiceWorker] Optional asset could not be pre-cached during install:', asset);
+          console.warn('[ServiceWorker] Note: Optional asset cached lazily:', asset);
         }
       }
     })
@@ -73,14 +76,22 @@ self.addEventListener('fetch', (event) => {
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(req, copy);
+              cache.put('/index.html', copy.clone());
+              cache.put('/', copy.clone());
+            });
           }
           return networkResponse;
         })
         .catch(async () => {
           // Fallback to cached index.html or root
-          const cachedIndex = await caches.match('/index.html') || await caches.match('/');
+          const cachedIndex =
+            (await caches.match(req)) ||
+            (await caches.match('/index.html')) ||
+            (await caches.match('/'));
           if (cachedIndex) return cachedIndex;
+
           return new Response(
             `<!DOCTYPE html>
             <html lang="en">
@@ -97,7 +108,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Static Assets, Scripts, Styles, Images, and JSON (Cache-First / Stale-While-Revalidate)
+  // 2. Static Assets, Scripts, Styles, Images, Fonts, and JSON (Cache-First / Stale-While-Revalidate)
   event.respondWith(
     caches.match(req).then((cachedResponse) => {
       // If cached, return immediately and update cache in background
@@ -109,7 +120,7 @@ self.addEventListener('fetch', (event) => {
             }
           })
           .catch(() => {
-            // Completely fine when offline
+            // Offline - using cached copy
           });
         return cachedResponse;
       }
@@ -117,7 +128,7 @@ self.addEventListener('fetch', (event) => {
       // If not in cache, fetch from network and store in dynamic cache
       return fetch(req)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
+          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
             const responseClone = networkResponse.clone();
             caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
               cache.put(req, responseClone);
@@ -131,7 +142,6 @@ self.addEventListener('fetch', (event) => {
             const fallbackImg = await caches.match('/images/cardiac_triage.jpg');
             if (fallbackImg) return fallbackImg;
           }
-          // Return generic offline response
           return new Response('Offline resource unavailable', {
             status: 503,
             statusText: 'Offline Resource Unavailable'
