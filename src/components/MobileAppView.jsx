@@ -29,12 +29,14 @@ import {
   HeartPulse,
   Database,
   Layers,
-  Video,
-  Hospital,
-  Shield,
-  Clock,
+  Bell,
   Check,
-  Share2
+  Globe,
+  Radio,
+  Clock,
+  ExternalLink,
+  Mic,
+  Plus
 } from 'lucide-react';
 
 export default function MobileAppView({
@@ -58,113 +60,41 @@ export default function MobileAppView({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMobileTab, setSelectedMobileTab] = useState(null);
 
-  const abhaNumber = currentUser?.staffId || '91-7712-4439-0021';
-  const patientName = currentUser?.name || 'PRASANT KUMAR ROUT';
-  const patientFacility = currentUser?.facility || 'Capital Hospital, BBSR';
+  const abhaNumber = currentUser?.staffId || '91-1234-5678-9012';
+  const patientName = currentUser?.name || 'Ravi Kumar';
+  const patientFacility = currentUser?.facility || 'Capital Hospital, Bhubaneswar';
   const patientAge = currentUser?.age || 42;
   const patientGender = currentUser?.gender || 'Male';
+  const patientDob = '10/10/1982';
 
   // Multilingual translations
   const t = useMemo(() => {
     return {
       'or-IN': {
-        brandTitle: 'ସ୍ୱାସ୍ଥ୍ୟମିତ୍ର ଓଡ଼ିଶା',
-        brandSubtitle: 'Odisha Digital Health Mission (ABDM)',
-        abhaCardTitle: 'ABHA Health ID',
-        emergency108: 'EMERGENCY 108',
-        healthAlertTitle: 'ALERT: Maintain Vigilance for Heatwave. Stay hydrated with ORS and avoid peak sun.',
-        viewDetails: 'VIEW DETAILS',
-        searchPlaceholder: 'ଡାକ୍ତର, ହସ୍ପିଟାଲ୍ ବେଡ୍, ଆମ୍ବୁଲାନ୍ସ ଖୋଜନ୍ତୁ...',
-        triageTitle: 'AI Symptom Triage',
-        triageSub: 'AI ଲକ୍ଷଣ ନିରୂପଣ ଓ ଭଏସ୍ ଇନପୁଟ୍',
-        bedTitle: 'Hospital Bed Availability',
-        bedSub: 'ଲାଇଭ୍ ICU ଓ ଜେନେରାଲ୍ ବେଡ୍',
-        ambTitle: '108 Ambulance Dispatch',
-        ambSub: 'ଜରୁରୀକାଳୀନ ଜିପିଏସ୍ ଆମ୍ବୁଲାନ୍ସ',
-        docTitle: 'Doctor Tele-Consultation',
-        docSub: '୨,୫୨୩ OMC ସ୍ପେଶାଲିଷ୍ଟ ଡାକ୍ତର',
-        gpsTitle: 'Nearest Medical GPS',
-        gpsSub: 'ନିକଟସ୍ଥ PHC / CHC ହସ୍ପିଟାଲ୍',
-        bloodTitle: 'Blood Bank Network',
-        bloodSub: 'OSBTC ଲାଇଭ୍ ରକ୍ତ ଭଣ୍ଡାର',
-        medTitle: 'Medicine Expiry & Safety',
-        medSub: 'ଔଷଧ ସୁରକ୍ଷା ଓ ଏକ୍ସପାଏରୀ ସ୍କାନର',
-        rxTitle: 'Doctor Prescription & Referral',
-        rxSub: 'ଡାକ୍ତରୀ ପ୍ରେସକ୍ରିପସନ୍ ଓ ରେଫରାଲ୍ ସ୍ଲିପ୍',
-        phcTitle: 'PHC Offline Sync Engine',
-        phcSub: 'ଜିରୋ ଇଣ୍ଟରନେଟ୍ ଗ୍ରାମୀଣ ଡାଟା ସିଙ୍କ୍',
-        ashaTitle: 'ASHA Field Worker Portal',
-        ashaSub: 'ମାତୃ ଓ ଶିଶୁ ସ୍ୱାସ୍ଥ୍ୟ ସର୍ଭେକ୍ଷଣ',
-        adminTitle: 'State Command Hub',
-        adminSub: '୩୦ ଜିଲ୍ଲା ଟେଲିମେଟ୍ରି ଓ ପ୍ରଶାସନ',
-        home: 'Home',
-        services: 'Services',
-        records: 'My Records',
-        profile: 'Profile',
-        backToHome: 'Back',
-        copySuccess: 'ABHA Copied!'
-      },
-      'hi-IN': {
-        brandTitle: 'स्वास्थ्यमित्र ओडिशा',
-        brandSubtitle: 'Odisha Digital Health Mission (ABDM)',
-        abhaCardTitle: 'ABHA Health ID',
-        emergency108: 'EMERGENCY 108',
-        healthAlertTitle: 'ALERT: लू और भीषण गर्मी से बचाव हेतु सतर्क रहें व ओआरएस का सेवन करें।',
-        viewDetails: 'VIEW DETAILS',
-        searchPlaceholder: 'डॉक्टर, अस्पताल बेड, एम्बुलेंस खोजें...',
-        triageTitle: 'AI Symptom Triage',
-        triageSub: 'AI लक्षण जांच एवं वॉइस इनपुट',
-        bedTitle: 'Hospital Bed Availability',
-        bedSub: 'लाइव ICU व जनरल बेड उपलब्धता',
-        ambTitle: '108 Ambulance Dispatch',
-        ambSub: 'आपातकालीन 108 एम्बुलेंस जीपीएस',
-        docTitle: 'Doctor Tele-Consultation',
-        docSub: '2,523 OMC विशेषज्ञ डॉक्टर',
-        gpsTitle: 'Nearest Medical GPS',
-        gpsSub: 'निकटतम PHC / CHC अस्पताल मैप',
-        bloodTitle: 'Blood Bank Network',
-        bloodSub: 'OSBTC रियल-टाइम रक्त भंडार',
-        medTitle: 'Medicine Expiry & Safety',
-        medSub: 'दवा सुरक्षा व एक्सपायरी स्कैनर',
-        rxTitle: 'Doctor Prescription & Referral',
-        rxSub: 'डिजिटल प्रिस्क्रिप्शन व रेफरल पर्ची',
-        phcTitle: 'PHC Offline Sync Engine',
-        phcSub: 'जीरो इंटरनेट ग्रामीण डाटा सिंक',
-        ashaTitle: 'ASHA Field Worker Portal',
-        ashaSub: 'मातृ एवं शिशु स्वास्थ्य सर्वेक्षण',
-        adminTitle: 'State Command Hub',
-        adminSub: '30 जिला कमान एवं टेलीमेट्री',
-        home: 'Home',
-        services: 'Services',
-        records: 'My Records',
-        profile: 'Profile',
-        backToHome: 'Back',
-        copySuccess: 'ABHA Copied!'
-      },
-      'en-IN': {
         brandTitle: 'SwasthyaMitra Odisha',
         brandSubtitle: 'Odisha Digital Health Mission (ABDM)',
-        abhaCardTitle: 'ABHA Health ID',
-        emergency108: 'EMERGENCY 108',
-        healthAlertTitle: 'ALERT: Maintain Vigilance for Heatwave. Stay hydrated with ORS and avoid peak sun.',
+        odishaGov: 'ଓଡ଼ିଶା ଡିଜିଟାଲ୍ ସ୍ୱାସ୍ଥ୍ୟ ମିଶନ',
+        abhaCardTitle: 'ABHA Digital Health ID',
+        emergency108: '108 EMERGENCY SOS',
+        healthAlertTitle: 'PUBLIC HEALTH ALERT: Dengue & Heatwave Prevention Protocols Active in Odisha. Report Symptoms Immediately.',
         viewDetails: 'VIEW DETAILS',
         searchPlaceholder: 'Search doctors, beds, ambulance, blood...',
-        triageTitle: 'AI Symptom Triage',
+        triageTitle: 'AI Symptom Voice Triage',
         triageSub: 'Multilingual Voice & Triage Note',
-        bedTitle: 'Hospital Bed Availability',
+        bedTitle: 'Hospital Bed Tracker',
         bedSub: '10,770 Live ICU & General Beds',
-        ambTitle: '108 Ambulance Dispatch',
+        ambTitle: 'GPS 108 Ambulance Dispatch',
         ambSub: 'Instant GPS Emergency SOS',
-        docTitle: 'Doctor Tele-Consultation',
+        docTitle: 'Doctor Video Consultation',
         docSub: '2,523 OMC Verified Specialists',
-        gpsTitle: 'Nearest Medical GPS',
+        rxTitle: 'Digital Prescription Slips',
+        rxSub: 'NMC Digital Rx & Referral Slips',
+        gpsTitle: 'Nearest Hospital GPS',
         gpsSub: 'PHC, CHC & DHH Navigator',
         bloodTitle: 'Blood Bank Network',
-        bloodSub: '8,420 OSBTC Blood Stock Units',
+        bloodSub: '8,420 OSBTC Blood Units',
         medTitle: 'Medicine Expiry & Safety',
         medSub: 'OCR & Drug Interaction Guard',
-        rxTitle: 'Doctor Prescription & Referral',
-        rxSub: 'NMC Digital Rx & Transfer Slips',
         phcTitle: 'PHC Offline Sync Engine',
         phcSub: 'Zero-Internet Rural Clinic DB',
         ashaTitle: 'ASHA Field Worker Portal',
@@ -173,7 +103,83 @@ export default function MobileAppView({
         adminSub: '30-District Health Governance',
         home: 'Home',
         services: 'Services',
-        records: 'My Records',
+        records: 'Health Records',
+        profile: 'Profile',
+        backToHome: 'Back',
+        copySuccess: 'ABHA Copied!'
+      },
+      'hi-IN': {
+        brandTitle: 'SwasthyaMitra Odisha',
+        brandSubtitle: 'Odisha Digital Health Mission (ABDM)',
+        odishaGov: 'ओडिशा डिजिटल हेल्थ मिशन',
+        abhaCardTitle: 'ABHA Digital Health ID',
+        emergency108: '108 EMERGENCY SOS',
+        healthAlertTitle: 'PUBLIC HEALTH ALERT: ओडिशा में डेंगू व लू से बचाव निर्देश जारी। लक्षण दिखने पर तुरंत जांच करें।',
+        viewDetails: 'VIEW DETAILS',
+        searchPlaceholder: 'Search doctors, beds, ambulance, blood...',
+        triageTitle: 'AI Symptom Voice Triage',
+        triageSub: 'AI लक्षण जांच एवं वॉइस इनपुट',
+        bedTitle: 'Hospital Bed Tracker',
+        bedSub: 'लाइव ICU व जनरल बेड उपलब्धता',
+        ambTitle: 'GPS 108 Ambulance Dispatch',
+        ambSub: 'आपातकालीन 108 एम्बुलेंस जीपीएस',
+        docTitle: 'Doctor Video Consultation',
+        docSub: '2,523 OMC विशेषज्ञ डॉक्टर',
+        rxTitle: 'Digital Prescription Slips',
+        rxSub: 'डिजिटल प्रिस्क्रिप्शन व रेफरल पर्ची',
+        gpsTitle: 'Nearest Hospital GPS',
+        gpsSub: 'निकटतम PHC / CHC अस्पताल मैप',
+        bloodTitle: 'Blood Bank Network',
+        bloodSub: 'OSBTC रियल-टाइम रक्त भंडार',
+        medTitle: 'Medicine Expiry & Safety',
+        medSub: 'दवा सुरक्षा व एक्सपायरी स्कैनर',
+        phcTitle: 'PHC Offline Sync Engine',
+        phcSub: 'जीरो इंटरनेट ग्रामीण डाटा सिंक',
+        ashaTitle: 'ASHA Field Worker Portal',
+        ashaSub: 'मातृ एवं शिशु स्वास्थ्य सर्वेक्षण',
+        adminTitle: 'State Command Hub',
+        adminSub: '30 जिला कमान एवं टेलीमेट्री',
+        home: 'Home',
+        services: 'Services',
+        records: 'Health Records',
+        profile: 'Profile',
+        backToHome: 'Back',
+        copySuccess: 'ABHA Copied!'
+      },
+      'en-IN': {
+        brandTitle: 'SwasthyaMitra Odisha',
+        brandSubtitle: 'Odisha Digital Health Mission (ABDM)',
+        odishaGov: 'ODISHA DIGITAL HEALTH MISSION',
+        abhaCardTitle: 'ABHA Digital Health ID',
+        emergency108: '108 EMERGENCY SOS',
+        healthAlertTitle: 'PUBLIC HEALTH ALERT: Dengue Prevention Protocols Active in Bhubaneswar. Report Symptoms Immediately.',
+        viewDetails: 'VIEW DETAILS',
+        searchPlaceholder: 'Search doctors, beds, ambulance, blood...',
+        triageTitle: 'AI Symptom Voice Triage',
+        triageSub: 'Multilingual Voice & Triage Note',
+        bedTitle: 'Hospital Bed Tracker',
+        bedSub: '10,770 Live ICU & General Beds',
+        ambTitle: 'GPS 108 Ambulance Dispatch',
+        ambSub: 'Instant GPS Emergency SOS',
+        docTitle: 'Doctor Video Consultation',
+        docSub: '2,523 OMC Verified Specialists',
+        rxTitle: 'Digital Prescription Slips',
+        rxSub: 'NMC Digital Rx & Referral Slips',
+        gpsTitle: 'Nearest Hospital GPS',
+        gpsSub: 'PHC, CHC & DHH Navigator',
+        bloodTitle: 'Blood Bank Network',
+        bloodSub: '8,420 OSBTC Blood Units',
+        medTitle: 'Medicine Expiry & Safety',
+        medSub: 'OCR & Drug Interaction Guard',
+        phcTitle: 'PHC Offline Sync Engine',
+        phcSub: 'Zero-Internet Rural Clinic DB',
+        ashaTitle: 'ASHA Field Worker Portal',
+        ashaSub: 'Maternal & Child Health Surveys',
+        adminTitle: 'State Command Hub',
+        adminSub: '30-District Health Governance',
+        home: 'Home',
+        services: 'Services',
+        records: 'Health Records',
         profile: 'Profile',
         backToHome: 'Back',
         copySuccess: 'ABHA Copied!'
@@ -188,106 +194,95 @@ export default function MobileAppView({
     setTimeout(() => setCopiedAbha(false), 2000);
   };
 
-  // Action Portal Cards (Matching Mockup 2 Clean Layout)
+  // Action Portal Cards (Matching the 2-Column Mockup 1 & 2)
   const actionCards = useMemo(() => [
     {
       id: 'intake',
       hub: 'citizen',
       title: t.triageTitle,
-      sub: t.triageSub,
       icon: Activity,
-      iconBg: 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300',
-      badge: 'VOICE AI'
+      iconBg: 'bg-rose-50 text-rose-500 border border-rose-200',
+      tag: 'AI Mic'
     },
     {
       id: 'beds',
       hub: 'citizen',
       title: t.bedTitle,
-      sub: t.bedSub,
       icon: Bed,
-      iconBg: 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300',
-      badge: '10,770 BEDS'
+      iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
+      tag: 'Live Beds'
     },
     {
       id: 'ambulance',
       hub: 'citizen',
       title: t.ambTitle,
-      sub: t.ambSub,
       icon: Truck,
-      iconBg: 'bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300',
-      badge: 'GPS SOS'
+      iconBg: 'bg-amber-50 text-amber-600 border border-amber-200',
+      tag: '108 SOS'
     },
     {
       id: 'doctors',
       hub: 'citizen',
       title: t.docTitle,
-      sub: t.docSub,
       icon: Stethoscope,
-      iconBg: 'bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300',
-      badge: '2,523 DRS'
+      iconBg: 'bg-blue-50 text-blue-600 border border-blue-200',
+      tag: 'Video OPD'
     },
     {
       id: 'prescriptions',
       hub: 'doctor',
       title: t.rxTitle,
-      sub: t.rxSub,
       icon: FileText,
-      iconBg: 'bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300',
-      badge: 'NMC Rx'
+      iconBg: 'bg-purple-50 text-purple-600 border border-purple-200',
+      tag: 'NMC Rx'
     },
     {
       id: 'nearest',
       hub: 'citizen',
       title: t.gpsTitle,
-      sub: t.gpsSub,
       icon: MapPin,
-      iconBg: 'bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300',
-      badge: 'MAP GPS'
+      iconBg: 'bg-sky-50 text-sky-600 border border-sky-200',
+      tag: 'GPS Map'
     },
     {
       id: 'blood',
       hub: 'citizen',
       title: t.bloodTitle,
-      sub: t.bloodSub,
       icon: Droplet,
-      iconBg: 'bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300',
-      badge: '8,420 UNITS'
+      iconBg: 'bg-red-50 text-red-600 border border-red-200',
+      tag: 'OSBTC Stock'
     },
     {
       id: 'medicines',
       hub: 'citizen',
       title: t.medTitle,
-      sub: t.medSub,
       icon: Pill,
-      iconBg: 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300',
-      badge: 'SAFETY'
+      iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-200',
+      tag: 'OCR Safe'
     },
     {
       id: 'phc_offline',
       hub: 'asha',
       title: t.phcTitle,
-      sub: t.phcSub,
       icon: Database,
-      iconBg: 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200',
-      badge: 'OFFLINE'
+      iconBg: 'bg-teal-50 text-teal-600 border border-teal-200',
+      tag: 'Offline'
     },
     {
       id: 'asha_field',
       hub: 'asha',
       title: t.ashaTitle,
-      sub: t.ashaSub,
       icon: HeartPulse,
-      iconBg: 'bg-pink-100 dark:bg-pink-900/60 text-pink-700 dark:text-pink-300',
-      badge: 'FIELD'
+      iconBg: 'bg-pink-50 text-pink-600 border border-pink-200',
+      tag: 'Field'
     },
     {
       id: 'admin',
       hub: 'admin',
       title: t.adminTitle,
-      sub: t.adminSub,
       icon: Layers,
-      iconBg: 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
-      badge: 'COMMAND'
+      iconBg: 'bg-slate-100 text-slate-700 border border-slate-300',
+      tag: 'Command'
     }
   ], [t]);
 
@@ -311,14 +306,14 @@ export default function MobileAppView({
     if (!searchQuery.trim()) return actionCards;
     const q = searchQuery.toLowerCase();
     return actionCards.filter(
-      (c) => c.title.toLowerCase().includes(q) || c.sub.toLowerCase().includes(q)
+      (c) => c.title.toLowerCase().includes(q)
     );
   }, [actionCards, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 flex justify-center selection:bg-emerald-500 selection:text-white">
-      {/* 📱 Phone Shell Container (380px - 480px width) */}
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 min-h-screen shadow-2xl relative flex flex-col pb-24 border-x border-slate-200/80 dark:border-slate-800">
+    <div className="min-h-screen bg-[#e2e8f0] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 flex justify-center selection:bg-emerald-500 selection:text-white antialiased py-0 sm:py-6">
+      {/* 📱 Authentic Smartphone Container (Max 430px) */}
+      <div className="w-full max-w-[430px] bg-[#f8fafc] dark:bg-slate-900 min-h-screen sm:min-h-[860px] sm:rounded-[40px] shadow-2xl relative flex flex-col pb-24 overflow-hidden border-x sm:border border-slate-300/80 dark:border-slate-800">
 
         {/* ───────────────────────────────────────────────────────────── */}
         {/* DETAIL VIEW: WHEN A MODULE IS OPEN (AI Triage, Beds, GPS...)  */}
@@ -336,12 +331,12 @@ export default function MobileAppView({
                 <span>{t.backToHome}</span>
               </button>
 
-              <div className="font-bold text-sm text-white truncate text-center flex-1">
+              <div className="font-bold text-xs sm:text-sm text-white truncate text-center flex-1">
                 {actionCards.find((c) => c.id === selectedMobileTab)?.title || 'Health Module'}
               </div>
 
               {/* Language Pill */}
-              <div className="flex items-center bg-black/20 rounded-full p-0.5 text-[10px] font-bold">
+              <div className="flex items-center bg-black/25 rounded-full p-0.5 text-[10px] font-bold">
                 <button
                   type="button"
                   onClick={() => setAppLang('or-IN')}
@@ -382,14 +377,16 @@ export default function MobileAppView({
                     key={card.id}
                     type="button"
                     onClick={() => handleOpenModule(card.id, card.hub)}
-                    className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-xs flex flex-col items-center text-center space-y-2 active:scale-95 transition-all cursor-pointer hover:border-emerald-500"
+                    className="p-3.5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-xs flex flex-col items-center text-center space-y-2 active:scale-95 transition-all cursor-pointer hover:border-emerald-500"
                   >
                     <div className={`w-12 h-12 rounded-2xl ${card.iconBg} flex items-center justify-center shadow-xs`}>
                       <IconComp className="w-6 h-6 stroke-[2.2]" />
                     </div>
                     <div>
                       <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{card.title}</h3>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{card.sub}</p>
+                      <span className="inline-block mt-1 text-[9px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
+                        {card.tag}
+                      </span>
                     </div>
                   </button>
                 );
@@ -403,7 +400,7 @@ export default function MobileAppView({
           <div className="flex-1 flex flex-col p-4 space-y-4 animate-fadeIn">
             <div className="pt-2 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-black text-slate-900 dark:text-white">My Health Records</h2>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">Health Records</h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Ayushman Bharat Digital Health Vault</p>
               </div>
               <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-300">
@@ -432,8 +429,8 @@ export default function MobileAppView({
                     <Calendar className="w-5 h-5" />
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Doctor Appointments</div>
-                    <div className="text-[10px] text-slate-500">Upcoming OPD tokens & video consultations</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">Doctor Consultations</div>
+                    <div className="text-[10px] text-slate-500">Upcoming OPD tokens & video call history</div>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -445,12 +442,12 @@ export default function MobileAppView({
                 className="w-full p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs flex items-center justify-between active:scale-98 transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 flex items-center justify-center">
                     <Activity className="w-5 h-5" />
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Past AI Triage Notes</div>
-                    <div className="text-[10px] text-slate-500">Voice symptom records & risk assessments</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">Past AI Triage Assessments</div>
+                    <div className="text-[10px] text-slate-500">Voice symptom records & emergency triage logs</div>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -480,7 +477,7 @@ export default function MobileAppView({
           /* ───────────────────────────────────────────────────────────── */
           <div className="flex-1 flex flex-col p-4 space-y-4 animate-fadeIn">
             <div className="pt-2">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">Profile & Settings</h2>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">Profile & Preferences</h2>
             </div>
 
             {/* Profile Avatar Card */}
@@ -496,7 +493,7 @@ export default function MobileAppView({
             </div>
 
             {/* Language Switcher */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
+            <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Language Preference (ଭାଷା ଚୟନ)</label>
               <div className="grid grid-cols-3 gap-2">
                 <button
@@ -505,7 +502,7 @@ export default function MobileAppView({
                   className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     appLang === 'or-IN'
                       ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
-                      : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
+                      : 'bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                   }`}
                 >
                   ଓଡ଼ିଆ
@@ -516,7 +513,7 @@ export default function MobileAppView({
                   className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     appLang === 'hi-IN'
                       ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
-                      : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
+                      : 'bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                   }`}
                 >
                   हिन्दी
@@ -527,7 +524,7 @@ export default function MobileAppView({
                   className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     appLang === 'en-IN'
                       ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
-                      : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
+                      : 'bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                   }`}
                 >
                   English
@@ -536,7 +533,7 @@ export default function MobileAppView({
             </div>
 
             {/* Theme Mode */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
+            <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Color Theme</label>
               <div className="grid grid-cols-3 gap-2">
                 <button
@@ -545,7 +542,7 @@ export default function MobileAppView({
                   className={`py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     themeMode === 'light'
                       ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                      : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
+                      : 'bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                   }`}
                 >
                   <Sun className="w-3.5 h-3.5 text-amber-500" />
@@ -557,7 +554,7 @@ export default function MobileAppView({
                   className={`py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     themeMode === 'dark'
                       ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
-                      : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
+                      : 'bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                   }`}
                 >
                   <Moon className="w-3.5 h-3.5 text-purple-400" />
@@ -569,7 +566,7 @@ export default function MobileAppView({
                   className={`py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     themeMode === 'reading'
                       ? 'bg-amber-800 text-white border-amber-800 shadow-xs'
-                      : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
+                      : 'bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                   }`}
                 >
                   <BookOpen className="w-3.5 h-3.5 text-amber-300" />
@@ -585,7 +582,7 @@ export default function MobileAppView({
               className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all cursor-pointer"
             >
               <LogIn className="w-4 h-4" />
-              <span>Switch User / Staff Login</span>
+              <span>Switch User / Staff Portal</span>
             </button>
 
             {currentUser && (
@@ -601,125 +598,164 @@ export default function MobileAppView({
           </div>
         ) : (
           /* ───────────────────────────────────────────────────────────── */
-          /* HOME SCREEN (EXACT MATCH TO MOCKUP 2)                         */
+          /* HOME SCREEN (PIXEL-PERFECT MATCH TO MOCKUP 1 & 2)             */
           /* ───────────────────────────────────────────────────────────── */
-          <div className="flex-1 flex flex-col space-y-3.5 animate-fadeIn">
-            {/* 1. GREEN APP HEADER */}
-            <div className="bg-[#065f46] text-white px-4 pt-4 pb-5 rounded-b-[2rem] shadow-lg space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-lg shadow-inner">
+          <div className="flex-1 flex flex-col space-y-3 animate-fadeIn">
+            {/* 1. NATIVE STATUS & BRAND HEADER (EMERALD GREEN) */}
+            <div className="bg-[#065f46] text-white px-4 pt-3.5 pb-4 shadow-sm">
+              {/* Top System Bar */}
+              <div className="flex items-center justify-between text-[11px] font-mono text-emerald-100/90 pb-2">
+                <span>10:09</span>
+                <div className="flex items-center gap-2">
+                  <Radio className="w-3 h-3 text-emerald-300" />
+                  <span className="font-bold">5G</span>
+                  <div className="w-4 h-2 border border-emerald-300 rounded-xs p-0.5 flex items-center">
+                    <div className="w-full h-full bg-emerald-300 rounded-2xs" />
+                  </div>
+                </div>
+              </div>
+
+              {/* App Brand & Header */}
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-base shadow-inner">
                     🏥
                   </div>
                   <div>
                     <h1 className="text-sm font-black tracking-tight leading-tight">{t.brandTitle}</h1>
-                    <p className="text-[11px] text-emerald-200 font-medium">{t.brandSubtitle}</p>
                   </div>
                 </div>
 
-                {/* Language Switch Pill */}
-                <div className="flex items-center bg-black/25 rounded-full p-0.5 text-[10px] font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setAppLang('or-IN')}
-                    className={`px-2 py-0.5 rounded-full transition-all ${appLang === 'or-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200'}`}
-                  >
-                    ଓଡ଼ିଆ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAppLang('en-IN')}
-                    className={`px-2 py-0.5 rounded-full transition-all ${appLang === 'en-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200'}`}
-                  >
-                    EN
-                  </button>
-                </div>
-              </div>
-
-              {/* 2. METALLIC ABHA HEALTH ID HERO CARD */}
-              <div className="bg-gradient-to-tr from-[#047857] via-[#065f46] to-[#0f172a] rounded-2xl p-3.5 border border-emerald-400/40 shadow-xl text-white space-y-3">
-                {/* Card Top Title & Emergency Badge */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                    <span className="text-[11px] font-black uppercase tracking-wider text-emerald-200">
-                      {t.abhaCardTitle}
-                    </span>
-                  </div>
-
-                  <a
-                    href="tel:108"
-                    className="flex items-center gap-1 bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-full text-[10px] font-black shadow-md animate-pulse border border-rose-400 cursor-pointer"
-                  >
-                    <Phone className="w-3 h-3" />
-                    <span>{t.emergency108}</span>
-                  </a>
-                </div>
-
-                {/* Card Main Info: Photo Avatar + Name & Details + QR Code */}
-                <div className="flex items-center gap-3">
-                  {/* Photo Avatar */}
-                  <div className="w-13 h-13 rounded-xl bg-gradient-to-tr from-amber-400 via-amber-500 to-yellow-600 p-0.5 shadow-md shrink-0">
-                    <div className="w-full h-full rounded-[10px] bg-slate-900 flex items-center justify-center text-white font-black text-sm">
-                      {patientName.slice(0, 2).toUpperCase()}
-                    </div>
-                  </div>
-
-                  {/* Patient Details */}
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-xs font-black truncate tracking-wide text-white">
-                      {patientName}
-                    </h2>
-                    <div className="text-[10px] text-emerald-200 font-medium">
-                      {patientAge} Yrs • {patientGender}
-                    </div>
+                <div className="flex items-center gap-1.5">
+                  {/* Language Toggle */}
+                  <div className="flex items-center bg-black/25 rounded-full p-0.5 text-[10px] font-bold">
                     <button
                       type="button"
-                      onClick={handleCopyAbha}
-                      className="flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-300 bg-black/30 px-2 py-0.5 rounded-md mt-1 border border-emerald-500/30 cursor-pointer hover:text-white"
+                      onClick={() => setAppLang('or-IN')}
+                      className={`px-2 py-0.5 rounded-full transition-all ${appLang === 'or-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200'}`}
                     >
-                      <span>{abhaNumber}</span>
-                      {copiedAbha ? <Check className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5" />}
+                      ଓଡ଼ିଆ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAppLang('en-IN')}
+                      className={`px-2 py-0.5 rounded-full transition-all ${appLang === 'en-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200'}`}
+                    >
+                      EN
                     </button>
                   </div>
 
-                  {/* QR Code Action Preview */}
                   <button
                     type="button"
-                    onClick={() => setShowQrModal(true)}
-                    className="w-11 h-11 bg-white rounded-xl p-1 shadow-md flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition-all"
-                    title="View Full QR Code"
+                    onClick={() => setMobileSection('profile')}
+                    className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white"
                   >
-                    <QrCode className="w-8 h-8 text-slate-900" />
+                    <User className="w-4 h-4" />
                   </button>
-                </div>
 
-                {/* Card Footer Location */}
-                <div className="text-[10px] text-emerald-300/90 font-medium flex items-center gap-1 pt-0.5 border-t border-emerald-600/40 truncate">
-                  <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span className="truncate">{patientFacility}</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvisoryDetail(true)}
+                    className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white relative"
+                  >
+                    <Bell className="w-4 h-4" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 absolute top-0.5 right-0.5 animate-ping" />
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* 3. HEALTH ALERTS SECTION (MATCHING MOCKUP) */}
-            <div className="px-3.5">
-              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-800 rounded-2xl p-3 text-amber-950 dark:text-amber-200 shadow-2xs space-y-1.5">
-                <div className="flex items-start gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5">
-                    <AlertTriangle className="w-4 h-4" />
+            {/* 2. AUTHENTIC ABHA DIGITAL HEALTH ID CARD (WHITE EMBOSSED HERO) */}
+            <div className="px-3.5 -mt-1">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200/90 dark:border-slate-700 shadow-md space-y-3 relative overflow-hidden">
+                {/* Top Mission Header */}
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 flex items-center justify-center text-[10px] font-bold">
+                      🏛️
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-black tracking-wide text-slate-800 dark:text-slate-200 uppercase">
+                        {t.odishaGov}
+                      </div>
+                      <div className="text-[9px] text-slate-500 dark:text-slate-400">
+                        {t.abhaCardTitle}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1 text-xs font-bold leading-snug">
-                    {t.healthAlertTitle}
+
+                  <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-[10px] font-bold border border-amber-300">
+                    🌿
                   </div>
                 </div>
-                <div className="flex justify-end pt-1">
+
+                {/* Patient Information & QR Code */}
+                <div className="flex items-center gap-3">
+                  {/* Photo Avatar */}
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-tr from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 p-0.5 shadow-xs shrink-0 flex items-center justify-center overflow-hidden border border-slate-300 dark:border-slate-600">
+                    <div className="w-full h-full rounded-[10px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold text-lg">
+                      👤
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-black text-slate-900 dark:text-white truncate">
+                      {patientName}
+                    </div>
+                    <div className="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-400 mt-0.5 flex items-center gap-1">
+                      <span>ABHA: {abhaNumber}</span>
+                      <button
+                        type="button"
+                        onClick={handleCopyAbha}
+                        className="hover:text-emerald-900 dark:hover:text-emerald-200 cursor-pointer"
+                        title="Copy ABHA Number"
+                      >
+                        {copiedAbha ? <Check className="w-2.5 h-2.5 text-emerald-600" /> : <Copy className="w-2.5 h-2.5 text-slate-400" />}
+                      </button>
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      DOB: {patientDob} • {patientGender}
+                    </div>
+                  </div>
+
+                  {/* Scannable QR Code */}
+                  <button
+                    type="button"
+                    onClick={() => setShowQrModal(true)}
+                    className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-600 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
+                    title="Tap to zoom QR"
+                  >
+                    <QrCode className="w-11 h-11 text-slate-900 dark:text-white" />
+                  </button>
+                </div>
+
+                {/* 🚨 Full-Width Red Emergency SOS Button */}
+                <a
+                  href="tel:108"
+                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-rose-950/20 active:scale-98 transition-all cursor-pointer border border-rose-400/60"
+                >
+                  <Phone className="w-3.5 h-3.5 text-white animate-bounce" />
+                  <span className="tracking-wide">{t.emergency108}</span>
+                </a>
+              </div>
+            </div>
+
+            {/* 3. PUBLIC HEALTH ALERT BANNER (AMBER ROUNDED CARD) */}
+            <div className="px-3.5">
+              <div className="bg-[#fef3c7] dark:bg-amber-950/40 border border-[#fde68a] dark:border-amber-800 rounded-2xl p-3 text-[#92400e] dark:text-amber-200 shadow-2xs space-y-1">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-[#d97706] shrink-0 mt-0.5" />
+                  <div className="flex-1 text-[11px] font-bold leading-tight">
+                    {t.healthAlertTitle}
+                  </div>
                   <button
                     type="button"
                     onClick={() => setShowAdvisoryDetail(true)}
-                    className="text-[10px] font-black text-amber-900 dark:text-amber-200 underline uppercase tracking-wider cursor-pointer"
+                    className="p-0.5 text-amber-700 dark:text-amber-300 hover:text-amber-900 cursor-pointer shrink-0"
+                    title="Information"
                   >
-                    {t.viewDetails} →
+                    ⓘ
                   </button>
                 </div>
               </div>
@@ -734,7 +770,7 @@ export default function MobileAppView({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t.searchPlaceholder}
-                  className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                  className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
                 />
                 {searchQuery && (
                   <button
@@ -748,7 +784,7 @@ export default function MobileAppView({
               </div>
             </div>
 
-            {/* 5. CLEAN 2-COLUMN ACTION GRID (MATCHING MOCKUP 2) */}
+            {/* 5. CLEAN 2-COLUMN ACTION TILES (MATCHING MOCKUP 1 & 2) */}
             <div className="px-3.5 pb-2">
               <div className="grid grid-cols-2 gap-2.5">
                 {filteredCards.map((card) => {
@@ -758,23 +794,15 @@ export default function MobileAppView({
                       key={card.id}
                       type="button"
                       onClick={() => handleOpenModule(card.id, card.hub)}
-                      className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-xs flex flex-col items-start text-left space-y-2.5 active:scale-95 hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer group"
+                      className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 shadow-xs flex items-center gap-3 active:scale-95 hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer text-left"
                     >
-                      <div className="w-full flex items-center justify-between">
-                        <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform`}>
-                          <IconComp className="w-5 h-5 stroke-[2.2]" />
-                        </div>
-                        <span className="text-[9px] font-bold text-slate-400 group-hover:text-emerald-600 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">
-                          {card.badge}
-                        </span>
+                      <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center shadow-2xs shrink-0`}>
+                        <IconComp className="w-5 h-5 stroke-[2.2]" />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
                           {card.title}
                         </h3>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
-                          {card.sub}
-                        </p>
                       </div>
                     </button>
                   );
@@ -785,9 +813,9 @@ export default function MobileAppView({
         )}
 
         {/* ───────────────────────────────────────────────────────────── */}
-        {/* 6. FLOATING ISLAND BOTTOM NAVIGATION BAR (MATCHING MOCKUP 2)  */}
+        {/* 6. FLOATING ISLAND BOTTOM NAVIGATION BAR (MATCHING MOCKUP 1)  */}
         {/* ───────────────────────────────────────────────────────────── */}
-        <div className="fixed bottom-3 left-4 right-4 max-w-md mx-auto z-40">
+        <div className="fixed bottom-3 left-4 right-4 max-w-[398px] mx-auto z-40">
           <nav className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 px-2 py-1.5 flex items-center justify-around">
             {/* 1. Home */}
             <button
@@ -827,7 +855,7 @@ export default function MobileAppView({
               <span className="text-[10px] font-bold">{t.services}</span>
             </button>
 
-            {/* 3. My Records */}
+            {/* 3. Health Records */}
             <button
               type="button"
               onClick={() => {
@@ -906,7 +934,7 @@ export default function MobileAppView({
         )}
 
         {/* ───────────────────────────────────────────────────────────── */}
-        {/* HEATWAVE ADVISORY DETAIL MODAL                                */}
+        {/* PUBLIC HEALTH ADVISORY DETAIL MODAL                           */}
         {/* ───────────────────────────────────────────────────────────── */}
         {showAdvisoryDetail && (
           <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
@@ -914,7 +942,7 @@ export default function MobileAppView({
               <div className="flex items-center justify-between border-b pb-2.5">
                 <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-xs">
                   <AlertTriangle className="w-4 h-4" />
-                  <span>Public Health Heatwave Advisory</span>
+                  <span>Public Health Dengue & Heatwave Advisory</span>
                 </div>
                 <button
                   type="button"
@@ -928,10 +956,10 @@ export default function MobileAppView({
               <div className="text-xs text-slate-700 dark:text-slate-300 space-y-2 leading-relaxed">
                 <p><strong>Issued by:</strong> Health & Family Welfare Dept, Govt of Odisha.</p>
                 <ul className="list-disc pl-4 space-y-1 text-[11px]">
+                  <li>Dengue early testing and platelet counters active across all CHCs.</li>
                   <li>Avoid direct exposure to sunlight between 11:00 AM and 3:30 PM.</li>
                   <li>Drink plenty of water, buttermilk, lemon water, and ORS.</li>
-                  <li>In case of dizziness, high fever, or muscle cramps, visit nearest Jalachhatra or PHC immediately.</li>
-                  <li>Free ORS corners are active across all 30 District Hospitals.</li>
+                  <li>In case of fever with shivering or body ache, use <strong>AI Symptom Triage</strong> or visit nearest PHC immediately.</li>
                 </ul>
               </div>
 
