@@ -18,7 +18,8 @@ import {
   Globe,
   Sun,
   Moon,
-  BookOpen
+  BookOpen,
+  ArrowLeft
 } from 'lucide-react';
 import { getStoredUsers, saveUser, verifyCredentials, setCurrentUser } from '../utils/authStorage';
 
@@ -448,8 +449,25 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
       {/* Subtle background glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Top Bar: Theme Switcher & Language Switcher Bar */}
+      {/* Top Bar: Return to Dashboard, Theme Switcher & Language Switcher Bar */}
       <div className="z-20 mb-4 flex flex-wrap items-center justify-center gap-2.5">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-700/90 hover:bg-emerald-600 text-white border border-emerald-500/50 rounded-full shadow-md text-xs font-bold transition-all cursor-pointer hover:shadow-emerald-500/20"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>
+              {authLang === 'or-IN'
+                ? 'ଡ୍ୟାସବୋର୍ଡକୁ ଫେରନ୍ତୁ'
+                : authLang === 'hi-IN'
+                ? 'डैशबोर्ड पर वापस'
+                : 'Back to Dashboard'}
+            </span>
+          </button>
+        )}
+
         {/* Theme Mode Switcher: Light / Dark / Reading */}
         <div className="flex items-center bg-slate-800/90 border border-slate-700 p-0.5 rounded-full shadow-md text-xs">
           <button
@@ -664,9 +682,16 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     {currentStrings.passwordLabel}
                   </label>
-                  <span className="text-[11px] text-emerald-600 hover:underline cursor-pointer">
-                    Demo: password123
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSignInIdentifier('dr.soumya@scbmch.odisha.gov.in');
+                      setSignInPassword('password123');
+                    }}
+                    className="text-[11px] text-emerald-600 hover:underline cursor-pointer font-semibold"
+                  >
+                    Click to fill: dr.soumya / password123
+                  </button>
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -695,14 +720,14 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
 
               <button
                 type="submit"
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm mt-2"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm mt-2 cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />
                 {currentStrings.loginBtn}
               </button>
             </form>
 
-            {/* Quick 1-Click Demo Profiles (Includes Odisha Doctors & Patients) */}
+            {/* Quick 1-Click Demo Profiles (Includes Odisha Doctors, Patients, Staff, Admin) */}
             <div className="mt-6 pt-5 border-t border-slate-200">
               <div className="flex items-center justify-between mb-2.5">
                 <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
@@ -717,7 +742,7 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                 <button
                   type="button"
                   onClick={() => handleQuickDemoLogin('USR-DOC-505')}
-                  className="p-2.5 bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-300 rounded-xl text-left transition-all group ring-1 ring-emerald-200"
+                  className="p-2.5 bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-300 rounded-xl text-left transition-all group ring-1 ring-emerald-200 cursor-pointer"
                 >
                   <div className="flex items-center gap-1 text-slate-900 font-bold text-xs group-hover:text-emerald-800">
                     <Stethoscope className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
@@ -731,7 +756,7 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                 <button
                   type="button"
                   onClick={() => handleQuickDemoLogin('USR-PAT-606')}
-                  className="p-2.5 bg-amber-50/80 hover:bg-amber-100 border border-amber-300 rounded-xl text-left transition-all group ring-1 ring-amber-300"
+                  className="p-2.5 bg-amber-50/80 hover:bg-amber-100 border border-amber-300 rounded-xl text-left transition-all group ring-1 ring-amber-300 cursor-pointer"
                 >
                   <div className="flex items-center gap-1 text-slate-900 font-bold text-xs group-hover:text-amber-800">
                     <User className="w-3.5 h-3.5 text-amber-700 shrink-0" />
@@ -745,7 +770,7 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                 <button
                   type="button"
                   onClick={() => handleQuickDemoLogin('USR-DOC-101')}
-                  className="p-2.5 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 border border-slate-200 rounded-xl text-left transition-all group"
+                  className="p-2.5 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 border border-slate-200 rounded-xl text-left transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-1 text-slate-900 font-bold text-xs group-hover:text-emerald-700">
                     <Stethoscope className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -759,7 +784,7 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                 <button
                   type="button"
                   onClick={() => handleQuickDemoLogin('USR-NUR-202')}
-                  className="p-2.5 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-xl text-left transition-all group"
+                  className="p-2.5 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-xl text-left transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-1 text-slate-900 font-bold text-xs group-hover:text-blue-700">
                     <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
@@ -773,7 +798,7 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                 <button
                   type="button"
                   onClick={() => handleQuickDemoLogin('USR-ASH-303')}
-                  className="p-2.5 bg-slate-50 hover:bg-purple-50 hover:border-purple-300 border border-slate-200 rounded-xl text-left transition-all group"
+                  className="p-2.5 bg-slate-50 hover:bg-purple-50 hover:border-purple-300 border border-slate-200 rounded-xl text-left transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-1 text-slate-900 font-bold text-xs group-hover:text-purple-700">
                     <Activity className="w-3.5 h-3.5 text-purple-600 shrink-0" />
@@ -783,18 +808,18 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                   <p className="text-[9px] text-slate-400 font-mono">Sub-Center</p>
                 </button>
 
-                {/* Patient Rameshwar */}
+                {/* State Admin Direct Login */}
                 <button
                   type="button"
-                  onClick={() => handleQuickDemoLogin('USR-PAT-404')}
-                  className="p-2.5 bg-slate-50 hover:bg-amber-50 hover:border-amber-300 border border-slate-200 rounded-xl text-left transition-all group"
+                  onClick={() => handleQuickDemoLogin('USR-ADM-001')}
+                  className="p-2.5 bg-purple-50/70 hover:bg-purple-100/90 hover:border-purple-400 border border-purple-300 rounded-xl text-left transition-all group cursor-pointer ring-1 ring-purple-200"
                 >
-                  <div className="flex items-center gap-1 text-slate-900 font-bold text-xs group-hover:text-amber-700">
-                    <User className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span className="truncate">Rameshwar</span>
+                  <div className="flex items-center gap-1 text-purple-950 font-bold text-xs group-hover:text-purple-900">
+                    <ShieldCheck className="w-3.5 h-3.5 text-purple-700 shrink-0" />
+                    <span className="truncate">Sunil Biswal</span>
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Citizen Patient</p>
-                  <p className="text-[9px] text-slate-400 font-mono">ABHA User</p>
+                  <p className="text-[10px] text-purple-800 font-semibold mt-0.5">ରାଜ୍ୟ ପ୍ରଶାସକ (Admin)</p>
+                  <p className="text-[9px] text-purple-600 font-mono">NHM Directorate</p>
                 </button>
               </div>
             </div>
@@ -836,6 +861,16 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     {currentStrings.passwordLabel}
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminIdentifier('admin@health.odisha.gov.in');
+                      setAdminPassword('password123');
+                    }}
+                    className="text-[11px] text-purple-700 hover:underline cursor-pointer font-semibold"
+                  >
+                    Click to fill: admin@health.odisha.gov.in / password123
+                  </button>
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -866,6 +901,43 @@ export default function AuthPage({ onLoginSuccess, onCancel, themeMode: propThem
                 {currentStrings.adminLoginBtn}
               </button>
             </form>
+
+            {/* Quick 1-Click Super Admin Login Buttons */}
+            <div className="mt-6 pt-4 border-t border-purple-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-purple-950 uppercase tracking-wider flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  1-Click Admin Access:
+                </span>
+                <span className="text-[11px] text-purple-600 font-medium">Verified Admin Only</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemoLogin('USR-ADM-001')}
+                  className="p-2.5 bg-purple-50 hover:bg-purple-100/80 border border-purple-300 rounded-xl text-left transition-all group cursor-pointer ring-1 ring-purple-200"
+                >
+                  <div className="flex items-center gap-1 text-purple-950 font-bold text-xs group-hover:text-purple-900">
+                    <ShieldCheck className="w-3.5 h-3.5 text-purple-700 shrink-0" />
+                    <span>Sunil Biswal</span>
+                  </div>
+                  <p className="text-[10px] text-purple-800 font-semibold mt-0.5">ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ପ୍ରଶାସକ (State Admin)</p>
+                  <p className="text-[9px] text-slate-500 font-mono">NHM Directorate, BBSR</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemoLogin('USR-ADM-002')}
+                  className="p-2.5 bg-indigo-50 hover:bg-indigo-100/80 border border-indigo-300 rounded-xl text-left transition-all group cursor-pointer ring-1 ring-indigo-200"
+                >
+                  <div className="flex items-center gap-1 text-slate-900 font-bold text-xs group-hover:text-indigo-900">
+                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-700 shrink-0" />
+                    <span>Er. Tanmay Dash</span>
+                  </div>
+                  <p className="text-[10px] text-indigo-800 font-semibold mt-0.5">Director of Cloud Telemetry</p>
+                  <p className="text-[9px] text-slate-500 font-mono">State Data Center (OSDC)</p>
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

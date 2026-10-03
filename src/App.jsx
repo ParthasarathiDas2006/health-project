@@ -1,6 +1,13 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import MultimodalIntakeForm from './components/MultimodalIntakeForm';
-import { getCurrentUser, setCurrentUser, logoutUser, getBookedAppointments, getHospitalTransfers } from './utils/authStorage';
+import {
+  getCurrentUser,
+  setCurrentUser,
+  logoutUser,
+  getBookedAppointments,
+  getHospitalTransfers,
+  getStoredUsers
+} from './utils/authStorage';
 import { DoctorAvatar } from './utils/doctorPhotos';
 
 // Code-split heavy & secondary components to load on demand for instant site loading
@@ -61,7 +68,12 @@ import {
   Layers,
   Sparkles,
   Zap,
-  CheckCircle2
+  CheckCircle2,
+  Users,
+  Shield,
+  KeyRound,
+  ExternalLink,
+  TrendingUp
 } from 'lucide-react';
 
 export default function App() {
@@ -71,12 +83,19 @@ export default function App() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
 
+  // Role Category computation
+  const userRole = currentUser?.roleCategory || 'patient';
+  const isAdmin = userRole === 'admin';
+  const isDoctor = userRole === 'doctor' || userRole === 'nurse';
+  const isAsha = userRole === 'asha' || userRole === 'anm';
+  const isPatient = userRole === 'patient';
+
   // 4 Core Role-Based Hubs: 'citizen' | 'doctor' | 'phc' | 'admin'
   const [activeHub, setActiveHub] = useState(() => {
     const user = getCurrentUser();
     if (user?.roleCategory === 'admin') return 'admin';
-    if (user?.roleCategory === 'doctor') return 'doctor';
-    if (user?.roleCategory === 'asha') return 'phc';
+    if (user?.roleCategory === 'doctor' || user?.roleCategory === 'nurse') return 'doctor';
+    if (user?.roleCategory === 'asha' || user?.roleCategory === 'anm') return 'phc';
     return 'citizen';
   });
 
@@ -84,8 +103,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(() => {
     const user = getCurrentUser();
     if (user?.roleCategory === 'admin') return 'admin';
-    if (user?.roleCategory === 'doctor') return 'dashboard';
-    if (user?.roleCategory === 'asha') return 'phc_offline';
+    if (user?.roleCategory === 'doctor' || user?.roleCategory === 'nurse') return 'dashboard';
+    if (user?.roleCategory === 'asha' || user?.roleCategory === 'anm') return 'phc_offline';
     return 'intake';
   });
 
@@ -113,7 +132,7 @@ export default function App() {
     return localStorage.getItem('nhp_theme_mode') || 'light';
   });
 
-  // Firebase Cloud Firestore integration state
+  // Firebase Cloud Firestore integration state (ADMIN ONLY)
   const [showFirebaseModal, setShowFirebaseModal] = useState(false);
   const [isFirebaseReady, setIsFirebaseReady] = useState(() => isFirebaseConfigured());
 
@@ -156,16 +175,36 @@ export default function App() {
     if (user.roleCategory === 'admin') {
       setActiveHub('admin');
       setActiveTab('admin');
-    } else if (user.roleCategory === 'doctor') {
+    } else if (user.roleCategory === 'doctor' || user.roleCategory === 'nurse') {
       setActiveHub('doctor');
       setActiveTab('dashboard');
-    } else if (user.roleCategory === 'asha') {
+    } else if (user.roleCategory === 'asha' || user.roleCategory === 'anm') {
       setActiveHub('phc');
       setActiveTab('phc_offline');
     } else {
       setActiveHub('citizen');
       setActiveTab('intake');
     }
+  };
+
+  // Quick 1-Click Persona Switcher for Live Demo & Review
+  const handleQuickPersonaSwitch = (targetRoleCategory) => {
+    const allUsers = getStoredUsers();
+    let targetUser = null;
+    if (targetRoleCategory === 'admin') {
+      targetUser = allUsers.find((u) => u.id === 'USR-ADM-001') || allUsers.find((u) => u.roleCategory === 'admin');
+    } else if (targetRoleCategory === 'doctor') {
+      targetUser = allUsers.find((u) => u.id === 'USR-DOC-505') || allUsers.find((u) => u.roleCategory === 'doctor');
+    } else if (targetRoleCategory === 'asha') {
+      targetUser = allUsers.find((u) => u.id === 'USR-ASH-303') || allUsers.find((u) => u.roleCategory === 'asha');
+    } else {
+      targetUser = allUsers.find((u) => u.id === 'USR-PAT-606') || allUsers.find((u) => u.roleCategory === 'patient');
+    }
+    if (!targetUser) {
+      targetUser = allUsers[0];
+    }
+    setCurrentUser(targetUser);
+    handleLoginSuccess(targetUser);
   };
 
   const handleLogout = () => {
@@ -188,11 +227,11 @@ export default function App() {
   const switchHub = (hubId) => {
     setActiveHub(hubId);
     if (hubId === 'citizen') {
-      if (!['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry'].includes(activeTab)) {
+      if (!['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry', 'beds', 'bloodbank'].includes(activeTab)) {
         setActiveTab('intake');
       }
     } else if (hubId === 'doctor') {
-      if (!['dashboard', 'nmc_referral', 'drugallergy', 'differential', 'riskscores', 'hospitals'].includes(activeTab)) {
+      if (!['dashboard', 'nmc_referral', 'drugallergy', 'differential', 'xray', 'riskscores', 'hospitals', 'abha_history'].includes(activeTab)) {
         setActiveTab('dashboard');
       }
     } else if (hubId === 'phc') {
@@ -200,7 +239,7 @@ export default function App() {
         setActiveTab('phc_offline');
       }
     } else if (hubId === 'admin') {
-      if (!['admin', 'beds', 'bloodbank', 'outbreak', 'inventory'].includes(activeTab)) {
+      if (!['admin', 'beds', 'bloodbank', 'outbreak', 'inventory', 'compliance', 'abha_history'].includes(activeTab)) {
         setActiveTab('admin');
       }
     }
@@ -211,11 +250,11 @@ export default function App() {
     setActiveTab(tab);
     if (['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry'].includes(tab)) {
       setActiveHub('citizen');
-    } else if (['dashboard', 'nmc_referral', 't29_nmc_referral', 't29_discharge', 'drugallergy', 't13_drugallergy', 'differential', 't12_differential', 'riskscores', 't14_riskscores', 'hospitals'].includes(tab)) {
+    } else if (['dashboard', 'nmc_referral', 't29_nmc_referral', 't29_discharge', 'drugallergy', 't13_drugallergy', 'differential', 't12_differential', 'xray', 'riskscores', 't14_riskscores', 'hospitals'].includes(tab)) {
       setActiveHub('doctor');
     } else if (['phc_offline', 'asha_voice', 't17_asha_voice', 'family_triage', 't19_family_triage', 'maternal_anc', 't30_anc_maternal', 'pain_map', 't18_pain_map'].includes(tab)) {
       setActiveHub('phc');
-    } else if (['admin', 'beds', 'bloodbank', 'outbreak', 't23_outbreak', 'inventory', 't24_inventory'].includes(tab)) {
+    } else if (['admin', 'beds', 'bloodbank', 'outbreak', 't23_outbreak', 'inventory', 't24_inventory', 'compliance', 'abha_history'].includes(tab)) {
       setActiveHub('admin');
     }
   };
@@ -391,8 +430,12 @@ export default function App() {
         );
       }
       setIsGeneratingNote(false);
-      setActiveHub('doctor');
-      setActiveTab('dashboard');
+      if (isAdmin || isDoctor) {
+        setActiveHub('doctor');
+        setActiveTab('dashboard');
+      } else {
+        setActiveTab('intake');
+      }
     }, 800);
   };
 
@@ -420,16 +463,16 @@ export default function App() {
   const uiText = {
     'or-IN': {
       title: 'SwasthyaMitra',
-      subtitle: 'ସ୍ମାର୍ଟ ଡାକ୍ତରୀ କ୍ଲିନିକାଲ୍ ଟ୍ରାଏଜ୍ ଓ ରେଫରାଲ୍ (ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ବିଭାଗ)',
+      subtitle: 'AI ସ୍କ୍ରାଇବ୍, ଲ୍ୟାବ୍ OCR ଓ କ୍ଲିନିକାଲ୍ ଟ୍ରାଏଜ୍ (ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ବିଭାଗ)',
       safetyLabel: 'ସୁରକ୍ଷା ନିୟମ:',
       protocol: 'ଡାକ୍ତରୀ ନିଷ୍ପତ୍ତି ସହାୟକ (Non-Diagnostic) | BSKY & NHM ଅନ୍ତର୍ଭୁକ୍ତ',
       facilityLabel: 'କେନ୍ଦ୍ର:',
-      portalTag: 'ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ପୋର୍ଟାଲ୍',
+      portalTag: isAdmin ? 'ରାଜ୍ୟ ସୁପର ଆଡମିନ୍' : isDoctor ? 'ଡାକ୍ତରୀ କକ୍‌ପିଟ୍' : isAsha ? 'ଆଶା ଫିଲ୍ଡ ଷ୍ଟେସନ୍' : 'ନାଗରିକ ପୋର୍ଟାଲ୍',
       // Hubs
-      hubCitizen: '୧. ନାଗରିକ ସ୍ୱାସ୍ଥ୍ୟ ଡେସ୍କ',
+      hubCitizen: isAdmin ? '୪. ନାଗରିକ ସ୍ୱାସ୍ଥ୍ୟ ଡେସ୍କ' : '୧. ନାଗରିକ ସ୍ୱାସ୍ଥ୍ୟ ଡେସ୍କ',
       hubDoctor: '୨. ଡାକ୍ତର କ୍ଲିନିକାଲ୍ କକ୍‌ପିଟ୍',
       hubPhc: '୩. ଗ୍ରାମୀଣ PHC ଓ ଆଶା',
-      hubAdmin: '୪. ରାଜ୍ୟ କମାଣ୍ଡ ଓ ଲଜିଷ୍ଟିକ୍ସ',
+      hubAdmin: isAdmin ? '୧. ରାଜ୍ୟ କମାଣ୍ଡ ଓ ପ୍ରଶାସନ' : '୪. ରାଜ୍ୟ କମାଣ୍ଡ ଓ ଲଜିଷ୍ଟିକ୍ସ',
       // Citizen Subtabs
       sub_intake: 'ମୋର ଲକ୍ଷଣ ଦାଖଲ',
       sub_ocr: 'ଲ୍ୟାବ୍ ରିପୋର୍ଟ OCR',
@@ -459,10 +502,10 @@ export default function App() {
       // Badges & Labels
       noteReadyBadge: 'ନୋଟ୍ ପ୍ରସ୍ତୁତ',
       oneNewBadge: '୧ ନୂଆ',
-      verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ',
-      verifiedPatientBadge: 'ABHA ପ୍ରମାଣିତ',
+      verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ ଡାକ୍ତର',
+      verifiedPatientBadge: 'ABHA ପ୍ରମାଣିତ ନାଗରିକ',
       verifiedAdminBadge: 'Super Admin',
-      switchUser: 'ଖାତା ବଦଳାନ୍ତୁ',
+      switchUser: 'ଖାତା ବଦଳାନ୍ତୁ (Login)',
       signOut: 'ଲଗ୍ ଆଉଟ୍',
       years: 'ବର୍ଷ',
       male: 'ପୁରୁଷ',
@@ -484,12 +527,12 @@ export default function App() {
       safetyLabel: 'सुरक्षा नियम:',
       protocol: 'क्लिनिकल निर्णय समर्थन (Non-Diagnostic) | आयुष्मान भारत एवं NHM',
       facilityLabel: 'केंद्र:',
-      portalTag: 'राष्ट्रीय स्वास्थ्य पोर्टल',
+      portalTag: isAdmin ? 'राज्य सुपर एडमिन' : isDoctor ? 'डॉक्टर कॉकपिट' : isAsha ? 'आशा फील्ड स्टेशन' : 'नागरिक पोर्टल',
       // Hubs
-      hubCitizen: '1. नागरिक स्वास्थ्य डेस्क',
+      hubCitizen: isAdmin ? '4. नागरिक स्वास्थ्य डेस्क' : '1. नागरिक स्वास्थ्य डेस्क',
       hubDoctor: '2. डॉक्टर क्लिनिकल कॉकपिट',
       hubPhc: '3. ग्रामीण PHC एवं आशा',
-      hubAdmin: '4. राज्य प्रशासन एवं लॉजिस्टिक्स',
+      hubAdmin: isAdmin ? '1. राज्य कमान एवं प्रशासन' : '4. राज्य प्रशासन एवं लॉजिस्टिक्स',
       // Citizen Subtabs
       sub_intake: 'लक्षण दर्ज करें',
       sub_ocr: 'लैब रिपोर्ट OCR',
@@ -519,10 +562,10 @@ export default function App() {
       // Badges & Labels
       noteReadyBadge: 'नोट तैयार',
       oneNewBadge: '1 नया',
-      verifiedDoctorBadge: 'RMP सत्यापित',
-      verifiedPatientBadge: 'ABHA सत्यापित',
+      verifiedDoctorBadge: 'RMP सत्यापित डॉक्टर',
+      verifiedPatientBadge: 'ABHA सत्यापित नागरिक',
       verifiedAdminBadge: 'Super Admin',
-      switchUser: 'खाता बदलें',
+      switchUser: 'खाता बदलें (Login)',
       signOut: 'लॉग आउट',
       years: 'वर्ष',
       male: 'पुरुष',
@@ -544,12 +587,12 @@ export default function App() {
       safetyLabel: 'Safety Mandate:',
       protocol: 'Human-in-the-Loop Decision Support (Non-Diagnostic) | MoHFW Aligned',
       facilityLabel: 'Facility:',
-      portalTag: 'National Health Portal',
+      portalTag: isAdmin ? 'State Super Admin' : isDoctor ? 'Doctor Cockpit' : isAsha ? 'ASHA Field Station' : 'Citizen Portal',
       // Hubs
-      hubCitizen: '1. Citizen Health Desk',
+      hubCitizen: isAdmin ? '4. Citizen Health Desk' : '1. Citizen Health Desk',
       hubDoctor: '2. Doctor Clinical Cockpit',
       hubPhc: '3. Rural PHC & ASHA Station',
-      hubAdmin: '4. State Health Command',
+      hubAdmin: isAdmin ? '1. State Health Command' : '4. State Health Command',
       // Citizen Subtabs
       sub_intake: 'Symptom Intake',
       sub_ocr: 'Lab Report OCR',
@@ -579,10 +622,10 @@ export default function App() {
       // Badges & Labels
       noteReadyBadge: 'Note Ready',
       oneNewBadge: '1 New',
-      verifiedDoctorBadge: 'Verified RMP',
-      verifiedPatientBadge: 'ABHA Verified',
+      verifiedDoctorBadge: 'Verified RMP Doctor',
+      verifiedPatientBadge: 'ABHA Verified Citizen',
       verifiedAdminBadge: 'Super Admin',
-      switchUser: 'Switch User',
+      switchUser: 'Switch User (Login)',
       signOut: 'Sign Out',
       years: 'yrs',
       male: 'Male',
@@ -603,45 +646,68 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors">
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 1. TOP STATUS & CLINICAL SAFETY BANNER */}
+      {/* 1. TOP STATUS & CLINICAL SAFETY BANNER (ROLE-TAILORED) */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div className="bg-slate-900 text-slate-200 px-4 py-2 text-xs flex flex-wrap items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          {isAdmin ? (
+            <Shield className="w-4 h-4 text-purple-400" />
+          ) : isDoctor ? (
+            <Stethoscope className="w-4 h-4 text-emerald-400" />
+          ) : isAsha ? (
+            <Database className="w-4 h-4 text-teal-400" />
+          ) : (
+            <ShieldCheck className="w-4 h-4 text-amber-400" />
+          )}
           <span className="font-semibold text-white">{uiText.safetyLabel}</span>
-          <span className="text-slate-300">{uiText.protocol}</span>
+          <span className="text-slate-300">
+            {isAdmin
+              ? 'State Digital Health Mission Governance & Infrastructure Oversight'
+              : isDoctor
+              ? 'RMP Decision Support (Non-Diagnostic) | MoHFW & Odisha Medical Council'
+              : isAsha
+              ? 'Rural Community Health Outreach Station | Offline PWA Active'
+              : 'Citizen Healthcare Portal | BSKY & Ayushman Bharat (ଓଡ଼ିଶା)'}
+          </span>
         </div>
+
         <div className="flex items-center gap-3 text-slate-400 text-[11px]">
           {/* Offline / Online Sync Indicator */}
           <button
             onClick={() => {
-              setActiveHub('phc');
-              setActiveTab('phc_offline');
+              if (isAsha || isAdmin || isDoctor) {
+                setActiveHub('phc');
+                setActiveTab('phc_offline');
+              }
             }}
-            className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
+              isAsha || isAdmin || isDoctor ? 'cursor-pointer' : 'cursor-default'
+            } ${
               isOnline
                 ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900'
                 : 'bg-amber-950/90 text-amber-300 border border-amber-500/60 animate-pulse hover:bg-amber-900'
             }`}
-            title="Click to open Rural PHC Offline & IndexedDB Sync Suite"
+            title="Rural PHC Offline & IndexedDB Sync Status"
           >
             {isOnline ? <Wifi className="w-3 h-3 text-emerald-400" /> : <WifiOff className="w-3 h-3 text-amber-400" />}
             <span>{isOnline ? 'Cloud Synced' : 'Offline Mode (IndexedDB)'}</span>
           </button>
 
-          {/* Firebase Cloud Sync Pill */}
-          <button
-            onClick={() => setShowFirebaseModal(true)}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-              isFirebaseReady
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40 hover:bg-amber-500/30'
-                : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-white'
-            }`}
-            title="Configure Cloud Firestore Sync"
-          >
-            <Flame className="w-3 h-3 text-amber-400" />
-            <span>{isFirebaseReady ? 'Firestore Live' : 'Connect Cloud'}</span>
-          </button>
+          {/* 🔑 FIREBASE CLOUD / API CONFIGURATION BUTTON: STRICTLY ADMIN ONLY */}
+          {isAdmin && (
+            <button
+              onClick={() => setShowFirebaseModal(true)}
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                isFirebaseReady
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40 hover:bg-amber-500/30'
+                  : 'bg-purple-950 text-purple-300 border border-purple-500/60 hover:bg-purple-900'
+              }`}
+              title="Super Admin: Configure Cloud Firestore & API Credentials"
+            >
+              <Flame className="w-3 h-3 text-amber-400" />
+              <span>{isFirebaseReady ? 'Firestore Live (Admin)' : 'API Config (Admin)'}</span>
+            </button>
+          )}
 
           <span className="hidden sm:inline">|</span>
           <span className="flex items-center gap-1.5">
@@ -649,18 +715,48 @@ export default function App() {
             {uiText.facilityLabel} <strong>{currentUser.facility?.split(',')[0]}</strong>
           </span>
           <span className="hidden sm:inline">|</span>
-          <span className="hidden sm:inline">{uiText.portalTag}</span>
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+            {uiText.portalTag}
+          </span>
+          <span className="hidden sm:inline">|</span>
+          <button
+            onClick={() => {
+              setShowProfileMenu(false);
+              setShowAuthPage(true);
+            }}
+            className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[10px] font-semibold transition-all cursor-pointer"
+            title="Switch user account"
+          >
+            <LogIn className="w-2.5 h-2.5 text-emerald-400" />
+            <span>{uiText.switchUser || 'Switch'}</span>
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-white border border-rose-800/60 text-[10px] font-semibold transition-all cursor-pointer"
+            title="Sign out of current session"
+          >
+            <LogOut className="w-2.5 h-2.5 text-rose-400" />
+            <span>{uiText.signOut || 'Sign Out'}</span>
+          </button>
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 2. MAIN NAVBAR WITH 4 UNIFIED HUBS & CONTROLS */}
+      {/* 2. MAIN NAVBAR WITH DYNAMIC ROLE-BASED HUB SELECTORS */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row lg:items-center justify-between py-2.5 gap-3">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-600 text-white p-2.5 rounded-xl shadow-md">
+            <div className={`p-2.5 rounded-xl shadow-md text-white ${
+              isAdmin
+                ? 'bg-gradient-to-br from-purple-700 to-indigo-800'
+                : isDoctor
+                ? 'bg-gradient-to-br from-slate-900 to-emerald-800'
+                : isAsha
+                ? 'bg-gradient-to-br from-teal-700 to-emerald-800'
+                : 'bg-gradient-to-br from-amber-600 to-orange-700'
+            }`}>
               <Activity className="w-6 h-6" />
             </div>
             <div>
@@ -668,8 +764,16 @@ export default function App() {
                 <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
                   {uiText.title}
                 </h1>
-                <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-black rounded-md border border-emerald-300 dark:border-emerald-700">
-                  v2.0
+                <span className={`px-2 py-0.5 text-[10px] font-black rounded-md border ${
+                  isAdmin
+                    ? 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950 dark:text-purple-300'
+                    : isDoctor
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                    : isAsha
+                    ? 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950 dark:text-teal-300'
+                    : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300'
+                }`}>
+                  {isAdmin ? 'ADMIN' : isDoctor ? 'DOCTOR' : isAsha ? 'ASHA / PHC' : 'CITIZEN'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-md">
@@ -678,67 +782,139 @@ export default function App() {
             </div>
           </div>
 
-          {/* 4 Clean Segmented Role-Based Hub Selectors */}
+          {/* 4 CORE ROLE-BASED HUBS (Prioritized: Admin first for Administrators) */}
           <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
-            {/* HUB 1: CITIZEN */}
-            <button
-              onClick={() => switchHub('citizen')}
-              className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                activeHub === 'citizen'
-                  ? 'bg-amber-600 text-white shadow-md ring-2 ring-amber-400/40'
-                  : 'text-slate-700 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-              }`}
-            >
-              <User className="w-4 h-4" />
-              <span>{uiText.hubCitizen}</span>
-            </button>
+            {isAdmin ? (
+              <>
+                {/* HUB 1 (ADMIN): STATE COMMAND */}
+                <button
+                  onClick={() => switchHub('admin')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'admin'
+                      ? 'bg-purple-800 text-white shadow-md ring-2 ring-purple-400/40'
+                      : 'text-purple-950 dark:text-purple-300 hover:text-purple-800 hover:bg-purple-100/60 dark:hover:bg-purple-950/60'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <span>{uiText.hubAdmin}</span>
+                  <span className="bg-amber-400 text-purple-950 text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                    COMMAND
+                  </span>
+                </button>
 
-            {/* HUB 2: DOCTOR */}
-            <button
-              onClick={() => switchHub('doctor')}
-              className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                activeHub === 'doctor'
-                  ? 'bg-slate-900 dark:bg-slate-950 text-white shadow-md ring-2 ring-emerald-400/40'
-                  : 'text-slate-700 dark:text-slate-300 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-              }`}
-            >
-              <Stethoscope className="w-4 h-4 text-emerald-400" />
-              <span>{uiText.hubDoctor}</span>
-              {generatedTriageNote && (
-                <span className="bg-rose-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold animate-pulse">
-                  1
-                </span>
-              )}
-            </button>
+                {/* HUB 2: DOCTOR */}
+                <button
+                  onClick={() => switchHub('doctor')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'doctor'
+                      ? 'bg-slate-900 dark:bg-slate-950 text-white shadow-md ring-2 ring-emerald-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <Stethoscope className="w-4 h-4 text-emerald-400" />
+                  <span>{uiText.hubDoctor}</span>
+                  {generatedTriageNote && (
+                    <span className="bg-rose-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold animate-pulse">
+                      1
+                    </span>
+                  )}
+                </button>
 
-            {/* HUB 3: RURAL PHC & ASHA */}
-            <button
-              onClick={() => switchHub('phc')}
-              className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                activeHub === 'phc'
-                  ? 'bg-teal-700 text-white shadow-md ring-2 ring-teal-400/40'
-                  : 'text-slate-700 dark:text-slate-300 hover:text-teal-800 dark:hover:text-teal-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-              }`}
-            >
-              <Database className="w-4 h-4 text-teal-300" />
-              <span>{uiText.hubPhc}</span>
-              <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">
-                OFFLINE
-              </span>
-            </button>
+                {/* HUB 3: RURAL PHC & ASHA */}
+                <button
+                  onClick={() => switchHub('phc')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'phc'
+                      ? 'bg-teal-700 text-white shadow-md ring-2 ring-teal-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-teal-800 dark:hover:text-teal-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <Database className="w-4 h-4 text-teal-300" />
+                  <span>{uiText.hubPhc}</span>
+                  <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">
+                    OFFLINE
+                  </span>
+                </button>
 
-            {/* HUB 4: STATE COMMAND */}
-            <button
-              onClick={() => switchHub('admin')}
-              className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                activeHub === 'admin'
-                  ? 'bg-purple-800 text-white shadow-md ring-2 ring-purple-400/40'
-                  : 'text-slate-700 dark:text-slate-300 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4 text-purple-300" />
-              <span>{uiText.hubAdmin}</span>
-            </button>
+                {/* HUB 4: CITIZEN */}
+                <button
+                  onClick={() => switchHub('citizen')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'citizen'
+                      ? 'bg-amber-600 text-white shadow-md ring-2 ring-amber-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                  <span>{uiText.hubCitizen}</span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* HUB 1: CITIZEN */}
+                <button
+                  onClick={() => switchHub('citizen')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'citizen'
+                      ? 'bg-amber-600 text-white shadow-md ring-2 ring-amber-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                  <span>{uiText.hubCitizen}</span>
+                </button>
+
+                {/* HUB 2: DOCTOR */}
+                <button
+                  onClick={() => switchHub('doctor')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'doctor'
+                      ? 'bg-slate-900 dark:bg-slate-950 text-white shadow-md ring-2 ring-emerald-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <Stethoscope className="w-4 h-4 text-emerald-400" />
+                  <span>{uiText.hubDoctor}</span>
+                  {generatedTriageNote && (
+                    <span className="bg-rose-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold animate-pulse">
+                      1
+                    </span>
+                  )}
+                </button>
+
+                {/* HUB 3: RURAL PHC & ASHA */}
+                <button
+                  onClick={() => switchHub('phc')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'phc'
+                      ? 'bg-teal-700 text-white shadow-md ring-2 ring-teal-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-teal-800 dark:hover:text-teal-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <Database className="w-4 h-4 text-teal-300" />
+                  <span>{uiText.hubPhc}</span>
+                  <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">
+                    OFFLINE
+                  </span>
+                </button>
+
+                {/* HUB 4: STATE COMMAND */}
+                <button
+                  onClick={() => switchHub('admin')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'admin'
+                      ? 'bg-purple-800 text-white shadow-md ring-2 ring-purple-400/40'
+                      : 'text-purple-950 dark:text-purple-300 hover:text-purple-800 hover:bg-purple-100/60 dark:hover:bg-purple-950/60'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <span>{uiText.hubAdmin}</span>
+                  <span className="bg-amber-400 text-purple-950 text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                    GOV
+                  </span>
+                </button>
+              </>
+            )}
           </div>
 
           {/* Right Controls: Theme Switcher, Language Switcher & User Profile */}
@@ -749,7 +925,7 @@ export default function App() {
                 type="button"
                 onClick={() => setThemeMode('light')}
                 title="Light Mode"
-                className={`p-1.5 rounded-lg flex items-center gap-1 transition-all ${
+                className={`p-1.5 rounded-lg flex items-center gap-1 transition-all cursor-pointer ${
                   themeMode === 'light'
                     ? 'bg-white text-amber-600 shadow-xs font-bold'
                     : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -761,7 +937,7 @@ export default function App() {
                 type="button"
                 onClick={() => setThemeMode('reading')}
                 title="Reading Mode (Eye-Care)"
-                className={`p-1.5 rounded-lg flex items-center gap-1 transition-all ${
+                className={`p-1.5 rounded-lg flex items-center gap-1 transition-all cursor-pointer ${
                   themeMode === 'reading'
                     ? 'bg-amber-100 text-amber-900 shadow-xs font-bold'
                     : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -773,7 +949,7 @@ export default function App() {
                 type="button"
                 onClick={() => setThemeMode('dark')}
                 title="Dark Mode"
-                className={`p-1.5 rounded-lg flex items-center gap-1 transition-all ${
+                className={`p-1.5 rounded-lg flex items-center gap-1 transition-all cursor-pointer ${
                   themeMode === 'dark'
                     ? 'bg-slate-900 text-purple-400 shadow-xs font-bold'
                     : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -788,7 +964,7 @@ export default function App() {
               <Globe className="w-3.5 h-3.5 text-slate-500 ml-1" />
               <button
                 onClick={() => handleLanguageChange('or-IN')}
-                className={`px-2 py-0.5 rounded-lg font-bold transition-all ${
+                className={`px-2 py-0.5 rounded-lg font-bold transition-all cursor-pointer ${
                   appLang === 'or-IN'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
@@ -798,7 +974,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => handleLanguageChange('hi-IN')}
-                className={`px-2 py-0.5 rounded-lg font-bold transition-all ${
+                className={`px-2 py-0.5 rounded-lg font-bold transition-all cursor-pointer ${
                   appLang === 'hi-IN'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
@@ -808,7 +984,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => handleLanguageChange('en-IN')}
-                className={`px-2 py-0.5 rounded-lg font-bold transition-all ${
+                className={`px-2 py-0.5 rounded-lg font-bold transition-all cursor-pointer ${
                   appLang === 'en-IN'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
@@ -818,7 +994,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* User Profile Pill */}
+            {/* User Profile Pill with Demo Persona Switcher */}
             <div className="relative">
               <button
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -832,7 +1008,13 @@ export default function App() {
                     size="sm"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-xs shadow-xs bg-gradient-to-br from-amber-600 to-orange-700">
+                  <div className={`w-8 h-8 rounded-lg text-white flex items-center justify-center font-bold text-xs shadow-xs ${
+                    isAdmin
+                      ? 'bg-gradient-to-br from-purple-700 to-indigo-800'
+                      : isAsha
+                      ? 'bg-gradient-to-br from-teal-700 to-emerald-800'
+                      : 'bg-gradient-to-br from-amber-600 to-orange-700'
+                  }`}>
                     {userInitials}
                   </div>
                 )}
@@ -840,51 +1022,144 @@ export default function App() {
                   <div className="text-xs font-bold leading-tight text-slate-900 dark:text-white">
                     {currentUser.name}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium">
+                  <div className="text-[10px] text-slate-500 font-medium truncate max-w-[120px]">
                     {currentUser.role.split('/')[0]}
                   </div>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition-transform" />
               </button>
 
-              {/* Profile Menu */}
+              {/* Enhanced Profile Menu & Instant Demo Persona Switcher */}
               {showProfileMenu && (
-                <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 py-3 z-50 text-xs animate-fadeIn">
-                  <div className="px-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 dark:text-white text-sm">{currentUser.name}</span>
-                      <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800">
-                        {currentUser.roleCategory === 'admin'
-                          ? 'Super Admin'
-                          : currentUser.roleCategory === 'patient'
-                          ? 'ABHA Verified'
-                          : 'RMP Verified'}
-                      </span>
+                <>
+                  {/* Click-outside backdrop */}
+                  <div
+                    className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[0.5px]"
+                    onClick={() => setShowProfileMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 py-3 z-50 text-xs animate-fadeIn">
+                    <div className="px-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">{currentUser.name}</span>
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                          isAdmin
+                            ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                            : isDoctor
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : isAsha
+                            ? 'bg-teal-100 text-teal-800 border border-teal-300'
+                            : 'bg-amber-100 text-amber-800 border border-amber-300'
+                        }`}>
+                          {isAdmin
+                            ? uiText.verifiedAdminBadge
+                            : isDoctor
+                            ? uiText.verifiedDoctorBadge
+                            : isAsha
+                            ? 'ASHA Outreach'
+                            : uiText.verifiedPatientBadge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 mt-0.5">{currentUser.role}</p>
+                      <p className="text-[10px] text-slate-400 font-mono">ID: {currentUser.staffId}</p>
+                      <p className="text-[10px] text-slate-500 truncate mt-1">📍 {currentUser.facility}</p>
                     </div>
-                    <p className="text-[11px] font-medium text-emerald-700 mt-0.5">{currentUser.role}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">ID: {currentUser.staffId}</p>
-                  </div>
 
-                  <div className="p-2 space-y-1">
-                    <button
-                      onClick={() => {
-                        setShowProfileMenu(false);
-                        setShowAuthPage(true);
-                      }}
-                      className="w-full text-left px-3 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2 font-medium"
-                    >
-                      <LogIn className="w-3.5 h-3.5 text-slate-500" />
-                      {uiText.switchUser}
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-3 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg flex items-center gap-2 font-medium"
-                    >
-                      <LogOut className="w-3.5 h-3.5 text-rose-500" />
-                      {uiText.signOut}
-                    </button>
+                    {/* 🎭 1-CLICK INSTANT DEMO PERSONA SWITCHER */}
+                    <div className="p-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
+                        <span>🎭 Switch Persona (Live Demo)</span>
+                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">1-Click</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleQuickPersonaSwitch('patient')}
+                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                            isPatient
+                              ? 'bg-amber-100 border-amber-400 text-amber-950 font-bold shadow-xs'
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-amber-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400">
+                            <User className="w-3.5 h-3.5" />
+                            <span>Citizen</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate">Pratap (Patient)</div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleQuickPersonaSwitch('doctor')}
+                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                            isDoctor
+                              ? 'bg-emerald-100 border-emerald-400 text-emerald-950 font-bold shadow-xs'
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-400">
+                            <Stethoscope className="w-3.5 h-3.5" />
+                            <span>Doctor (RMP)</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate">Dr. Soumya (MO)</div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleQuickPersonaSwitch('asha')}
+                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                            isAsha
+                              ? 'bg-teal-100 border-teal-400 text-teal-950 font-bold shadow-xs'
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-teal-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-teal-800 dark:text-teal-400">
+                            <Database className="w-3.5 h-3.5" />
+                            <span>ASHA / PHC</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate">Sunita Devi (ASHA)</div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleQuickPersonaSwitch('admin')}
+                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                            isAdmin
+                              ? 'bg-purple-100 border-purple-400 text-purple-950 font-bold shadow-xs'
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-purple-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-purple-800 dark:text-purple-400">
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            <span>Super Admin</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate">Sunil Biswal (State Admin)</div>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-2 space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          setShowAuthPage(true);
+                        }}
+                        className="w-full text-left px-3 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex items-center gap-2 font-medium cursor-pointer"
+                      >
+                        <LogIn className="w-3.5 h-3.5 text-slate-500" />
+                        {uiText.switchUser}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full text-left px-3 py-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg flex items-center gap-2 font-medium cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5 text-rose-500" />
+                        {uiText.signOut}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </div>
@@ -976,6 +1251,30 @@ export default function App() {
                   <Pill className="w-3.5 h-3.5 text-indigo-300" />
                   <span>{uiText.sub_expiry}</span>
                 </button>
+
+                <button
+                  onClick={() => setActiveTab('beds')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'beds'
+                      ? 'bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <Bed className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>{uiText.sub_beds}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('bloodbank')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'bloodbank'
+                      ? 'bg-rose-700 text-white shadow-sm ring-2 ring-rose-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <Droplet className="w-3.5 h-3.5 text-rose-300" />
+                  <span>{uiText.sub_blood}</span>
+                </button>
               </>
             )}
 
@@ -1029,7 +1328,7 @@ export default function App() {
                 <button
                   onClick={() => setActiveTab('differential')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                    activeTab === 'differential' || activeTab === 't12_differential'
+                    activeTab === 'differential' || activeTab === 't12_differential' || activeTab === 'xray'
                       ? 'bg-cyan-700 text-white shadow-sm ring-2 ring-cyan-400/40'
                       : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
                   }`}
@@ -1048,6 +1347,18 @@ export default function App() {
                 >
                   <Activity className="w-3.5 h-3.5 text-purple-300" />
                   <span>{uiText.sub_scores}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('abha_history')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'abha_history' || activeTab === 't11_abha_history'
+                      ? 'bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>ABHA History</span>
                 </button>
 
                 <button
@@ -1194,6 +1505,29 @@ export default function App() {
                   <Pill className="w-3.5 h-3.5 text-teal-300" />
                   <span>{uiText.sub_inventory}</span>
                 </button>
+
+                <button
+                  onClick={() => setActiveTab('compliance')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'compliance'
+                      ? 'bg-indigo-700 text-white shadow-sm ring-2 ring-indigo-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <Shield className="w-3.5 h-3.5 text-indigo-300" />
+                  <span>DPDP & RLHF</span>
+                </button>
+
+                {/* 🔑 Direct API Modal Trigger strictly for Admins */}
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowFirebaseModal(true)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-gradient-to-r from-purple-900 to-indigo-900 text-purple-200 hover:text-white border border-purple-700/50 shadow-sm cursor-pointer ml-auto"
+                  >
+                    <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Cloud API Infrastructure</span>
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -1201,7 +1535,7 @@ export default function App() {
       </header>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 4. MAIN WORKSPACE CONTENT AREA (CLEAN FULL-WIDTH DISPLAY) */}
+      {/* 4. MAIN WORKSPACE CONTENT AREA (ROLE-FILTERED & RESPONSIVE) */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 overflow-y-auto">
         {/* ─── CITIZEN MODULES ─── */}
@@ -1347,8 +1681,8 @@ export default function App() {
           </Suspense>
         )}
 
-        {(activeTab === 'differential' || activeTab === 't12_differential') && (
-          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Differential Triage...</div>}>
+        {(activeTab === 'differential' || activeTab === 't12_differential' || activeTab === 'xray') && (
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Differential Triage & X-Ray...</div>}>
             <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="differential" />
           </Suspense>
         )}
@@ -1356,6 +1690,12 @@ export default function App() {
         {(activeTab === 'riskscores' || activeTab === 't14_riskscores') && (
           <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Clinical Risk Scores...</div>}>
             <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="scores" />
+          </Suspense>
+        )}
+
+        {(activeTab === 'abha_history' || activeTab === 't11_abha_history') && (
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading ABHA Temporal History...</div>}>
+            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="abha_history" />
           </Suspense>
         )}
 
@@ -1450,6 +1790,12 @@ export default function App() {
             <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="drug_safety" />
           </Suspense>
         )}
+
+        {(activeTab === 'compliance' || activeTab === 't15_compliance') && (
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading DPDP Compliance & RLHF...</div>}>
+            <GovtGovTechSuite appLang={appLang} currentUser={currentUser} initialFeature="compliance" />
+          </Suspense>
+        )}
       </main>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
@@ -1471,12 +1817,14 @@ export default function App() {
         </Suspense>
       )}
 
-      {/* Firebase Cloud Firestore Config & Live Sync Modal */}
-      <FirebaseConfigModal
-        isOpen={showFirebaseModal}
-        onClose={() => setShowFirebaseModal(false)}
-        onConfigSaved={handleFirebaseConfigSaved}
-      />
+      {/* Firebase Cloud Firestore Config & Live Sync Modal (ADMIN ONLY) */}
+      {isAdmin && (
+        <FirebaseConfigModal
+          isOpen={showFirebaseModal}
+          onClose={() => setShowFirebaseModal(false)}
+          onConfigSaved={handleFirebaseConfigSaved}
+        />
+      )}
     </div>
   );
 }

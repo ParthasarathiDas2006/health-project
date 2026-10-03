@@ -587,21 +587,38 @@ export const saveUser = (newUser) => {
 
 export const verifyCredentials = (identifier, password) => {
   const users = getStoredUsers();
-  const cleanedId = identifier.trim().toLowerCase();
+  const cleanedId = (identifier || '').trim().toLowerCase();
+  const cleanedDigits = cleanedId.replace(/\D/g, '');
+  const cleanedAlphaNum = cleanedId.replace(/[^a-z0-9]/g, '');
 
-  const matched = users.find(
-    (u) =>
-      u.email.toLowerCase() === cleanedId ||
-      u.staffId?.toLowerCase() === cleanedId ||
-      u.phone?.replace(/\s+/g, '') === cleanedId.replace(/\s+/g, '')
-  );
+  const matched = users.find((u) => {
+    if (!u) return false;
+    const userEmail = (u.email || '').toLowerCase().trim();
+    const userId = (u.id || '').toLowerCase().trim();
+    const userStaffId = (u.staffId || '').toLowerCase().trim();
+    const userStaffAlphaNum = userStaffId.replace(/[^a-z0-9]/g, '');
+    const userPhoneDigits = (u.phone || '').replace(/\D/g, '');
+    const userName = (u.name || '').toLowerCase().trim();
+
+    return (
+      userEmail === cleanedId ||
+      userId === cleanedId ||
+      userStaffId === cleanedId ||
+      (cleanedAlphaNum.length >= 4 && userStaffAlphaNum.includes(cleanedAlphaNum)) ||
+      (cleanedDigits.length >= 6 && userPhoneDigits.includes(cleanedDigits)) ||
+      (cleanedId.length >= 3 && userName.includes(cleanedId))
+    );
+  });
 
   if (!matched) {
-    throw new Error('No user found with this Email, Staff ID, or Mobile number.');
+    throw new Error('No user found with this Email, Staff/ABHA ID, Phone, or Name.');
   }
 
-  if (matched.password !== password) {
-    throw new Error('Incorrect password. Please verify and try again.');
+  const cleanInputPass = (password || '').trim();
+  const cleanStoredPass = (matched.password || '').trim();
+
+  if (cleanStoredPass !== cleanInputPass) {
+    throw new Error('Incorrect password. Please verify and try again (Default: password123).');
   }
 
   return matched;
@@ -609,8 +626,12 @@ export const verifyCredentials = (identifier, password) => {
 
 export const getCurrentUser = () => {
   try {
+    const isLoggedOut = localStorage.getItem('triage_logged_out');
+    if (isLoggedOut === 'true') {
+      return null;
+    }
     const raw = localStorage.getItem(CURRENT_USER_KEY);
-    if (!raw) {
+    if (!raw || raw === 'null') {
       // Default initial login for effortless first-time exploration
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(DEFAULT_USERS[0]));
       return DEFAULT_USERS[0];
@@ -623,20 +644,23 @@ export const getCurrentUser = () => {
     return parsed;
   } catch (e) {
     console.error('Failed to read current user:', e);
-    return DEFAULT_USERS[0];
+    return null;
   }
 };
 
 export const setCurrentUser = (user) => {
   if (user) {
+    localStorage.removeItem('triage_logged_out');
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
   } else {
-    localStorage.removeItem(CURRENT_USER_KEY);
+    localStorage.setItem('triage_logged_out', 'true');
+    localStorage.setItem(CURRENT_USER_KEY, 'null');
   }
 };
 
 export const logoutUser = () => {
-  localStorage.removeItem(CURRENT_USER_KEY);
+  localStorage.setItem('triage_logged_out', 'true');
+  localStorage.setItem(CURRENT_USER_KEY, 'null');
 };
 
 // ─────────────────────────────────────────────

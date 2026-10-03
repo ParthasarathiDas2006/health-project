@@ -348,8 +348,16 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     if (activeSubTab !== 'track' || !trackMapRef.current || !activeMission) return;
 
     if (trackMapInstanceRef.current) {
-      trackMapInstanceRef.current.remove();
+      try {
+        trackMapInstanceRef.current.remove();
+      } catch (e) {
+        // ignore cleanup error
+      }
       trackMapInstanceRef.current = null;
+    }
+
+    if (trackMapRef.current._leaflet_id) {
+      delete trackMapRef.current._leaflet_id;
     }
 
     const ambLat = activeMission.startCoords?.lat || 20.2668;
@@ -439,8 +447,14 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     return () => {
       cancelAnimationFrame(animId);
       clearTimeout(t1);
-      map.remove();
-      trackMapInstanceRef.current = null;
+      if (trackMapInstanceRef.current) {
+        try {
+          trackMapInstanceRef.current.remove();
+        } catch (e) {
+          // ignore
+        }
+        trackMapInstanceRef.current = null;
+      }
     };
   }, [activeSubTab, activeMission?.id]);
 

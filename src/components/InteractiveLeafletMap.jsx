@@ -48,6 +48,11 @@ export default function InteractiveLeafletMap({
     if (!mapContainerRef.current) return;
     if (mapInstanceRef.current) return; // Prevent double init
 
+    // Reset container if previously tagged by Leaflet
+    if (mapContainerRef.current._leaflet_id) {
+      delete mapContainerRef.current._leaflet_id;
+    }
+
     const initialLat = userCoords?.lat || 20.2668;
     const initialLng = userCoords?.lng || 85.8398;
 
@@ -85,8 +90,14 @@ export default function InteractiveLeafletMap({
     return () => {
       cancelAnimationFrame(animId);
       clearTimeout(t1);
-      map.remove();
-      mapInstanceRef.current = null;
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          // ignore cleanup error
+        }
+        mapInstanceRef.current = null;
+      }
     };
   }, []);
 

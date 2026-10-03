@@ -30,7 +30,16 @@ import {
   Award,
   Check,
   ChevronLeft,
-  GraduationCap
+  GraduationCap,
+  Radio,
+  Megaphone,
+  Send,
+  TrendingUp,
+  Plus,
+  Globe,
+  Flame,
+  BarChart3,
+  AlertOctagon
 } from 'lucide-react';
 import { getDoctorsList, ODISHA_DISTRICTS } from '../data/doctorsData';
 import { DoctorAvatar } from '../utils/doctorPhotos';
@@ -51,19 +60,116 @@ import {
   resetSystemToDefaults
 } from '../utils/authStorage';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 30 Odisha Districts Official Command Telemetry & Chief District Medical Officers
+// ─────────────────────────────────────────────────────────────────────────────
+export const ODISHA_30_DISTRICTS_TELEMETRY = [
+  { id: 'OD-01', name: 'Khurda (ଖୋର୍ଦ୍ଧା)', zone: 'Coastal', cdmo: 'Dr. Artabandhu Nayak', hospital: 'Capital Hospital, Bhubaneswar & DHH Khurda', beds: 850, occupied: 720, icuBeds: 120, ambulanceUnits: 28, status: 'Normal', phone: '+91 674 2390124', alertCount: 0 },
+  { id: 'OD-02', name: 'Cuttack (କଟକ)', zone: 'Coastal', cdmo: 'Dr. Umesh Chandra Ray', hospital: 'SCB Medical College & Hospital & DHH Cuttack', beds: 1350, occupied: 1190, icuBeds: 210, ambulanceUnits: 34, status: 'High Load', phone: '+91 671 2414011', alertCount: 2 },
+  { id: 'OD-03', name: 'Ganjam (ଗଞ୍ଜାମ)', zone: 'Southern', cdmo: 'Dr. Bijay Kumar Panigrahi', hospital: 'MKCG Medical College & Hospital, Berhampur', beds: 950, occupied: 780, icuBeds: 140, ambulanceUnits: 26, status: 'Normal', phone: '+91 680 2220199', alertCount: 1 },
+  { id: 'OD-04', name: 'Sambalpur (ସମ୍ବଲପୁର)', zone: 'Western', cdmo: 'Dr. Pankaj Kumar Patel', hospital: 'VIMSAR Medical College, Burla & DHH Sambalpur', beds: 820, occupied: 690, icuBeds: 110, ambulanceUnits: 22, status: 'Alert', phone: '+91 663 2400331', alertCount: 3 },
+  { id: 'OD-05', name: 'Puri (ପୁରୀ)', zone: 'Coastal', cdmo: 'Dr. Sujata Mishra', hospital: 'District Headquarters Hospital (DHH), Puri', beds: 480, occupied: 360, icuBeds: 60, ambulanceUnits: 18, status: 'Normal', phone: '+91 6752 222045', alertCount: 0 },
+  { id: 'OD-06', name: 'Mayurbhanj (ମୟୂରଭଞ୍ଜ)', zone: 'Northern', cdmo: 'Dr. Roopnarayan Marndi', hospital: 'PRM Medical College & Hospital, Baripada', beds: 650, occupied: 510, icuBeds: 75, ambulanceUnits: 24, status: 'Normal', phone: '+91 6792 252100', alertCount: 1 },
+  { id: 'OD-07', name: 'Sundargarh (ସୁନ୍ଦରଗଡ଼)', zone: 'Western', cdmo: 'Dr. Dharanidhar Sahu', hospital: 'GMC Sundargarh & IGH Rourkela', beds: 780, occupied: 610, icuBeds: 95, ambulanceUnits: 25, status: 'Normal', phone: '+91 6622 272201', alertCount: 0 },
+  { id: 'OD-08', name: 'Balasore (ବାଲେଶ୍ୱର)', zone: 'Coastal', cdmo: 'Dr. Dulalsen Jagatdeo', hospital: 'FM Medical College & Hospital, Balasore', beds: 590, occupied: 470, icuBeds: 80, ambulanceUnits: 20, status: 'Normal', phone: '+91 6782 262022', alertCount: 0 },
+  { id: 'OD-09', name: 'Kalahandi (କଳାହାଣ୍ଡି)', zone: 'Southern', cdmo: 'Dr. Nihar Ranjan Das', hospital: 'Saheed Rendo Majhi GMC & Hospital, Bhawanipatna', beds: 520, occupied: 410, icuBeds: 65, ambulanceUnits: 19, status: 'Normal', phone: '+91 6670 230412', alertCount: 0 },
+  { id: 'OD-10', name: 'Koraput (କୋରାପୁଟ)', zone: 'Southern', cdmo: 'Dr. Arun Kumar Padhi', hospital: 'SLN Medical College & Hospital, Koraput', beds: 580, occupied: 460, icuBeds: 70, ambulanceUnits: 22, status: 'Normal', phone: '+91 6852 250341', alertCount: 1 },
+  { id: 'OD-11', name: 'Angul (ଅନୁଗୋଳ)', zone: 'Central', cdmo: 'Dr. Trilochan Pradhan', hospital: 'District Headquarters Hospital, Angul', beds: 380, occupied: 290, icuBeds: 45, ambulanceUnits: 16, status: 'Normal', phone: '+91 6764 230214', alertCount: 0 },
+  { id: 'OD-12', name: 'Balangir (ବଲାଙ୍ଗୀର)', zone: 'Western', cdmo: 'Dr. Kuber Chandra Mahanta', hospital: 'Bhima Bhoi Medical College, Balangir', beds: 560, occupied: 450, icuBeds: 70, ambulanceUnits: 20, status: 'Alert', phone: '+91 6652 232145', alertCount: 2 },
+  { id: 'OD-13', name: 'Bargarh (ବରଗଡ଼)', zone: 'Western', cdmo: 'Dr. Sadhu Charan Sahoo', hospital: 'District Headquarters Hospital, Bargarh', beds: 360, occupied: 280, icuBeds: 40, ambulanceUnits: 15, status: 'Normal', phone: '+91 6646 233211', alertCount: 0 },
+  { id: 'OD-14', name: 'Bhadrak (ଭଦ୍ରକ)', zone: 'Coastal', cdmo: 'Dr. Santosh Kumar Patra', hospital: 'District Headquarters Hospital, Bhadrak', beds: 410, occupied: 320, icuBeds: 50, ambulanceUnits: 16, status: 'Normal', phone: '+91 6784 251200', alertCount: 0 },
+  { id: 'OD-15', name: 'Boudh (ବୌଦ୍ଧ)', zone: 'Central', cdmo: 'Dr. Madan Mohan Pradhan', hospital: 'District Headquarters Hospital, Boudh', beds: 240, occupied: 170, icuBeds: 25, ambulanceUnits: 12, status: 'Normal', phone: '+91 6841 222310', alertCount: 0 },
+  { id: 'OD-16', name: 'Deogarh (ଦେବଗଡ଼)', zone: 'Western', cdmo: 'Dr. Manoj Kumar Upadhyay', hospital: 'District Headquarters Hospital, Deogarh', beds: 210, occupied: 140, icuBeds: 20, ambulanceUnits: 10, status: 'Normal', phone: '+91 6641 226201', alertCount: 0 },
+  { id: 'OD-17', name: 'Dhenkanal (ଢେଙ୍କାନାଳ)', zone: 'Central', cdmo: 'Dr. Ashok Kumar Das', hospital: 'District Headquarters Hospital, Dhenkanal', beds: 390, occupied: 295, icuBeds: 45, ambulanceUnits: 15, status: 'Normal', phone: '+91 6762 224320', alertCount: 0 },
+  { id: 'OD-18', name: 'Gajapati (ଗଜପତି)', zone: 'Southern', cdmo: 'Dr. Pradeep Kumar Patra', hospital: 'District Headquarters Hospital, Paralakhemundi', beds: 280, occupied: 205, icuBeds: 30, ambulanceUnits: 14, status: 'Normal', phone: '+91 6815 222411', alertCount: 0 },
+  { id: 'OD-19', name: 'Jagatsinghpur (ଜଗତସିଂହପୁର)', zone: 'Coastal', cdmo: 'Dr. Basanta Kumar Jena', hospital: 'District Headquarters Hospital, Jagatsinghpur', beds: 350, occupied: 270, icuBeds: 40, ambulanceUnits: 14, status: 'Normal', phone: '+91 6724 220202', alertCount: 0 },
+  { id: 'OD-20', name: 'Jajpur (ଯାଜପୁର)', zone: 'Coastal', cdmo: 'Dr. Shibasis Mohanty', hospital: 'Jajpur GMC & DHH Jajpur', beds: 520, occupied: 410, icuBeds: 65, ambulanceUnits: 18, status: 'Normal', phone: '+91 6728 222123', alertCount: 0 },
+  { id: 'OD-21', name: 'Jharsuguda (ଝାରସୁଗୁଡ଼ା)', zone: 'Western', cdmo: 'Dr. Jayakrushna Naik', hospital: 'District Headquarters Hospital, Jharsuguda', beds: 320, occupied: 250, icuBeds: 40, ambulanceUnits: 14, status: 'Normal', phone: '+91 6645 272101', alertCount: 0 },
+  { id: 'OD-22', name: 'Kandhamal (କନ୍ଧମାଳ)', zone: 'Central', cdmo: 'Dr. Manoranjan Routray', hospital: 'District Headquarters Hospital, Phulbani', beds: 340, occupied: 260, icuBeds: 35, ambulanceUnits: 16, status: 'Normal', phone: '+91 6842 253210', alertCount: 1 },
+  { id: 'OD-23', name: 'Kendrapara (କେନ୍ଦ୍ରାପଡ଼ା)', zone: 'Coastal', cdmo: 'Dr. Anita Patnaik', hospital: 'District Headquarters Hospital, Kendrapara', beds: 390, occupied: 305, icuBeds: 45, ambulanceUnits: 16, status: 'Normal', phone: '+91 6727 232410', alertCount: 0 },
+  { id: 'OD-24', name: 'Keonjhar (କେନ୍ଦୁଝର)', zone: 'Northern', cdmo: 'Dr. Kishore Kumar Prusty', hospital: 'Dharani Dhar GMC & Hospital, Keonjhar', beds: 560, occupied: 430, icuBeds: 70, ambulanceUnits: 20, status: 'Normal', phone: '+91 6766 255200', alertCount: 0 },
+  { id: 'OD-25', name: 'Malkangiri (ମାଲକାନଗିରି)', zone: 'Southern', cdmo: 'Dr. Prafulla Kumar Nanda', hospital: 'District Headquarters Hospital, Malkangiri', beds: 320, occupied: 240, icuBeds: 35, ambulanceUnits: 16, status: 'Normal', phone: '+91 6861 230214', alertCount: 1 },
+  { id: 'OD-26', name: 'Nabarangpur (ନବରଙ୍ଗପୁର)', zone: 'Southern', cdmo: 'Dr. Santosh Kumar Nayak', hospital: 'District Headquarters Hospital, Nabarangpur', beds: 350, occupied: 275, icuBeds: 40, ambulanceUnits: 16, status: 'Normal', phone: '+91 6858 222144', alertCount: 0 },
+  { id: 'OD-27', name: 'Nayagarh (ନୟାଗଡ଼)', zone: 'Central', cdmo: 'Dr. Swarnalata Mohapatra', hospital: 'District Headquarters Hospital, Nayagarh', beds: 340, occupied: 260, icuBeds: 40, ambulanceUnits: 14, status: 'Normal', phone: '+91 6753 252123', alertCount: 0 },
+  { id: 'OD-28', name: 'Nuapada (ନୂଆପଡ଼ା)', zone: 'Western', cdmo: 'Dr. Kali Prasad Sahu', hospital: 'District Headquarters Hospital, Nuapada', beds: 260, occupied: 195, icuBeds: 30, ambulanceUnits: 12, status: 'Normal', phone: '+91 6678 223400', alertCount: 0 },
+  { id: 'OD-29', name: 'Rayagada (ରାୟଗଡ଼ା)', zone: 'Southern', cdmo: 'Dr. Lalmohan Routray', hospital: 'District Headquarters Hospital, Rayagada', beds: 360, occupied: 285, icuBeds: 45, ambulanceUnits: 16, status: 'Normal', phone: '+91 6856 222134', alertCount: 1 },
+  { id: 'OD-30', name: 'Subarnapur (ସୁବର୍ଣ୍ଣପୁର)', zone: 'Western', cdmo: 'Dr. Bisweswar Mishra', hospital: 'District Headquarters Hospital, Sonepur', beds: 240, occupied: 175, icuBeds: 25, ambulanceUnits: 12, status: 'Normal', phone: '+91 6654 220211', alertCount: 0 }
+];
+
+export const APEX_MEDICAL_COLLEGES_TELEMETRY = [
+  { name: 'SCB Medical College & Hospital', city: 'Cuttack', beds: 1200, occupied: 1080, icu: 180, superintendent: 'Prof. (Dr.) Sudhanshu Sekhar Mishra', type: 'Apex State Referral' },
+  { name: 'AIIMS Hospital', city: 'Bhubaneswar', beds: 960, occupied: 890, icu: 150, superintendent: 'Dr. Dilip Kumar Parida', type: 'National Apex Institute' },
+  { name: 'MKCG Medical College & Hospital', city: 'Berhampur', beds: 850, occupied: 720, icu: 110, superintendent: 'Prof. (Dr.) Santosh Kumar Mishra', type: 'South Odisha Apex' },
+  { name: 'VIMSAR Medical College & Hospital', city: 'Burla, Sambalpur', beds: 750, occupied: 640, icu: 95, superintendent: 'Prof. (Dr.) Lalmohan Nayak', type: 'West Odisha Apex' },
+  { name: 'Capital Hospital', city: 'Bhubaneswar', beds: 600, occupied: 520, icu: 80, superintendent: 'Dr. Laxmidhar Sahoo', type: 'State Capital Post-Graduate Institute' },
+  { name: 'PRM Medical College & Hospital', city: 'Baripada, Mayurbhanj', beds: 500, occupied: 410, icu: 60, superintendent: 'Dr. Kabita Sahu', type: 'North Odisha Apex' }
+];
+
 /**
  * AdminPage Component
  * Central Command & Governance Portal for State Healthcare Operations
  * Supports Odia, Hindi, English and Light/Dark/Reading theme modes
  */
 export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTab }) {
-  const [activeSubTab, setActiveSubTab] = useState('users'); // 'users' | 'beds' | 'ambulance' | 'appointments' | 'transfers' | 'audit'
+  // State Command Overview is the primary default view for Administrator
+  const [activeSubTab, setActiveSubTab] = useState('overview'); // 'overview' | 'users' | 'doctors' | 'beds' | 'ambulance' | 'advisory' | 'cdmo' | 'appointments' | 'transfers' | 'audit'
   const [usersList, setUsersList] = useState([]);
   const [bedBookings, setBedBookings] = useState([]);
   const [ambulanceList, setAmbulanceList] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [transfers, setTransfers] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+
+  // Pre-seeded Live State Advisories & Emergency Bulletins
+  const [advisoriesList, setAdvisoriesList] = useState(() => {
+    return [
+      {
+        id: 'ADV-OD-2026-001',
+        title: '🚨 Heatwave Orange Alert & ORS Distribution Advisory',
+        districtScope: 'Western & Interior Odisha (Titilagarh, Sambalpur, Bolangir, Jharsuguda)',
+        severity: 'critical',
+        issuedBy: 'Directorate of Public Health, Odisha (IDSP)',
+        issuedAt: '2026-03-10T10:00:00.000Z',
+        active: true,
+        targetAudience: 'All Health Stations & Citizens',
+        message: 'Severe heatwave forecast with temperatures exceeding 42°C. Activate 24x7 cooling bays at all PHCs/CHCs, stock 100,000+ ORS sachets, and mandate shade halts for field workers.'
+      },
+      {
+        id: 'ADV-OD-2026-002',
+        title: '🦟 Pre-Monsoon Vector-Borne & Malaria Surveillance Protocol',
+        districtScope: 'Tribal & Forest Pockets (Mayurbhanj, Rayagada, Koraput, Malkangiri)',
+        severity: 'warning',
+        issuedBy: 'State Vector Borne Disease Control Cell (NVBDCP)',
+        issuedAt: '2026-03-09T14:30:00.000Z',
+        active: true,
+        targetAudience: 'ASHA / ANM & Medical Officers',
+        message: 'Initiate door-to-door Rapid Diagnostic Test (RDT) screening and LLIN mosquito bed-net verification across high API sub-centers.'
+      },
+      {
+        id: 'ADV-OD-2026-003',
+        title: '🩸 Urgent Blood Bank Appeal: O-Negative & B-Negative Reserves',
+        districtScope: 'Cuttack-Bhubaneswar Corridor (SCBMCH & Capital Hospital)',
+        severity: 'info',
+        issuedBy: 'Odisha State Blood Transfusion Council (OSBTC)',
+        issuedAt: '2026-03-08T09:15:00.000Z',
+        active: true,
+        targetAudience: 'Citizen Voluntary Donors & Blood Banks',
+        message: 'Critical emergency reserve requested for poly-trauma casualty units. Voluntary blood donation camps mobilized at district headquarters.'
+      }
+    ];
+  });
+
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [newAdvisory, setNewAdvisory] = useState({
+    title: '',
+    districtScope: 'Statewide (All 30 Districts)',
+    severity: 'warning',
+    targetAudience: 'All Health Stations & Citizens',
+    message: ''
+  });
+  const [districtSearch, setDistrictSearch] = useState('');
+  const [districtZoneFilter, setDistrictZoneFilter] = useState('all');
+  const [selectedDistrictModal, setSelectedDistrictModal] = useState(null);
 
   // User filter states
   const [roleFilter, setRoleFilter] = useState('all');
@@ -344,14 +450,106 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
     }
   };
 
+  const handleBroadcastSubmit = (e) => {
+    e.preventDefault();
+    if (!newAdvisory.title.trim() || !newAdvisory.message.trim()) {
+      return;
+    }
+    const createdAdvisory = {
+      id: `ADV-OD-${Date.now().toString().slice(-4)}`,
+      title: newAdvisory.title.trim(),
+      districtScope: newAdvisory.districtScope,
+      severity: newAdvisory.severity,
+      targetAudience: newAdvisory.targetAudience,
+      issuedBy: currentUser?.name || 'Directorate of Public Health, Odisha',
+      issuedAt: new Date().toISOString(),
+      active: true,
+      message: newAdvisory.message.trim()
+    };
+    setAdvisoriesList([createdAdvisory, ...advisoriesList]);
+    logSystemEvent({
+      type: 'HEALTH_ADVISORY_BROADCAST',
+      actor: currentUser?.name || 'Administrator',
+      description: `State Advisory (${createdAdvisory.title}) broadcasted with ${createdAdvisory.severity} priority`,
+      severity: createdAdvisory.severity === 'critical' ? 'critical' : 'warning'
+    });
+    setAuditLogs(getSystemAuditLogs());
+    setShowBroadcastModal(false);
+    setNewAdvisory({
+      title: '',
+      districtScope: 'Statewide (All 30 Districts)',
+      severity: 'warning',
+      targetAudience: 'All Health Stations & Citizens',
+      message: ''
+    });
+    setActionSuccessMsg(
+      appLang === 'or-IN'
+        ? 'ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ପରାମର୍ଶ/ଆଲର୍ଟ ସଫଳତାର ସହ ପ୍ରସାରିତ ହେଲା!'
+        : 'Statewide health advisory successfully broadcasted!'
+    );
+    setTimeout(() => setActionSuccessMsg(''), 3000);
+  };
+
+  const handleToggleAdvisory = (advId) => {
+    setAdvisoriesList(
+      advisoriesList.map((a) => (a.id === advId ? { ...a, active: !a.active } : a))
+    );
+  };
+
+  const handleExportSituationReport = () => {
+    const reportData = {
+      reportTitle: 'Odisha State Health Daily Situation Report (DSR)',
+      generatedAt: new Date().toISOString(),
+      generatedBy: currentUser?.name || 'Super Administrator',
+      telemetry: {
+        totalRegisteredUsers: usersList.length,
+        totalDoctorsInRegistry: fullDoctorsRegistry.length,
+        activeBedBookings: bedBookings.length,
+        activeAmbulanceTrips: ambulanceList.length,
+        scheduledAppointments: appointments.length,
+        tertiaryTransfers: transfers.length,
+        districtsCovered: 30
+      },
+      districtSummary: ODISHA_30_DISTRICTS_TELEMETRY.map((d) => ({
+        district: d.name,
+        cdmo: d.cdmo,
+        hospital: d.hospital,
+        totalBeds: d.beds,
+        occupiedBeds: d.occupied,
+        occupancyRate: `${Math.round((d.occupied / d.beds) * 100)}%`,
+        icuCapacity: d.icuBeds,
+        ambulances108: d.ambulanceUnits,
+        status: d.status
+      })),
+      activeAdvisories: advisoriesList.filter((a) => a.active)
+    };
+
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Odisha_State_Health_DSR_${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    setActionSuccessMsg(
+      appLang === 'or-IN'
+        ? 'ସମଗ୍ର ରାଜ୍ୟ ଦୈନିକ ସ୍ଥିତି ରିପୋର୍ଟ (DSR) ଏକ୍ସପୋର୍ଟ ହୋଇଛି।'
+        : 'State Daily Situation Report (DSR) successfully exported.'
+    );
+    setTimeout(() => setActionSuccessMsg(''), 3000);
+  };
+
   // Multilingual Strings
   const t = {
     'or-IN': {
-      portalTitle: 'ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ମିଶନ - କେନ୍ଦ୍ରୀୟ ପ୍ରଶାସନିକ ଡେସ୍କ',
+      portalTitle: 'ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ମିଶନ - କେନ୍ଦ୍ରୀୟ ପ୍ରଶାସନିକ କମାଣ୍ଡ',
       portalSubtitle: 'ସମସ୍ତ ୩୦ ଟି ଜିଲ୍ଲା, ମେଡିକାଲ୍ କଲେଜ୍, ଡାକ୍ତରଖାନା ଏବଂ ବ୍ୟବହାରକାରୀଙ୍କ କେନ୍ଦ୍ରୀୟ ନିୟନ୍ତ୍ରଣ',
       badge: 'ଜାତୀୟ ସ୍ୱାସ୍ଥ୍ୟ ମିଶନ (NHM) • ସର୍ବୋଚ୍ଚ ପ୍ରଶାସନିକ କମାଣ୍ଡ',
       refreshBtn: 'ତଥ୍ୟ ନବୀକରଣ',
       addUserBtn: 'ନୂଆ କର୍ମଚାରୀ / ଡାକ୍ତର ଯୋଡ଼ନ୍ତୁ',
+      broadcastAlertBtn: 'ଜରୁରୀ ଆଲର୍ଟ ପ୍ରସାରଣ',
+      situationReportBtn: 'ଦୈନିକ ସ୍ଥିତି ରିପୋର୍ଟ (DSR)',
       exportCensusBtn: 'ସେନ୍ସସ୍ ଏକ୍ସପୋର୍ଟ (CSV)',
       restoreBtn: 'ସରକାରୀ ତଥ୍ୟ ପୁନଃସ୍ଥାପନ',
       totalUsers: 'ମୋଟ ପଞ୍ଜୀକୃତ ବ୍ୟବହାରକାରୀ',
@@ -360,13 +558,16 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       totalAppointments: 'ଡାକ୍ତର ପରାମର୍ଶ ବୁକିଂ',
       totalTransfers: 'ଇଣ୍ଟର-ହସ୍ପିଟାଲ୍ ରେଫରାଲ୍',
       totalDoctors: 'ପଞ୍ଜୀକୃତ ବିଶେଷଜ୍ଞ ଡାକ୍ତର (OMC)',
-      tabUsers: '୧. ବ୍ୟବହାରକାରୀ ଓ ଷ୍ଟାଫ୍ ପରିଚାଳନା',
-      tabDoctors: '୨. ବିଶେଷଜ୍ଞ ଡାକ୍ତର ରେଜିଷ୍ଟ୍ରି (~୨,୫୦୦+)',
+      tabOverview: '🌟 ରାଜ୍ୟ କମାଣ୍ଡ ଅବଲୋକନ',
+      tabUsers: '୧. ବ୍ୟବହାରକାରୀ ଓ ଷ୍ଟାଫ୍',
+      tabDoctors: '୨. ବିଶେଷଜ୍ଞ ଡାକ୍ତର ରେଜିଷ୍ଟ୍ରି',
       tabBeds: '୩. ହସ୍ପିଟାଲ୍ ବେଡ୍ କମାଣ୍ଡ',
       tabAmbulance: '୪. ଆମ୍ବୁଲାନ୍ସ ଡିସପାଚ୍',
-      tabAppointments: '୫. ଡାକ୍ତର ପରାମର୍ଶ କମାଣ୍ଡ',
-      tabTransfers: '୬. ହସ୍ପିଟାଲ୍ ରେଫରାଲ୍ ସ୍ଲିପ୍',
-      tabAudit: '୭. ସିଷ୍ଟମ୍ ସୁରକ୍ଷା ଓ ଅଡିଟ୍ ଲଗ୍',
+      tabAdvisory: '୫. ଜରୁରୀ ଆଲର୍ଟ ପ୍ରସାରଣ',
+      tabCdmo: '୬. ୩୦ ଜିଲ୍ଲା CDMO ରୋଷ୍ଟର',
+      tabAppointments: '୭. ପରାମର୍ଶ କମାଣ୍ଡ',
+      tabTransfers: '୮. ହସ୍ପିଟାଲ୍ ରେଫରାଲ୍',
+      tabAudit: '୯. ସୁରକ୍ଷା ଓ ଅଡିଟ୍ ଲଗ୍',
       searchPlaceholder: 'ନାମ, ଇମେଲ୍, ରେଗ୍ ଆଇଡି କିମ୍ବା ଡାକ୍ତରଖାନା ଖୋଜନ୍ତୁ...',
       allRoles: 'ସମସ୍ତ ଭୂମିକା',
       doctors: 'ଡାକ୍ତର (Doctors)',
@@ -391,11 +592,13 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       dbLatency: 'ଡାଟାବେସ୍ ରେସପନ୍ସ: ୧୨ms'
     },
     'hi-IN': {
-      portalTitle: 'राज्य स्वास्थ्य मिशन - केंद्रीय प्रशासनिक डेस्क',
+      portalTitle: 'राज्य स्वास्थ्य मिशन - केंद्रीय प्रशासनिक कमान',
       portalSubtitle: 'सभी 30 जिलों, मेडिकल कॉलेजों, अस्पतालों एवं उपयोगकर्ताओं का केंद्रीय नियंत्रण',
       badge: 'राष्ट्रीय स्वास्थ्य मिशन (NHM) • सर्वोच्च प्रशासनिक कमान',
       refreshBtn: 'डेटा रीफ्रेश',
       addUserBtn: 'नया स्टाफ / डॉक्टर जोड़ें',
+      broadcastAlertBtn: 'आपातकालीन अलर्ट प्रसारण',
+      situationReportBtn: 'दैनिक स्थिति रिपोर्ट (DSR)',
       exportCensusBtn: 'डेटा निर्यात (CSV)',
       restoreBtn: 'आधिकारिक डेटा रीसेट',
       totalUsers: 'कुल पंजीकृत उपयोगकर्ता',
@@ -404,13 +607,16 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       totalAppointments: 'डॉक्टर परामर्श बुकिंग',
       totalTransfers: 'इंटर-हॉस्पिटल रेफरल',
       totalDoctors: 'पंजीकृत विशेषज्ञ चिकित्सक (OMC)',
-      tabUsers: '1. उपयोगकर्ता एवं स्टाफ प्रबंधन',
-      tabDoctors: '2. विशेषज्ञ डॉक्टर रजिस्ट्री (~2,500+)',
+      tabOverview: '🌟 राज्य कमान अवलोकन',
+      tabUsers: '1. उपयोगकर्ता एवं स्टाफ',
+      tabDoctors: '2. विशेषज्ञ डॉक्टर रजिस्ट्री',
       tabBeds: '3. अस्पताल बेड कमान',
       tabAmbulance: '4. एम्बुलेंस प्रेषण',
-      tabAppointments: '5. डॉक्टर परामर्श कमान',
-      tabTransfers: '6. अस्पताल रेफरल पर्ची',
-      tabAudit: '7. सिस्टम सुरक्षा एवं ऑडिट लॉग',
+      tabAdvisory: '5. आपातकालीन अलर्ट प्रसारण',
+      tabCdmo: '6. 30 जिला CDMO रोस्टर',
+      tabAppointments: '7. डॉक्टर परामर्श कमान',
+      tabTransfers: '8. अस्पताल रेफरल पर्ची',
+      tabAudit: '9. सुरक्षा एवं ऑडिट लॉग',
       searchPlaceholder: 'नाम, ईमेल, रजिस्ट्रेशन आईडी या अस्पताल खोजें...',
       allRoles: 'सभी भूमिकाएं',
       doctors: 'चिकित्सक (Doctors)',
@@ -435,11 +641,13 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       dbLatency: 'डेटाबेस प्रतिक्रिया: 12ms'
     },
     'en-IN': {
-      portalTitle: 'State Health Mission - Central Administrative Portal',
+      portalTitle: 'State Health Mission - Supreme Administrative Command',
       portalSubtitle: 'Central command for 30 District Directorates, Apex Hospitals, Staff & Citizens',
       badge: 'National Health Mission (NHM) • Supreme Administrative Command',
       refreshBtn: 'Refresh Telemetry',
       addUserBtn: 'Register New Staff / Officer',
+      broadcastAlertBtn: 'Broadcast Advisory',
+      situationReportBtn: 'Situation Report (DSR)',
       exportCensusBtn: 'Export Census (CSV)',
       restoreBtn: 'Restore State Telemetry',
       totalUsers: 'Registered Users & Staff',
@@ -448,13 +656,16 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       totalAppointments: 'Scheduled Consultations',
       totalTransfers: 'Apex Inter-Hospital Referrals',
       totalDoctors: 'State Registered Doctors (OMC)',
+      tabOverview: '🌟 State Command Overview',
       tabUsers: '1. User & Staff Management',
-      tabDoctors: '2. Specialist Doctors Registry (~2,500+)',
+      tabDoctors: '2. Specialist Doctors Registry',
       tabBeds: '3. Live Bed Command',
       tabAmbulance: '4. Ambulance Dispatch Control',
-      tabAppointments: '5. Scheduled Consultations',
-      tabTransfers: '6. Inter-Hospital Transfer Slips',
-      tabAudit: '7. System Security & Audit Trail',
+      tabAdvisory: '5. Statewide Advisories & Alerts',
+      tabCdmo: '6. 30 District CDMOs & Directors',
+      tabAppointments: '7. Scheduled Consultations',
+      tabTransfers: '8. Inter-Hospital Transfer Slips',
+      tabAudit: '9. System Security & Audit Trail',
       searchPlaceholder: 'Search by name, email, registration ID or facility...',
       allRoles: 'All Roles',
       doctors: 'Doctors (RMP)',
@@ -479,6 +690,21 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       dbLatency: 'Database Response: 12ms'
     }
   }[appLang] || {};
+
+  // Memoized 30 Districts Telemetry Filter
+  const filteredDistricts = useMemo(() => {
+    const q = districtSearch.toLowerCase().trim();
+    return ODISHA_30_DISTRICTS_TELEMETRY.filter((d) => {
+      const matchesZone = districtZoneFilter === 'all' || d.zone.toLowerCase() === districtZoneFilter.toLowerCase();
+      const matchesSearch =
+        !q ||
+        d.name.toLowerCase().includes(q) ||
+        d.hospital.toLowerCase().includes(q) ||
+        d.cdmo.toLowerCase().includes(q) ||
+        d.zone.toLowerCase().includes(q);
+      return matchesZone && matchesSearch;
+    });
+  }, [districtSearch, districtZoneFilter]);
 
   // Filter users by role and search query
   const filteredUsers = usersList.filter((u) => {
@@ -655,6 +881,26 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
+                onClick={() => setShowBroadcastModal(true)}
+                className="px-3 py-2.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-md shadow-rose-950/30 cursor-pointer animate-pulse"
+                title="Broadcast Emergency Health Advisory"
+              >
+                <Megaphone className="w-4 h-4 text-amber-200" />
+                <span className="inline">{t.broadcastAlertBtn}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportSituationReport}
+                className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                title="Export State Daily Situation Report"
+              >
+                <FileText className="w-4 h-4 text-blue-400" />
+                <span className="hidden sm:inline">{t.situationReportBtn}</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleExportCensus}
                 className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
                 title="Download CSV Census"
@@ -731,10 +977,30 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       {/* Metric KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         <div
+          onClick={() => setActiveSubTab('overview')}
+          className={`p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
+            activeSubTab === 'overview'
+              ? 'bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border-indigo-500 ring-2 ring-indigo-500/30 shadow-md'
+              : 'bg-white border-slate-200 hover:border-indigo-300 hover:shadow-md'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider line-clamp-1">State Telemetry</span>
+            <div className="p-1.5 rounded-lg bg-indigo-100 text-indigo-700 shrink-0">
+              <Globe className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2 text-2xl font-black text-slate-900">30 / 30</div>
+          <div className="text-[10px] text-indigo-700 font-semibold mt-0.5 truncate">
+            Districts Live Monitored
+          </div>
+        </div>
+
+        <div
           onClick={() => setActiveSubTab('users')}
           className={`p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
             activeSubTab === 'users'
-              ? 'bg-purple-500/10 border-purple-500 ring-2 ring-purple-500/20'
+              ? 'bg-purple-500/10 border-purple-500 ring-2 ring-purple-500/20 shadow-md'
               : 'bg-white border-slate-200 hover:border-purple-300 hover:shadow-md'
           }`}
         >
@@ -746,7 +1012,7 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
           </div>
           <div className="mt-2 text-2xl font-black text-slate-900">{usersList.length}</div>
           <div className="text-[10px] text-purple-700 font-semibold mt-0.5 truncate">
-            {usersList.filter((u) => u.roleCategory === 'doctor').length} Staff Docs
+            {usersList.filter((u) => u.roleCategory === 'doctor').length} Staff Docs & Admins
           </div>
         </div>
 
@@ -754,7 +1020,7 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
           onClick={() => setActiveSubTab('doctors')}
           className={`p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
             activeSubTab === 'doctors'
-              ? 'bg-blue-500/10 border-blue-500 ring-2 ring-blue-500/20'
+              ? 'bg-blue-500/10 border-blue-500 ring-2 ring-blue-500/20 shadow-md'
               : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-md'
           }`}
         >
@@ -774,7 +1040,7 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
           onClick={() => setActiveSubTab('beds')}
           className={`p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
             activeSubTab === 'beds'
-              ? 'bg-emerald-500/10 border-emerald-500 ring-2 ring-emerald-500/20'
+              ? 'bg-emerald-500/10 border-emerald-500 ring-2 ring-emerald-500/20 shadow-md'
               : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-md'
           }`}
         >
@@ -786,7 +1052,7 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
           </div>
           <div className="mt-2 text-2xl font-black text-slate-900">{bedBookings.length}</div>
           <div className="text-[10px] text-emerald-700 font-semibold mt-0.5 truncate">
-            Live Ward Tracking
+            Live Ward Allocation
           </div>
         </div>
 
@@ -794,7 +1060,7 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
           onClick={() => setActiveSubTab('ambulance')}
           className={`p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
             activeSubTab === 'ambulance'
-              ? 'bg-rose-500/10 border-rose-500 ring-2 ring-rose-500/20'
+              ? 'bg-rose-500/10 border-rose-500 ring-2 ring-rose-500/20 shadow-md'
               : 'bg-white border-slate-200 hover:border-rose-300 hover:shadow-md'
           }`}
         >
@@ -811,48 +1077,46 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
         </div>
 
         <div
-          onClick={() => setActiveSubTab('appointments')}
+          onClick={() => setActiveSubTab('advisory')}
           className={`p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
-            activeSubTab === 'appointments'
-              ? 'bg-teal-500/10 border-teal-500 ring-2 ring-teal-500/20'
-              : 'bg-white border-slate-200 hover:border-teal-300 hover:shadow-md'
+            activeSubTab === 'advisory'
+              ? 'bg-amber-500/10 border-amber-500 ring-2 ring-amber-500/20 shadow-md'
+              : 'bg-white border-slate-200 hover:border-amber-300 hover:shadow-md'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider line-clamp-1">{t.totalAppointments}</span>
-            <div className="p-1.5 rounded-lg bg-teal-100 text-teal-700 shrink-0">
-              <Calendar className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider line-clamp-1">Health Advisories</span>
+            <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700 shrink-0">
+              <Megaphone className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="mt-2 text-2xl font-black text-slate-900">{appointments.length}</div>
-          <div className="text-[10px] text-teal-700 font-semibold mt-0.5 truncate">
-            Scheduled Consults
+          <div className="mt-2 text-2xl font-black text-slate-900">
+            {advisoriesList.filter((a) => a.active).length}
           </div>
-        </div>
-
-        <div
-          onClick={() => setActiveSubTab('transfers')}
-          className={`p-4 rounded-xl border transition-all cursor-pointer shadow-xs ${
-            activeSubTab === 'transfers'
-              ? 'bg-indigo-500/10 border-indigo-500 ring-2 ring-indigo-500/20'
-              : 'bg-white border-slate-200 hover:border-indigo-300 hover:shadow-md'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider line-clamp-1">{t.totalTransfers}</span>
-            <div className="p-1.5 rounded-lg bg-indigo-100 text-indigo-700 shrink-0">
-              <Building2 className="w-3.5 h-3.5" />
-            </div>
-          </div>
-          <div className="mt-2 text-2xl font-black text-slate-900">{transfers.length}</div>
-          <div className="text-[10px] text-indigo-700 font-semibold mt-0.5 truncate">
-            Tertiary Referrals
+          <div className="text-[10px] text-amber-700 font-semibold mt-0.5 truncate">
+            Active Statewide Bulletins
           </div>
         </div>
       </div>
 
       {/* Admin Module Sub-Navigation Bar */}
       <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200 pb-2 text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('overview')}
+          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+            activeSubTab === 'overview'
+              ? 'bg-indigo-700 text-white shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Globe className="w-4 h-4 text-indigo-300" />
+          <span>{t.tabOverview}</span>
+          <span className="bg-indigo-900/40 text-indigo-100 text-[10px] px-1.5 py-0.2 rounded-full">
+            30 Dist.
+          </span>
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveSubTab('users')}
@@ -919,6 +1183,38 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
 
         <button
           type="button"
+          onClick={() => setActiveSubTab('advisory')}
+          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+            activeSubTab === 'advisory'
+              ? 'bg-amber-600 text-white shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Megaphone className="w-4 h-4 text-amber-200" />
+          <span>{t.tabAdvisory}</span>
+          <span className="bg-amber-800 text-amber-100 text-[10px] px-1.5 py-0.2 rounded-full">
+            {advisoriesList.filter((a) => a.active).length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('cdmo')}
+          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+            activeSubTab === 'cdmo'
+              ? 'bg-teal-700 text-white shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Building2 className="w-4 h-4 text-teal-200" />
+          <span>{t.tabCdmo}</span>
+          <span className="bg-teal-900 text-teal-100 text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+            30 CDMO
+          </span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveSubTab('appointments')}
           className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
             activeSubTab === 'appointments'
@@ -965,6 +1261,323 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
           </span>
         </button>
       </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* SUB-VIEW 0: STATE COMMAND OVERVIEW (EXECUTIVE TELEMETRY)      */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {activeSubTab === 'overview' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Active Statewide Emergency Advisories Ticker */}
+          {advisoriesList.filter((a) => a.active).length > 0 && (
+            <div className="bg-gradient-to-r from-rose-900 via-amber-950 to-slate-900 border border-amber-500/40 rounded-2xl p-4 sm:p-5 text-white shadow-lg space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-500/20 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-3 w-3 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                  </span>
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                    {appLang === 'or-IN'
+                      ? 'ସକ୍ରିୟ ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ବୁଲେଟିନ୍ ଓ ଜରୁରୀ ପରାମର୍ଶ'
+                      : 'Active Statewide Public Health Advisories & Emergency Alerts'}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-rose-500/30 border border-rose-500/50 text-[10px] font-extrabold text-rose-200">
+                    {advisoriesList.filter((a) => a.active).length} Broadcasts Active
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSubTab('advisory')}
+                    className="text-[11px] font-bold text-amber-300 hover:text-amber-100 flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Manage All Advisories</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {advisoriesList
+                  .filter((a) => a.active)
+                  .slice(0, 3)
+                  .map((adv) => (
+                    <div
+                      key={adv.id}
+                      className="bg-slate-900/80 border border-slate-700/80 rounded-xl p-3 space-y-1.5 hover:border-amber-400/50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-xs font-black text-amber-200 line-clamp-1">{adv.title}</h4>
+                        <span
+                          className={`text-[9px] font-black px-1.5 py-0.2 rounded uppercase shrink-0 ${
+                            adv.severity === 'critical'
+                              ? 'bg-rose-500/30 text-rose-300 border border-rose-500/50'
+                              : adv.severity === 'warning'
+                              ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50'
+                              : 'bg-blue-500/30 text-blue-300 border border-blue-500/50'
+                          }`}
+                        >
+                          {adv.severity}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">{adv.message}</p>
+                      <div className="pt-1 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                        <span className="truncate max-w-[180px]">📍 {adv.districtScope}</span>
+                        <span className="font-mono text-amber-400/80 shrink-0">{adv.targetAudience.slice(0, 16)}..</span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Apex Tertiary Medical Colleges & Hospitals Telemetry */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-indigo-600" />
+                  {appLang === 'or-IN'
+                    ? 'ସର୍ବୋଚ୍ଚ ସରକାରୀ ମେଡିକାଲ୍ କଲେଜ୍ ଓ ହସ୍ପିଟାଲ୍ ଲାଇଭ୍ କ୍ଷମତା'
+                    : 'Apex Medical Colleges & Tertiary Centers Live Telemetry'}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Real-time bed occupancy, ICU reserve, and trauma center readiness across Odisha's premier apex health institutes
+                </p>
+              </div>
+              <span className="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-extrabold rounded-full self-start sm:self-auto">
+                {APEX_MEDICAL_COLLEGES_TELEMETRY.length} Apex Centers
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+              {APEX_MEDICAL_COLLEGES_TELEMETRY.map((apex, idx) => {
+                const occupancyRate = Math.round((apex.occupied / apex.beds) * 100);
+                const isHigh = occupancyRate >= 88;
+                const isModerate = occupancyRate >= 75 && occupancyRate < 88;
+
+                return (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:border-indigo-300 hover:shadow-md transition-all space-y-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-1">
+                      <div>
+                        <h4 className="font-black text-xs text-slate-900 line-clamp-1">{apex.name}</h4>
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3 text-slate-400" />
+                          {apex.city}
+                        </span>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-indigo-100 text-indigo-800 shrink-0">
+                        {apex.trauma}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500 font-semibold">Bed Occupancy</span>
+                        <span
+                          className={`font-black ${
+                            isHigh ? 'text-rose-600' : isModerate ? 'text-amber-600' : 'text-emerald-700'
+                          }`}
+                        >
+                          {apex.occupied} / {apex.beds} ({occupancyRate}%)
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            isHigh ? 'bg-rose-500' : isModerate ? 'bg-amber-500' : 'bg-emerald-500'
+                          }`}
+                          style={{ width: `${occupancyRate}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-600 font-medium">
+                      <span>ICU Beds: <strong className="text-slate-900">{apex.icu}</strong></span>
+                      <span className="text-indigo-700 font-bold">{apex.specialties} Depts</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 30 Odisha Districts Health Matrix */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-indigo-600" />
+                  {appLang === 'or-IN'
+                    ? 'ଓଡ଼ିଶାର ସମସ୍ତ ୩୦ ଜିଲ୍ଲା ସ୍ୱାସ୍ଥ୍ୟ କମାଣ୍ଡ ମ୍ୟାଟ୍ରିକ୍ସ'
+                    : 'Odisha 30-District Real-Time Health Telemetry & CDMO Roster'}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {appLang === 'or-IN'
+                    ? 'ପ୍ରତ୍ୟେକ ଜିଲ୍ଲାର ମୁଖ୍ୟ ଚିକିତ୍ସାଳୟ, ବେଡ୍ କ୍ଷମତା, ୧୦୮ ଆମ୍ବୁଲାନ୍ସ ଫ୍ଲିଟ୍ ଏବଂ CDMO ଯୋଗାଯୋଗ'
+                    : 'Real-time DHH bed telemetry, ICU allocations, 108 ambulance units & Chief District Medical Officer command'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveSubTab('cdmo')}
+                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold border border-indigo-200 transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>30 CDMO Directory</span>
+                </button>
+                <span className="px-3 py-1.5 bg-slate-900 text-white text-xs font-black rounded-xl">
+                  Showing {filteredDistricts.length} / 30 Districts
+                </span>
+              </div>
+            </div>
+
+            {/* District Search and Zone Filter Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  value={districtSearch}
+                  onChange={(e) => setDistrictSearch(e.target.value)}
+                  placeholder="Search district name, hospital, CDMO officer or zone..."
+                  className="w-full pl-9 pr-8 py-2 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                />
+                {districtSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setDistrictSearch('')}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Zone Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
+                {['all', 'Coastal', 'Western', 'Southern', 'Northern', 'Central'].map((zone) => (
+                  <button
+                    key={zone}
+                    type="button"
+                    onClick={() => setDistrictZoneFilter(zone)}
+                    className={`px-3 py-1.5 rounded-lg font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                      districtZoneFilter.toLowerCase() === zone.toLowerCase()
+                        ? 'bg-indigo-700 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {zone === 'all' ? 'All Zones (30)' : `${zone} Zone`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 30 Districts Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredDistricts.map((dist) => {
+                const occupancyRate = Math.round((dist.occupied / dist.beds) * 100);
+                const isHigh = occupancyRate >= 85;
+                const isModerate = occupancyRate >= 70 && occupancyRate < 85;
+
+                return (
+                  <div
+                    key={dist.id}
+                    onClick={() => setSelectedDistrictModal(dist)}
+                    className="p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-400 hover:shadow-lg transition-all cursor-pointer space-y-3 relative group"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-black text-slate-900 group-hover:text-indigo-700 transition-colors">
+                            {dist.name}
+                          </h4>
+                          <span className="text-[10px] font-extrabold px-2 py-0.2 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                            {dist.zone} Zone
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 font-semibold line-clamp-1 mt-0.5">
+                          {dist.hospital}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase shrink-0 ${
+                          dist.status === 'Normal'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : dist.status === 'Moderate Load'
+                            ? 'bg-blue-100 text-blue-800'
+                            : dist.status === 'High Load'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800 animate-pulse'
+                        }`}
+                      >
+                        {dist.status}
+                      </span>
+                    </div>
+
+                    {/* Bed Capacity Progress */}
+                    <div className="space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500 font-semibold">Bed Occupancy:</span>
+                        <span
+                          className={`font-black ${
+                            isHigh ? 'text-rose-600' : isModerate ? 'text-amber-600' : 'text-emerald-700'
+                          }`}
+                        >
+                          {dist.occupied} / {dist.beds} Beds ({occupancyRate}%)
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            isHigh ? 'bg-rose-500' : isModerate ? 'bg-amber-500' : 'bg-emerald-500'
+                          }`}
+                          style={{ width: `${occupancyRate}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* ICU and Ambulance Stats */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="p-2 rounded-lg bg-indigo-50/50 border border-indigo-100 flex items-center justify-between">
+                        <span className="text-[10px] text-indigo-700 font-bold uppercase">ICU Beds</span>
+                        <span className="font-black text-indigo-950">{dist.icuBeds}</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-rose-50/50 border border-rose-100 flex items-center justify-between">
+                        <span className="text-[10px] text-rose-700 font-bold uppercase">108 Fleet</span>
+                        <span className="font-black text-rose-950">{dist.ambulanceUnits} Units</span>
+                      </div>
+                    </div>
+
+                    {/* CDMO Contact Line */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <div>
+                        <span className="text-[9px] text-slate-400 uppercase block font-bold">Chief District Medical Officer</span>
+                        <span className="font-bold text-slate-800 text-[11px] line-clamp-1">{dist.cdmo}</span>
+                      </div>
+                      <a
+                        href={`tel:${dist.phone}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-700 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors"
+                        title={`Call CDMO: ${dist.phone}`}
+                      >
+                        <Phone className="w-3 h-3 text-indigo-600" />
+                        <span>Call</span>
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* SUB-VIEW 1: USER & STAFF MANAGEMENT TABLE                     */}
@@ -1934,6 +2547,244 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
+      {/* SUB-VIEW: STATEWIDE HEALTH ADVISORIES & ALERTS               */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {activeSubTab === 'advisory' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                <Megaphone className="w-5 h-5 text-amber-600" />
+                {appLang === 'or-IN' ? 'ରାଜ୍ୟ ଜରୁରୀ ସ୍ୱାସ୍ଥ୍ୟ ପରାମର୍ଶ ଓ ଆଲର୍ଟ ବୁଲେଟିନ୍' : 'Statewide Public Health Advisories & Emergency Alerts'}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {appLang === 'or-IN'
+                  ? 'ସମଗ୍ର ରାଜ୍ୟର ସ୍ୱାସ୍ଥ୍ୟ କର୍ମଚାରୀ, ଡାକ୍ତରଖାନା ଏବଂ ନାଗରିକଙ୍କ ପାଇଁ କେନ୍ଦ୍ରୀୟ ପ୍ରସାରଣ ନିୟନ୍ତ୍ରଣ'
+                  : 'Broadcast high-priority epidemiological alerts, heatwave advisories, and clinical protocols statewide'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowBroadcastModal(true)}
+              className="px-4 py-2.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-md shadow-rose-950/20 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Broadcast New Advisory</span>
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {advisoriesList.map((adv) => (
+              <div
+                key={adv.id}
+                className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                  adv.active
+                    ? 'bg-gradient-to-r from-amber-50/80 via-white to-slate-50 border-amber-300/80 shadow-xs'
+                    : 'bg-slate-50/60 border-slate-200 opacity-75'
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase ${
+                        adv.severity === 'critical'
+                          ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                          : adv.severity === 'warning'
+                          ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                          : 'bg-blue-100 text-blue-800 border border-blue-300'
+                      }`}
+                    >
+                      {adv.severity} Priority
+                    </span>
+                    <span className="font-mono text-slate-500 text-xs font-bold">{adv.id}</span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-xs text-slate-500 font-medium">
+                      Issued: {new Date(adv.issuedAt).toLocaleDateString()} at {new Date(adv.issuedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        adv.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {adv.active ? '● LIVE BROADCAST' : 'ARCHIVED'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleAdvisory(adv.id)}
+                      className={`text-xs font-bold px-3 py-1 rounded-xl transition-all cursor-pointer ${
+                        adv.active
+                          ? 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                          : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                      }`}
+                    >
+                      {adv.active ? 'Withdraw Alert' : 'Re-Activate Alert'}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-base font-black text-slate-900">{adv.title}</h3>
+                  <p className="text-xs text-slate-700 font-medium mt-1 leading-relaxed bg-white/80 p-3 rounded-xl border border-slate-200">
+                    {adv.message}
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+                  <div className="flex items-center gap-4">
+                    <span>
+                      <strong className="text-slate-800">Geographic Scope:</strong> {adv.districtScope}
+                    </span>
+                    <span>
+                      <strong className="text-slate-800">Audience:</strong> {adv.targetAudience}
+                    </span>
+                  </div>
+                  <div className="text-slate-500 italic">
+                    Authority: <strong className="text-slate-700">{adv.issuedBy}</strong>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* SUB-VIEW: 30 DISTRICT CDMOS & APEX DIRECTORS ROSTER          */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {activeSubTab === 'cdmo' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-teal-600" />
+                {appLang === 'or-IN'
+                  ? '୩୦ ଟି ଜିଲ୍ଲାର ମୁଖ୍ୟ ଚିକିତ୍ସା ଅଧିକାରୀ (CDMO) ଓ ନିର୍ଦ୍ଦେଶକ ରୋଷ୍ଟର'
+                  : '30 Odisha Chief District Medical Officers (CDMO) & Apex Directors'}
+              </h2>
+              <p className="text-xs text-slate-500">
+                Official contact directory, escalation desks, and administrative nodes for all 30 Odisha health districts
+              </p>
+            </div>
+
+            <span className="px-3 py-1 bg-teal-100 text-teal-800 font-extrabold text-xs rounded-full">
+              30 CDMOs On Duty
+            </span>
+          </div>
+
+          {/* Search & Zone Filter */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                value={districtSearch}
+                onChange={(e) => setDistrictSearch(e.target.value)}
+                placeholder="Search CDMO by doctor name, district, or hospital..."
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+              />
+              {districtSearch && (
+                <button
+                  type="button"
+                  onClick={() => setDistrictSearch('')}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Zone Filter */}
+            <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
+              {['all', 'Coastal', 'Western', 'Southern', 'Northern', 'Central'].map((zone) => (
+                <button
+                  key={zone}
+                  type="button"
+                  onClick={() => setDistrictZoneFilter(zone)}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                    districtZoneFilter.toLowerCase() === zone.toLowerCase()
+                      ? 'bg-teal-700 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {zone === 'all' ? 'All Zones (30)' : `${zone} Zone`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredDistricts.map((dist) => (
+              <div
+                key={dist.id}
+                className="p-5 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50/50 to-white hover:border-teal-400 hover:shadow-md transition-all space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-black text-teal-700 uppercase tracking-wider block">
+                      {dist.zone} Zone • {dist.tier}
+                    </span>
+                    <h3 className="text-base font-black text-slate-900">{dist.name} District</h3>
+                    <p className="text-xs text-slate-600 font-semibold">{dist.hospital}</p>
+                  </div>
+                  <span className="p-2 rounded-xl bg-teal-100 text-teal-800 font-mono font-bold text-xs">
+                    {dist.id}
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-teal-600 shrink-0" />
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Chief District Medical Officer</span>
+                      <strong className="text-slate-900 font-black">{dist.cdmo}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-slate-600">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Official Contact:</span>
+                    <a href={`tel:${dist.phone}`} className="font-mono font-bold text-teal-700 hover:underline">
+                      {dist.phone}
+                    </a>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Direct Email:</span>
+                    <a href={`mailto:${dist.email}`} className="font-mono text-[11px] text-slate-700 hover:underline truncate max-w-[180px]">
+                      {dist.email}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200 flex items-center gap-2">
+                  <a
+                    href={`tel:${dist.phone}`}
+                    className="flex-1 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs text-center flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Direct Call</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDistrictModal(dist);
+                    }}
+                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    Telemetry
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
       {/* SUB-VIEW 4: SCHEDULED DOCTOR CONSULTATIONS                   */}
       {/* ───────────────────────────────────────────────────────────── */}
       {activeSubTab === 'appointments' && (
@@ -2487,6 +3338,219 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
               >
                 Close Credentials View
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* MODAL: BROADCAST STATE HEALTH ADVISORY / EMERGENCY ALERT       */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {showBroadcastModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="p-5 bg-gradient-to-r from-rose-900 via-amber-950 to-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-rose-500/30 text-rose-300">
+                  <Megaphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-white">
+                    {appLang === 'or-IN' ? 'ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ପରାମର୍ଶ ପ୍ରସାରଣ' : 'Broadcast Statewide Health Advisory'}
+                  </h3>
+                  <p className="text-xs text-amber-200">
+                    Dispatch official public health bulletin across all 30 districts & clinical nodes
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBroadcastModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleBroadcastSubmit} className="p-6 space-y-4 text-xs">
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700 block">Advisory Bulletin Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 🚨 High Heatwave Orange Alert & ORS Bay Mobilization"
+                  value={newAdvisory.title}
+                  onChange={(e) => setNewAdvisory({ ...newAdvisory, title: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none font-semibold text-slate-900 text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 block">Severity Level *</label>
+                  <select
+                    value={newAdvisory.severity}
+                    onChange={(e) => setNewAdvisory({ ...newAdvisory, severity: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none text-slate-900 text-xs font-semibold"
+                  >
+                    <option value="critical">🚨 Critical / High Surge Emergency</option>
+                    <option value="warning">⚠️ Warning / Epidemiological Alert</option>
+                    <option value="info">ℹ️ Public Health Information</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-700 block">Geographic Scope *</label>
+                  <select
+                    value={newAdvisory.districtScope}
+                    onChange={(e) => setNewAdvisory({ ...newAdvisory, districtScope: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none text-slate-900 text-xs font-semibold"
+                  >
+                    <option value="Statewide (All 30 Districts)">Statewide (All 30 Districts)</option>
+                    <option value="Coastal Zone (Puri, Cuttack, Khurda, Ganjam, Balasore)">Coastal Zone (5 Districts)</option>
+                    <option value="Western Zone (Sambalpur, Bolangir, Kalahandi, Jharsuguda)">Western Zone (Heatwave Belt)</option>
+                    <option value="Southern Zone (Koraput, Malkangiri, Rayagada, Nabarangpur)">Southern Zone (Tribal Belt)</option>
+                    <option value="Northern Zone (Mayurbhanj, Keonjhar, Sundargarh)">Northern Zone (Malkangiri)</option>
+                    {ODISHA_30_DISTRICTS_TELEMETRY.map((d) => (
+                      <option key={d.id} value={`${d.name} District Only`}>
+                        {d.name} District Only
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700 block">Target Audience *</label>
+                <select
+                  value={newAdvisory.targetAudience}
+                  onChange={(e) => setNewAdvisory({ ...newAdvisory, targetAudience: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none text-slate-900 text-xs font-semibold"
+                >
+                  <option value="All Health Stations & Citizens">All Health Stations & Citizens</option>
+                  <option value="Medical Officers & Tertiary Hospitals">Medical Officers & Tertiary Hospitals</option>
+                  <option value="ASHA / ANM Community Health Workers">ASHA / ANM Community Health Workers</option>
+                  <option value="108 / 102 Ambulance Dispatch Fleet">108 / 102 Ambulance Dispatch Fleet</option>
+                  <option value="Blood Bank Donors & OSBTC Centers">Blood Bank Donors & OSBTC Centers</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700 block">Advisory Bulletin Message & Directives *</label>
+                <textarea
+                  rows="4"
+                  required
+                  placeholder="Provide clinical action guidelines, emergency hotline, drug reserve mobilization instructions..."
+                  value={newAdvisory.message}
+                  onChange={(e) => setNewAdvisory({ ...newAdvisory, message: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-rose-500 outline-none font-normal text-slate-900 text-xs leading-relaxed"
+                ></textarea>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span className="text-[11px] leading-tight">
+                  This advisory will immediately appear on the State Command Overview and broadcast across connected district consoles.
+                </span>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setShowBroadcastModal(false)}
+                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-black shadow-md cursor-pointer flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Publish Statewide Broadcast</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* MODAL: DISTRICT HEALTH TELEMETRY & CDMO DIRECT CONTACT        */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {selectedDistrictModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="p-5 bg-gradient-to-r from-teal-900 via-indigo-900 to-slate-900 text-white flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black text-teal-300 uppercase tracking-widest block">
+                  District Health Command
+                </span>
+                <h3 className="text-lg font-black text-white">{selectedDistrictModal.name} District</h3>
+                <p className="text-xs text-teal-100">{selectedDistrictModal.hospital}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDistrictModal(null)}
+                className="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase block">Zone & Tier</span>
+                  <span className="font-black text-slate-900 text-sm">{selectedDistrictModal.zone} Zone</span>
+                  <span className="text-[10px] text-indigo-700 font-bold block">{selectedDistrictModal.tier}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase block">Current Load Status</span>
+                  <span className="font-black text-slate-900 text-sm">{selectedDistrictModal.status}</span>
+                  <span className="text-[10px] text-emerald-700 font-bold block">Telemetry Synced</span>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-teal-50 border border-teal-200 space-y-1">
+                <span className="text-[10px] text-teal-800 font-black uppercase block">Chief District Medical Officer (CDMO)</span>
+                <p className="text-sm font-black text-slate-900">{selectedDistrictModal.cdmo}</p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-600 pt-1">
+                  <span>Phone: <strong className="font-mono text-teal-800">{selectedDistrictModal.phone}</strong></span>
+                  <span>Email: <strong className="font-mono text-slate-700">{selectedDistrictModal.email}</strong></span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[9px] text-slate-500 uppercase block font-bold">Total Beds</span>
+                  <span className="text-base font-black text-slate-900">{selectedDistrictModal.beds}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-indigo-50 border border-indigo-200">
+                  <span className="text-[9px] text-indigo-700 uppercase block font-bold">ICU Beds</span>
+                  <span className="text-base font-black text-indigo-900">{selectedDistrictModal.icuBeds}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200">
+                  <span className="text-[9px] text-rose-700 uppercase block font-bold">108 Fleet</span>
+                  <span className="text-base font-black text-rose-900">{selectedDistrictModal.ambulanceUnits} Units</span>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDistrictModal(null)}
+                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold"
+                >
+                  Close
+                </button>
+                <a
+                  href={`tel:${selectedDistrictModal.phone}`}
+                  className="px-5 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-black flex items-center gap-1.5 shadow-sm"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call Officer</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
