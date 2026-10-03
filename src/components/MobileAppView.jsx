@@ -51,8 +51,6 @@ export default function MobileAppView({
   setActiveTab,
   activeHub,
   setActiveHub,
-  deviceView,
-  toggleDeviceView,
   onOpenAuth,
   onLogout,
   renderActiveComponent
@@ -588,18 +586,6 @@ export default function MobileAppView({
               <LogIn className="w-4 h-4" />
               <span>Switch User / Staff Portal</span>
             </button>
-
-            {/* Switch to Desktop Command Center */}
-            {toggleDeviceView && (
-              <button
-                type="button"
-                onClick={() => toggleDeviceView('desktop')}
-                className="w-full py-3 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all cursor-pointer"
-              >
-                <Monitor className="w-4 h-4" />
-                <span>Switch to Desktop Command Center</span>
-              </button>
-            )}
 
             {currentUser && (
               <button
