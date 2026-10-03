@@ -40,7 +40,7 @@ import { getHospitalPartners, HOSPITAL_CITIES } from '../data/hospitalPartners';
  * 4. 🚑 Emergency 108 Dispatch & Tele-ICU Hotline (Instant Helpdesks)
  * 5. 📜 BSKY & PM-JAY Cashless Helpdesk (₹5L/₹10L Scheme Guidance)
  */
-export default function HospitalTieUpSystem({ currentUser, appLang, onTransfersCountChange }) {
+export default function HospitalTieUpSystem({ currentUser, appLang, onTransfersCountChange, onOpenNmcSuite }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   // Active Section State (1 through 5)
@@ -1274,21 +1274,37 @@ export default function HospitalTieUpSystem({ currentUser, appLang, onTransfersC
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold flex items-center gap-1.5 text-xs"
-              >
-                <Printer className="w-4 h-4" />
-                <span>{txt.printSlip}</span>
-              </button>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
+              {onOpenNmcSuite && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmedTransferSlip(null);
+                    onOpenNmcSuite();
+                  }}
+                  className="px-3.5 py-2 bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-900 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>NMC Verifiable QR Suite</span>
+                </button>
+              )}
 
-              <button
-                onClick={() => setConfirmedTransferSlip(null)}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
-              >
-                {txt.closeBtn}
-              </button>
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold flex items-center gap-1.5 text-xs cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>{txt.printSlip}</span>
+                </button>
+
+                <button
+                  onClick={() => setConfirmedTransferSlip(null)}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs cursor-pointer"
+                >
+                  {txt.closeBtn}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -46,7 +46,7 @@ import { DoctorAvatar, getDoctorPhotoUrl } from '../utils/doctorPhotos';
  * 5. High-performance client-side pagination with useMemo search caching.
  * 6. 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
  */
-export default function DoctorBookingSystem({ currentUser, appLang, onBookedCountChange }) {
+export default function DoctorBookingSystem({ currentUser, appLang, onBookedCountChange, onOpenNmcSuite }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('directory'); // 'directory', 'recommendations', or 'my-bookings'
@@ -2192,23 +2192,40 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
             </div>
 
             {/* Modal Actions */}
-            <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-between items-center">
+            <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={() => setConfirmedSlip(null)}
-                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-semibold"
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-semibold cursor-pointer"
               >
                 {txt.closeBtn}
               </button>
 
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                {txt.printSlip}
-              </button>
+              <div className="flex items-center gap-2">
+                {onOpenNmcSuite && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConfirmedSlip(null);
+                      onOpenNmcSuite();
+                    }}
+                    className="px-3.5 py-2 bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-900 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    title="Generate official generic prescription with verifiable QR code"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-purple-200" />
+                    <span>NMC Generic e-Rx</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  {txt.printSlip}
+                </button>
+              </div>
             </div>
           </div>
         </div>

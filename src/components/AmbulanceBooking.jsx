@@ -28,7 +28,7 @@ import 'leaflet/dist/leaflet.css';
 import { getAmbulanceRequests, saveAmbulanceRequest, cancelAmbulanceRequest } from '../utils/authStorage';
 import { ODISHA_MEDICAL_FACILITIES, ODISHA_LOCATIONS, calculateDistanceKm } from '../utils/nearestMedicalData';
 
-export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNearest }) {
+export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNearest, onOpenNmcSuite }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('book'); // 'book' | 'track' | 'my-requests'
@@ -515,11 +515,23 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
           )}
         </button>
 
+        {onOpenNmcSuite && (
+          <button
+            type="button"
+            onClick={onOpenNmcSuite}
+            className="ml-auto px-4 py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-900 text-white flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            title="Open NMC Referral & Verifiable QR Suite"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+            <span>NMC Referral &amp; Verifiable QR</span>
+          </button>
+        )}
+
         {onNavigateToNearest && (
           <button
             type="button"
             onClick={onNavigateToNearest}
-            className="ml-auto px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            className="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 flex items-center gap-1.5 shadow-2xs cursor-pointer"
           >
             <Navigation className="w-3.5 h-3.5 text-emerald-600" />
             <span>📍 Nearest Hospital GPS Map</span>
@@ -1069,6 +1081,22 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                 <span>{txt.helpline108}</span>
               </a>
             </div>
+
+            {onOpenNmcSuite && (
+              <div className="px-5 pb-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmedSlip(null);
+                    onOpenNmcSuite();
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-900 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-2xs cursor-pointer"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Attach / View Official NMC Referral Slip (QR Code)</span>
+                </button>
+              </div>
+            )}
 
             <div className="flex gap-2 px-5 pb-5">
               <button

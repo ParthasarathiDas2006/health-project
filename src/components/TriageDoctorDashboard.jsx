@@ -691,6 +691,18 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
             {txt.filterGreen}
           </button>
         </div>
+
+        {onOpenNmcSuite && (
+          <button
+            type="button"
+            onClick={onOpenNmcSuite}
+            className="px-3.5 py-2 bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-900 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all self-start sm:self-auto"
+            title="Open NMC Prescription & Verifiable QR Referral Suite"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+            <span>NMC Rx &amp; QR Referral Suite</span>
+          </button>
+        )}
       </div>
 
       {/* Accepted Patient Alert Toast */}

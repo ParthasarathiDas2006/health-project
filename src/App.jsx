@@ -1356,6 +1356,7 @@ export default function App() {
                 currentUser={currentUser}
                 appLang={appLang}
                 onBookedCountChange={(cnt) => setBookedCount(cnt)}
+                onOpenNmcSuite={() => setActiveTab('nmc_referral')}
               />
             </Suspense>
           </div>
@@ -1411,6 +1412,7 @@ export default function App() {
                 currentUser={currentUser}
                 appLang={appLang}
                 onTransfersCountChange={(cnt) => setTransfersCount(cnt)}
+                onOpenNmcSuite={() => setActiveTab('nmc_referral')}
               />
             </Suspense>
           </div>
@@ -1655,6 +1657,7 @@ export default function App() {
                 currentUser={currentUser}
                 appLang={appLang}
                 onNavigateToNearest={() => setActiveTab('nearest')}
+                onOpenNmcSuite={() => setActiveTab('nmc_referral')}
               />
             </Suspense>
           </div>

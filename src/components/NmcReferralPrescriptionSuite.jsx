@@ -874,6 +874,25 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     setMedications(updated);
   };
 
+  // Convert All Detected Commercial Brands to NMC Generic in one click
+  const handleAutoFixAllBrands = () => {
+    const updated = medications.map((med) => {
+      const match = checkBrandName(med.name);
+      if (match) {
+        return {
+          ...med,
+          name: match.generic,
+          dosage: match.dosage,
+          form: match.form
+        };
+      }
+      return med;
+    });
+    setMedications(updated);
+  };
+
+  const hasAnyBrandDetected = medications.some((m) => checkBrandName(m.name) !== null);
+
   // Live Clinical Safety Guard: Drug-Allergy & Interaction Check
   const checkPrescriptionSafety = () => {
     const warnings = [];
@@ -1853,13 +1872,25 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                       Generic Medications (NMC Compliant)
                     </span>
                   </div>
-                  <button
-                    onClick={handleAddMedication}
-                    className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 print:hidden flex items-center gap-1 cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>{txt.addMedBtn}</span>
-                  </button>
+                  <div className="flex items-center gap-2 print:hidden">
+                    {hasAnyBrandDetected && (
+                      <button
+                        onClick={handleAutoFixAllBrands}
+                        className="text-[11px] font-black bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-2.5 py-1 rounded-lg shadow-2xs flex items-center gap-1 cursor-pointer transition-all animate-pulse"
+                        title="Convert all commercial brands to NMC uppercase generic standard"
+                      >
+                        <Sparkles className="w-3 h-3 text-yellow-200" />
+                        <span>Auto-Fix All to Generic (NMC 2023)</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={handleAddMedication}
+                      className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{txt.addMedBtn}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto">
