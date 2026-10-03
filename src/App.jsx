@@ -109,7 +109,14 @@ export default function App() {
     return 'intake';
   });
 
-  const [currentIntake, setCurrentIntake] = useState(null);
+  const [currentIntake, setCurrentIntake] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nhp_current_intake');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [currentOcr, setCurrentOcr] = useState(null);
   const [generatedTriageNote, setGeneratedTriageNote] = useState(null);
   const [isGeneratingNote, setIsGeneratingNote] = useState(false);
@@ -262,11 +269,24 @@ export default function App() {
 
   // Handle Intake submission
   const handleIntakeComplete = (data) => {
-    setCurrentIntake({
+    const intakeRecord = {
       ...data,
+      patientName: currentUser?.name || 'Rajendra Naik',
+      age: currentUser?.age || 42,
+      gender: currentUser?.gender || 'Male',
+      village: currentUser?.village || 'Borigumma, Koraput',
+      abhaId: currentUser?.abhaId || '91-4829-1049-2819',
+      chiefComplaint: data.translatedSummary || data.rawSpeech || 'Reported symptoms',
+      originalSpeech: data.rawSpeech,
       intakeBy: currentUser?.name || 'Healthcare Worker',
       intakeFacility: currentUser?.facility || 'Primary Health Center'
-    });
+    };
+    setCurrentIntake(intakeRecord);
+    try {
+      localStorage.setItem('nhp_current_intake', JSON.stringify(intakeRecord));
+    } catch (e) {
+      console.warn('Could not store intake in localStorage:', e);
+    }
     setActiveTab('ocr');
   };
 

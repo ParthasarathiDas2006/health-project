@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Mic,
   MicOff,
@@ -16,7 +16,11 @@ import {
   Activity,
   ChevronDown,
   ChevronUp,
-  HelpCircle
+  HelpCircle,
+  Save,
+  Volume2,
+  Sparkles,
+  Info
 } from 'lucide-react';
 
 /**
@@ -28,7 +32,7 @@ export const CONDITION_PROTOCOLS = {
     id: 'fever',
     icon: Thermometer,
     name: { en: 'Fever & Infection', hi: 'बुखार एवं संक्रमण', or: 'ଜ୍ୱର ଓ ସଂକ୍ରମଣ' },
-    keywords: ['fever', 'temp', 'temperature', 'बुखार', 'तापमान', 'ଜ୍ୱର', 'ତାପମାତ୍ରା'],
+    keywords: ['fever', 'temp', 'temperature', 'chills', 'rigor', 'बुखार', 'तापमान', 'ठंड', 'कंपकंपी', 'ଜ୍ୱର', 'ତାପମାତ୍ରା', 'ଥଣ୍ଡା', 'କମ୍ପ'],
     primaryVitals: ['temperature', 'durationDays'],
     questions: [
       {
@@ -73,7 +77,7 @@ export const CONDITION_PROTOCOLS = {
     id: 'respiratory',
     icon: Wind,
     name: { en: 'Cough & Breathing', hi: 'खांसी एवं सांस', or: 'କାଶ ଓ ନିଶ୍ୱାସ' },
-    keywords: ['cough', 'breath', 'shortness of breath', 'phlegm', 'wheezing', 'खांसी', 'सांस', 'दम', 'କାଶ', 'କଫ', 'ନିଶ୍ୱାସ'],
+    keywords: ['cough', 'breath', 'shortness of breath', 'phlegm', 'wheezing', 'asthma', 'खांसी', 'सांस', 'दम', 'बलगम', 'କାଶ', 'କଫ', 'ନିଶ୍ୱାସ', 'ଦମ'],
     primaryVitals: ['spo2', 'durationDays'],
     questions: [
       {
@@ -107,7 +111,7 @@ export const CONDITION_PROTOCOLS = {
     id: 'chest',
     icon: HeartPulse,
     name: { en: 'Chest Pain / Heart', hi: 'छाती में दर्द / हृदय', or: 'ଛାତି ଯନ୍ତ୍ରଣା / ହୃଦୟ' },
-    keywords: ['chest', 'heart', 'heaviness', 'छाती', 'सीने', 'ଛାତି'],
+    keywords: ['chest', 'heart', 'heaviness', 'sweat', 'angina', 'छाती', 'सीने', 'दिल', 'पसीना', 'ଛାତି', 'ହୃଦୟ', 'ଝାଳ'],
     primaryVitals: ['pulse', 'durationDays'],
     questions: [
       {
@@ -140,7 +144,7 @@ export const CONDITION_PROTOCOLS = {
     id: 'gastro',
     icon: Activity,
     name: { en: 'Stomach & Vomiting', hi: 'पेट दर्द एवं दस्त', or: 'ପେଟ ଓ ଝାଡ଼ା/ବାନ୍ତି' },
-    keywords: ['abdominal', 'stomach', 'diarrhea', 'motions', 'vomit', 'vomiting', 'पेट', 'दस्त', 'उल्टी', 'ପେଟ', 'ଝାଡ଼ା', 'ବାନ୍ତି'],
+    keywords: ['abdominal', 'stomach', 'diarrhea', 'motions', 'vomit', 'vomiting', 'loose', 'पेट', 'दस्त', 'उल्टी', 'मरोड़', 'ପେଟ', 'ଝାଡ଼ା', 'ବାନ୍ତି'],
     primaryVitals: ['durationDays'],
     questions: [
       {
@@ -174,7 +178,7 @@ export const CONDITION_PROTOCOLS = {
     id: 'neuro',
     icon: Stethoscope,
     name: { en: 'Headache & Neuro', hi: 'सिरदर्द एवं चक्कर', or: 'ମୁଣ୍ଡବିନ୍ଧା ଓ ଚକ୍କର' },
-    keywords: ['headache', 'head', 'dizziness', 'vertigo', 'सिरदर्द', 'सिर', 'चक्कर', 'ମୁଣ୍ଡ', 'ବିନ୍ଧା', 'ବୁଲାଇବା'],
+    keywords: ['headache', 'head', 'dizziness', 'vertigo', 'fainting', 'सिरदर्द', 'सिर', 'चक्कर', 'बेहोशी', 'ମୁଣ୍ଡ', 'ବିନ୍ଧା', 'ବୁଲାଇବା', 'ଅଚେତ'],
     primaryVitals: ['durationDays'],
     questions: [
       {
@@ -226,30 +230,24 @@ export const CONDITION_PROTOCOLS = {
   }
 };
 
-/**
- * Multimodal Intake Form
- * Pure localization across Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
- * Supports continuous speech accumulation (SpeechRecognition), symptoms chips,
- * and deterministic vital signs capture.
- */
+const DRAFT_STORAGE_KEY = 'nhp_draft_patient_intake';
+
 export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, appLang, onLanguageChange }) {
   const [language, setLanguage] = useState(appLang || currentUser?.preferredLanguage || 'or-IN');
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [interimTranscript, setInterimTranscript] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [micSupported, setMicSupported] = useState(true);
+  const [micError, setMicError] = useState(null);
+  const [isSavedDraft, setIsSavedDraft] = useState(false);
 
   // Condition category & adaptive questions state
   const [activeCategory, setActiveCategory] = useState('fever');
   const [targetedAnswers, setTargetedAnswers] = useState({});
   const [showExtraVitals, setShowExtraVitals] = useState(false);
-
-  // Sync internal language with appLang prop whenever it changes
-  useEffect(() => {
-    if (appLang && appLang !== language) {
-      setLanguage(appLang);
-    }
-  }, [appLang]);
 
   // Vitals State
   const [vitals, setVitals] = useState({
@@ -261,6 +259,74 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
     durationDays: '3',
   });
 
+  // Keep references for stable event handlers
+  const recognitionRef = useRef(null);
+  const isListeningRef = useRef(false);
+  const baseTextRef = useRef('');
+  const fullTextRef = useRef('');
+  const translateTimerRef = useRef(null);
+  const timerIntervalRef = useRef(null);
+  const saveTimerRef = useRef(null);
+
+  // Sync internal language with appLang prop
+  useEffect(() => {
+    if (appLang && appLang !== language) {
+      setLanguage(appLang);
+    }
+  }, [appLang]);
+
+  // Check Web Speech API support
+  useEffect(() => {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      setMicSupported(false);
+    }
+  }, []);
+
+  // Restore draft from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.transcript) {
+          setTranscript(parsed.transcript);
+          baseTextRef.current = parsed.transcript;
+          fullTextRef.current = parsed.transcript;
+        }
+        if (parsed.translatedText) setTranslatedText(parsed.translatedText);
+        if (parsed.activeCategory) setActiveCategory(parsed.activeCategory);
+        if (parsed.targetedAnswers) setTargetedAnswers(parsed.targetedAnswers);
+        if (parsed.vitals) setVitals((prev) => ({ ...prev, ...parsed.vitals }));
+        if (parsed.language && !appLang) setLanguage(parsed.language);
+        setIsSavedDraft(true);
+      }
+    } catch (e) {
+      console.warn('Could not restore intake draft:', e);
+    }
+  }, []);
+
+  // Auto-save draft to localStorage debounced
+  const persistDraft = useCallback((data) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
+          transcript: data.transcript ?? fullTextRef.current,
+          translatedText: data.translatedText ?? translatedText,
+          activeCategory: data.activeCategory ?? activeCategory,
+          targetedAnswers: data.targetedAnswers ?? targetedAnswers,
+          vitals: data.vitals ?? vitals,
+          language: data.language ?? language,
+          savedAt: new Date().toISOString()
+        }));
+        setIsSavedDraft(true);
+      } catch (e) {
+        console.warn('Error saving draft intake:', e);
+      }
+    }, 400);
+  }, [activeCategory, targetedAnswers, vitals, language, translatedText]);
+
   // Common quick chips for Indian PHC/Camp settings
   const commonSymptoms = [
     { en: 'High Fever', hi: 'तेज़ बुखार', or: 'ପ୍ରବଳ ଜ୍ୱର', category: 'fever' },
@@ -268,9 +334,46 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
     { en: 'Shortness of Breath', hi: 'सांस लेने में तकलीफ', or: 'ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ', category: 'respiratory' },
     { en: 'Severe Headache', hi: 'सिर में तेज़ दर्द', or: 'ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା', category: 'neuro' },
     { en: 'Abdominal Pain', hi: 'पेट में दर्द', or: 'ପେଟ ଯନ୍ତ୍ରଣା', category: 'gastro' },
-    { en: 'Loose Motions / Diarrhea', hi: 'दस्त / उल्टी', or: 'ଝାଡ଼ା / ବାନ୍ତି', category: 'gastro' },
+    { en: 'Loose Motions / Vomiting', hi: 'दस्त / उल्टी', or: 'ଝାଡ଼ା / ବାନ୍ତି', category: 'gastro' },
     { en: 'Chest Heaviness', hi: 'छाती में भारीपन', or: 'ଛାତି ଭାରୀ ଲାଗିବା', category: 'chest' },
     { en: 'Dizziness / Vertigo', hi: 'चक्कर आना', or: 'ମୁଣ୍ଡ ବୁଲାଇବା', category: 'neuro' },
+  ];
+
+  // Demo Voice Scenario Presets (Instant 1-Tap Audio Simulation)
+  const voicePresets = [
+    {
+      label: { en: 'Fever & Chills', hi: 'तेज़ बुखार व ठंड', or: 'ପ୍ରବଳ ଜ୍ୱର ଓ କମ୍ପ' },
+      text: {
+        'or-IN': 'ମୋତେ ୩ ଦିନ ହେଲା ପ୍ରବଳ ଜ୍ୱର ସହ ବାନ୍ତି ଓ ଶରୀରରେ ଭୀଷଣ କମ୍ପ ହେଉଛି।',
+        'hi-IN': 'मुझे 3 दिन से तेज़ बुखार, उल्टी और ठंड लगकर कंपकंपी हो रही है।',
+        'en-IN': 'High fever for 3 days with vomiting, severe chills and body ache.'
+      },
+      category: 'fever',
+      answers: { rigors: 'yes', bleeding: 'none', hydration: 'good' },
+      vitals: { temperature: '102.4', durationDays: '3' }
+    },
+    {
+      label: { en: 'Chest Pain & Sweating', hi: 'सीने में दर्द व पसीना', or: 'ଛାତି ଯନ୍ତ୍ରଣା ଓ ଝାଳ' },
+      text: {
+        'or-IN': 'ଛାତି ଭାରୀ ଲାଗୁଛି ଏବଂ ଯନ୍ତ୍ରଣା ବାମ ହାତ ଆଡ଼କୁ ବ୍ୟାପୁଛି, ସାଙ୍ଗରେ ଥଣ୍ଡା ଝାଳ ବୋହୁଛି।',
+        'hi-IN': 'सीने में भारीपन है, दर्द बाएं हाथ में फैल रहा है और ठंडा पसीना आ रहा है।',
+        'en-IN': 'Severe chest heaviness radiating to left arm with profuse cold sweating.'
+      },
+      category: 'chest',
+      answers: { chest_spread: 'yes_arm', cold_sweat: 'sweating' },
+      vitals: { pulse: '104', systolic: '150', diastolic: '95', durationDays: '1' }
+    },
+    {
+      label: { en: 'Cough & Breathlessness', hi: 'खांसी व सांस की तकलीफ', or: 'କାଶ ଓ ନିଶ୍ୱାସ କଷ୍ଟ' },
+      text: {
+        'or-IN': '୨ ଦିନ ହେବ କଫ ସହ କାଶ ଏବଂ ନିଶ୍ୱାସ ନେବାରେ ଭୀଷଣ କଷ୍ଟ ହେଉଛି, କଥା କହିପାରୁନାହିଁ।',
+        'hi-IN': '2 दिन से खांसी में बलगम आ रहा है और सांस फूलने से बात करने में तकलीफ हो रही है।',
+        'en-IN': 'Productive cough for 2 days with severe shortness of breath on single words.'
+      },
+      category: 'respiratory',
+      answers: { breath_speech: 'broken_words', cough_type: 'yellow_phlegm' },
+      vitals: { spo2: '89', pulse: '110', durationDays: '2' }
+    }
   ];
 
   // Pure UI Text Dictionary
@@ -280,14 +383,16 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
       subtitle: 'ପ୍ରାଥମିକ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର, ଜିଲ୍ଲା ଡାକ୍ତରଖାନା ଓ ଶିଳ୍ପାଞ୍ଚଳ କ୍ଲିନିକ୍ ପାଇଁ',
       patientSelf: 'ରୋଗୀ ନିଜେ ଦାଖଲ କରୁଛନ୍ତି:',
       intakeOfficer: 'ତଥ୍ୟ ସଂଗ୍ରହକାରୀ କର୍ମଚାରୀ:',
-      chiefComplaints: 'ମୁଖ୍ୟ ଲକ୍ଷଣ ଓ ସମସ୍ୟା',
-      listening: 'ମାଇକ୍ ଚାଲୁ ଅଛି... କୁହନ୍ତୁ',
+      chiefComplaints: 'ମୁଖ୍ୟ ଲକ୍ଷଣ ଓ ସମସ୍ୟା (ଭଏସ୍ ଇନପୁଟ୍ / ମାଇକ୍)',
+      listening: 'ମାଇକ୍ ଚାଲୁ ଅଛି... ସ୍ପଷ୍ଟ ଭାବେ କୁହନ୍ତୁ',
       clear: 'ହଟାନ୍ତୁ',
       speakOrType: 'କୁହନ୍ତୁ କିମ୍ବା ଲେଖନ୍ତୁ',
-      placeholder: 'ମାଇକ୍ ଦବାଇ ଓଡ଼ିଆରେ କୁହନ୍ତୁ କିମ୍ବା ଏଠାରେ ଲେଖନ୍ତୁ (ଯେପରି: ୩ ଦିନ ହେବ ପ୍ରବଳ ଜ୍ୱର, ବାନ୍ତି, ଛାତି କଷ୍ଟ...)',
+      placeholder: 'ମାଇକ୍ ବଟନ୍ ଦବାଇ ଓଡ଼ିଆରେ କୁହନ୍ତୁ କିମ୍ବା ଏଠାରେ ଲେଖନ୍ତୁ (ଯେପରି: ୩ ଦିନ ହେବ ପ୍ରବଳ ଜ୍ୱର, ବାନ୍ତି, ଛାତି କଷ୍ଟ...)',
       micStop: 'ରିକର୍ଡିଂ ବନ୍ଦ କରନ୍ତୁ',
-      micStart: 'ଭଏସ୍ ଇନପୁଟ୍ ଆରମ୍ଭ କରନ୍ତୁ',
+      micStart: 'ଭଏସ୍ ଇନପୁଟ୍ (ମାଇକ୍) ଆରମ୍ଭ କରନ୍ତୁ',
+      micTapToTalk: 'ମାଇକ୍ ଚାପି କୁହନ୍ତୁ (ନିରନ୍ତର ରିକର୍ଡିଂ)',
       quickAdd: 'ଶୀଘ୍ର ଯୋଡ଼ନ୍ତୁ:',
+      voiceDemoTitle: 'ତ୍ୱରିତ ଭଏସ୍ ନମୁନା (ଡେମୋ):',
       categorySelect: 'ମୁଖ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ସମସ୍ୟା ଚୟନ କରନ୍ତୁ:',
       targetedTitle: 'ସମ୍ବନ୍ଧିତ ପ୍ରାଥମିକ ପ୍ରଶ୍ନାବଳୀ (ଡାକ୍ତରୀ ଆକଳନ)',
       vitalsTitle: 'ଆବଶ୍ୟକ ଜୀବନ ସୂଚକ',
@@ -302,22 +407,26 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
       diastolic: 'ରକ୍ତଚାପ ଡାୟାଷ୍ଟୋଲିକ୍ (DBP)',
       duration: 'ଅସୁସ୍ଥତା ଅବଧି (ଦିନ)',
       disclaimer: 'ସୁରକ୍ଷା ନିୟମ: ଏହି ପୋର୍ଟାଲ୍ ରୋଗୀଙ୍କ ଲକ୍ଷଣ ସଜାଡ଼ି ଜରୁରୀ ସ୍ତର ଚିହ୍ନଟ କରେ। ଏହା କୌଣସି ଚିକିତ୍ସା କିମ୍ବା ଔଷଧ ନିର୍ଦ୍ଦେଶ ଦିଏ ନାହିଁ। ଚୂଡ଼ାନ୍ତ ନିଷ୍ପତ୍ତି ପଞ୍ଜୀକୃତ ଡାକ୍ତରଙ୍କ ଦ୍ୱାରା ନିଆଯାଏ।',
-      submitBtn: 'ଲ୍ୟାବ୍ ରିପୋର୍ଟ ଓ ଟ୍ରାଏଜ୍ ନୋଟ୍ ପ୍ରସ୍ତୁତି ପାଇଁ ଆଗକୁ ବଢ଼ନ୍ତୁ',
-      alertValidation: 'ଦୟାକରି କିଛି ଲକ୍ଷଣ କିମ୍ବା ଅତି କମରେ ଗୋଟିଏ ଜୀବନ ସୂଚକ ପ୍ରବେଶ କରନ୍ତୁ।'
+      submitBtn: 'ସଂରକ୍ଷଣ କରନ୍ତୁ ଓ ଲ୍ୟାବ୍ ରିପୋର୍ଟ / ଟ୍ରାଏଜ୍ ନୋଟ୍ କୁ ଯାଆନ୍ତୁ',
+      alertValidation: 'ଦୟାକରି କିଛି ଲକ୍ଷଣ କିମ୍ବା ଅତି କମରେ ଗୋଟିଏ ଜୀବନ ସୂଚକ ପ୍ରବେଶ କରନ୍ତୁ।',
+      autoSaved: 'ଡ୍ରାଫ୍ଟ ସ୍ୱୟଂକ୍ରିୟ ଭାବେ ସଂରକ୍ଷିତ ହେଲା',
+      micNotSupported: 'ଆପଣଙ୍କ ବ୍ରାଉଜରରେ ସ୍ପିଚ୍ ରେକଗ୍ନିସନ ସମର୍ଥିତ ନୁହେଁ। ଟାଇପ୍ କରନ୍ତୁ କିମ୍ବା ଡେମୋ ବଟନ୍ ବ୍ୟବହାର କରନ୍ତୁ।'
     },
     'hi-IN': {
       title: 'मरीज बहुआयामी विवरण फॉर्म',
       subtitle: 'प्राथमिक स्वास्थ्य केंद्र, जिला अस्पताल एवं स्वास्थ्य शिविरों हेतु',
       patientSelf: 'मरीज स्वयं विवरण दर्ज कर रहे हैं:',
       intakeOfficer: 'डाटा संग्रहकर्ता स्वास्थ्यकर्मी:',
-      chiefComplaints: 'मुख्य लक्षण एवं समस्याएं',
-      listening: 'माइक चालू है... बोलें',
+      chiefComplaints: 'मुख्य लक्षण एवं समस्याएं (माइक / वॉइस इनपुट)',
+      listening: 'माइक चालू है... स्पष्ट बोलें',
       clear: 'हटाएं',
       speakOrType: 'बोलें या टाइप करें',
       placeholder: 'माइक दबाकर बोलें या यहाँ लिखें (जैसे: 3 दिन से तेज़ बुखार, सांस लेने में तकलीफ, उल्टी हो रही है...)',
       micStop: 'रिकॉर्डिंग बंद करें',
-      micStart: 'वॉइस इनपुट शुरू करें',
+      micStart: 'वॉइस इनपुट (माइक) शुरू करें',
+      micTapToTalk: 'माइक दबाकर बोलें (लगातार रिकॉर्डिंग)',
       quickAdd: 'त्वरित जोड़ें:',
+      voiceDemoTitle: 'त्वरित वॉइस सैंपल (डेमो):',
       categorySelect: 'मुख्य स्वास्थ्य समस्या चुनें:',
       targetedTitle: 'संबंधित प्राथमिक प्रश्न (क्लिनिकल मूल्यांकन)',
       vitalsTitle: 'प्राथमिक आवश्यक वाइटल्स',
@@ -332,22 +441,26 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
       diastolic: 'रक्तचाप डायस्टोलिक (DBP)',
       duration: 'बीमारी की अवधि (दिन)',
       disclaimer: 'सुरक्षा निर्देश: यह प्रणाली केवल लक्षणों को व्यवस्थित कर तात्कालिकता का स्तर दर्शाती है। यह कोई प्रत्यक्ष निदान या दवा निर्धारित नहीं करती। अंतिम निर्णय उपस्थित चिकित्सक द्वारा लिया जाता है।',
-      submitBtn: 'लैब रिपोर्ट एवं ट्रायज नोट के लिए आगे बढ़ें',
-      alertValidation: 'कृपया लक्षण अथवा कम से कम एक वाइटल संकेत दर्ज करें।'
+      submitBtn: 'सुरक्षित करें एवं लैब रिपोर्ट / ट्रायज नोट की ओर बढ़ें',
+      alertValidation: 'कृपया लक्षण अथवा कम से कम एक वाइटल संकेत दर्ज करें।',
+      autoSaved: 'ड्राफ्ट स्वतः सुरक्षित हुआ',
+      micNotSupported: 'आपके ब्राउज़र में स्पीच इनपुट समर्थित नहीं है। कृपया टाइप करें या त्वरित सैंपल बटन दबाएं।'
     },
     'en-IN': {
       title: 'Patient Multimodal Clinical Intake',
       subtitle: 'For PHCs, Civil Hospitals, Health Camps & Occupational Clinics',
       patientSelf: 'Patient Self-Reporting:',
       intakeOfficer: 'Intake Officer:',
-      chiefComplaints: 'Chief Complaints & Symptoms',
-      listening: 'Listening... speak now',
+      chiefComplaints: 'Chief Complaints & Symptoms (Mic / Voice Input)',
+      listening: 'Listening... speak continuously',
       clear: 'Clear',
       speakOrType: 'Speak or Type',
       placeholder: 'Tap the mic or type symptoms (e.g. Fever for 3 days, cough with phlegm, shortness of breath...)',
       micStop: 'Stop Recording',
-      micStart: 'Start Voice Input',
+      micStart: 'Start Voice Input (Mic)',
+      micTapToTalk: 'Tap Mic to Speak (Continuous Auto-Save)',
       quickAdd: 'Quick add:',
+      voiceDemoTitle: 'Quick Voice Sample Presets:',
       categorySelect: 'Select Primary Condition:',
       targetedTitle: 'Focused Clinical Inquiries',
       vitalsTitle: 'Primary Required Vitals',
@@ -362,32 +475,27 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
       diastolic: 'BP Diastolic (DBP)',
       duration: 'Duration (Days)',
       disclaimer: 'Triage Non-Diagnostic Notice: This intake organizes symptoms and highlights urgency factors. It does not formulate diagnoses or prescribe medication. Final triage level is determined by the attending clinician.',
-      submitBtn: 'Proceed to Lab Report & Triage Note Generation',
-      alertValidation: 'Please enter symptoms or at least one vital sign.'
+      submitBtn: 'Save Intake & Proceed to Lab Report / Triage Note',
+      alertValidation: 'Please enter symptoms or at least one vital sign.',
+      autoSaved: 'Draft Auto-Saved to Storage',
+      micNotSupported: 'Speech Recognition not supported in this browser. Please type or use sample presets.'
     }
   }[language] || {};
 
-  const recognitionRef = useRef(null);
-  const baseTextRef = useRef('');
-  const transcriptRef = useRef('');
-  const translateTimerRef = useRef(null);
-
-  useEffect(() => {
-    transcriptRef.current = transcript;
-  }, [transcript]);
-
-  // Compiled dictionary for clinical translation (cached statically)
+  // Compiled dictionary for clinical translation
   const CLINICAL_DICT = useRef([
     // Odia clinical phrases
-    { pattern: /ପ୍ରବଳ ଜ୍ୱର|ଜ୍ବର|ଜ୍ୱର/gi, en: 'high grade fever' },
-    { pattern: /ଥଣ୍ଡା ଲାଗିବା|ଥଣ୍ଡା/gi, en: 'chills / rigor' },
-    { pattern: /ବାନ୍ତି ହେବା|ବାନ୍ତି/gi, en: 'vomiting' },
+    { pattern: /ପ୍ରବଳ ଜ୍ୱର|ପ୍ରବଳ ଜ୍ବର|ଜ୍ୱର|ଜ୍ବର/gi, en: 'high grade fever' },
+    { pattern: /ଥଣ୍ଡା ଲାଗିବା|ଥଣ୍ଡା ଲାଗି|ଥଣ୍ଡା/gi, en: 'chills / rigor' },
+    { pattern: /ବାନ୍ତି ହେବା|ବାନ୍ତି ହେଉଛି|ବାନ୍ତି/gi, en: 'vomiting' },
     { pattern: /ଝାଡ଼ା|ପେଟ ଖରାପ/gi, en: 'diarrhea / loose watery stools' },
-    { pattern: /ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ|ନିଶ୍ୱାସ କଷ୍ଟ/gi, en: 'severe dyspnea / shortness of breath' },
+    { pattern: /ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ|ନିଶ୍ୱାସ କଷ୍ଟ|ଅଣନିଶ୍ୱାସୀ/gi, en: 'severe dyspnea / shortness of breath' },
     { pattern: /ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା|ମୁଣ୍ଡ ବିନ୍ଧା|ମୁଣ୍ଡ ଯନ୍ତ୍ରଣା/gi, en: 'severe headache' },
-    { pattern: /ଛାତି ଭାରୀ ଲାଗିବା|ଛାତି ଯନ୍ତ୍ରଣା|ଛାତି ବିନ୍ଧା/gi, en: 'chest pain / heaviness' },
-    { pattern: /ପେଟ ଯନ୍ତ୍ରଣା|ପେଟ ବିନ୍ଧା/gi, en: 'acute abdominal pain' },
-    { pattern: /ମୁଣ୍ଡ ବୁଲାଇବା/gi, en: 'dizziness / vertigo' },
+    { pattern: /ଛାତି ଭାରୀ ଲାଗିବା|ଛାତି ଭାରୀ|ଛାତି ଯନ୍ତ୍ରଣା|ଛାତି ବିନ୍ଧା/gi, en: 'chest pain / heaviness' },
+    { pattern: /ବାମ ହାତ|ବାମ ହାତ ଆଡ଼କୁ/gi, en: 'radiating to left arm' },
+    { pattern: /ଥଣ୍ଡା ଝାଳ|ଝାଳ ବୋହୁଛି|ଝାଳ/gi, en: 'cold sweating / diaphoresis' },
+    { pattern: /ପେଟ ଯନ୍ତ୍ରଣା|ପେଟ ବିନ୍ଧା|ପେଟ କାଟୁଛି/gi, en: 'acute abdominal pain' },
+    { pattern: /ମୁଣ୍ଡ ବୁଲାଇବା|ମୁଣ୍ଡ ଘୁରାଇବା/gi, en: 'dizziness / vertigo' },
     { pattern: /କଫ ସହ କାଶ|କାଶ|କଫ/gi, en: 'cough with expectoration' },
     { pattern: /ଦେହ ହାତ ବିନ୍ଧା|ଅଣ୍ଟା ବିନ୍ଧା|ଦେହ ଯନ୍ତ୍ରଣା/gi, en: 'generalized body ache / myalgia' },
     { pattern: /ଅତ୍ୟଧିକ ଦୁର୍ବଳତା|ଦୁର୍ବଳ/gi, en: 'severe weakness / asthenia' },
@@ -399,13 +507,15 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
 
     // Hindi clinical phrases
     { pattern: /तेज़ बुखार|तेज बुखार|बुखार/gi, en: 'high fever' },
-    { pattern: /ठंड लग रही|ठंड/gi, en: 'chills' },
+    { pattern: /ठंड लग रही|ठंड/gi, en: 'chills / shivering' },
     { pattern: /उल्टी हो रही|उल्टी/gi, en: 'vomiting' },
-    { pattern: /दस्त|पेट खराब/gi, en: 'diarrhea / loose motions' },
-    { pattern: /सांस लेने में तकलीफ|सांस फूल रही/gi, en: 'shortness of breath (dyspnea)' },
+    { pattern: /दस्त|पेट खराब|पतले दस्त/gi, en: 'diarrhea / loose motions' },
+    { pattern: /सांस लेने में तकलीफ|सांस फूल रही|दम घुट रहा/gi, en: 'shortness of breath (dyspnea)' },
     { pattern: /सिर में तेज़ दर्द|सिर दर्द|सर दर्द/gi, en: 'severe headache' },
-    { pattern: /छाती में भारीपन|छाती में दर्द/gi, en: 'chest heaviness / retrosternal pain' },
-    { pattern: /पेट में दर्द|पेट दर्द/gi, en: 'abdominal pain' },
+    { pattern: /छाती में भारीपन|छाती में दर्द|सीने में दर्द|सीने में भारीपन/gi, en: 'chest heaviness / retrosternal pain' },
+    { pattern: /बाएं हाथ|बाएं बाजू/gi, en: 'radiating to left arm' },
+    { pattern: /ठंडा पसीना|पसीना आ रहा/gi, en: 'cold sweating' },
+    { pattern: /पेट में दर्द|पेट दर्द|मरोड़/gi, en: 'abdominal pain / cramps' },
     { pattern: /चक्कर आना|चक्कर/gi, en: 'dizziness / syncope' },
     { pattern: /खांसी|बलगम/gi, en: 'cough with phlegm' },
     { pattern: /शरीर में दर्द|बदन दर्द/gi, en: 'generalized body ache' },
@@ -417,8 +527,20 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
     { pattern: /1 हफ्ता|एक हफ्ता/gi, en: 'duration 1 week' }
   ]).current;
 
+  // Auto-detect condition category from speech/text keywords
+  const autoDetectCategory = useCallback((text) => {
+    if (!text) return;
+    const lower = text.toLowerCase();
+    for (const [catId, proto] of Object.entries(CONDITION_PROTOCOLS)) {
+      if (proto.keywords && proto.keywords.some((kw) => lower.includes(kw.toLowerCase()))) {
+        setActiveCategory(catId);
+        break;
+      }
+    }
+  }, []);
+
   // Clean debounced clinical translator
-  const translateClinicalText = (text) => {
+  const translateClinicalText = useCallback((text) => {
     if (translateTimerRef.current) {
       clearTimeout(translateTimerRef.current);
     }
@@ -431,8 +553,9 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
 
     setIsTranslating(true);
     translateTimerRef.current = setTimeout(() => {
+      let finalTrans = text;
       if (language === 'en-IN') {
-        setTranslatedText(text);
+        finalTrans = text;
       } else {
         let translated = text;
         let matched = false;
@@ -444,128 +567,174 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
         });
 
         if (matched) {
-          setTranslatedText(`[Normalized Clinical English]: ${translated}`);
+          finalTrans = `[Clinical Normalized]: ${translated}`;
         } else {
-          setTranslatedText(`[Normalized Clinical English]: Reported symptoms - "${text}"`);
+          finalTrans = `[Reported]: ${text}`;
         }
       }
+      setTranslatedText(finalTrans);
       setIsTranslating(false);
-    }, 350);
-  };
+      autoDetectCategory(text);
+      persistDraft({ transcript: text, translatedText: finalTrans });
+    }, 300);
+  }, [language, autoDetectCategory, persistDraft]);
 
-  // Initialize Web Speech Recognition
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition = null;
-    if (SpeechRecognition) {
-      recognition = new SpeechRecognition();
+  // Speech Recognition Initializer & Auto-Restart Keep-Alive
+  const startSpeechRecognition = () => {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      setMicSupported(false);
+      setMicError('Speech recognition is not supported in this browser.');
+      return;
+    }
+
+    setMicError(null);
+    try {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch {}
+      }
+
+      const recognition = new SpeechRec();
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = language;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        isListeningRef.current = true;
+        setMicError(null);
+      };
 
       recognition.onresult = (event) => {
-        let sessionFinal = '';
-        let sessionInterim = '';
+        let interim = '';
+        let finalChunk = '';
 
-        for (let i = 0; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
           const res = event.results[i];
           if (res.isFinal) {
-            sessionFinal += res[0].transcript + ' ';
+            finalChunk += res[0].transcript + ' ';
           } else {
-            sessionInterim += res[0].transcript;
+            interim += res[0].transcript;
           }
         }
 
-        const currentSpoken = (sessionFinal + sessionInterim).trim();
-        const prefix = baseTextRef.current ? baseTextRef.current.trim() + ' ' : '';
-        const fullTranscript = (prefix + currentSpoken).trim();
-
-        setTranscript(fullTranscript);
-        transcriptRef.current = fullTranscript;
-
-        if (sessionFinal.trim()) {
-          translateClinicalText(fullTranscript);
+        if (finalChunk) {
+          const newBase = (baseTextRef.current ? baseTextRef.current.trim() + ' ' : '') + finalChunk.trim();
+          baseTextRef.current = newBase;
+          fullTextRef.current = newBase;
+          setTranscript(newBase);
+          setInterimTranscript('');
+          translateClinicalText(newBase);
+        } else {
+          setInterimTranscript(interim);
+          const combined = (baseTextRef.current ? baseTextRef.current.trim() + ' ' : '') + interim;
+          fullTextRef.current = combined;
         }
       };
 
       recognition.onerror = (err) => {
-        if (err.error !== 'no-speech') {
+        console.warn('SpeechRecognition error:', err.error);
+        if (err.error === 'not-allowed' || err.error === 'service-not-allowed') {
+          isListeningRef.current = false;
           setIsListening(false);
+          setMicError('Microphone permission denied. Please allow microphone access or use quick sample buttons.');
         }
       };
 
       recognition.onend = () => {
-        setIsListening(false);
-        baseTextRef.current = transcriptRef.current;
-        translateClinicalText(transcriptRef.current);
+        // RESILIENT AUTO-RESTART: If the user didn't hit stop, restart keep-alive
+        if (isListeningRef.current) {
+          setTimeout(() => {
+            if (isListeningRef.current && recognitionRef.current) {
+              try {
+                recognitionRef.current.start();
+              } catch (e) {
+                console.warn('Auto-restart retry:', e);
+              }
+            }
+          }, 150);
+        } else {
+          setIsListening(false);
+          setInterimTranscript('');
+          const finalText = baseTextRef.current.trim();
+          setTranscript(finalText);
+          fullTextRef.current = finalText;
+          translateClinicalText(finalText);
+        }
       };
 
       recognitionRef.current = recognition;
-    }
+      recognition.start();
+      setIsListening(true);
+      isListeningRef.current = true;
 
-    return () => {
-      if (translateTimerRef.current) {
-        clearTimeout(translateTimerRef.current);
-      }
-      if (recognition) {
-        try {
-          recognition.stop();
-        } catch {}
-      }
-    };
-  }, [language]);
+      // Timer counter
+      setRecordSeconds(0);
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = setInterval(() => {
+        setRecordSeconds((s) => s + 1);
+      }, 1000);
 
-  const toggleListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Web Speech API is not supported in this browser. Please use Chrome/Edge or type manually.');
-      return;
-    }
-
-    if (isListening) {
-      try {
-        recognitionRef.current?.stop();
-      } catch (e) {
-        console.error(e);
-      }
+    } catch (e) {
+      console.error('Failed to start speech recognition:', e);
       setIsListening(false);
-      baseTextRef.current = transcriptRef.current;
-      translateClinicalText(transcriptRef.current);
-    } else {
-      baseTextRef.current = transcriptRef.current;
-      if (recognitionRef.current) {
-        recognitionRef.current.lang = language;
-        try {
-          recognitionRef.current.start();
-          setIsListening(true);
-        } catch (e) {
-          try {
-            recognitionRef.current.stop();
-          } catch {}
-          setTimeout(() => {
-            try {
-              recognitionRef.current.start();
-              setIsListening(true);
-            } catch (err) {
-              console.error(err);
-            }
-          }, 150);
-        }
-      }
+      isListeningRef.current = false;
+      setMicError('Could not start microphone. Please check browser permissions.');
     }
   };
 
-  const handleClearText = () => {
-    if (isListening && recognitionRef.current) {
+  const stopSpeechRecognition = () => {
+    isListeningRef.current = false;
+    setIsListening(false);
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
       } catch {}
-      setIsListening(false);
+    }
+    setInterimTranscript('');
+    const finalVal = (baseTextRef.current || transcript).trim();
+    setTranscript(finalVal);
+    fullTextRef.current = finalVal;
+    translateClinicalText(finalVal);
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopSpeechRecognition();
+    } else {
+      startSpeechRecognition();
+    }
+  };
+
+  // Clean up speech recognition & intervals on unmount
+  useEffect(() => {
+    return () => {
+      isListeningRef.current = false;
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch {}
+      }
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      if (translateTimerRef.current) clearTimeout(translateTimerRef.current);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
+
+  const handleClearText = () => {
+    if (isListening) {
+      stopSpeechRecognition();
     }
     setTranscript('');
+    setInterimTranscript('');
     setTranslatedText('');
     baseTextRef.current = '';
-    transcriptRef.current = '';
+    fullTextRef.current = '';
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    setIsSavedDraft(false);
   };
 
   const handleChipClick = (symptom) => {
@@ -580,93 +749,137 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
     }
     setTranscript((prev) => {
       const updated = prev && prev.trim() ? `${prev.trim()}, ${addition}` : addition;
-      transcriptRef.current = updated;
       baseTextRef.current = updated;
+      fullTextRef.current = updated;
       translateClinicalText(updated);
       return updated;
     });
   };
 
   const handleSelectAnswer = (questionId, optionValue) => {
-    setTargetedAnswers((prev) => ({
-      ...prev,
+    const updated = {
+      ...targetedAnswers,
       [questionId]: optionValue
-    }));
+    };
+    setTargetedAnswers(updated);
+    persistDraft({ targetedAnswers: updated });
+  };
+
+  const handleVitalsChange = (field, value) => {
+    const updated = { ...vitals, [field]: value };
+    setVitals(updated);
+    persistDraft({ vitals: updated });
+  };
+
+  const handleLoadVoicePreset = (preset) => {
+    const textToLoad = preset.text[language] || preset.text['en-IN'];
+    setTranscript(textToLoad);
+    baseTextRef.current = textToLoad;
+    fullTextRef.current = textToLoad;
+    setActiveCategory(preset.category);
+    if (preset.answers) setTargetedAnswers(preset.answers);
+    if (preset.vitals) setVitals((prev) => ({ ...prev, ...preset.vitals }));
+    translateClinicalText(textToLoad);
   };
 
   const handleLanguageChange = (newLang) => {
+    if (isListening) {
+      stopSpeechRecognition();
+    }
     setLanguage(newLang);
     if (onLanguageChange) {
       onLanguageChange(newLang);
-    }
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const hasAnyTargeted = Object.keys(targetedAnswers).length > 0;
-    if (!transcript && !vitals.temperature && !vitals.spo2 && !hasAnyTargeted) {
+    const finalSpeech = (transcript || fullTextRef.current || '').trim();
+
+    if (!finalSpeech && !vitals.temperature && !vitals.spo2 && !hasAnyTargeted) {
       alert(ui.alertValidation);
       return;
     }
 
-    onIntakeComplete({
+    const payload = {
       language,
-      rawSpeech: transcript,
-      translatedSummary: translatedText || transcript,
+      rawSpeech: finalSpeech,
+      translatedSummary: translatedText || finalSpeech,
       selectedCategory: activeCategory,
       targetedAnswers,
       vitals,
+      intakeMode: 'multimodal_voice_vitals',
       timestamp: new Date().toISOString(),
-    });
+    };
+
+    // Store in global intake storage
+    try {
+      localStorage.setItem('nhp_current_intake', JSON.stringify(payload));
+    } catch {}
+
+    onIntakeComplete(payload);
+  };
+
+  const formatSeconds = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6 max-w-2xl mx-auto font-sans">
-      <div className="flex justify-between items-center border-b pb-4 mb-5">
+    <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-4 sm:p-6 max-w-2xl mx-auto font-sans">
+      {/* Header with Title & Language Switcher */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 pb-4 mb-5">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <FileText className="text-emerald-600 w-6 h-6" />
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+            <FileText className="text-emerald-600 w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
             {ui.title}
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 mt-0.5">
             {ui.subtitle}
           </p>
         </div>
 
-        {/* Language Switcher */}
-        <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-300">
-          <Globe className="w-4 h-4 text-emerald-700" />
-          <select
-            value={language}
-            onChange={(e) => handleLanguageChange(e.target.value)}
-            className="bg-transparent text-xs font-bold text-slate-800 outline-none cursor-pointer"
-          >
-            <option value="or-IN">ଓଡ଼ିଆ (Odia)</option>
-            <option value="hi-IN">हिन्दी (Hindi)</option>
-            <option value="en-IN">English</option>
-          </select>
+        {/* Language Switcher & Auto-Save Badge */}
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          {isSavedDraft && (
+            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full">
+              <Save className="w-3 h-3" />
+              {ui.autoSaved}
+            </span>
+          )}
+
+          <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-300 shadow-2xs">
+            <Globe className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+            <select
+              value={language}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              className="bg-transparent text-xs font-bold text-slate-800 outline-none cursor-pointer"
+            >
+              <option value="or-IN">ଓଡ଼ିଆ (Odia)</option>
+              <option value="hi-IN">हिन्दी (Hindi)</option>
+              <option value="en-IN">English</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Conducting Staff or Patient Self-Intake Attribution */}
       {currentUser && (
         <div
-          className={`mb-5 px-3.5 py-2.5 rounded-lg flex items-center justify-between text-xs ${
+          className={`mb-5 px-3.5 py-2.5 rounded-xl flex items-center justify-between text-xs ${
             currentUser.roleCategory === 'patient'
               ? 'bg-amber-50 border border-amber-200 text-amber-900'
-              : 'bg-slate-50 border border-slate-200 text-slate-600'
+              : 'bg-slate-50 border border-slate-200 text-slate-700'
           }`}
         >
           <span className="flex items-center gap-1.5 font-medium">
             <span
-              className={`w-2 h-2 rounded-full ${
-                currentUser.roleCategory === 'patient' ? 'bg-amber-500' : 'bg-emerald-500'
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                currentUser.roleCategory === 'patient' ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
               }`}
-            ></span>
+            />
             {currentUser.roleCategory === 'patient' ? (
               <span>
                 {ui.patientSelf}{' '}
@@ -679,7 +892,7 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
             ) : (
               <span>
                 {ui.intakeOfficer} <strong className="text-slate-800">{currentUser.name}</strong>{' '}
-                ({currentUser.role.split('/')[0]})
+                ({currentUser.role?.split('/')[0]})
               </span>
             )}
           </span>
@@ -689,81 +902,149 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Voice & Chief Complaints Input Section */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+      {/* Mic Error Notice if permission denied */}
+      {micError && (
+        <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold">{micError}</p>
+            <p className="text-[11px] text-rose-600 mt-0.5">You can still type your symptoms or use the 1-tap quick voice presets below.</p>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* ─── VOICE RECORDING & TEXT INPUT BOX ─── */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
               {ui.chiefComplaints}
               {isListening && (
-                <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 animate-pulse flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-rose-600"></span>
-                  {ui.listening}
+                <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 flex items-center gap-1.5 animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span>
+                  {ui.listening} ({formatSeconds(recordSeconds)})
                 </span>
               )}
             </label>
 
             <div className="flex items-center gap-2">
-              {transcript && (
+              {(transcript || interimTranscript) && (
                 <button
                   type="button"
                   onClick={handleClearText}
-                  className="text-xs text-rose-600 hover:text-rose-800 font-medium flex items-center gap-1 hover:underline"
+                  className="text-xs text-rose-600 hover:text-rose-800 font-medium flex items-center gap-1 hover:underline cursor-pointer"
                   title="Clear all text"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   {ui.clear}
                 </button>
               )}
-              <span className="text-xs text-slate-400">{ui.speakOrType}</span>
             </div>
           </div>
 
+          {/* Textarea + Live Mic Waveform Container */}
           <div className="relative">
             <textarea
               rows={4}
-              value={transcript}
+              value={transcript + (interimTranscript ? (transcript ? ' ' : '') + interimTranscript : '')}
               onChange={(e) => {
                 const val = e.target.value;
                 setTranscript(val);
-                transcriptRef.current = val;
+                setInterimTranscript('');
                 baseTextRef.current = val;
+                fullTextRef.current = val;
                 translateClinicalText(val);
               }}
               placeholder={ui.placeholder}
-              className={`w-full p-3.5 pr-14 text-sm rounded-lg border transition-all outline-none resize-none text-slate-900 ${
+              className={`w-full p-3.5 pr-16 text-xs sm:text-sm rounded-xl border transition-all outline-none resize-none text-slate-900 leading-relaxed ${
                 isListening
-                  ? 'border-rose-400 ring-2 ring-rose-100 bg-rose-50/20'
-                  : 'border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500'
+                  ? 'border-rose-400 ring-2 ring-rose-100 bg-rose-50/30'
+                  : 'border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white'
               }`}
             />
 
-            {/* Mic Toggle Button */}
-            <button
-              type="button"
-              onClick={toggleListening}
-              className={`absolute right-3 bottom-3 p-3 rounded-full shadow-md transition-all ${
-                isListening
-                  ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-200 scale-105'
-                  : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-105'
-              }`}
-              title={isListening ? ui.micStop : ui.micStart}
-            >
-              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-            </button>
+            {/* Mic Action Control Button */}
+            <div className="absolute right-2.5 bottom-2.5 flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={toggleListening}
+                className={`p-3 rounded-full shadow-lg transition-all flex items-center justify-center cursor-pointer active:scale-95 ${
+                  isListening
+                    ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-200 scale-105'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-105'
+                }`}
+                title={isListening ? ui.micStop : ui.micStart}
+              >
+                {isListening ? (
+                  <MicOff className="w-5 h-5 text-white" />
+                ) : (
+                  <Mic className="w-5 h-5 text-white" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Active Audio Waveform Indicator */}
+          {isListening && (
+            <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between animate-fadeIn text-xs text-rose-800">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600"></span>
+                </span>
+                <span className="font-bold">
+                  {language === 'or-IN' ? 'ଓଡ଼ିଆ ଭଏସ୍ ରିକର୍ଡିଂ ଚାଲୁଅଛି...' : (language === 'hi-IN' ? 'हिन्दी वॉइस रिकॉर्डिंग जारी है...' : 'Recording live English speech...')}
+                </span>
+              </div>
+              {/* Pulsing Audio Waves */}
+              <div className="flex items-center gap-1">
+                <div className="w-1 h-3 bg-rose-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-1 h-5 bg-rose-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-1 h-4 bg-rose-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-1 h-6 bg-rose-600 rounded-full animate-bounce" style={{ animationDelay: '450ms' }} />
+                <div className="w-1 h-3 bg-rose-600 rounded-full animate-bounce" style={{ animationDelay: '200ms' }} />
+                <span className="font-mono font-bold text-rose-900 ml-1.5">{formatSeconds(recordSeconds)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* 1-Tap Voice Simulation Presets (Helpful on all mobile browsers) */}
+          <div className="pt-1">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
+                <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
+                {ui.voiceDemoTitle}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {voicePresets.map((preset, pIdx) => {
+                const pLabel = preset.label[language] || preset.label['en-IN'];
+                return (
+                  <button
+                    key={pIdx}
+                    type="button"
+                    onClick={() => handleLoadVoicePreset(preset)}
+                    className="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-left transition-all text-xs text-slate-700 hover:text-emerald-900 flex items-center justify-between gap-1.5 cursor-pointer"
+                  >
+                    <span className="font-medium truncate">{pLabel}</span>
+                    <Sparkles className="w-3 h-3 text-emerald-600 shrink-0" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Quick Symptoms Chips */}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="text-xs text-slate-500 self-center font-medium">{ui.quickAdd}</span>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <span className="text-xs text-slate-500 self-center font-medium mr-1">{ui.quickAdd}</span>
             {commonSymptoms.map((sym, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleChipClick(sym)}
-                className="text-xs bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 border border-slate-200 px-2.5 py-1 rounded-full text-slate-600 transition-colors flex items-center gap-1"
+                className="text-xs bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 border border-slate-200 px-2.5 py-1 rounded-full text-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
               >
-                <Plus className="w-3 h-3" />
+                <Plus className="w-3 h-3 text-slate-400" />
                 {language === 'or-IN' ? sym.or : (language === 'hi-IN' ? sym.hi : sym.en)}
               </button>
             ))}
@@ -771,7 +1052,7 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
 
           {/* Normalized Clinical Translation Preview */}
           {translatedText && (
-            <div className="mt-3.5 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900 flex items-start gap-2.5 animate-fadeIn">
+            <div className="mt-3 p-3 bg-blue-50/80 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-start gap-2.5 animate-fadeIn">
               <RefreshCw
                 className={`w-4 h-4 mt-0.5 text-blue-600 shrink-0 ${
                   isTranslating ? 'animate-spin' : ''
@@ -779,15 +1060,15 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
               />
               <div className="flex-1">
                 <span className="font-bold text-blue-950">{ui.scribeTitle} </span>
-                <span className="text-blue-900 font-medium">{translatedText}</span>
+                <span className="text-blue-900 font-medium leading-relaxed">{translatedText}</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* 1. Condition Selector Tabs */}
-        <div className="border-t pt-4">
-          <label className="text-xs font-bold text-slate-700 block mb-2">
+        {/* ─── 1. CONDITION SELECTOR TABS ─── */}
+        <div className="border-t border-slate-200 pt-4">
+          <label className="text-xs font-bold text-slate-800 block mb-2">
             {ui.categorySelect}
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -801,10 +1082,11 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                   type="button"
                   onClick={() => {
                     setActiveCategory(proto.id);
+                    persistDraft({ activeCategory: proto.id });
                   }}
-                  className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-semibold transition-all text-left ${
+                  className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all text-left cursor-pointer ${
                     isSelected
-                      ? 'border-emerald-600 bg-emerald-50 text-emerald-900 shadow-sm ring-1 ring-emerald-500'
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-900 shadow-xs ring-1 ring-emerald-500'
                       : 'border-slate-200 bg-slate-50/60 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
@@ -816,22 +1098,22 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
           </div>
         </div>
 
-        {/* 2. Targeted Clinical Questions (Adaptive for Selected Condition) */}
+        {/* ─── 2. TARGETED CLINICAL INQUIRIES ─── */}
         {CONDITION_PROTOCOLS[activeCategory]?.questions?.length > 0 && (
-          <div className="p-4 bg-emerald-50/40 rounded-xl border border-emerald-200/80 space-y-3.5">
+          <div className="p-3.5 sm:p-4 bg-emerald-50/40 rounded-2xl border border-emerald-200/80 space-y-3">
             <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
               <HelpCircle className="w-4 h-4 text-emerald-700" />
               <span>{ui.targetedTitle}</span>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {CONDITION_PROTOCOLS[activeCategory].questions.map((q) => {
                 const questionText = language === 'or-IN' ? q.text.or : (language === 'hi-IN' ? q.text.hi : q.text.en);
                 const currentAnswer = targetedAnswers[q.id];
 
                 return (
-                  <div key={q.id} className="bg-white p-3 rounded-lg border border-emerald-100 shadow-2xs">
-                    <p className="text-xs font-semibold text-slate-800 mb-2">{questionText}</p>
+                  <div key={q.id} className="bg-white p-3 rounded-xl border border-emerald-100 shadow-2xs">
+                    <p className="text-xs font-semibold text-slate-800 mb-2 leading-snug">{questionText}</p>
                     <div className="flex flex-wrap gap-2">
                       {q.options.map((opt) => {
                         const optLabel = language === 'or-IN' ? opt.or : (language === 'hi-IN' ? opt.hi : opt.en);
@@ -843,11 +1125,11 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                             key={opt.val}
                             type="button"
                             onClick={() => handleSelectAnswer(q.id, opt.val)}
-                            className={`text-xs px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 font-medium ${
+                            className={`text-xs px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 font-medium cursor-pointer ${
                               isChosen
                                 ? (isAlert
                                     ? 'bg-rose-50 border-rose-500 text-rose-800 font-bold ring-1 ring-rose-400'
-                                    : 'bg-emerald-600 border-emerald-600 text-white font-semibold shadow-xs')
+                                    : 'bg-emerald-600 border-emerald-600 text-white font-semibold shadow-2xs')
                                 : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                             }`}
                           >
@@ -864,10 +1146,10 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
           </div>
         )}
 
-        {/* 3. Primary Required Vitals (Focused on Active Condition) */}
-        <div className="border-t pt-4">
+        {/* ─── 3. PRIMARY REQUIRED VITALS ─── */}
+        <div className="border-t border-slate-200 pt-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
               <Activity className="w-4 h-4 text-emerald-600" />
               {ui.vitalsTitle}
             </h3>
@@ -879,12 +1161,12 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {/* Always show durationDays */}
             <div>
-              <label className="text-xs text-slate-700 font-medium">{ui.duration}</label>
+              <label className="text-xs text-slate-700 font-medium block">{ui.duration}</label>
               <input
                 type="number"
                 value={vitals.durationDays}
-                onChange={(e) => setVitals({ ...vitals, durationDays: e.target.value })}
-                className="w-full mt-1 p-2 text-sm rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none"
+                onChange={(e) => handleVitalsChange('durationDays', e.target.value)}
+                className="w-full mt-1 p-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-900"
               />
             </div>
 
@@ -900,8 +1182,8 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                   step="0.1"
                   placeholder="98.6"
                   value={vitals.temperature}
-                  onChange={(e) => setVitals({ ...vitals, temperature: e.target.value })}
-                  className="w-full mt-1 p-2 text-sm rounded border border-emerald-400 focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-900 bg-emerald-50/20"
+                  onChange={(e) => handleVitalsChange('temperature', e.target.value)}
+                  className="w-full mt-1 p-2 text-xs sm:text-sm rounded-lg border border-emerald-400 focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-900 bg-emerald-50/20"
                 />
               </div>
             )}
@@ -917,8 +1199,8 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                   type="number"
                   placeholder="98"
                   value={vitals.spo2}
-                  onChange={(e) => setVitals({ ...vitals, spo2: e.target.value })}
-                  className="w-full mt-1 p-2 text-sm rounded border border-sky-400 focus:ring-2 focus:ring-sky-500 outline-none font-medium text-slate-900 bg-sky-50/20"
+                  onChange={(e) => handleVitalsChange('spo2', e.target.value)}
+                  className="w-full mt-1 p-2 text-xs sm:text-sm rounded-lg border border-sky-400 focus:ring-2 focus:ring-sky-500 outline-none font-medium text-slate-900 bg-sky-50/20"
                 />
               </div>
             )}
@@ -934,27 +1216,27 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                   type="number"
                   placeholder="78"
                   value={vitals.pulse}
-                  onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
-                  className="w-full mt-1 p-2 text-sm rounded border border-rose-300 focus:ring-2 focus:ring-rose-500 outline-none font-medium text-slate-900"
+                  onChange={(e) => handleVitalsChange('pulse', e.target.value)}
+                  className="w-full mt-1 p-2 text-xs sm:text-sm rounded-lg border border-rose-300 focus:ring-2 focus:ring-rose-500 outline-none font-medium text-slate-900 bg-white"
                 />
               </div>
             )}
           </div>
 
-          {/* 4. Expandable Home Vitals Drawer (Optional) */}
-          <div className="mt-4 pt-3 border-t border-slate-100">
+          {/* Expandable Home Vitals Drawer */}
+          <div className="mt-3.5 pt-2.5 border-t border-slate-100">
             <button
               type="button"
               onClick={() => setShowExtraVitals(!showExtraVitals)}
-              className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 focus:outline-none"
+              className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 focus:outline-none cursor-pointer"
             >
               {showExtraVitals ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               {showExtraVitals ? ui.extraVitalsToggleClose : ui.extraVitalsToggleOpen}
             </button>
-            <p className="text-[11px] text-slate-400 mt-1">{ui.optionalNotice}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{ui.optionalNotice}</p>
 
             {showExtraVitals && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg animate-fadeIn">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl animate-fadeIn">
                 {!CONDITION_PROTOCOLS[activeCategory]?.primaryVitals?.includes('temperature') && (
                   <div>
                     <label className="text-xs text-slate-600 font-medium">{ui.temp}</label>
@@ -963,8 +1245,8 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                       step="0.1"
                       placeholder="98.6"
                       value={vitals.temperature}
-                      onChange={(e) => setVitals({ ...vitals, temperature: e.target.value })}
-                      className="w-full mt-1 p-2 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                      onChange={(e) => handleVitalsChange('temperature', e.target.value)}
+                      className="w-full mt-1 p-2 text-xs rounded-lg border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-900"
                     />
                   </div>
                 )}
@@ -975,8 +1257,8 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                       type="number"
                       placeholder="78"
                       value={vitals.pulse}
-                      onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
-                      className="w-full mt-1 p-2 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                      onChange={(e) => handleVitalsChange('pulse', e.target.value)}
+                      className="w-full mt-1 p-2 text-xs rounded-lg border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-900"
                     />
                   </div>
                 )}
@@ -987,8 +1269,8 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                       type="number"
                       placeholder="98"
                       value={vitals.spo2}
-                      onChange={(e) => setVitals({ ...vitals, spo2: e.target.value })}
-                      className="w-full mt-1 p-2 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                      onChange={(e) => handleVitalsChange('spo2', e.target.value)}
+                      className="w-full mt-1 p-2 text-xs rounded-lg border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-900"
                     />
                   </div>
                 )}
@@ -998,8 +1280,8 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                     type="number"
                     placeholder="120"
                     value={vitals.systolic}
-                    onChange={(e) => setVitals({ ...vitals, systolic: e.target.value })}
-                    className="w-full mt-1 p-2 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                    onChange={(e) => handleVitalsChange('systolic', e.target.value)}
+                    className="w-full mt-1 p-2 text-xs rounded-lg border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-900"
                   />
                 </div>
                 <div>
@@ -1008,8 +1290,8 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
                     type="number"
                     placeholder="80"
                     value={vitals.diastolic}
-                    onChange={(e) => setVitals({ ...vitals, diastolic: e.target.value })}
-                    className="w-full mt-1 p-2 text-xs rounded border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                    onChange={(e) => handleVitalsChange('diastolic', e.target.value)}
+                    className="w-full mt-1 p-2 text-xs rounded-lg border border-slate-300 focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-slate-900"
                   />
                 </div>
               </div>
@@ -1018,14 +1300,15 @@ export default function MultimodalIntakeForm({ onIntakeComplete, currentUser, ap
         </div>
 
         {/* Clinical Guardrail Disclaimer */}
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2.5 text-xs text-amber-800">
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-900">
           <AlertCircle className="w-4 h-4 mt-0.5 text-amber-600 shrink-0" />
-          <p>{ui.disclaimer}</p>
+          <p className="leading-snug">{ui.disclaimer}</p>
         </div>
 
+        {/* Submit & Store Button */}
         <button
           type="submit"
-          className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 text-sm"
+          className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
         >
           <CheckCircle2 className="w-4 h-4" />
           {ui.submitBtn}
