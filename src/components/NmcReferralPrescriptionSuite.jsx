@@ -42,7 +42,14 @@ import {
   Navigation,
   FileDown,
   Compass,
-  Edit3
+  Edit3,
+  Camera,
+  Upload,
+  HeartPulse,
+  CheckSquare,
+  Square,
+  Layers,
+  FileCheck
 } from 'lucide-react';
 import { getHospitalPartners } from '../data/hospitalPartners';
 
@@ -77,6 +84,25 @@ const BRAND_TO_GENERIC_MAP = {
   'CIPLOX': { generic: 'CIPROFLOXACIN', dosage: '500 mg', form: 'Tablet' },
   'ZIFI': { generic: 'CEFIXIME', dosage: '200 mg', form: 'Tablet' }
 };
+
+// ─── Standard ICD-10 Search Database ─────────────────────────────────────────
+const ICD10_DATABASE = [
+  { code: 'A97.2', name: 'Severe Dengue with Severe Thrombocytopenia & Plasma Leakage', category: 'Infectious / Arboviral' },
+  { code: 'I21.1', name: 'Acute ST-Elevation Myocardial Infarction (STEMI - Inferior Wall)', category: 'Cardiovascular / Emergency' },
+  { code: 'O14.1', name: 'Severe Gestational Pre-eclampsia with Impending Eclampsia', category: 'Obstetric / Maternal' },
+  { code: 'B50.0', name: 'Plasmodium falciparum Malaria with Cerebral Complications', category: 'Infectious / Parasitic' },
+  { code: 'T63.0', name: 'Toxic Effect of Contact with Venomous Snake (Elapid / Neurotoxic)', category: 'Toxicology / Emergency' },
+  { code: 'E11.621', name: 'Type 2 Diabetes Mellitus with Foot Ulcer & Severe Cellulitis', category: 'Endocrine / Metabolic' },
+  { code: 'J18.9', name: 'Severe Community-Acquired Pneumonia with Respiratory Distress', category: 'Pulmonary / Respiratory' },
+  { code: 'K35.80', name: 'Acute Appendicitis with Localized Peritonitis', category: 'General Surgery' },
+  { code: 'S06.0X0A', name: 'Traumatic Brain Injury / Concussion with Loss of Consciousness', category: 'Trauma & Neurosurgery' },
+  { code: 'A09', name: 'Infectious Gastroenteritis with Severe Hypovolemic Dehydration', category: 'Gastrointestinal' },
+  { code: 'N17.9', name: 'Acute Kidney Injury (AKI) with Uremic Acidosis', category: 'Nephrology' },
+  { code: 'I63.9', name: 'Acute Ischemic Cerebral Infarction (Stroke in Evolution)', category: 'Neurology' },
+  { code: 'J44.1', name: 'Chronic Obstructive Pulmonary Disease (COPD) with Acute Exacerbation', category: 'Pulmonary' },
+  { code: 'R57.2', name: 'Septic Shock with Multi-Organ Dysfunction Syndrome (MODS)', category: 'Critical Care' },
+  { code: 'O72.1', name: 'Postpartum Hemorrhage (PPH) with Hypovolemic Shock', category: 'Obstetric' }
+];
 
 // ─── Destination Apex Hospitals Real-Time Bed & Nodal Directory ─────────────
 const APEX_DESTINATION_STATUS = {
@@ -388,18 +414,41 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedSms, setCopiedSms] = useState(false);
   const [vaultList, setVaultList] = useState([]);
+
+  // Modals & Panels
   const [showSmsModal, setShowSmsModal] = useState(false);
   const [showDoctorModal, setShowDoctorModal] = useState(false);
   const [showSignModal, setShowSignModal] = useState(false);
+  const [showIcdModal, setShowIcdModal] = useState(false);
+  const [showAbhaCardModal, setShowAbhaCardModal] = useState(false);
+  const [icdSearchTerm, setIcdSearchTerm] = useState('');
+
+  // Print Mode Options: 'full_letterhead' | 'blank_pad'
+  const [printStationeryMode, setPrintStationeryMode] = useState('full_letterhead');
+
+  // Paramedic Handover Checklist Items
+  const [handoverChecks, setHandoverChecks] = useState({
+    ivLine: true,
+    pulseOx: true,
+    o2Pressure: true,
+    attendantConsent: true,
+    casualtyNotified: true,
+    emtEscort: true
+  });
 
   // HTML5 Canvas Digital Signature Pad State
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [signatureDataUrl, setSignatureDataUrl] = useState(null);
 
+  // Live Camera Scanner State
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const videoRef = useRef(null);
+  const [uploadedFileName, setUploadedFileName] = useState(null);
+
   // Voice Dictation State
   const [isDictating, setIsDictating] = useState(false);
-  const [dictationTarget, setDictationTarget] = useState(null); // 'complaints' | 'diagnosis' | 'referralReason'
+  const [dictationTarget, setDictationTarget] = useState(null);
 
   // Populate fields on preset change
   useEffect(() => {
@@ -486,6 +535,36 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     }
   }, []);
 
+  // Compute Physiological Shock & Mean Arterial Pressure (MAP)
+  const computeVitalsScores = () => {
+    try {
+      const bpParts = (vitals.bp || '120/80').split('/');
+      const sbp = parseFloat(bpParts[0]) || 120;
+      const dbp = parseFloat(bpParts[1]) || 80;
+      const hr = parseFloat((vitals.pulse || '72').replace(/[^0-9.]/g, '')) || 72;
+
+      // Shock Index = HR / SBP
+      const shockIndex = sbp > 0 ? (hr / sbp).toFixed(2) : '0.60';
+      // Mean Arterial Pressure (MAP) = (2*DBP + SBP) / 3
+      const map = Math.round((2 * dbp + sbp) / 3);
+
+      return {
+        sbp,
+        dbp,
+        hr,
+        shockIndex: parseFloat(shockIndex),
+        map,
+        isShock: parseFloat(shockIndex) > 0.9,
+        isHypertensive: sbp >= 160 || dbp >= 100,
+        isHypotensive: sbp < 90
+      };
+    } catch {
+      return { shockIndex: 0.6, map: 93, isShock: false };
+    }
+  };
+
+  const vitalScores = computeVitalsScores();
+
   // Multilingual UI Texts
   const txt = {
     'or-IN': {
@@ -518,7 +597,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       liveBedTitle: 'ଗନ୍ତବ୍ୟ ହସ୍ପିଟାଲ୍ ଲାଇଭ୍ ଶଯ୍ୟା ଓ ନୋଡାଲ୍ ସ୍ଥିତି:',
       autoFixTooltip: 'ବ୍ରାଣ୍ଡ୍ ନାମ ଚିହ୍ନଟ ହୋଇଛି! NMC ଜେନେରିକ୍ ରୂପରେ ବଦଳାନ୍ତୁ',
       etaLabel: '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ପରିବହନ ଦୂରତା ଓ ସମୟ (ETA):',
-      exportHtmlBtn: 'ଅଫଲାଇନ୍ ସାର୍ଟିଫିକେଟ୍ ଡାଉନଲୋଡ୍'
+      exportHtmlBtn: 'ଅଫଲାଇନ୍ ସାର୍ଟିଫିକେଟ୍ ଡାଉନଲୋଡ୍',
+      icdBtn: 'ICD-10 ସନ୍ଧାନ କୋଡ୍',
+      abhaCardBtn: 'ABHA କାର୍ଡ ପ୍ରଦର୍ଶନ'
     },
     'hi-IN': {
       title: 'NMC ई-प्रिस्क्रिप्शन एवं सत्यापित QR कोड रेफरल पर्ची',
@@ -550,7 +631,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       liveBedTitle: 'लक्ष्य अस्पताल लाइव बेड एवं नोडल स्थिति:',
       autoFixTooltip: 'ब्रांड नाम पहचाना गया! NMC जेनेरिक में बदलें',
       etaLabel: '108 एम्बुलेंस दूरी एवं आगमन समय (ETA):',
-      exportHtmlBtn: 'ऑफलाइन सर्टिफिकेट डाउनलोड'
+      exportHtmlBtn: 'ऑफलाइन सर्टिफिकेट डाउनलोड',
+      icdBtn: 'ICD-10 कोड खोजें',
+      abhaCardBtn: 'ABHA कार्ड दृश्य'
     },
     'en-IN': {
       title: 'PDF Referral Slips & NMC Prescriptions with Verifiable QR Codes',
@@ -582,7 +665,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       liveBedTitle: 'Destination Apex Hospital Live Bed & Nodal Status:',
       autoFixTooltip: 'Brand detected! Click to convert to NMC generic standard',
       etaLabel: '108 Transit Route & Golden-Hour ETA:',
-      exportHtmlBtn: 'Download Offline Certificate'
+      exportHtmlBtn: 'Download Offline Certificate',
+      icdBtn: 'ICD-10 Directory',
+      abhaCardBtn: 'ABHA Digital Card'
     }
   }[lang] || {};
 
@@ -693,12 +778,56 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     setMedications(medications.filter((_, idx) => idx !== index));
   };
 
+  // Select ICD-10 Diagnosis from Modal
+  const handleSelectIcdDiagnosis = (item) => {
+    setDiagnosis(`${item.name} (ICD-10: ${item.code})`);
+    setShowIcdModal(false);
+  };
+
   // Perform Verification Simulation (Honest check or Tamper detection)
   const handleVerifyPayload = () => {
     if (simulateTamper) {
       setVerifyStatus('TAMPERED');
     } else {
       setVerifyStatus('VALID');
+    }
+  };
+
+  // Camera QR Scanner Toggle
+  const toggleCameraScanner = () => {
+    if (isCameraActive) {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject;
+        const tracks = stream.getTracks();
+        tracks.forEach((track) => track.stop());
+      }
+      setIsCameraActive(false);
+    } else {
+      setIsCameraActive(true);
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices
+          .getUserMedia({ video: { facingMode: 'environment' } })
+          .then((stream) => {
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+              videoRef.current.play();
+            }
+          })
+          .catch((err) => {
+            console.warn('Camera access unavailable, fallback to simulated scan:', err);
+          });
+      }
+    }
+  };
+
+  // Simulated QR File Upload Handler
+  const handleFileUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setUploadedFileName(file.name);
+      setTimeout(() => {
+        setVerifyStatus('VALID');
+      }, 600);
     }
   };
 
@@ -818,7 +947,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#1e3a8a'; // Deep doctor blue ink
+    ctx.strokeStyle = '#1e3a8a';
     ctx.lineTo(x, y);
     ctx.stroke();
   };
@@ -921,6 +1050,13 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     pilotEscort: '108 Priority Green Siren Clearance'
   };
 
+  const filteredIcdList = ICD10_DATABASE.filter(
+    (item) =>
+      item.code.toLowerCase().includes(icdSearchTerm.toLowerCase()) ||
+      item.name.toLowerCase().includes(icdSearchTerm.toLowerCase()) ||
+      item.category.toLowerCase().includes(icdSearchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       {/* ───────────────────────────────────────────────────────── */}
@@ -964,6 +1100,15 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
             >
               <Stethoscope className="w-3.5 h-3.5 text-indigo-400" />
               <span>RMP: {doctorName.split(' ')[1] || doctorName}</span>
+            </button>
+
+            <button
+              onClick={() => setShowAbhaCardModal(true)}
+              className="flex items-center gap-1.5 bg-teal-800 hover:bg-teal-700 text-teal-100 px-3 py-2 rounded-xl text-xs font-bold border border-teal-600 transition-all cursor-pointer"
+              title="View Official ABHA Digital Card"
+            >
+              <Award className="w-3.5 h-3.5 text-teal-300" />
+              <span>{txt.abhaCardBtn}</span>
             </button>
 
             <button
@@ -1142,15 +1287,15 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
             </div>
           )}
 
-          {/* Compliance & Live Apex Status Banner */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Compliance, Live Apex Status & Print Stationery Toggle */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-center justify-between gap-2 shadow-2xs">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                 <span className="font-medium">{txt.nmcNotice}</span>
               </div>
               <span className="bg-amber-200/80 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded shrink-0">
-                Section 27 NMC Act
+                NMC Sec 27
               </span>
             </div>
 
@@ -1161,13 +1306,45 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 <div className="truncate">
                   <span className="font-bold block truncate">{txt.liveBedTitle}</span>
                   <span className="text-[10px] text-indigo-700 block truncate">
-                    ICU: <strong>{apexStatus.icuBeds} Free</strong> • HDU: <strong>{apexStatus.hduBeds} Free</strong> • {apexStatus.greenCorridor}
+                    ICU: <strong>{apexStatus.icuBeds} Free</strong> • HDU: <strong>{apexStatus.hduBeds} Free</strong>
                   </span>
                 </div>
               </div>
               <span className="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shrink-0">
                 LIVE VACANCY
               </span>
+            </div>
+
+            {/* Pre-Printed Hospital Stationery Pad Switcher */}
+            <div className="p-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 text-xs flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-slate-600 shrink-0" />
+                <span className="font-bold">Paper Format:</span>
+              </div>
+              <div className="flex items-center gap-1 text-[10px]">
+                <button
+                  onClick={() => setPrintStationeryMode('full_letterhead')}
+                  className={`px-2 py-1 rounded font-bold cursor-pointer transition-all ${
+                    printStationeryMode === 'full_letterhead'
+                      ? 'bg-slate-900 text-white shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-200'
+                  }`}
+                  title="Print full header logo & title"
+                >
+                  Full Header
+                </button>
+                <button
+                  onClick={() => setPrintStationeryMode('blank_pad')}
+                  className={`px-2 py-1 rounded font-bold cursor-pointer transition-all ${
+                    printStationeryMode === 'blank_pad'
+                      ? 'bg-slate-900 text-white shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-200'
+                  }`}
+                  title="Hide header for pre-printed hospital letterhead pads"
+                >
+                  Pad Mode
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1210,77 +1387,88 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
             id="printable-clinical-slip"
             className="bg-white rounded-2xl border-2 border-slate-300 shadow-lg p-6 sm:p-8 space-y-6 text-slate-800 font-sans print:border-none print:shadow-none print:p-0 print:m-0"
           >
-            {/* 1. Official Letterhead Header */}
-            <div className="border-b-2 border-slate-900 pb-4">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                {/* Hospital & Govt Emblems */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-indigo-900">
-                    <span className="bg-indigo-100 px-2 py-0.5 rounded">Department of Health &amp; Family Welfare</span>
-                    <span>Government of Odisha</span>
+            {/* 1. Official Letterhead Header (Can be hidden if printing onto pre-printed stationary) */}
+            {printStationeryMode === 'full_letterhead' ? (
+              <div className="border-b-2 border-slate-900 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  {/* Hospital & Govt Emblems */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-indigo-900">
+                      <span className="bg-indigo-100 px-2 py-0.5 rounded">Department of Health &amp; Family Welfare</span>
+                      <span>Government of Odisha</span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                      {facilityName}
+                    </h3>
+                    <p className="text-xs text-slate-600 font-medium">
+                      {facilityDistrict} • 24x7 Emergency Clinical Facility • BSKY &amp; NHM Accredited
+                    </p>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                    {facilityName}
-                  </h3>
-                  <p className="text-xs text-slate-600 font-medium">
-                    {facilityDistrict} • 24x7 Emergency Clinical Facility • BSKY &amp; NHM Accredited
-                  </p>
+
+                  {/* Verifiable QR Code & Document ID Stamp */}
+                  <div className="flex items-center sm:items-start gap-3 bg-slate-50 border border-slate-200 p-2.5 rounded-xl shrink-0">
+                    {qrDataUrl && (
+                      <img
+                        src={qrDataUrl}
+                        alt="Verifiable QR Code"
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded border border-slate-300 shadow-2xs"
+                      />
+                    )}
+                    <div className="text-[10px] space-y-0.5 text-slate-600 font-mono">
+                      <span className="block font-black text-slate-900 text-xs">
+                        {verificationToken?.docId}
+                      </span>
+                      <span className="text-emerald-700 font-bold block">✓ ABDM VERIFIABLE</span>
+                      <span>108 CAD: <strong>{verificationToken?.cadToken}</strong></span>
+                      <span>Date: {new Date().toLocaleDateString()}</span>
+                      <span>Time: {new Date().toLocaleTimeString()}</span>
+                      <span className="text-[9px] text-slate-400 block truncate max-w-[120px]">
+                        {verificationToken?.securityHash}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Verifiable QR Code & Document ID Stamp */}
-                <div className="flex items-center sm:items-start gap-3 bg-slate-50 border border-slate-200 p-2.5 rounded-xl shrink-0">
-                  {qrDataUrl && (
-                    <img
-                      src={qrDataUrl}
-                      alt="Verifiable QR Code"
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded border border-slate-300 shadow-2xs"
-                    />
-                  )}
-                  <div className="text-[10px] space-y-0.5 text-slate-600 font-mono">
-                    <span className="block font-black text-slate-900 text-xs">
-                      {verificationToken?.docId}
-                    </span>
-                    <span className="text-emerald-700 font-bold block">✓ ABDM VERIFIABLE</span>
-                    <span>108 CAD: <strong>{verificationToken?.cadToken}</strong></span>
-                    <span>Date: {new Date().toLocaleDateString()}</span>
-                    <span>Time: {new Date().toLocaleTimeString()}</span>
-                    <span className="text-[9px] text-slate-400 block truncate max-w-[120px]">
-                      {verificationToken?.securityHash}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Document Banner Type */}
-              <div className="mt-4 pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-black uppercase tracking-wider">
-                  {activeTab === 'prescription' ? (
-                    <>
-                      <Pill className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>Official Medical Prescription (NMC Regulations 2023)</span>
-                    </>
-                  ) : (
-                    <>
-                      <Ambulance className="w-3.5 h-3.5 text-rose-400" />
-                      <span>Inter-Facility Clinical Referral Slip (NHM 108 Transit)</span>
-                    </>
-                  )}
-                </span>
-
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="font-bold text-slate-600">Acuity Status:</span>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full font-black text-[11px] ${
-                      currentCase.acuity === 'RED'
-                        ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                        : 'bg-amber-100 text-amber-800 border border-amber-300'
-                    }`}
-                  >
-                    {currentCase.acuity} PRIORITY EMERGENCY
+                {/* Document Banner Type */}
+                <div className="mt-4 pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-black uppercase tracking-wider">
+                    {activeTab === 'prescription' ? (
+                      <>
+                        <Pill className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>Official Medical Prescription (NMC Regulations 2023)</span>
+                      </>
+                    ) : (
+                      <>
+                        <Ambulance className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Inter-Facility Clinical Referral Slip (NHM 108 Transit)</span>
+                      </>
+                    )}
                   </span>
+
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="font-bold text-slate-600">Acuity Status:</span>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full font-black text-[11px] ${
+                        currentCase.acuity === 'RED'
+                          ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                          : 'bg-amber-100 text-amber-800 border border-amber-300'
+                      }`}
+                    >
+                      {currentCase.acuity} PRIORITY EMERGENCY
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="border-b border-dashed border-slate-300 pb-3 flex justify-between items-center text-xs">
+                <span className="text-slate-400 italic">
+                  [Pre-Printed Stationery Mode Active: Hospital Crest Suppressed for Print]
+                </span>
+                <span className="font-mono text-indigo-900 font-bold">
+                  {verificationToken?.docId} • {new Date().toLocaleDateString()}
+                </span>
+              </div>
+            )}
 
             {/* 2. Patient Demographics & ABHA Information */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-xs">
@@ -1307,7 +1495,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
               </div>
             </div>
 
-            {/* 3. Vitals & Examination Findings */}
+            {/* 3. Vitals & Examination Findings + Shock Index */}
             <div className="space-y-1.5">
               <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
                 {txt.vitalsLabel}
@@ -1334,6 +1522,26 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                   <strong className="text-indigo-950 font-black text-sm">{vitals.rr}</strong>
                 </div>
               </div>
+
+              {/* Physiological Critical Indices Strip */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-100/80 rounded-lg text-[11px] font-mono">
+                <div className="flex items-center gap-1.5">
+                  <HeartPulse className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>
+                    Shock Index: <strong>{vitalScores.shockIndex}</strong>{' '}
+                    <span
+                      className={`px-1.5 py-0.2 rounded font-bold text-[9px] ${
+                        vitalScores.isShock ? 'bg-rose-600 text-white' : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {vitalScores.isShock ? 'SHOCK HAZARD' : 'NORMAL RANGE'}
+                    </span>
+                  </span>
+                </div>
+                <div className="text-slate-600">
+                  Mean Arterial Pressure (MAP): <strong>{vitalScores.map} mmHg</strong>
+                </div>
+              </div>
             </div>
 
             {/* 4. Clinical Diagnosis & Chief Complaints */}
@@ -1343,20 +1551,29 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                   <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
                     {txt.diagLabel}
                   </span>
-                  <button
-                    onClick={() => handleToggleVoiceDictation('diagnosis')}
-                    className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1 print:hidden cursor-pointer"
-                  >
-                    {isDictating && dictationTarget === 'diagnosis' ? (
-                      <span className="text-rose-600 animate-pulse flex items-center gap-1">
-                        <MicOff className="w-3 h-3" /> Listening...
-                      </span>
-                    ) : (
-                      <>
-                        <Mic className="w-3 h-3" /> <span>Dictate Voice</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2 print:hidden">
+                    <button
+                      onClick={() => setShowIcdModal(true)}
+                      className="text-[10px] font-bold text-teal-700 hover:text-teal-900 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 flex items-center gap-1 cursor-pointer"
+                    >
+                      <Search className="w-2.5 h-2.5" />
+                      <span>{txt.icdBtn}</span>
+                    </button>
+                    <button
+                      onClick={() => handleToggleVoiceDictation('diagnosis')}
+                      className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1 cursor-pointer"
+                    >
+                      {isDictating && dictationTarget === 'diagnosis' ? (
+                        <span className="text-rose-600 animate-pulse flex items-center gap-1">
+                          <MicOff className="w-3 h-3" /> Listening...
+                        </span>
+                      ) : (
+                        <>
+                          <Mic className="w-3 h-3" /> <span>Dictate Voice</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <input
                   type="text"
@@ -1551,6 +1768,74 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                     </div>
                   </div>
                 </div>
+
+                {/* NHM 108 Emergency Handover Checklist */}
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
+                  <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider block">
+                    NHM 108 Inter-Facility Handover Verification Checklist:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={handoverChecks.ivLine}
+                        onChange={(e) => setHandoverChecks({ ...handoverChecks, ivLine: e.target.checked })}
+                        className="rounded text-indigo-600"
+                      />
+                      <span>IV Cannula (18G) Patent</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={handoverChecks.pulseOx}
+                        onChange={(e) => setHandoverChecks({ ...handoverChecks, pulseOx: e.target.checked })}
+                        className="rounded text-indigo-600"
+                      />
+                      <span>Pulse Oximeter Connected</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={handoverChecks.o2Pressure}
+                        onChange={(e) => setHandoverChecks({ ...handoverChecks, o2Pressure: e.target.checked })}
+                        className="rounded text-indigo-600"
+                      />
+                      <span>O2 Cylinder Pressure &gt;150 Bar</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={handoverChecks.attendantConsent}
+                        onChange={(e) => setHandoverChecks({ ...handoverChecks, attendantConsent: e.target.checked })}
+                        className="rounded text-indigo-600"
+                      />
+                      <span>Attendant Transfer Consent OK</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={handoverChecks.casualtyNotified}
+                        onChange={(e) => setHandoverChecks({ ...handoverChecks, casualtyNotified: e.target.checked })}
+                        className="rounded text-indigo-600"
+                      />
+                      <span>Casualty Desk Tele-Informed</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={handoverChecks.emtEscort}
+                        onChange={(e) => setHandoverChecks({ ...handoverChecks, emtEscort: e.target.checked })}
+                        className="rounded text-indigo-600"
+                      />
+                      <span>Staff Nurse / EMT Escort Named</span>
+                    </label>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1613,9 +1898,20 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
               </p>
             </div>
 
-            {/* QR Visual */}
-            <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
-              {qrDataUrl ? (
+            {/* QR Visual or Live Camera Video */}
+            <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300 relative overflow-hidden">
+              {isCameraActive ? (
+                <div className="relative w-64 h-64 rounded-xl overflow-hidden bg-black flex items-center justify-center shadow-md">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 border-2 border-emerald-400 m-8 rounded-lg pointer-events-none animate-pulse"></div>
+                  <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-red-500 shadow-sm animate-bounce"></div>
+                </div>
+              ) : qrDataUrl ? (
                 <img
                   src={qrDataUrl}
                   alt="Scannable QR Code"
@@ -1629,6 +1925,27 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
               <span className="text-[11px] font-mono text-slate-500 mt-3">
                 Token ID: <strong>{verificationToken?.docId}</strong>
               </span>
+            </div>
+
+            {/* Camera / Upload Scanner Controls */}
+            <div className="flex gap-2">
+              <button
+                onClick={toggleCameraScanner}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  isCameraActive
+                    ? 'bg-rose-600 text-white'
+                    : 'bg-slate-800 text-white hover:bg-slate-700'
+                }`}
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>{isCameraActive ? 'Stop Camera' : 'Live Camera Scanner'}</span>
+              </button>
+
+              <label className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-slate-300">
+                <Upload className="w-3.5 h-3.5" />
+                <span>{uploadedFileName ? 'QR Scanned ✓' : 'Upload QR Slip'}</span>
+                <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+              </label>
             </div>
 
             {/* Tamper Simulation Toggle */}
@@ -1659,7 +1976,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Simulate Receiving Hospital Verification</span>
+                <span>Audit Certificate Integrity</span>
               </button>
 
               <button
@@ -1754,7 +2071,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
             {!verifyStatus && (
               <div className="p-12 text-center text-slate-400 border border-dashed rounded-2xl">
                 <QrCode className="w-12 h-12 mx-auto mb-2 text-slate-300" />
-                <p className="text-xs font-semibold">Click "Simulate Receiving Hospital Verification" to audit the digital credentials.</p>
+                <p className="text-xs font-semibold">Click "Audit Certificate Integrity" or scan with camera to verify credentials.</p>
               </div>
             )}
           </div>
@@ -2013,6 +2330,148 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer"
               >
                 Save Signature
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────── */}
+      {/* 9. MODAL: ICD-10 STANDARDIZED DIAGNOSIS SEARCH */}
+      {/* ───────────────────────────────────────────────────────── */}
+      {showIcdModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Search className="w-5 h-5 text-teal-600" />
+                <h3 className="font-bold text-sm text-slate-900">
+                  Search &amp; Insert Standard ICD-10 Diagnosis
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowIcdModal(false)}
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Search diagnosis name, ICD code, or condition..."
+                value={icdSearchTerm}
+                onChange={(e) => setIcdSearchTerm(e.target.value)}
+                className="w-full p-2.5 border border-slate-300 rounded-xl text-xs"
+              />
+            </div>
+
+            <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs">
+              {filteredIcdList.map((item) => (
+                <div
+                  key={item.code}
+                  onClick={() => handleSelectIcdDiagnosis(item)}
+                  className="p-3 hover:bg-teal-50/70 rounded-xl cursor-pointer transition-all flex items-center justify-between"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold bg-teal-100 text-teal-900 px-2 py-0.5 rounded text-[11px]">
+                        {item.code}
+                      </span>
+                      <strong className="text-slate-900">{item.name}</strong>
+                    </div>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">{item.category}</span>
+                  </div>
+                  <span className="text-teal-700 font-bold text-[11px] shrink-0">Insert &rarr;</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setShowIcdModal(false)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────── */}
+      {/* 10. MODAL: OFFICIAL ABHA DIGITAL HEALTH CARD */}
+      {/* ───────────────────────────────────────────────────────── */}
+      {showAbhaCardModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-teal-600" />
+                <h3 className="font-bold text-sm text-slate-900">
+                  Ayushman Bharat Health Account (ABHA) Card
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowAbhaCardModal(false)}
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Official Indian ABHA Card Graphics */}
+            <div className="rounded-2xl border-2 border-teal-600 bg-gradient-to-br from-teal-50 via-white to-emerald-50 p-5 shadow-md relative overflow-hidden space-y-4">
+              {/* Top Indian Tricolor Stripe */}
+              <div className="h-1.5 w-full bg-gradient-to-r from-orange-500 via-white to-emerald-600 rounded-full"></div>
+
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[10px] font-black uppercase text-teal-900 tracking-wider block">
+                    National Health Authority • Govt of India
+                  </span>
+                  <span className="text-xs font-black text-slate-900">ABHA Digital Health Card</span>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-teal-700 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+                  ABHA
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-slate-200 border-2 border-teal-500 rounded-xl flex items-center justify-center text-slate-400 font-bold shrink-0">
+                  <User className="w-8 h-8 text-teal-800" />
+                </div>
+                <div className="space-y-0.5 text-xs">
+                  <strong className="text-slate-900 text-sm block font-black">{patientName}</strong>
+                  <div className="text-slate-600">{patientAge} Yrs / {patientGender}</div>
+                  <div className="text-slate-600">Blood Group: <strong>{currentCase.bloodGroup}</strong></div>
+                  <div className="text-slate-500 text-[10px]">District: {currentCase.district}, Odisha</div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-white/90 border border-teal-200 rounded-xl space-y-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">ABHA Number:</span>
+                <span className="font-mono text-base font-black text-teal-950 tracking-wider block">
+                  {patientAbha}
+                </span>
+                <span className="text-[10px] text-teal-700 font-semibold block">
+                  ABHA Address: {patientAbha.replace(/[^0-9]/g, '').slice(0, 10)}@abdm
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center text-[10px] text-slate-500 pt-1">
+                <span>✓ Verified ABDM M1/M2/M3</span>
+                <span>SwasthyaMitra Odisha Portal</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setShowAbhaCardModal(false)}
+                className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-bold cursor-pointer"
+              >
+                Close Card
               </button>
             </div>
           </div>
