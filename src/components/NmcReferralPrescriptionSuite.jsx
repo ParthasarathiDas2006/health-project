@@ -425,6 +425,14 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
 
   // Print Mode Options: 'full_letterhead' | 'blank_pad'
   const [printStationeryMode, setPrintStationeryMode] = useState('full_letterhead');
+  // Copy Set Mode: 'single' | 'triplicate'
+  const [printCopyMode, setPrintCopyMode] = useState('single');
+
+  // Casualty Tele-Handover Call State
+  const [teleCallAcknowledged, setTeleCallAcknowledged] = useState(false);
+  const [teleCallOfficer, setTeleCallOfficer] = useState('');
+  const [teleCallNotes, setTeleCallNotes] = useState('');
+  const [copyFhirSuccess, setCopyFhirSuccess] = useState(false);
 
   // Paramedic Handover Checklist Items
   const [handoverChecks, setHandoverChecks] = useState({
@@ -565,6 +573,175 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
 
   const vitalScores = computeVitalsScores();
 
+  // Calculate MEWS (Modified Early Warning Score: 0 - 14)
+  const computeMewsScore = () => {
+    let score = 0;
+    try {
+      const bpParts = (vitals.bp || '120/80').split('/');
+      const sbp = parseFloat(bpParts[0]) || 120;
+      const hr = parseFloat((vitals.pulse || '72').replace(/[^0-9.]/g, '')) || 72;
+      const spo2 = parseFloat((vitals.spo2 || '98%').replace(/[^0-9.]/g, '')) || 98;
+      const tempF = parseFloat((vitals.temp || '98.6°F').replace(/[^0-9.]/g, '')) || 98.6;
+
+      // Systolic BP score
+      if (sbp <= 70) score += 3;
+      else if (sbp <= 80) score += 2;
+      else if (sbp <= 100) score += 1;
+      else if (sbp >= 200) score += 2;
+
+      // Heart Rate score
+      if (hr <= 40) score += 2;
+      else if (hr <= 50) score += 1;
+      else if (hr >= 130) score += 3;
+      else if (hr >= 111) score += 2;
+      else if (hr >= 101) score += 1;
+
+      // SpO2 score
+      if (spo2 < 92) score += 3;
+      else if (spo2 <= 95) score += 1;
+
+      // Temperature score
+      if (tempF < 95.0) score += 2;
+      else if (tempF >= 101.4) score += 2;
+      else if (tempF >= 100.4) score += 1;
+
+      let riskLevel = 'LOW';
+      let guidance = 'Standard peripheral ward / 108 non-critical transit.';
+      let colorClass = 'text-emerald-700 bg-emerald-50 border-emerald-200';
+
+      if (score >= 5) {
+        riskLevel = 'CRITICAL / RED ALERT';
+        guidance = 'Immediate Critical Care / ICU team mandatory. Continuous 108 ALS cardiac & SpO2 monitoring.';
+        colorClass = 'text-rose-700 bg-rose-50 border-rose-300';
+      } else if (score >= 3) {
+        riskLevel = 'MODERATE / AMBER ALERT';
+        guidance = 'Escalate to Senior Medical Officer. 15-minute vitals check en-route.';
+        colorClass = 'text-amber-700 bg-amber-50 border-amber-300';
+      }
+
+      return { score, riskLevel, guidance, colorClass };
+    } catch {
+      return { score: 1, riskLevel: 'LOW', guidance: 'Normal monitoring', colorClass: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+    }
+  };
+
+  const mewsScore = computeMewsScore();
+
+  // Generate ABDM FHIR R4 Bundle Object
+  const generateAbdmFhirBundle = () => {
+    const docId = verificationToken?.docId || `NMC-OD-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+    const cadId = verificationToken?.cadToken || `CAD-108-OD-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    return {
+      resourceType: "Bundle",
+      id: `abdm-referral-${docId}`,
+      meta: {
+        versionId: "1",
+        lastUpdated: new Date().toISOString(),
+        profile: [
+          "https://nrces.in/ndhm/fhir/r4/StructureDefinition/ClinicalArtifactBundle"
+        ]
+      },
+      identifier: {
+        system: "https://health.odisha.gov.in/abdm/bundle-id",
+        value: docId
+      },
+      type: "document",
+      timestamp: new Date().toISOString(),
+      entry: [
+        {
+          fullUrl: `urn:uuid:patient-${patientAbha.replace(/[^0-9]/g, '') || '9123456789'}`,
+          resource: {
+            resourceType: "Patient",
+            id: patientAbha.replace(/[^0-9]/g, '') || '9123456789',
+            identifier: [
+              {
+                type: { coding: [{ system: "https://nrces.in/ndhm/fhir/r4/StructureDefinition/ndhm-identifier", code: "ABHA" }] },
+                value: patientAbha
+              }
+            ],
+            name: [{ text: patientName }],
+            gender: (patientGender || 'unknown').toLowerCase(),
+            birthDate: `${2026 - parseInt(patientAge || '35')}-01-01`
+          }
+        },
+        {
+          fullUrl: `urn:uuid:practitioner-${doctorRegNo.replace(/[^a-zA-Z0-9]/g, '')}`,
+          resource: {
+            resourceType: "Practitioner",
+            id: doctorRegNo.replace(/[^a-zA-Z0-9]/g, ''),
+            identifier: [{ system: "https://nmc.org.in/doctor-reg", value: doctorRegNo }],
+            name: [{ text: doctorName }],
+            qualification: [{ code: { text: doctorDegrees } }]
+          }
+        },
+        {
+          fullUrl: `urn:uuid:service-request-${cadId}`,
+          resource: {
+            resourceType: "ServiceRequest",
+            status: "active",
+            intent: "order",
+            category: [{ coding: [{ system: "http://snomed.info/sct", code: "3457005", display: "Patient referral" }] }],
+            priority: priorityTier === 'RED' ? 'stat' : 'urgent',
+            code: { text: `Emergency 108 Transfer to ${referralTarget}` },
+            reasonCode: [{ text: referralReason }],
+            patient: { reference: `urn:uuid:patient-${patientAbha.replace(/[^0-9]/g, '') || '9123456789'}`, display: patientName }
+          }
+        },
+        {
+          fullUrl: `urn:uuid:condition-${currentCase.icdCode.replace(/[^a-zA-Z0-9]/g, '')}`,
+          resource: {
+            resourceType: "Condition",
+            code: {
+              coding: [{ system: "http://hl7.org/fhir/sid/icd-10", code: currentCase.icdCode, display: currentCase.icdName }],
+              text: diagnosis
+            },
+            subject: { reference: `urn:uuid:patient-${patientAbha.replace(/[^0-9]/g, '') || '9123456789'}`, display: patientName }
+          }
+        },
+        ...medications.map((med, idx) => ({
+          fullUrl: `urn:uuid:medication-request-${idx + 1}`,
+          resource: {
+            resourceType: "MedicationRequest",
+            status: "active",
+            intent: "order",
+            medicationCodeableConcept: {
+              text: `${med.name} (${med.dosage}, ${med.form})`
+            },
+            dosageInstruction: [
+              {
+                text: `${med.freq} for ${med.duration}`,
+                additionalInstruction: [{ text: med.instructions }]
+              }
+            ]
+          }
+        }))
+      ]
+    };
+  };
+
+  // Copy ABDM FHIR JSON to Clipboard
+  const handleCopyFhirJson = () => {
+    const fhirObj = generateAbdmFhirBundle();
+    navigator.clipboard.writeText(JSON.stringify(fhirObj, null, 2));
+    setCopyFhirSuccess(true);
+    setTimeout(() => setCopyFhirSuccess(false), 2500);
+  };
+
+  // Download ABDM FHIR JSON File
+  const handleDownloadFhirJson = () => {
+    const fhirObj = generateAbdmFhirBundle();
+    const blob = new Blob([JSON.stringify(fhirObj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ABDM-FHIR-R4-${patientName.replace(/\s+/g, '_')}-${verificationToken?.docId || 'BUNDLE'}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Multilingual UI Texts
   const txt = {
     'or-IN': {
@@ -574,6 +751,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       tabReferral: '୨. ହସ୍ପିଟାଲ୍ ରେଫରାଲ୍ ସ୍ଲିପ୍ (୧୦୮)',
       tabVerify: '୩. QR କୋଡ୍ ସତ୍ୟତା ଯାଞ୍ଚ (Scanner)',
       tabVault: '୪. ଜାରି କରାଯାଇଥିବା ଦଲିଲ୍ ଭଲ୍ଟ',
+      tabSbar: '୫. NABH SBAR ଟ୍ରାଞ୍ଜିଟ୍ ଓ ABDM FHIR',
       nmcNotice: 'NMC ମାଣ୍ଡେଟ୍ ୨୦୨୩: ସମସ୍ତ ଔଷଧର ନାମ ବଡ଼ ଅକ୍ଷରରେ (GENERIC CAPITAL LETTERS) ଲିଖିତ।',
       btnPrintPdf: 'ପ୍ରିଣ୍ଟ୍ / PDF ସେଭ୍ କରନ୍ତୁ',
       btnVerifyDoc: 'QR କୋଡ୍ ଯାଞ୍ଚ କରନ୍ତୁ',
@@ -608,6 +786,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       tabReferral: '2. अस्पताल रेफरल पर्ची (108)',
       tabVerify: '3. QR कोड सत्यता सत्यापन (Scanner)',
       tabVault: '4. जारी किए गए दस्तावेज वॉल्ट',
+      tabSbar: '5. NABH SBAR ट्रांजिट एवं ABDM FHIR',
       nmcNotice: 'NMC आदेश 2023: सभी दवाओं के जेनेरिक नाम बड़े अक्षरों (CAPITAL LETTERS) में लिखे गए हैं।',
       btnPrintPdf: 'प्रिंट / PDF डाउनलोड करें',
       btnVerifyDoc: 'QR कोड सत्यापित करें',
@@ -642,6 +821,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
       tabReferral: '2. Hospital Referral Slip (108)',
       tabVerify: '3. QR Authenticity Verifier',
       tabVault: '4. Clinical Document Vault',
+      tabSbar: '5. NABH SBAR Handover & ABDM FHIR',
       nmcNotice: 'NMC Mandate 2023: Generic medicine names displayed in standard legible CAPITAL LETTERS.',
       btnPrintPdf: 'Print / Save as PDF Slip',
       btnVerifyDoc: 'Verify QR Authenticity',
@@ -1207,6 +1387,18 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
               {vaultList.length}
             </span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('sbar_handover')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'sbar_handover'
+                ? 'bg-white text-indigo-950 shadow-md ring-2 ring-indigo-400/40'
+                : 'bg-indigo-950/60 text-indigo-200 hover:bg-indigo-800/60'
+            }`}
+          >
+            <HeartPulse className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+            {txt.tabSbar}
+          </button>
         </div>
       </div>
 
@@ -1346,6 +1538,38 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 </button>
               </div>
             </div>
+
+            {/* Triplicate Copy Set Switcher */}
+            <div className="p-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 text-xs flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="font-bold">Copy Set:</span>
+              </div>
+              <div className="flex items-center gap-1 text-[10px]">
+                <button
+                  onClick={() => setPrintCopyMode('single')}
+                  className={`px-2 py-1 rounded font-bold cursor-pointer transition-all ${
+                    printCopyMode === 'single'
+                      ? 'bg-slate-900 text-white shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-200'
+                  }`}
+                  title="Single Referral Slip"
+                >
+                  Single
+                </button>
+                <button
+                  onClick={() => setPrintCopyMode('triplicate')}
+                  className={`px-2 py-1 rounded font-bold cursor-pointer transition-all ${
+                    printCopyMode === 'triplicate'
+                      ? 'bg-slate-900 text-white shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-200'
+                  }`}
+                  title="Official 3-Copy Triplicate Set (Patient + Hospital MRD + 108 Ambulance)"
+                >
+                  Triplicate (3 Copies)
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* 108 Emergency Transit Corridor & ETA Strip */}
@@ -1429,21 +1653,28 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                   </div>
                 </div>
 
-                {/* Document Banner Type */}
+                {/* Document Banner Type & Triplicate Stamp */}
                 <div className="mt-4 pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-black uppercase tracking-wider">
-                    {activeTab === 'prescription' ? (
-                      <>
-                        <Pill className="w-3.5 h-3.5 text-indigo-400" />
-                        <span>Official Medical Prescription (NMC Regulations 2023)</span>
-                      </>
-                    ) : (
-                      <>
-                        <Ambulance className="w-3.5 h-3.5 text-rose-400" />
-                        <span>Inter-Facility Clinical Referral Slip (NHM 108 Transit)</span>
-                      </>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-black uppercase tracking-wider">
+                      {activeTab === 'prescription' ? (
+                        <>
+                          <Pill className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>Official Medical Prescription (NMC Regulations 2023)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Ambulance className="w-3.5 h-3.5 text-rose-400" />
+                          <span>Inter-Facility Clinical Referral Slip (NHM 108 Transit)</span>
+                        </>
+                      )}
+                    </span>
+                    {printCopyMode === 'triplicate' && (
+                      <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black px-2.5 py-1 rounded-md shadow-2xs">
+                        SHEET 1 OF 3: ORIGINAL (PATIENT &amp; APEX COPY)
+                      </span>
                     )}
-                  </span>
+                  </div>
 
                   <div className="flex items-center gap-2 text-xs">
                     <span className="font-bold text-slate-600">Acuity Status:</span>
@@ -1877,6 +2108,103 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 </div>
               </div>
             </div>
+
+            {/* ── TRIPLICATE HOSPITAL SET (SHEET 2 & SHEET 3) ── */}
+            {printCopyMode === 'triplicate' && (
+              <div className="space-y-6 pt-6">
+                {/* ── SHEET 2: DUPLICATE (REFERRING HOSPITAL MEDICAL RECORDS MRD COPY) ── */}
+                <div className="pt-6 border-t-4 border-dashed border-slate-400 break-before-page space-y-4">
+                  <div className="bg-slate-800 text-white p-2 rounded-lg text-center text-xs font-black tracking-widest flex items-center justify-between px-4">
+                    <span className="text-[10px] text-amber-400 font-mono">TRIPLICATE SET (SHEET 2 OF 3)</span>
+                    <span>DUPLICATE: REFERRING HOSPITAL MEDICAL RECORDS (MRD) ARCHIVE COPY</span>
+                    <span className="text-[10px] text-slate-300 font-mono">RETENTION: 5 YEARS</span>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 border border-slate-300 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">MRD Token:</span>
+                      <strong className="font-mono text-slate-900">{verificationToken?.docId}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Patient Name:</span>
+                      <strong className="text-slate-900">{patientName} ({patientAge}y, {patientGender})</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Referred Destination:</span>
+                      <strong className="text-indigo-950 truncate block">{referralTarget}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">108 CAD Token:</span>
+                      <strong className="font-mono text-rose-900">{verificationToken?.cadToken}</strong>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-white border border-slate-200 rounded-xl text-xs space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Provisional Diagnosis &amp; Clinical Justification:</span>
+                    <p className="font-extrabold text-slate-900">{diagnosis} ({currentCase.icdCode})</p>
+                    <p className="text-slate-700">{referralReason}</p>
+                  </div>
+
+                  <div className="flex justify-between items-center text-xs border-t pt-3">
+                    <div className="text-[10px] text-slate-500">
+                      Filed into Hospital MRD Register by Duty Records Officer on: {new Date().toLocaleDateString()}
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 block">Attending Clinician (RMP):</span>
+                      <strong className="text-slate-900">{doctorName}</strong> ({doctorRegNo})
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── SHEET 3: TRIPLICATE (108 AMBULANCE EMT TRANSIT HANDOVER COPY) ── */}
+                <div className="pt-6 border-t-4 border-dashed border-slate-400 break-before-page space-y-4">
+                  <div className="bg-rose-900 text-white p-2 rounded-lg text-center text-xs font-black tracking-widest flex items-center justify-between px-4">
+                    <span className="text-[10px] text-rose-300 font-mono">TRIPLICATE SET (SHEET 3 OF 3)</span>
+                    <span>TRIPLICATE: 108 EMERGENCY AMBULANCE EMT TRANSIT HANDOVER COPY</span>
+                    <span className="text-[10px] text-rose-200 font-mono">PILOT ESCORT</span>
+                  </div>
+
+                  <div className="p-4 bg-rose-50/70 border border-rose-200 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div>
+                      <span className="text-rose-700 block text-[10px]">108 CAD Incident:</span>
+                      <strong className="font-mono text-rose-950">{verificationToken?.cadToken}</strong>
+                    </div>
+                    <div>
+                      <span className="text-rose-700 block text-[10px]">Golden Hour ETA:</span>
+                      <strong className="text-rose-950">{transitRoute.eta} ({transitRoute.distance})</strong>
+                    </div>
+                    <div>
+                      <span className="text-rose-700 block text-[10px]">Transit Route Corridor:</span>
+                      <strong className="text-slate-900 truncate block">{transitRoute.highway}</strong>
+                    </div>
+                    <div>
+                      <span className="text-rose-700 block text-[10px]">Oxygen Requirement:</span>
+                      <strong className="text-emerald-900">{oxygenReq}</strong>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-white border border-slate-200 rounded-xl text-xs space-y-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">En-Route EMT Vitals Monitoring Protocol:</span>
+                    <div className="grid grid-cols-4 gap-2 text-center text-[11px]">
+                      <div className="bg-slate-50 p-1.5 rounded">Departure BP: <strong>{vitals.bp}</strong></div>
+                      <div className="bg-slate-50 p-1.5 rounded">Pulse: <strong>{vitals.pulse}</strong></div>
+                      <div className="bg-slate-50 p-1.5 rounded">SpO2: <strong>{vitals.spo2}</strong></div>
+                      <div className="bg-slate-50 p-1.5 rounded">Temp: <strong>{vitals.temp}</strong></div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center text-xs border-t pt-3">
+                    <div className="text-[10px] text-slate-500">
+                      108 Emergency Ambulance EMT Sign &amp; Base Station Handover Code: EMT-OD-7721
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 block">Receiving Apex Casualty Desk:</span>
+                      <strong className="text-indigo-900">{referralTarget}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -2141,6 +2469,468 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
               <p className="text-xs font-medium">No documents saved in vault yet. Click "Save to Vault" to archive slips.</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────── */}
+      {/* 5. SUB-TAB 5: NABH SBAR TRANSIT HANDOVER & ABDM FHIR R4 */}
+      {/* ───────────────────────────────────────────────────────── */}
+      {activeTab === 'sbar_handover' && (
+        <div className="space-y-6">
+          {/* Header Action Strip */}
+          <div className="bg-gradient-to-r from-rose-950 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl border border-rose-800/40 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="bg-rose-500/30 text-rose-200 border border-rose-400/40 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+                  NABH &amp; WHO Patient Safety Protocol
+                </span>
+                <span className="bg-teal-500/30 text-teal-200 border border-teal-400/40 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+                  ABDM FHIR R4 Standard
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white mt-1">
+                NABH SBAR Transit Handover Protocol &amp; ABDM FHIR Suite
+              </h3>
+              <p className="text-xs text-rose-200/80 mt-0.5">
+                Situation • Background • Assessment • Recommendation structured critical handover for inter-facility 108 emergency transit.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleCopyFhirJson}
+                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-700 shadow-2xs cursor-pointer transition-all"
+              >
+                {copyFhirSuccess ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copyFhirSuccess ? 'FHIR Copied!' : (txt.btnCopyFhir || 'Copy FHIR JSON')}</span>
+              </button>
+
+              <button
+                onClick={handleDownloadFhirJson}
+                className="px-3.5 py-2 bg-teal-700 hover:bg-teal-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>{txt.btnDownloadFhir || 'Download FHIR (.json)'}</span>
+              </button>
+
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print SBAR Slip</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 4 Pillars of NABH SBAR Structured Handover */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            {/* S - Situation */}
+            <div className="bg-white rounded-2xl border-2 border-rose-200 p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-rose-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-xl bg-rose-600 text-white font-black text-sm flex items-center justify-center shadow-2xs">
+                    S
+                  </span>
+                  <div>
+                    <strong className="text-slate-900 text-sm font-black block">SITUATION (ଘଟଣା / स्थिति)</strong>
+                    <span className="text-[10px] text-slate-400">Immediate clinical trigger &amp; transit priority</span>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${
+                  priorityTier === 'RED' ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>
+                  {priorityTier} PRIORITY TRANSFER
+                </span>
+              </div>
+
+              <div className="space-y-2 text-slate-700">
+                <div className="p-2.5 bg-rose-50/70 border border-rose-100 rounded-xl space-y-1">
+                  <span className="text-[10px] font-bold text-rose-900 uppercase block">Active Provisional Diagnosis:</span>
+                  <p className="font-extrabold text-slate-900 text-xs">{diagnosis}</p>
+                  <span className="text-[10px] font-mono text-rose-700 font-bold bg-white px-2 py-0.5 rounded border border-rose-200 inline-block">
+                    ICD-10: {currentCase.icdCode} - {currentCase.icdName}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
+                    <span className="text-slate-400 block text-[10px]">Patient:</span>
+                    <strong className="text-slate-900">{patientName} ({patientAge}y, {patientGender})</strong>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
+                    <span className="text-slate-400 block text-[10px]">Destination Apex:</span>
+                    <strong className="text-indigo-950 truncate block">{referralTarget}</strong>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                  <span className="text-slate-400 block text-[10px]">Transit Acute Trigger:</span>
+                  <p className="text-slate-800 font-medium">{referralReason}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* B - Background */}
+            <div className="bg-white rounded-2xl border-2 border-indigo-200 p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-indigo-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-xl bg-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-2xs">
+                    B
+                  </span>
+                  <div>
+                    <strong className="text-slate-900 text-sm font-black block">BACKGROUND (ପୃଷ୍ଠଭୂମି / पृष्ठभूमि)</strong>
+                    <span className="text-[10px] text-slate-400">Clinical context &amp; pre-transfer interventions</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                  ABHA: {patientAbha}
+                </span>
+              </div>
+
+              <div className="space-y-2 text-slate-700">
+                <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Chief Complaints &amp; Chronology:</span>
+                  <p className="text-slate-800">{chiefComplaints}</p>
+                </div>
+
+                <div className="p-2.5 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1">
+                  <span className="text-[10px] font-bold text-amber-900 uppercase block">Allergy &amp; Precautions Guard:</span>
+                  <p className="text-amber-950 font-bold">{patientAllergies || 'No known drug allergies reported'}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
+                    <span className="text-slate-400 block text-[10px]">Pre-Transfer IV Line:</span>
+                    <strong className="text-slate-900">18G Cannula (Left Forearm)</strong>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
+                    <span className="text-slate-400 block text-[10px]">O2 Support Status:</span>
+                    <strong className="text-emerald-800">{oxygenReq}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* A - Assessment */}
+            <div className="bg-white rounded-2xl border-2 border-emerald-200 p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-emerald-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center shadow-2xs">
+                    A
+                  </span>
+                  <div>
+                    <strong className="text-slate-900 text-sm font-black block">ASSESSMENT (ଆକଳନ / मूल्यांकन)</strong>
+                    <span className="text-[10px] text-slate-400">Vitals, MEWS score &amp; Shock Index</span>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${mewsScore.colorClass}`}>
+                  MEWS Score: {mewsScore.score} ({mewsScore.riskLevel})
+                </span>
+              </div>
+
+              <div className="space-y-2.5 text-slate-700">
+                {/* Vitals Grid */}
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <span className="text-slate-400 block text-[9px] uppercase font-bold">BP</span>
+                    <strong className="text-slate-900 text-xs">{vitals.bp}</strong>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <span className="text-slate-400 block text-[9px] uppercase font-bold">PULSE</span>
+                    <strong className="text-slate-900 text-xs">{vitals.pulse}</strong>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <span className="text-slate-400 block text-[9px] uppercase font-bold">SPO2</span>
+                    <strong className="text-emerald-800 text-xs">{vitals.spo2}</strong>
+                  </div>
+                  <div className="bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <span className="text-slate-400 block text-[9px] uppercase font-bold">TEMP</span>
+                    <strong className="text-slate-900 text-xs">{vitals.temp}</strong>
+                  </div>
+                </div>
+
+                {/* Shock Index & MAP */}
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
+                    <span className="text-emerald-900 font-bold block text-[10px]">Shock Index (HR/SBP):</span>
+                    <strong className="text-sm font-black text-emerald-950">{vitalScores.shockIndex}</strong>
+                    <span className="text-[10px] text-emerald-700 block">
+                      {vitalScores.shockIndex > 0.9 ? '⚠️ Elevated - Fluid resuscitation active' : '✓ Hemodynamically compensated'}
+                    </span>
+                  </div>
+                  <div className="bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-200">
+                    <span className="text-indigo-900 font-bold block text-[10px]">Mean Arterial Pressure (MAP):</span>
+                    <strong className="text-sm font-black text-indigo-950">{vitalScores.map} mmHg</strong>
+                    <span className="text-[10px] text-indigo-700 block">Target: &gt;65 mmHg for organ perfusion</span>
+                  </div>
+                </div>
+
+                <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-[10px] text-slate-600">
+                  <strong>Clinical Escalation Guideline:</strong> {mewsScore.guidance}
+                </div>
+              </div>
+            </div>
+
+            {/* R - Recommendation */}
+            <div className="bg-white rounded-2xl border-2 border-purple-200 p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-purple-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-xl bg-purple-600 text-white font-black text-sm flex items-center justify-center shadow-2xs">
+                    R
+                  </span>
+                  <div>
+                    <strong className="text-slate-900 text-sm font-black block">RECOMMENDATION (ସୁପାରିଶ / सिफ़ारिश)</strong>
+                    <span className="text-[10px] text-slate-400">108 EMT directives &amp; receiving department</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">
+                  108 En-Route Directives
+                </span>
+              </div>
+
+              <div className="space-y-2 text-slate-700">
+                <div className="p-2.5 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1">
+                  <span className="text-[10px] font-bold text-purple-900 uppercase block">Destination Department Requested:</span>
+                  <p className="font-extrabold text-slate-900">{referralTarget} — Emergency Intensive / HDU Unit</p>
+                </div>
+
+                <div className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[11px]">
+                  <span className="text-slate-400 block text-[10px] font-bold uppercase">En-Route Paramedic Instructions:</span>
+                  <p className="flex items-center gap-1.5 text-slate-800">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Repeat vitals recording every 15 minutes en-route.</span>
+                  </p>
+                  <p className="flex items-center gap-1.5 text-slate-800">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Maintain SpO2 &gt;94% via high-flow O2 if dyspneic.</span>
+                  </p>
+                  <p className="flex items-center gap-1.5 text-slate-800">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Alert destination casualty desk 15 mins prior to arrival.</span>
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] p-2 bg-slate-100 rounded-lg">
+                  <span className="text-slate-500">Transit Transport Mode:</span>
+                  <strong className="text-indigo-900">{transportMode}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Destination Apex Casualty Pre-Arrival Direct Dialer & Handover Logger */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-emerald-600" />
+                  <span>Apex Destination Casualty Pre-Arrival Direct Dialer &amp; Handover Logger</span>
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Referring clinician mandatory protocol: Alert the receiving hospital emergency nodal officer prior to ambulance departure.
+                </p>
+              </div>
+
+              {teleCallAcknowledged && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full text-xs font-bold">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Casualty Handover Confirmed ✓</span>
+                </span>
+              )}
+            </div>
+
+            {/* Quick Dial Buttons to Odisha Apex Casualty Desks */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
+              <a
+                href="tel:06712414080"
+                className="p-2.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex flex-col items-center text-center cursor-pointer group"
+              >
+                <Building2 className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform mb-1" />
+                <span className="font-bold text-slate-900 truncate w-full text-[11px]">SCBMCH Cuttack</span>
+                <span className="text-[10px] text-slate-500 font-mono">0671-2414080</span>
+              </a>
+
+              <a
+                href="tel:06742476789"
+                className="p-2.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex flex-col items-center text-center cursor-pointer group"
+              >
+                <Building2 className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform mb-1" />
+                <span className="font-bold text-slate-900 truncate w-full text-[11px]">AIIMS Bhubaneswar</span>
+                <span className="text-[10px] text-slate-500 font-mono">0674-2476789</span>
+              </a>
+
+              <a
+                href="tel:06802292746"
+                className="p-2.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex flex-col items-center text-center cursor-pointer group"
+              >
+                <Building2 className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform mb-1" />
+                <span className="font-bold text-slate-900 truncate w-full text-[11px]">MKCG Berhampur</span>
+                <span className="text-[10px] text-slate-500 font-mono">0680-2292746</span>
+              </a>
+
+              <a
+                href="tel:06792252102"
+                className="p-2.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex flex-col items-center text-center cursor-pointer group"
+              >
+                <Building2 className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform mb-1" />
+                <span className="font-bold text-slate-900 truncate w-full text-[11px]">PRM Baripada</span>
+                <span className="text-[10px] text-slate-500 font-mono">06792-252102</span>
+              </a>
+
+              <a
+                href="tel:06852250101"
+                className="p-2.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex flex-col items-center text-center cursor-pointer group"
+              >
+                <Building2 className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform mb-1" />
+                <span className="font-bold text-slate-900 truncate w-full text-[11px]">SLN Koraput</span>
+                <span className="text-[10px] text-slate-500 font-mono">06852-250101</span>
+              </a>
+
+              <a
+                href="tel:06742391983"
+                className="p-2.5 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all flex flex-col items-center text-center cursor-pointer group"
+              >
+                <Building2 className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform mb-1" />
+                <span className="font-bold text-slate-900 truncate w-full text-[11px]">Capital Hospital BBSR</span>
+                <span className="text-[10px] text-slate-500 font-mono">0674-2391983</span>
+              </a>
+            </div>
+
+            {/* Handover Call Logging Form */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Receiving Casualty Officer (CMO):</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Dr. B. Mohapatra, CMO Casualty"
+                  value={teleCallOfficer}
+                  onChange={(e) => setTeleCallOfficer(e.target.value)}
+                  className="w-full p-2 bg-white border border-slate-300 rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Handover Notes / Bed Confirmation:</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Bed #4 HDU held; Blood crossmatch requisitioned"
+                  value={teleCallNotes}
+                  onChange={(e) => setTeleCallNotes(e.target.value)}
+                  className="w-full p-2 bg-white border border-slate-300 rounded-lg"
+                />
+              </div>
+
+              <div className="flex items-end">
+                <button
+                  onClick={() => setTeleCallAcknowledged(true)}
+                  className="w-full p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Log Tele-Handover Call</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ABDM FHIR R4 Bundle JSON Viewer & Standards Validator */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-indigo-600" />
+                <h4 className="text-sm font-extrabold text-slate-900">
+                  Ayushman Bharat Digital Mission (ABDM) FHIR R4 Bundle Validator
+                </h4>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold">
+                Profile: ClinicalArtifactBundle (v1.0)
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              National standard interoperable HL7 FHIR R4 bundle payload. Can be uploaded directly to Ayushman Bharat Digital Locker or hospital EMR systems:
+            </p>
+
+            <pre className="p-3 bg-slate-900 text-emerald-300 rounded-xl font-mono text-[11px] max-h-64 overflow-y-auto border border-slate-800 shadow-inner">
+              {JSON.stringify(generateAbdmFhirBundle(), null, 2)}
+            </pre>
+          </div>
+
+          {/* Printable Vernacular Patient Medication Schedule (ରୋଗୀ ଔଷଧ ସେବନ ନିର୍ଦ୍ଦେଶାବଳୀ) */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <Pill className="w-4 h-4 text-indigo-600" />
+                  <span>ରୋଗୀ ଓ ସହାୟକଙ୍କ ପାଇଁ ସ୍ୱଚ୍ଛ ଔଷଧ ସେବନ କାର୍ଡ (Patient Visual Dosage Schedule)</span>
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Easy visual schedule for rural patients and family attendants with time-of-day icons.
+                </p>
+              </div>
+              <span className="text-[10px] bg-indigo-50 text-indigo-900 font-bold px-2 py-0.5 rounded border border-indigo-200">
+                Odia / Hindi / English
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {medications.map((med, idx) => (
+                <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                  <div className="flex justify-between items-start">
+                    <strong className="text-xs font-extrabold text-slate-900 block truncate">
+                      {med.name}
+                    </strong>
+                    <span className="text-[10px] bg-slate-200 px-1.5 py-0.2 rounded font-bold text-slate-700">
+                      {med.form}
+                    </span>
+                  </div>
+
+                  <div className="text-[11px] text-slate-600 font-semibold">
+                    Dose: {med.dosage} • Duration: {med.duration}
+                  </div>
+
+                  {/* Visual Time-of-Day Icons */}
+                  <div className="grid grid-cols-3 gap-1 text-center text-[10px] pt-1">
+                    <div className="bg-amber-50 border border-amber-200 p-1.5 rounded-lg">
+                      <span className="block text-xs">🌅</span>
+                      <strong className="text-amber-900 block">ସକାଳେ</strong>
+                      <span className="text-[8px] text-slate-500">Morning</span>
+                    </div>
+                    <div className="bg-orange-50 border border-orange-200 p-1.5 rounded-lg">
+                      <span className="block text-xs">☀️</span>
+                      <strong className="text-orange-900 block">ଦ୍ୱିପହର</strong>
+                      <span className="text-[8px] text-slate-500">Afternoon</span>
+                    </div>
+                    <div className="bg-indigo-50 border border-indigo-200 p-1.5 rounded-lg">
+                      <span className="block text-xs">🌙</span>
+                      <strong className="text-indigo-900 block">ରାତିରେ</strong>
+                      <span className="text-[8px] text-slate-500">Night</span>
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] text-emerald-800 font-bold bg-emerald-50 p-1.5 rounded border border-emerald-200 text-center">
+                    🍽️ {med.freq.includes('after') ? 'ଖାଇବା ପରେ ସେବନ କରନ୍ତୁ (After Meals)' : 'ଖାଲି ପେଟରେ / ଖାଇବା ପୂର୍ବରୁ (Before Meals)'}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Critical Patient Advisory Warnings */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] pt-1">
+              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 space-y-0.5">
+                <strong>⚠️ ଜରୁରୀ ସତର୍କତା (Emergency):</strong>
+                <p className="text-[10px]">କୌଣସି ଆଲର୍ଜି, ବାନ୍ତି କିମ୍ବା ଶ୍ୱାସକଷ୍ଟ ହେଲେ ତୁରନ୍ତ ନିକଟସ୍ଥ ଡାକ୍ତରଖାନା ବା ୧୦୮ କୁ ଯୋଗାଯୋଗ କରନ୍ତୁ।</p>
+              </div>
+              <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 space-y-0.5">
+                <strong>💊 ସମ୍ପୂର୍ଣ୍ଣ କୋର୍ସ (Complete Course):</strong>
+                <p className="text-[10px]">ଡାକ୍ତରଙ୍କ ପରାମର୍ଶ ବିନା ଆଣ୍ଟିବାୟୋଟିକ୍ ଔଷଧ ମଝିରେ ବନ୍ଦ କରନ୍ତୁ ନାହିଁ।</p>
+              </div>
+              <div className="p-2.5 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-900 space-y-0.5">
+                <strong>💧 ଜଳ ସେବନ (Hydration):</strong>
+                <p className="text-[10px]">ଔଷଧ ସେବନ ସମୟରେ ପର୍ଯ୍ୟାପ୍ତ ବିଶୁଦ୍ଧ ପିଇବା ପାଣି ଏବଂ ORS ଗ୍ରହଣ କରନ୍ତୁ।</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

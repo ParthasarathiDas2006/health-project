@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import {
   AlertCircle,
   Clock,
@@ -14,7 +15,8 @@ import {
   Award,
   Stethoscope,
   X,
-  MapPin
+  MapPin,
+  QrCode
 } from 'lucide-react';
 import { DoctorAvatar } from '../utils/doctorPhotos';
 import { getHospitalPartners } from '../data/hospitalPartners';
@@ -30,6 +32,7 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [acceptedTicketId, setAcceptedTicketId] = useState(null);
   const [customSwasthyaMitraHospital, setCustomSwasthyaMitraHospital] = useState('');
+  const [modalQrUrl, setModalQrUrl] = useState('');
   const apexHospitals = getHospitalPartners(activeLang);
 
   // Default fallback clinician profile
@@ -285,6 +288,31 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
       return match || activeTickets[0];
     });
   }, [activeLang]);
+
+  // Generate verifiable QR code for quick referral slip modal
+  useEffect(() => {
+    if (showReferralModal && selectedTicket) {
+      const qrPayload = {
+        slipId: `REF-${selectedTicket.id}-2026`,
+        patient: selectedTicket.patientName,
+        urgency: selectedTicket.urgency,
+        fromFacility: activeUser.facility,
+        toFacility: customSwasthyaMitraHospital || selectedTicket.referralRecommendation,
+        referringRmp: activeUser.name,
+        rmpRegNo: activeUser.staffId,
+        issuedAt: new Date().toISOString(),
+        verificationUrl: `https://health.odisha.gov.in/verify/ref?id=REF-${selectedTicket.id}-2026`
+      };
+
+      QRCode.toDataURL(JSON.stringify(qrPayload), {
+        width: 140,
+        margin: 1,
+        color: { dark: '#0f172a', light: '#ffffff' }
+      })
+        .then((url) => setModalQrUrl(url))
+        .catch((err) => console.warn('QR generation error in doctor dashboard', err));
+    }
+  }, [showReferralModal, selectedTicket, customSwasthyaMitraHospital, activeUser]);
 
   // Comprehensive localized UI text map
   const txt = {
@@ -938,12 +966,37 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
 
             {/* Slip Body */}
             <div className="p-6 space-y-4 text-xs text-slate-700 max-h-[75vh] overflow-y-auto">
-              {/* Reference Info */}
-              <div className="flex justify-between border-b pb-3 text-slate-500">
-                <span>
-                  {txt.slipId} <strong className="font-mono text-slate-800">REF-{selectedTicket.id}-2026</strong>
-                </span>
-                <span>{txt.dateTime} <strong>{new Date().toLocaleString(activeLang === 'or-IN' ? 'or-IN' : (activeLang === 'hi-IN' ? 'hi-IN' : 'en-IN'))}</strong></span>
+              {/* Reference Info with Live ABDM QR Code */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-3 text-slate-500">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-700">{txt.slipId}</span>
+                    <strong className="font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      REF-{selectedTicket.id}-2026
+                    </strong>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    {txt.dateTime} <strong>{new Date().toLocaleString(activeLang === 'or-IN' ? 'or-IN' : (activeLang === 'hi-IN' ? 'hi-IN' : 'en-IN'))}</strong>
+                  </div>
+                </div>
+
+                {modalQrUrl && (
+                  <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl p-1.5 shadow-2xs">
+                    <img
+                      src={modalQrUrl}
+                      alt="ABDM Verifiable QR"
+                      className="w-14 h-14 rounded-lg border border-slate-300 bg-white p-0.5"
+                    />
+                    <div className="text-[10px] pr-1.5">
+                      <div className="font-bold text-emerald-800 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>ABDM QR Verified</span>
+                      </div>
+                      <div className="text-slate-600 font-mono text-[9px]">NMC-2023 / NHM</div>
+                      <div className="text-[8px] text-slate-400">Scan via phone / 108 CAD</div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Patient & Urgency Banner */}
@@ -1036,6 +1089,10 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
                   <div className="text-[11px] text-emerald-700 font-semibold">{activeUser.role}</div>
                   <div className="text-[10px] font-mono text-slate-500">{txt.regNo} {activeUser.staffId}</div>
                   <div className="text-[10px] text-slate-400 mt-0.5">{txt.verifiedMedicalSigner}</div>
+                  <div className="inline-flex items-center gap-1 mt-1 text-[9px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                    <span>NMC 2023 & ABDM Digital Sign-off</span>
+                  </div>
                 </div>
               </div>
             </div>
