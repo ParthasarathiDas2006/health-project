@@ -1,7 +1,9 @@
-// SwasthyaMitra Service Worker — Rural PHC Offline Triage & Clinic Suite
-// Cache Version: v1.0.0 (National Health Mission / Odisha Health Portal)
+// SwasthyaMitra Service Worker — Ultra-Reliable Rural PHC Offline Triage & Clinic Suite
+// Version: v1.1.0 (Odisha Health Portal & National Health Mission)
 
-const CACHE_NAME = 'swasthyamitra-phc-v1.0.0';
+const CACHE_NAME = 'swasthyamitra-phc-v1.1.0';
+const DYNAMIC_CACHE_NAME = 'swasthyamitra-dynamic-v1.1.0';
+
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -13,29 +15,37 @@ const STATIC_ASSETS = [
   '/images/xray_hand.jpg',
   '/images/xray_skull.jpg',
   '/images/xray_chest_clinical.jpg',
-  '/images/xray_knees.jpg'
+  '/images/xray_knees.jpg',
+  '/images/xray_normal.jpg',
+  '/images/xray_pneumonia.jpg',
+  '/images/xray_tb.jpg',
+  '/images/xray_fullbody.jpg'
 ];
 
-// Install Event: Pre-cache critical App Shell & Medical References
+// Install Event: Cache core static assets one by one (fault-tolerant)
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Pre-caching Rural PHC Offline App Shell & X-Ray references');
-      return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.warn('[ServiceWorker] Some assets failed pre-caching:', err);
-      });
+    caches.open(CACHE_NAME).then(async (cache) => {
+      console.log('[ServiceWorker] Pre-caching Rural PHC Offline Shell & Clinical Assets...');
+      for (const asset of STATIC_ASSETS) {
+        try {
+          await cache.add(asset);
+        } catch (err) {
+          console.warn('[ServiceWorker] Optional asset could not be pre-cached during install:', asset);
+        }
+      }
     })
   );
   self.skipWaiting();
 });
 
-// Activate Event: Clean up old cache versions
+// Activate Event: Clean up outdated cache versions
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
+          if (cache !== CACHE_NAME && cache !== DYNAMIC_CACHE_NAME) {
             console.log('[ServiceWorker] Removing obsolete cache:', cache);
             return caches.delete(cache);
           }
@@ -46,68 +56,92 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event: Stale-While-Revalidate with Offline Cache Fallback
+// Fetch Event: True Offline-First with Stale-While-Revalidate & SPA Fallback
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Skip non-GET requests or chrome-extension URLs
-  if (req.method !== 'GET' || url.protocol.startsWith('chrome-extension')) {
+  // Skip non-GET requests or browser internal protocols
+  if (req.method !== 'GET' || url.protocol.startsWith('chrome-extension') || url.protocol.startsWith('about')) {
     return;
   }
 
-  // Handle SPA Navigation requests: Return cached index.html if offline
-  if (req.mode === 'navigate') {
+  // 1. HTML Navigation Requests (SPA Route Handling)
+  if (req.mode === 'navigate' || req.destination === 'document') {
     event.respondWith(
-      fetch(req).catch(() => {
-        return caches.match('/index.html') || caches.match('/');
-      })
+      fetch(req)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          // Fallback to cached index.html or root
+          const cachedIndex = await caches.match('/index.html') || await caches.match('/');
+          if (cachedIndex) return cachedIndex;
+          return new Response(
+            `<!DOCTYPE html>
+            <html lang="en">
+              <head><meta charset="UTF-8"><title>SwasthyaMitra Offline Mode</title></head>
+              <body style="font-family:sans-serif;padding:2rem;text-align:center;background:#0f172a;color:#f8fafc;">
+                <h2>📡 SwasthyaMitra Rural PHC — Offline Active</h2>
+                <p>You are working offline with IndexedDB. Please reload once cached.</p>
+              </body>
+            </html>`,
+            { headers: { 'Content-Type': 'text/html' } }
+          );
+        })
     );
     return;
   }
 
-  // Assets, images, and script bundles: Cache-First / Stale-While-Revalidate
+  // 2. Static Assets, Scripts, Styles, Images, and JSON (Cache-First / Stale-While-Revalidate)
   event.respondWith(
     caches.match(req).then((cachedResponse) => {
+      // If cached, return immediately and update cache in background
       if (cachedResponse) {
-        // Revalidate in background for fresh updates
-        fetch(req).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, networkResponse));
-          }
-        }).catch(() => {
-          // Silent catch for offline mode
-        });
+        fetch(req)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              caches.open(DYNAMIC_CACHE_NAME).then((cache) => cache.put(req, networkResponse));
+            }
+          })
+          .catch(() => {
+            // Completely fine when offline
+          });
         return cachedResponse;
       }
 
-      // If not in cache, fetch from network and cache
+      // If not in cache, fetch from network and store in dynamic cache
       return fetch(req)
         .then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse;
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+              cache.put(req, responseClone);
+            });
           }
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(req, responseToCache);
-          });
           return networkResponse;
         })
-        .catch(() => {
-          // Return generic offline response for images if missing
+        .catch(async () => {
+          // Offline fallback for images
           if (req.destination === 'image') {
-            return caches.match('/images/cardiac_triage.jpg');
+            const fallbackImg = await caches.match('/images/cardiac_triage.jpg');
+            if (fallbackImg) return fallbackImg;
           }
-          return new Response('Offline: SwasthyaMitra Rural PHC Cached Mode Active', {
+          // Return generic offline response
+          return new Response('Offline resource unavailable', {
             status: 503,
-            statusText: 'Service Unavailable (Offline)'
+            statusText: 'Offline Resource Unavailable'
           });
         });
     })
   );
 });
 
-// Background Sync Listener
+// Background Sync Listener for queued PHC mutations
 self.addEventListener('sync', (event) => {
   if (event.tag === 'phc-outbox-sync') {
     event.waitUntil(
@@ -120,9 +154,16 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-// PostMessage interface for manual sync and status
+// Message listener for skip waiting & manual precaching trigger
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'PRECACHE_URLS' && Array.isArray(event.data.urls)) {
+    caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+      event.data.urls.forEach((url) => {
+        cache.add(url).catch((err) => console.log('[ServiceWorker] Precache url error:', url, err));
+      });
+    });
   }
 });
