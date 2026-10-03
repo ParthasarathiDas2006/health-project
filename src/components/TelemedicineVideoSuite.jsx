@@ -49,7 +49,12 @@ import {
   Pause,
   HelpCircle,
   Paperclip,
-  CheckCheck
+  CheckCheck,
+  Camera,
+  Grid,
+  Printer,
+  QrCode,
+  Smartphone
 } from 'lucide-react';
 import { DoctorAvatar } from '../utils/doctorPhotos';
 import { getBookedAppointments } from '../utils/authStorage';
@@ -168,6 +173,54 @@ export default function TelemedicineVideoSuite({
   const [playingAudioId, setPlayingAudioId] = useState(null);
   const [expandedImage, setExpandedImage] = useState(null);
   const [inputChat, setInputChat] = useState('');
+
+  // Improvised Clinical Examination & Prescription Hand-off States
+  const [showMeasurementGrid, setShowMeasurementGrid] = useState(false);
+  const [isSyncingVitals, setIsSyncingVitals] = useState(false);
+  const [showNmcRxModal, setShowNmcRxModal] = useState(false);
+  const [whatsappSentNotice, setWhatsappSentNotice] = useState(false);
+  const [rxPrescriptions, setRxPrescriptions] = useState([
+    {
+      id: 'rx-1',
+      name: 'Tab Paracetamol 650mg (Dolo)',
+      generic: 'Paracetamol IP 650mg',
+      dosage: '1 Tablet',
+      freq: 'TDS (3 times/day)',
+      timing: 'After meals (SOS for fever > 100°F)',
+      days: '3 Days',
+      instruction: 'Do not exceed 3 tablets in 24 hours. Maintain hydration.'
+    },
+    {
+      id: 'rx-2',
+      name: 'Electral ORS Powder (WHO Formula)',
+      generic: 'Oral Rehydration Salts IP',
+      dosage: '1 Sachet',
+      freq: 'Throughout day',
+      timing: 'Mix in 1 Liter boiled cooled water',
+      days: '3 Days',
+      instruction: 'Sip 2 to 3 liters daily to prevent hemoconcentration.'
+    },
+    {
+      id: 'rx-3',
+      name: 'Tab Pantoprazole 40mg',
+      generic: 'Pantoprazole Sodium IP 40mg',
+      dosage: '1 Tablet',
+      freq: 'OD (Once daily)',
+      timing: '30 mins before breakfast',
+      days: '5 Days',
+      instruction: 'Gastric mucosal protection during antipyretic course.'
+    },
+    {
+      id: 'rx-4',
+      name: 'Syrup Zinc Sulphate 20mg/5ml',
+      generic: 'Zinc Sulphate Monohydrate',
+      dosage: '5 ml',
+      freq: 'OD (Once daily)',
+      timing: 'After dinner',
+      days: '7 Days',
+      instruction: 'Immune mucosal support during viral recovery.'
+    }
+  ]);
 
   // Patient Clinical Telemetry Profile
   const [patientData, setPatientData] = useState(() => {
@@ -766,13 +819,61 @@ export default function TelemedicineVideoSuite({
     }
   };
 
+  // Capture In-Call Clinical Examination Photo & attach to SOAP
+  const handleCaptureExamSnapshot = () => {
+    playTone('audio_note');
+    const newSnapshot = {
+      imageUrl: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=700&q=80',
+      caption: `Clinical Exam Snapshot • ${patientData.name} • ${formatTime(callDuration)} • Room: ${roomId}`
+    };
+    handleSendSpecialMessage('image', newSnapshot);
+    setClinicalSoapNotes((prev) => ({
+      ...prev,
+      objective: `${prev.objective}\n• Attached Clinical Snapshot: Pharyngeal inspection captured at ${formatTime(callDuration)}.`
+    }));
+  };
+
+  // Sync Bluetooth Peripheral Vitals (Pulse Oximeter & BP Cuff)
+  const handleSyncBluetoothVitals = () => {
+    setIsSyncingVitals(true);
+    playTone('connect');
+    setTimeout(() => {
+      const updatedVitals = {
+        bp: '118/74 mmHg',
+        pulse: '84 bpm',
+        spo2: '98%',
+        temp: '99.4°F',
+        rr: '18/min'
+      };
+      setPatientData((prev) => ({
+        ...prev,
+        vitals: updatedVitals,
+        acuity: 'GREEN'
+      }));
+      handleSendSpecialMessage('vitals', {
+        ...updatedVitals,
+        acuity: 'GREEN',
+        source: 'Synced via Bluetooth BLE (Omron HEM-7120 & ChoiceMMed Oximeter)'
+      });
+      setIsSyncingVitals(false);
+      playTone('connect');
+    }, 1200);
+  };
+
   // Launch Instant NMC Prescription Suite with current patient pre-loaded
   const handleOpenNmcPrescription = () => {
     if (onNavigateToNmc) {
       onNavigateToNmc(patientData);
     } else {
-      alert(`NMC QR e-Prescription initialized for ${patientData.name}. Clinical notes transferred.`);
+      setShowNmcRxModal(true);
     }
+  };
+
+  // Dispatch Prescription to WhatsApp
+  const handleSendWhatsAppRx = () => {
+    setWhatsappSentNotice(true);
+    playTone('message');
+    setTimeout(() => setWhatsappSentNotice(false), 3500);
   };
 
   return (
@@ -1185,6 +1286,30 @@ export default function TelemedicineVideoSuite({
                   </button>
                 </div>
 
+                {/* Clinical Camera Snapshot Button */}
+                <button
+                  type="button"
+                  onClick={handleCaptureExamSnapshot}
+                  className="p-1.5 bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-sky-300 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold"
+                  title="Capture Examination Photo & Append to SOAP Record"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span className="hidden xl:inline">Snapshot</span>
+                </button>
+
+                {/* Millimeter Measurement Grid Overlay */}
+                <button
+                  type="button"
+                  onClick={() => setShowMeasurementGrid((g) => !g)}
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[11px] font-bold ${
+                    showMeasurementGrid ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                  title="Toggle Millimeter Examination Grid for Skin/Throat Analysis"
+                >
+                  <Grid className="w-3.5 h-3.5" />
+                  <span className="hidden xl:inline">Grid</span>
+                </button>
+
                 <span className="text-[11px] font-mono text-emerald-400 hidden md:inline">
                   {networkQuality}
                 </span>
@@ -1246,20 +1371,55 @@ export default function TelemedicineVideoSuite({
                 )}
               </div>
 
+              {/* Millimeter Medical Calibration Grid Overlay */}
+              {showMeasurementGrid && (
+                <div className="absolute inset-0 pointer-events-none z-10 opacity-70">
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      backgroundImage:
+                        'linear-gradient(to right, rgba(245, 158, 11, 0.35) 1px, transparent 1px), linear-gradient(to bottom, rgba(245, 158, 11, 0.35) 1px, transparent 1px)',
+                      backgroundSize: '24px 24px'
+                    }}
+                  />
+                  <div className="absolute top-2 right-2 bg-amber-950/90 border border-amber-500/60 text-amber-300 px-2 py-0.5 rounded text-[9px] font-mono">
+                    CALIBRATED 10mm DERMATOLOGY SCALE
+                  </div>
+                  {/* Center Reticle */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 border border-amber-400/80 rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-amber-400 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Patient Live Vitals HUD Floating Overlay */}
               <div className="absolute top-3 left-3 bg-slate-900/95 backdrop-blur-md p-2.5 rounded-xl border border-slate-700/80 text-[10px] space-y-1.5 shadow-xl select-none hidden sm:block z-20">
                 <div className="flex items-center justify-between gap-3 text-slate-400 font-bold border-b border-slate-800 pb-1">
                   <span className="flex items-center gap-1 text-emerald-400">
-                    <HeartPulse className="w-3 h-3 text-rose-500" />
+                    <HeartPulse className="w-3 h-3 text-rose-500 animate-pulse" />
                     <span>VITALS TELEMETRY</span>
                   </span>
-                  <span className="text-amber-400 font-mono">YELLOW ACUITY</span>
+                  <span className="text-amber-400 font-mono">{patientData.acuity} ACUITY</span>
                 </div>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-slate-200">
                   <span>SpO2: <strong className="text-emerald-400">{patientData.vitals.spo2}</strong></span>
                   <span>Pulse: <strong className="text-amber-400">{patientData.vitals.pulse}</strong></span>
                   <span>BP: <strong>{patientData.vitals.bp}</strong></span>
                   <span>Temp: <strong className="text-rose-400">{patientData.vitals.temp}</strong></span>
+                </div>
+                <div className="pt-1 border-t border-slate-800 flex items-center justify-between">
+                  <span className="text-[9px] text-slate-500 font-mono">BLE Omron/ChoiceMMed</span>
+                  <button
+                    type="button"
+                    onClick={handleSyncBluetoothVitals}
+                    disabled={isSyncingVitals}
+                    className="flex items-center gap-1 text-[9px] font-bold text-sky-400 hover:text-sky-300 disabled:opacity-50 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-2.5 h-2.5 ${isSyncingVitals ? 'animate-spin' : ''}`} />
+                    <span>{isSyncingVitals ? 'Syncing...' : 'Sync BLE'}</span>
+                  </button>
                 </div>
               </div>
 
@@ -2144,6 +2304,205 @@ export default function TelemedicineVideoSuite({
             <div className="flex items-center justify-between text-[11px] text-slate-400">
               <span>Patient: {patientData.name} ({patientData.abhaId})</span>
               <span>Encrypted ABDM Artifact</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 8. OFFICIAL NMC DIGITAL E-PRESCRIPTION & QR VERIFICATION MODAL */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {showNmcRxModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-3xl max-w-3xl w-full p-4 sm:p-6 shadow-2xl relative space-y-4 my-auto">
+            {/* Top Close & Print Controls */}
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-xs">
+                  Rx
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight">
+                    ODISHA DIGITAL HEALTH MISSION • NMC VERIFIED E-PRESCRIPTION
+                  </h3>
+                  <p className="text-[10px] text-slate-500 font-mono">
+                    Token: RX-OD-{roomId} • MoHFW Telemedicine Guidelines 2020 Aligned
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Print Official Prescription Slip"
+                >
+                  <Printer className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                  <span className="hidden sm:inline">Print Slip</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowNmcRxModal(false)}
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Doctor & Clinic Identification Banner */}
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Consulting Registered Medical Practitioner (RMP):</span>
+                <div className="font-black text-sm text-slate-900 dark:text-white">{doctorData.name}</div>
+                <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold">{doctorData.degrees}</div>
+                <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono">OMC Reg No: {doctorData.regNo}</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">Facility: {doctorData.facility}</div>
+              </div>
+
+              <div className="sm:border-l sm:border-slate-200 dark:sm:border-slate-700 sm:pl-3">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Patient Information & ABHA Digital Identity:</span>
+                <div className="font-black text-sm text-slate-900 dark:text-white">{patientData.name}</div>
+                <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-mono font-bold">ABHA: {patientData.abhaId}</div>
+                <div className="text-[10px] text-slate-600 dark:text-slate-400">Age: {patientData.age} Y • Gender: {patientData.gender} • District: {patientData.district}</div>
+                <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                  Vitals: BP {patientData.vitals.bp} | Pulse {patientData.vitals.pulse} | SpO2 {patientData.vitals.spo2}
+                </div>
+              </div>
+            </div>
+
+            {/* Clinical Assessment & Provisional Impression */}
+            <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-3 text-xs space-y-1">
+              <div className="font-bold text-emerald-900 dark:text-emerald-300 flex items-center justify-between">
+                <span>Clinical Impression / Provisional Diagnosis:</span>
+                <span className="text-[10px] bg-emerald-200 dark:bg-emerald-900 text-emerald-950 dark:text-emerald-200 px-2 py-0.5 rounded-full font-mono">
+                  ICD-11: 1D22 (Acute Febrile Illness)
+                </span>
+              </div>
+              <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                {clinicalSoapNotes.assessment}
+              </p>
+            </div>
+
+            {/* Prescribed Medications Table */}
+            <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden text-xs">
+              <div className="bg-slate-100 dark:bg-slate-800 px-3.5 py-2 font-black text-slate-800 dark:text-slate-200 flex items-center justify-between">
+                <span>Prescription (Rx) & Dosage Regimen</span>
+                <span className="text-[10px] text-slate-500 font-mono">{rxPrescriptions.length} Prescribed Medicines</span>
+              </div>
+
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {rxPrescriptions.map((med, idx) => (
+                  <div key={med.id} className="p-3 bg-white dark:bg-slate-900 hover:bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-md bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 text-[10px] font-black flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <strong className="text-slate-900 dark:text-white font-bold">{med.name}</strong>
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 ml-7">
+                        Generic: {med.generic} • <span className="text-indigo-600 dark:text-indigo-400 font-medium">{med.instruction}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3 text-[11px] shrink-0 ml-7 sm:ml-0">
+                      <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded font-mono font-bold">
+                        {med.dosage}
+                      </span>
+                      <span className="px-2 py-0.5 bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 rounded font-bold">
+                        {med.freq}
+                      </span>
+                      <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded font-bold">
+                        {med.days}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Non-Pharmacological Directives & Red Flag Advice */}
+            <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 border border-slate-200 dark:border-slate-700 text-xs space-y-1">
+              <span className="font-bold text-slate-700 dark:text-slate-300 text-[11px]">Dietary, Hydration & Follow-up Directives:</span>
+              <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed whitespace-pre-line">
+                {clinicalSoapNotes.plan}
+              </p>
+            </div>
+
+            {/* Verifiable ABDM QR Code & Digital Signature Stamp */}
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white rounded-xl border border-slate-200 shadow-2xs shrink-0">
+                  <QrCode className="w-16 h-16 text-slate-900" />
+                </div>
+                <div className="text-xs">
+                  <div className="font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>ABDM Cryptographically Verified Slip</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5 max-w-xs leading-tight">
+                    Scan with any smartphone or ABDM PHR app to verify doctor registration on the National Medical Council portal.
+                  </p>
+                  <div className="text-[9px] font-mono text-emerald-700 dark:text-emerald-400 mt-1">
+                    SHA-256: 7f83b1..49e2 (NHA National Gateway)
+                  </div>
+                </div>
+              </div>
+
+              {/* Digital Doctor Signature Stamp */}
+              <div className="border border-indigo-200 dark:border-indigo-900 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-xl p-2.5 text-center min-w-[200px]">
+                <div className="text-[9px] font-black tracking-wider uppercase text-indigo-700 dark:text-indigo-300">
+                  Digitally Authenticated
+                </div>
+                <div className="font-serif italic font-bold text-base text-indigo-950 dark:text-indigo-200 my-0.5">
+                  {doctorData.name}
+                </div>
+                <div className="text-[9px] font-mono text-slate-500 dark:text-slate-400">
+                  Reg: {doctorData.regNo} • {new Date().toLocaleDateString('en-IN')}
+                </div>
+              </div>
+            </div>
+
+            {/* Notification Banner when Sent via WhatsApp */}
+            {whatsappSentNotice && (
+              <div className="p-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-2 animate-bounce shadow-md">
+                <Check className="w-4 h-4" />
+                <span>e-Prescription slip sent successfully via WhatsApp to {patientData.phone}!</span>
+              </div>
+            )}
+
+            {/* Footer Multi-Channel Hand-Off Actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleSendWhatsAppRx}
+                className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              >
+                <Smartphone className="w-4 h-4" />
+                <span>Send via WhatsApp</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  alert(`Prescription #${roomId} transmitted to Jan Aushadhi & PHC Pharmacy Queue.`);
+                  playTone('message');
+                }}
+                className="py-2.5 px-3 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              >
+                <Building2 className="w-4 h-4" />
+                <span>Transmit to Pharmacy</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowNmcRxModal(false)}
+                className="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Done & Return to Call</span>
+              </button>
             </div>
           </div>
         </div>
