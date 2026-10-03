@@ -104,6 +104,8 @@ export default function MobileAppView({
         ashaSub: 'Maternal & Child Health Surveys',
         adminTitle: 'State Command Hub',
         adminSub: '30-District Health Governance',
+        teleconsultTitle: 'ଭିଡିଓ ଟେଲିକନସଲଟେସନ୍',
+        teleconsultSub: 'ଲାଇଭ୍ WebRTC ଭିଡିଓ କଲ୍ ଓ ଡିଜିଟାଲ୍ Rx',
         home: 'Home',
         services: 'Services',
         records: 'Health Records',
@@ -142,6 +144,8 @@ export default function MobileAppView({
         ashaSub: 'मातृ एवं शिशु स्वास्थ्य सर्वेक्षण',
         adminTitle: 'State Command Hub',
         adminSub: '30 जिला कमान एवं टेलीमेट्री',
+        teleconsultTitle: 'लाइव वीडियो टेलीपरामर्श',
+        teleconsultSub: 'WebRTC वीडियो कॉल एवं डिजिटल पर्ची',
         home: 'Home',
         services: 'Services',
         records: 'Health Records',
@@ -180,6 +184,8 @@ export default function MobileAppView({
         ashaSub: 'Maternal & Child Health Surveys',
         adminTitle: 'State Command Hub',
         adminSub: '30-District Health Governance',
+        teleconsultTitle: 'Live Video Teleconsult',
+        teleconsultSub: 'In-App WebRTC Video & AI SOAP Scribe',
         home: 'Home',
         services: 'Services',
         records: 'Health Records',
@@ -229,7 +235,15 @@ export default function MobileAppView({
       title: t.docTitle,
       icon: Stethoscope,
       iconBg: 'bg-blue-50 text-blue-600 border border-blue-200',
-      tag: 'Video OPD'
+      tag: 'OPD Directory'
+    },
+    {
+      id: 'teleconsult',
+      hub: 'citizen',
+      title: t.teleconsultTitle,
+      icon: Video,
+      iconBg: 'bg-purple-50 text-purple-600 border border-purple-200',
+      tag: 'Live WebRTC'
     },
     {
       id: 'prescriptions',
