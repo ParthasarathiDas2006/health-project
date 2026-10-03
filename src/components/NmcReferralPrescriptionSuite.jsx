@@ -512,16 +512,20 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     emtEscort: true
   });
 
-  // HTML5 Canvas Digital Signature Pad State (Advanced Stylus & DSC)
+  // HTML5 Canvas Digital Signature Pad State (Ultra-Smooth Fluid Bezier & DSC)
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [signatureDataUrl, setSignatureDataUrl] = useState(null);
   const [signatureType, setSignatureType] = useState('drawn'); // 'drawn' | 'dsc_stamp' | 'uploaded' | 'cursive'
   const [penColor, setPenColor] = useState('#0f2963'); // Clinical Navy Blue default
   const [penThickness, setPenThickness] = useState(2.5); // 1.5 (fine), 2.5 (standard), 4.0 (bold)
+  const [penStyle, setPenStyle] = useState('gel'); // 'gel' | 'fountain' | 'ballpoint'
   const [signModalTab, setSignModalTab] = useState('draw'); // 'draw' | 'dsc' | 'upload'
   const [strokeHistory, setStrokeHistory] = useState([]); // Undo history
-  const lastPointRef = useRef(null);
+  const pointsRef = useRef([]); // High frequency point smoothing buffer
+  const strokeWidthRef = useRef(2.5);
+  const isDrawingRef = useRef(false);
+  const canvasDprRef = useRef(2);
   const signatureUploadRef = useRef(null);
 
   // Live Camera Scanner State
@@ -1257,93 +1261,248 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     URL.revokeObjectURL(url);
   };
 
-  // Get accurate coordinates for Mouse, Touch, or Stylus Pen
-  const getCanvasCoords = (e) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-
-    let clientX = e.clientX;
-    let clientY = e.clientY;
-
-    if (e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    }
-
-    return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY
-    };
-  };
-
-  // HTML5 High-Resolution Signature Canvas Drawing Handlers (Fluid Bezier Curve)
-  const startDrawing = (e) => {
-    if (e.cancelable && e.type.startsWith('touch')) {
-      e.preventDefault();
-    }
+  // Initialize Retina Hi-DPI Canvas Buffer
+  const setupCanvasDpi = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    const dpr = Math.max(window.devicePixelRatio || 1, 2);
+    canvasDprRef.current = dpr;
 
-    // Save previous state to history before new stroke for Undo
+    const cssWidth = 480;
+    const cssHeight = 160;
+    const targetW = Math.round(cssWidth * dpr);
+    const targetH = Math.round(cssHeight * dpr);
+
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
+      canvas.style.width = `${cssWidth}px`;
+      canvas.style.height = `${cssHeight}px`;
+      ctx.scale(dpr, dpr);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+  };
+
+  // Auto-setup Hi-DPI canvas buffer on modal open
+  useEffect(() => {
+    if (showSignModal && signModalTab === 'draw') {
+      const timer = setTimeout(() => {
+        setupCanvasDpi();
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+  }, [showSignModal, signModalTab]);
+
+  // Auto-Crop Bounding Box for Crisp, Zero-Padding Signature Export
+  const trimCanvasSignature = (canvas) => {
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    if (w === 0 || h === 0) return null;
+
     try {
-      const snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      setStrokeHistory((prev) => [...prev.slice(-15), snapshot]);
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      let minX = w, minY = h, maxX = 0, maxY = 0;
+      let found = false;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const alpha = data[(y * w + x) * 4 + 3];
+          if (alpha > 12) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            found = true;
+          }
+        }
+      }
+
+      if (!found) return null;
+
+      const pad = Math.round(12 * (canvasDprRef.current || 2));
+      const cropX = Math.max(0, minX - pad);
+      const cropY = Math.max(0, minY - pad);
+      const cropW = Math.min(w - cropX, (maxX - minX) + pad * 2);
+      const cropH = Math.min(h - cropY, (maxY - minY) + pad * 2);
+
+      const cropCanvas = document.createElement('canvas');
+      cropCanvas.width = cropW;
+      cropCanvas.height = cropH;
+      const cropCtx = cropCanvas.getContext('2d');
+      cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+      return cropCanvas.toDataURL('image/png');
     } catch {
-      // ignore
+      return canvas.toDataURL('image/png');
+    }
+  };
+
+  // Distance helper
+  const getDistance = (p1, p2) => Math.hypot(p2.x - p1.x, p2.y - p1.y);
+
+  // Modern HTML5 Pointer Events Drawing Handlers (Fluid Bezier Curve with Velocity & Pressure)
+  const handlePointerDown = (e) => {
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setupCanvasDpi();
+
+    if (e.target.setPointerCapture) {
+      try {
+        e.target.setPointerCapture(e.pointerId);
+      } catch {}
     }
 
-    const { x, y } = getCanvasCoords(e);
-    lastPointRef.current = { x, y };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 480 / (rect.width || 480);
+    const scaleY = 160 / (rect.height || 160);
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    const ctx = canvas.getContext('2d');
+    try {
+      const snap = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setStrokeHistory((prev) => [...prev.slice(-15), snap]);
+    } catch {}
+
+    isDrawingRef.current = true;
     setIsDrawing(true);
 
-    ctx.beginPath();
-    ctx.arc(x, y, penThickness / 2, 0, Math.PI * 2);
+    const initialPressure = e.pressure && e.pressure > 0 ? e.pressure : 0.5;
+    pointsRef.current = [{ x, y, time: Date.now(), pressure: initialPressure }];
+
+    let baseWidth = penThickness;
+    if (penStyle === 'fountain') baseWidth *= 1.3;
+    if (penStyle === 'ballpoint') baseWidth *= 0.9;
+    strokeWidthRef.current = baseWidth;
+
+    // Draw initial dot with anti-aliasing
+    ctx.save();
     ctx.fillStyle = penColor;
+    ctx.beginPath();
+    ctx.arc(x, y, baseWidth / 2, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
   };
 
-  const draw = (e) => {
-    if (!isDrawing) return;
-    if (e.cancelable && e.type.startsWith('touch')) {
-      e.preventDefault();
-    }
+  const handlePointerMove = (e) => {
+    if (!isDrawingRef.current) return;
+    e.preventDefault();
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    const { x, y } = getCanvasCoords(e);
-    const lastPoint = lastPointRef.current || { x, y };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 480 / (rect.width || 480);
+    const scaleY = 160 / (rect.height || 160);
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    const now = Date.now();
+    const pressure = e.pressure && e.pressure > 0 && e.pressure <= 1 ? e.pressure : 0.5;
 
-    // Fluid Quadratic Bezier Curve Smoothing
-    const midX = (lastPoint.x + x) / 2;
-    const midY = (lastPoint.y + y) / 2;
+    const points = pointsRef.current;
+    const lastP = points[points.length - 1];
+    if (!lastP) return;
 
-    ctx.beginPath();
-    ctx.moveTo(lastPoint.x, lastPoint.y);
-    ctx.quadraticCurveTo(lastPoint.x, lastPoint.y, midX, midY);
-    ctx.lineWidth = penThickness * 1.5;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = penColor;
-    ctx.stroke();
+    const dist = getDistance(lastP, { x, y });
+    if (dist < 1.0) return; // Sub-pixel jitter filter
 
-    lastPointRef.current = { x, y };
+    // Velocity-based pen tapering for authentic handwriting physics
+    const timeDelta = Math.max(now - lastP.time, 1);
+    const velocity = dist / timeDelta;
+
+    let targetWidth = penThickness;
+    if (penStyle === 'fountain') {
+      targetWidth = Math.max(penThickness * 0.45, Math.min(penThickness * 1.85, penThickness * (1.25 - velocity * 0.22) * (0.6 + pressure * 0.8)));
+    } else if (penStyle === 'ballpoint') {
+      targetWidth = penThickness * (0.85 + pressure * 0.3);
+    } else {
+      // Gel pen (Smooth uniform flow with subtle tapering)
+      targetWidth = Math.max(penThickness * 0.75, Math.min(penThickness * 1.35, penThickness * (1.1 - velocity * 0.12)));
+    }
+
+    strokeWidthRef.current = strokeWidthRef.current * 0.6 + targetWidth * 0.4;
+    points.push({ x, y, time: now, pressure });
+
+    // Multi-Point Smooth Quadratic Bezier Interpolation
+    if (points.length === 2) {
+      const p0 = points[0];
+      const p1 = points[1];
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo((p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
+      ctx.strokeStyle = penColor;
+      ctx.lineWidth = strokeWidthRef.current;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      ctx.restore();
+    } else if (points.length >= 3) {
+      const p0 = points[points.length - 3];
+      const p1 = points[points.length - 2];
+      const p2 = points[points.length - 1];
+
+      const startMid = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+      const endMid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(startMid.x, startMid.y);
+      ctx.quadraticCurveTo(p1.x, p1.y, endMid.x, endMid.y);
+      ctx.strokeStyle = penColor;
+      ctx.lineWidth = strokeWidthRef.current;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      ctx.restore();
+    }
   };
 
-  const stopDrawing = (e) => {
-    if (!isDrawing) return;
-    if (e && e.cancelable && e.type && e.type.startsWith('touch')) {
-      e.preventDefault();
+  const handlePointerUp = (e) => {
+    if (!isDrawingRef.current) return;
+    if (e && e.target && e.target.releasePointerCapture) {
+      try {
+        e.target.releasePointerCapture(e.pointerId);
+      } catch {}
     }
+
+    const points = pointsRef.current;
+    if (points && points.length >= 2) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        const pLast = points[points.length - 1];
+        const pPrev = points[points.length - 2];
+        const mid = { x: (pPrev.x + pLast.x) / 2, y: (pPrev.y + pLast.y) / 2 };
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(mid.x, mid.y);
+        ctx.lineTo(pLast.x, pLast.y);
+        ctx.strokeStyle = penColor;
+        ctx.lineWidth = strokeWidthRef.current;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    isDrawingRef.current = false;
     setIsDrawing(false);
-    lastPointRef.current = null;
+    pointsRef.current = [];
+
     const canvas = canvasRef.current;
     if (canvas) {
-      setSignatureDataUrl(canvas.toDataURL('image/png'));
+      const cropped = trimCanvasSignature(canvas) || canvas.toDataURL('image/png');
+      setSignatureDataUrl(cropped);
       setSignatureType('drawn');
     }
   };
@@ -1356,7 +1515,8 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     const prevSnap = strokeHistory[strokeHistory.length - 1];
     ctx.putImageData(prevSnap, 0, 0);
     setStrokeHistory((prev) => prev.slice(0, -1));
-    setSignatureDataUrl(canvas.toDataURL('image/png'));
+    const cropped = trimCanvasSignature(canvas);
+    setSignatureDataUrl(cropped);
   };
 
   // Clear Pad
@@ -1364,7 +1524,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
     }
     setStrokeHistory([]);
     setSignatureDataUrl(null);
@@ -1374,14 +1537,19 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
   const adoptDefaultSignature = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    setupCanvasDpi();
     const ctx = canvas.getContext('2d');
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
 
     // Save state
     const snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
     setStrokeHistory((prev) => [...prev, snapshot]);
 
-    // Draw Cursive Doctor Name
+    ctx.save();
+    // Draw Cursive Doctor Name with calligraphy style
     ctx.font = 'italic bold 32px "Brush Script MT", "Segoe Script", cursive, Georgia';
     ctx.fillStyle = penColor;
     ctx.fillText(`${doctorName}`, 30, 75);
@@ -1389,7 +1557,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     // Elegant medical flourish line below name
     ctx.beginPath();
     ctx.moveTo(25, 95);
-    ctx.bezierCurveTo(120, 110, 240, 80, 360, 92);
+    ctx.bezierCurveTo(120, 115, 240, 75, 380, 92);
     ctx.lineWidth = 2.5;
     ctx.strokeStyle = penColor;
     ctx.stroke();
@@ -1398,9 +1566,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
     ctx.font = 'bold 11px monospace';
     ctx.fillStyle = '#64748b';
     ctx.fillText(`OMC: ${doctorRegNo} • ${new Date().toLocaleDateString()}`, 35, 120);
+    ctx.restore();
 
-    const data = canvas.toDataURL('image/png');
-    setSignatureDataUrl(data);
+    const cropped = trimCanvasSignature(canvas) || canvas.toDataURL('image/png');
+    setSignatureDataUrl(cropped);
     setSignatureType('cursive');
   };
 
@@ -3776,6 +3945,31 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                     />
                   </div>
 
+                  {/* Pen Style Selector */}
+                  <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase px-1">Pen:</span>
+                    {[
+                      { id: 'gel', label: 'Gel', icon: '✒️' },
+                      { id: 'fountain', label: 'Fountain', icon: '🖋️' },
+                      { id: 'ballpoint', label: 'Ballpoint', icon: '🖊️' }
+                    ].map((style) => (
+                      <button
+                        key={style.id}
+                        type="button"
+                        onClick={() => setPenStyle(style.id)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                          penStyle === style.id
+                            ? 'bg-indigo-600 text-white shadow-2xs'
+                            : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                        title={`${style.label} Pen (Natural Dynamic Physics)`}
+                      >
+                        <span>{style.icon}</span>
+                        <span>{style.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Nib Widths */}
                   <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200">
                     <span className="text-[10px] font-bold text-slate-500 uppercase px-1">Nib:</span>
@@ -3788,7 +3982,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                         key={nib.label}
                         type="button"
                         onClick={() => setPenThickness(nib.size)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
                           penThickness === nib.size
                             ? 'bg-indigo-600 text-white shadow-2xs'
                             : 'text-slate-600 hover:bg-slate-100'
@@ -3838,20 +4032,16 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, onN
                 <div className="relative bg-slate-50 border-2 border-dashed border-indigo-300 rounded-2xl p-2 flex flex-col items-center shadow-inner">
                   <canvas
                     ref={canvasRef}
-                    width={480}
-                    height={160}
-                    className="bg-white rounded-xl cursor-crosshair touch-none shadow-xs border border-slate-200"
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
-                    onTouchStart={startDrawing}
-                    onTouchMove={draw}
-                    onTouchEnd={stopDrawing}
+                    style={{ width: '480px', height: '160px', touchAction: 'none' }}
+                    className="max-w-full bg-white rounded-xl cursor-crosshair shadow-xs border border-slate-200 select-none"
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
                   />
 
                   {/* Watermark Signature Baseline */}
-                  <div className="w-[460px] flex items-center justify-between text-[10px] text-slate-400 font-mono pt-1 select-none pointer-events-none">
+                  <div className="w-[460px] max-w-full flex items-center justify-between text-[10px] text-slate-400 font-mono pt-1 select-none pointer-events-none">
                     <span>✍️ Sign above this baseline</span>
                     <span>{doctorRegNo} • OMC</span>
                   </div>
