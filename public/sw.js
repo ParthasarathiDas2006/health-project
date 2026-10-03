@@ -1,8 +1,8 @@
 // SwasthyaMitra Service Worker — Ultra-Reliable Rural PHC Offline Triage & Clinic Suite
-// Version: v1.2.0 (Odisha Health Portal & National Health Mission)
+// Version: v2.1.0 (Odisha Health Portal & ABDM Mission - Network-First for Fast Deployments)
 
-const CACHE_NAME = 'swasthyamitra-phc-v1.2.0';
-const DYNAMIC_CACHE_NAME = 'swasthyamitra-dynamic-v1.2.0';
+const CACHE_NAME = 'swasthyamitra-phc-v2.1.0';
+const DYNAMIC_CACHE_NAME = 'swasthyamitra-dynamic-v2.1.0';
 
 const STATIC_ASSETS = [
   '/',
@@ -25,11 +25,11 @@ const STATIC_ASSETS = [
   '/images/xray_fullbody.jpg'
 ];
 
-// Install Event: Cache core static assets fault-tolerantly
+// Install Event: Cache core static assets fault-tolerantly & skip waiting
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      console.log('[ServiceWorker] Pre-caching Rural PHC Offline Shell & Clinical Assets...');
+      console.log('[ServiceWorker v2.1.0] Pre-caching Rural PHC Offline Shell & Clinical Assets...');
       for (const asset of STATIC_ASSETS) {
         try {
           await cache.add(asset);
@@ -42,14 +42,14 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate Event: Clean up outdated cache versions
+// Activate Event: Clean up all outdated cache versions immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME && cache !== DYNAMIC_CACHE_NAME) {
-            console.log('[ServiceWorker] Removing obsolete cache:', cache);
+            console.log('[ServiceWorker] Purging obsolete cache:', cache);
             return caches.delete(cache);
           }
         })
@@ -59,7 +59,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event: True Offline-First with Stale-While-Revalidate & SPA Fallback
+// Fetch Event: Network-First for HTML/JS/CSS to ensure instant updates, Cache-Fallback for Offline
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
@@ -69,28 +69,39 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. HTML Navigation Requests (SPA Route Handling)
-  if (req.mode === 'navigate' || req.destination === 'document') {
+  // 1. HTML Navigation Requests & JS/CSS Scripts (Network-First Strategy)
+  const isHtmlOrScript =
+    req.mode === 'navigate' ||
+    req.destination === 'document' ||
+    req.destination === 'script' ||
+    req.destination === 'style' ||
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname === '/';
+
+  if (isHtmlOrScript) {
     event.respondWith(
       fetch(req)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
+          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
             const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
+            caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
               cache.put(req, copy);
-              cache.put('/index.html', copy.clone());
-              cache.put('/', copy.clone());
+              if (req.mode === 'navigate' || url.pathname === '/') {
+                cache.put('/index.html', copy.clone());
+              }
             });
           }
           return networkResponse;
         })
         .catch(async () => {
-          // Fallback to cached index.html or root
-          const cachedIndex =
+          // Network failed: return cached copy if available
+          const cachedResponse =
             (await caches.match(req)) ||
             (await caches.match('/index.html')) ||
             (await caches.match('/'));
-          if (cachedIndex) return cachedIndex;
+          if (cachedResponse) return cachedResponse;
 
           return new Response(
             `<!DOCTYPE html>
@@ -98,7 +109,7 @@ self.addEventListener('fetch', (event) => {
               <head><meta charset="UTF-8"><title>SwasthyaMitra Offline Mode</title></head>
               <body style="font-family:sans-serif;padding:2rem;text-align:center;background:#0f172a;color:#f8fafc;">
                 <h2>📡 SwasthyaMitra Rural PHC — Offline Active</h2>
-                <p>You are working offline with IndexedDB. Please reload once cached.</p>
+                <p>You are working offline with IndexedDB. Please reconnect to sync.</p>
               </body>
             </html>`,
             { headers: { 'Content-Type': 'text/html' } }
@@ -108,10 +119,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Static Assets, Scripts, Styles, Images, Fonts, and JSON (Cache-First / Stale-While-Revalidate)
+  // 2. Images & Other Media: Stale-While-Revalidate / Cache-First
   event.respondWith(
     caches.match(req).then((cachedResponse) => {
-      // If cached, return immediately and update cache in background
       if (cachedResponse) {
         fetch(req)
           .then((networkResponse) => {
@@ -119,13 +129,10 @@ self.addEventListener('fetch', (event) => {
               caches.open(DYNAMIC_CACHE_NAME).then((cache) => cache.put(req, networkResponse));
             }
           })
-          .catch(() => {
-            // Offline - using cached copy
-          });
+          .catch(() => {});
         return cachedResponse;
       }
 
-      // If not in cache, fetch from network and store in dynamic cache
       return fetch(req)
         .then((networkResponse) => {
           if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
@@ -137,7 +144,6 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(async () => {
-          // Offline fallback for images
           if (req.destination === 'image') {
             const fallbackImg = await caches.match('/images/cardiac_triage.jpg');
             if (fallbackImg) return fallbackImg;

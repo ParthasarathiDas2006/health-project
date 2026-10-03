@@ -20,13 +20,19 @@ export function registerServiceWorker() {
             cacheAllAppResources();
           }, 2000);
 
+          // Force check for updates from server on page load
+          try {
+            reg.update();
+          } catch {}
+
           // Listen for updates
           reg.onupdatefound = () => {
             const installingWorker = reg.installing;
             if (installingWorker) {
               installingWorker.onstatechange = () => {
                 if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[PWA] New offline version available; caching complete.');
+                  console.log('[PWA] New version detected, notifying worker to skip waiting...');
+                  installingWorker.postMessage({ type: 'SKIP_WAITING' });
                 }
               };
             }
