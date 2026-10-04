@@ -183,9 +183,10 @@ async function seedData() {
       batch.set(doc(db, 'swasthya_appointments', a.id), { ...a, _syncedAt: new Date().toISOString() });
     }
 
-    // 3. Beds
+    // 3. Beds (both plural and singular collections)
     for (const b of SEED_BEDS) {
       batch.set(doc(db, 'swasthya_bed_bookings', b.id), { ...b, _syncedAt: new Date().toISOString() });
+      batch.set(doc(db, 'swasthya_bed_booking', b.id), { ...b, _syncedAt: new Date().toISOString() });
     }
 
     // 4. Ambulance

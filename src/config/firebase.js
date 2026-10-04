@@ -24,11 +24,13 @@ const STORAGE_KEY = 'swasthya_firebase_config';
  */
 export const getStoredFirebaseConfig = () => {
   try {
-    const local = localStorage.getItem(STORAGE_KEY);
-    if (local) {
-      const parsed = JSON.parse(local);
-      if (parsed.projectId && parsed.apiKey) {
-        return { ...parsed, source: 'localStorage' };
+    if (typeof localStorage !== 'undefined') {
+      const local = localStorage.getItem(STORAGE_KEY);
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (parsed.projectId && parsed.apiKey) {
+          return { ...parsed, source: 'localStorage' };
+        }
       }
     }
   } catch (err) {
@@ -36,13 +38,14 @@ export const getStoredFirebaseConfig = () => {
   }
 
   // Fallback to Vite environment variables
+  const envObj = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {});
   const envConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+    apiKey: envObj.VITE_FIREBASE_API_KEY || '',
+    authDomain: envObj.VITE_FIREBASE_AUTH_DOMAIN || '',
+    projectId: envObj.VITE_FIREBASE_PROJECT_ID || '',
+    storageBucket: envObj.VITE_FIREBASE_STORAGE_BUCKET || '',
+    messagingSenderId: envObj.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+    appId: envObj.VITE_FIREBASE_APP_ID || '',
     source: 'env'
   };
 

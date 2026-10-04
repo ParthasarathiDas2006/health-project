@@ -87,6 +87,15 @@ export const saveFirestoreDoc = async (collectionName, docId, data) => {
     };
 
     await setDoc(docRef, payload, { merge: true });
+
+    // Also mirror to swasthya_bed_booking if bed bookings so user sees it in their exact console collection
+    if (collectionName === FIRESTORE_COLLECTIONS.BED_BOOKINGS) {
+      try {
+        const altRef = doc(db, FIRESTORE_COLLECTIONS.BED_BOOKINGS_ALT, cleanId);
+        await setDoc(altRef, payload, { merge: true });
+      } catch (_) {}
+    }
+
     return true;
   } catch (error) {
     console.error(`Failed to save doc in "${collectionName}":`, error);
@@ -160,6 +169,12 @@ export const uploadBatchToFirestore = async (collectionName, items) => {
       const docId = String(item.id || `REC-${Date.now()}-${Math.floor(Math.random() * 1000)}`);
       const docRef = doc(db, collectionName, docId);
       batch.set(docRef, { ...item, id: docId, _syncedAt: new Date().toISOString() }, { merge: true });
+
+      if (collectionName === FIRESTORE_COLLECTIONS.BED_BOOKINGS) {
+        const altRef = doc(db, FIRESTORE_COLLECTIONS.BED_BOOKINGS_ALT, docId);
+        batch.set(altRef, { ...item, id: docId, _syncedAt: new Date().toISOString() }, { merge: true });
+      }
+
       count++;
     }
 
