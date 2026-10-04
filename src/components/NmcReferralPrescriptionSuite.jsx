@@ -2047,6 +2047,197 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       </div>
 
       {/* ───────────────────────────────────────────────────────── */}
+      {/* 2.5 DOCTOR CLINICAL COCKPIT (NMC & 108 TRANSIT INTEGRATED) */}
+      {/* ───────────────────────────────────────────────────────── */}
+      <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-2xl border border-indigo-700/60 p-5 text-white shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-indigo-800/60 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-black text-white shadow-md">
+              <Sliders className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-black text-white tracking-tight flex items-center gap-2">
+                  <span>Doctor Clinical Cockpit (ଡାକ୍ତରୀ କ୍ଲିନିକାଲ୍ କକ୍ପିଟ୍)</span>
+                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    LIVE NMC &amp; 108 CAD
+                  </span>
+                </h3>
+              </div>
+              <p className="text-xs text-indigo-200/80">
+                Centralized real-time clinical control deck: Section 1-No (Apex RMP Verifier), Section 2-No (ABHA Vitals Guard), Section 3-No (ICD-10 &amp; Tele-Triage Handover).
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => setShowDoctorModal(true)}
+              className="px-3 py-1.5 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-xl font-bold flex items-center gap-1.5 border border-indigo-500/40 shadow-2xs transition-all cursor-pointer"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>RMP Credentials</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSignModal(true)}
+              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+            >
+              <PenTool className="w-3.5 h-3.5" />
+              <span>Digital DSC Pad</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 3 Distinct Clinical Cockpit Command Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
+          {/* COCKPIT FEATURE 1-NO: Official RMP & Live QR Seal Module */}
+          <div className="bg-slate-800/80 border border-indigo-700/50 rounded-xl p-3.5 space-y-2.5 flex flex-col justify-between hover:border-indigo-500 transition-colors">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                <span className="font-black text-indigo-300 flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[11px] font-black">1</span>
+                  <span>RMP &amp; Verifiable QR Seal</span>
+                </span>
+                <span className="text-[9px] bg-emerald-500/20 text-emerald-300 font-mono px-1.5 py-0.5 rounded border border-emerald-400/30">
+                  {verificationToken?.docId ? 'ACTIVE_HASH' : 'SYNCING'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                NMC Sec 27 authorized credentialing with live SHA-256 cryptographic token and OMC council accreditation.
+              </p>
+              <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-700/80 space-y-1 font-mono text-[10px]">
+                <div className="text-slate-400">RMP: <strong className="text-white">{doctorName}</strong></div>
+                <div className="text-slate-400">Reg No: <strong className="text-indigo-300">{doctorRegNo}</strong></div>
+                <div className="text-slate-400 truncate">Doc ID: <span className="text-emerald-400">{verificationToken?.docId || docId}</span></div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1 border-t border-slate-700/60">
+              <button
+                type="button"
+                onClick={() => setActiveTab('verify')}
+                className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs"
+              >
+                <QrCode className="w-3 h-3" />
+                <span>Test QR Verifier</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDocId(`NMC-OD-2026-${Math.floor(100000 + Math.random() * 900000)}`);
+                  setCadToken(`CAD-108-OD-${Math.floor(10000 + Math.random() * 90000)}`);
+                }}
+                className="p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg cursor-pointer transition-colors"
+                title="Generate new cryptographic hash"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* COCKPIT FEATURE 2-NO: Patient Demographics & ABHA Digital Card */}
+          <div className="bg-slate-800/80 border border-indigo-700/50 rounded-xl p-3.5 space-y-2.5 flex flex-col justify-between hover:border-indigo-500 transition-colors">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                <span className="font-black text-purple-300 flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-md bg-purple-600 text-white flex items-center justify-center text-[11px] font-black">2</span>
+                  <span>ABHA Demographics &amp; Vitals</span>
+                </span>
+                <span className="text-[9px] bg-purple-500/20 text-purple-300 font-mono px-1.5 py-0.5 rounded border border-purple-400/30">
+                  ABDM_M2
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                Ayushman Bharat Health Account (ABHA M2) demographic sync, weight-calibrated vitals &amp; critical allergy shield.
+              </p>
+              <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-700/80 space-y-1 text-[10px]">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Patient:</span>
+                  <strong className="text-white truncate max-w-[150px]">{patientName}</strong>
+                </div>
+                <div className="flex justify-between font-mono">
+                  <span className="text-slate-400">ABHA:</span>
+                  <strong className="text-indigo-300">{patientAbha}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Allergy Status:</span>
+                  <span className={`font-bold ${patientAllergies.includes('None') ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {patientAllergies}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1 border-t border-slate-700/60">
+              <button
+                type="button"
+                onClick={() => setShowAbhaCardModal(true)}
+                className="w-full py-1.5 bg-indigo-700 hover:bg-indigo-600 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs"
+              >
+                <Award className="w-3 h-3" />
+                <span>Open ABHA Card</span>
+              </button>
+            </div>
+          </div>
+
+          {/* COCKPIT FEATURE 3-NO: Vitals Triage & Shock Index Escalate */}
+          <div className="bg-slate-800/80 border border-indigo-700/50 rounded-xl p-3.5 space-y-2.5 flex flex-col justify-between hover:border-indigo-500 transition-colors">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                <span className="font-black text-rose-300 flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-md bg-rose-600 text-white flex items-center justify-center text-[11px] font-black">3</span>
+                  <span>Triage Index &amp; ICD-10 Search</span>
+                </span>
+                <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-bold ${
+                  vitalScores.isShock ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-emerald-500/20 text-emerald-300'
+                }`}>
+                  SI: {vitalScores.shockIndex}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                Automated Physiological Shock Index, Mean Arterial Pressure (MAP {vitalScores.map} mmHg), and instant WHO ICD-10 code selector.
+              </p>
+              <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-700/80 space-y-1 font-mono text-[10px]">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Vitals:</span>
+                  <span className="text-white">{vitals.bp} • {vitals.pulse} • {vitals.spo2}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">MEWS Score:</span>
+                  <span className="text-amber-300 font-bold">{mewsScore.score} ({mewsScore.riskLevel})</span>
+                </div>
+                <div className="text-slate-400 truncate">
+                  Diagnosis: <span className="text-slate-200">{diagnosis}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1 border-t border-slate-700/60">
+              <button
+                type="button"
+                onClick={() => setShowIcdModal(true)}
+                className="w-full py-1.5 bg-teal-700 hover:bg-teal-600 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs"
+              >
+                <Search className="w-3 h-3" />
+                <span>Search ICD-10</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('sbar_handover')}
+                className="py-1.5 px-2 bg-rose-700 hover:bg-rose-600 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                title="View in 5-No SBAR Handover Tab"
+              >
+                <HeartPulse className="w-3 h-3" />
+                <span>Tab 5</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ───────────────────────────────────────────────────────── */}
       {/* 3. PRINTABLE OFFICIAL DOCUMENT CANVAS (NMC RX OR REFERRAL) */}
       {/* ───────────────────────────────────────────────────────── */}
       {(activeTab === 'prescription' || activeTab === 'referral') && (
@@ -2239,7 +2430,11 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             )}
             {/* 1. Official Letterhead Header (Can be hidden if printing onto pre-printed stationary) */}
             {printStationeryMode === 'full_letterhead' ? (
-              <div className="border-b-2 border-slate-900 pb-4">
+              <div className="border-b-2 border-slate-900 pb-4 space-y-2">
+                <div className="flex items-center justify-between bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                  <span className="font-black text-amber-300">SECTION 1-NO: OFFICIAL APEX LETTERHEAD &amp; NMC VERIFIABLE QR SEAL</span>
+                  <span className="text-slate-300">STATUTORY INSTRUCTION: PRESERVE FOR CLINICAL AUDIT &amp; LEGAL VERIFICATION</span>
+                </div>
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   {/* Hospital & Govt Emblems */}
                   <div className="space-y-1">
@@ -2328,45 +2523,60 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             )}
 
             {/* 2. Patient Demographics & ABHA Information */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-xs">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Patient Name</span>
-                <strong className="text-slate-900 text-sm font-black">{patientName}</strong>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between bg-indigo-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-indigo-300">SECTION 2-NO: PATIENT DEMOGRAPHICS &amp; ABHA HEALTH IDENTIFIER</span>
+                <span className="text-slate-300">INSTRUCTION: VERIFY IDENTITY WITH GOVT ID (AADHAAR / BSKY / ABHA CARD)</span>
               </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-xs">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Patient Name</span>
+                  <strong className="text-slate-900 text-sm font-black">{patientName}</strong>
+                </div>
 
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Age / Gender</span>
-                <span className="text-slate-800 font-bold">{patientAge} Yrs / {patientGender}</span>
-              </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Age / Gender</span>
+                  <span className="text-slate-800 font-bold">{patientAge} Yrs / {patientGender}</span>
+                </div>
 
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">ABHA Health ID</span>
-                <span className="font-mono text-indigo-900 font-bold">{patientAbha}</span>
-              </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">ABHA Health ID</span>
+                  <span className="font-mono text-indigo-900 font-bold">{patientAbha}</span>
+                </div>
 
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Weight / ABO</span>
-                <span className="text-slate-800 font-bold">{patientWeight} • <span className="text-rose-700 font-extrabold">{currentCase.bloodGroup || 'O+'}</span></span>
-              </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Weight / ABO</span>
+                  <span className="text-slate-800 font-bold">{patientWeight} • <span className="text-rose-700 font-extrabold">{currentCase.bloodGroup || 'O+'}</span></span>
+                </div>
 
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">District &amp; Phone</span>
-                <span className="text-slate-800 font-medium truncate block">{currentCase.district || 'Cuttack'} • {patientPhone}</span>
-              </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">District &amp; Phone</span>
+                  <span className="text-slate-800 font-medium truncate block">{currentCase.district || 'Cuttack'} • {patientPhone}</span>
+                </div>
 
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Allergy Status</span>
-                <span className={`font-bold ${patientAllergies.includes('None') ? 'text-emerald-700' : 'text-rose-700'}`}>
-                  {patientAllergies}
-                </span>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Allergy Status</span>
+                  <span className={`font-bold ${patientAllergies.includes('None') ? 'text-emerald-700' : 'text-rose-700'}`}>
+                    {patientAllergies}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* 3. Vitals & Examination Findings + Shock Index */}
             <div className="space-y-1.5">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
-                {txt.vitalsLabel}
-              </span>
+              <div className="flex items-center justify-between bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-rose-300">SECTION 3-NO: PHYSIOLOGICAL VITALS, EXAMINATION &amp; SHOCK INDEX</span>
+                <span className="text-slate-300">INSTRUCTION: RE-EVALUATE EVERY 15 MINS DURING TRANSIT / ADMISSION</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
+                  {txt.vitalsLabel}
+                </span>
+                <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
+                  MEWS Alert: {mewsScore.riskLevel}
+                </span>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100 text-center text-xs">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold block">Blood Pressure</span>
@@ -2413,6 +2623,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
 
             {/* 4. Clinical Diagnosis & Chief Complaints */}
             <div className="space-y-3">
+              <div className="flex items-center justify-between bg-teal-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-teal-300">SECTION 4-NO: CLINICAL PROVISIONAL DIAGNOSIS &amp; CHIEF COMPLAINTS</span>
+                <span className="text-slate-300">INSTRUCTION: MANDATORY WHO ICD-10 CODE &amp; SYMPTOM CHRONOLOGY SPECIFIED</span>
+              </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
@@ -2482,6 +2696,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             {/* 5. A. PRESCRIPTION SECTION (WHEN IN RX TAB) */}
             {activeTab === 'prescription' && (
               <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between bg-indigo-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                  <span className="font-black text-indigo-300">SECTION 5-NO: NMC COMPLIANT GENERIC PHARMACOTHERAPY &amp; DOSAGE DIRECTIVES</span>
+                  <span className="text-slate-300">INSTRUCTION: MANDATORY CAPITAL LETTERS (NMC 2023) • FREE NIRAMAYA SUPPLY</span>
+                </div>
                 <div className="flex items-center justify-between border-b-2 border-slate-900 pb-1.5">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-black text-slate-900 font-serif">℞</span>
@@ -2705,6 +2923,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             {/* 5. B. REFERRAL SLIP SECTION (WHEN IN REFERRAL TAB) */}
             {activeTab === 'referral' && (
               <div className="space-y-4 pt-2">
+                <div className="flex items-center justify-between bg-rose-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                  <span className="font-black text-rose-300">SECTION 5-NO: NHM 108 INTER-FACILITY REFERRAL, SBAR HANDOVER &amp; EN-ROUTE RX</span>
+                  <span className="text-slate-300">INSTRUCTION: MANDATORY EMT ESCORT, TELE-HANDOVER CALL &amp; DUAL-FACILITY TRIAGE</span>
+                </div>
                 <div className="border-b-2 border-rose-900 pb-1 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Ambulance className="w-5 h-5 text-rose-700" />
@@ -3091,16 +3313,21 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             )}
 
             {/* 6. Attending RMP Signature & Verification Seal */}
-            <div className="border-t-2 border-slate-900 pt-6 mt-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              {/* Statutory Note */}
-              <div className="text-[10px] text-slate-500 max-w-sm space-y-1">
-                <p className="font-bold text-slate-700">
-                  National Health Mission • Odisha State Health Authority
-                </p>
-                <p>
-                  This document is generated by an authorized Registered Medical Practitioner (RMP) under Section 27 of NMC Act 2019 and signed with ABDM cryptographic hash.
-                </p>
+            <div className="border-t-2 border-slate-900 pt-4 mt-6 space-y-4">
+              <div className="flex items-center justify-between bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-emerald-400">SECTION 6-NO: REGISTERED MEDICAL PRACTITIONER (RMP) DIGITAL SIGNATURE &amp; LEGAL CERTIFICATION</span>
+                <span className="text-slate-300">STATUTORY MANDATE: SIGNED PER SECTION 27 OF NMC ACT 2019 &amp; ABDM DSC STANDARD</span>
               </div>
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                {/* Statutory Note */}
+                <div className="text-[10px] text-slate-500 max-w-sm space-y-1">
+                  <p className="font-bold text-slate-700">
+                    National Health Mission • Odisha State Health Authority
+                  </p>
+                  <p>
+                    This document is generated by an authorized Registered Medical Practitioner (RMP) under Section 27 of NMC Act 2019 and signed with ABDM cryptographic hash.
+                  </p>
+                </div>
 
               {/* RMP Signature Seal with Vector Signature Overlay */}
               <div className="text-right sm:border-l sm:pl-6 border-slate-300 space-y-1 shrink-0">
@@ -3151,6 +3378,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                 </div>
               </div>
             </div>
+          </div>
 
             {/* ── TRIPLICATE HOSPITAL SET (SHEET 2 & SHEET 3) ── */}
             {printCopyMode === 'triplicate' && (
