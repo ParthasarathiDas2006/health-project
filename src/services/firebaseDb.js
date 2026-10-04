@@ -23,6 +23,7 @@ export const FIRESTORE_COLLECTIONS = {
   USERS: 'swasthya_users',
   APPOINTMENTS: 'swasthya_appointments',
   BED_BOOKINGS: 'swasthya_bed_bookings',
+  BED_BOOKINGS_ALT: 'swasthya_bed_booking',
   AMBULANCE_REQUESTS: 'swasthya_ambulance_requests',
   BLOOD_REQUESTS: 'swasthya_blood_requests',
   BLOOD_DONORS: 'swasthya_blood_donors',
@@ -49,6 +50,18 @@ export const fetchFirestoreCollection = async (collectionName, maxItems = 150) =
     querySnapshot.forEach((docSnap) => {
       items.push({ ...docSnap.data(), id: docSnap.id });
     });
+
+    // Auto-detect singular/plural collection created by user in Firebase console
+    if (items.length === 0 && collectionName === FIRESTORE_COLLECTIONS.BED_BOOKINGS) {
+      try {
+        const altRef = collection(db, FIRESTORE_COLLECTIONS.BED_BOOKINGS_ALT);
+        const altSnap = await getDocs(query(altRef, limit(maxItems)));
+        altSnap.forEach((docSnap) => {
+          items.push({ ...docSnap.data(), id: docSnap.id });
+        });
+      } catch (_) {}
+    }
+
     return items;
   } catch (error) {
     console.error(`Failed to fetch Firestore collection "${collectionName}":`, error);
