@@ -3728,6 +3728,130 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             </div>
           </div>
 
+          {/* ─── NMC VERIFIABLE QR PRESCRIPTIONS & TRANSIT DRUG ADMINISTRATION CARD ─── */}
+          <div className="bg-white rounded-2xl border-2 border-indigo-200 p-5 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-indigo-100 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-900 text-white flex items-center justify-center font-black text-lg shadow-sm">
+                  ℞
+                </div>
+                <div>
+                  <h4 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <span>NMC Verifiable Prescriptions &amp; En-Route 108 Emergency Pharmacotherapy</span>
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-300">
+                      NMC 2023 VALIDATED
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-500">
+                    NMC Compliant generic pharmacotherapy with live tamper-evident QR verification token &amp; Niramaya scheme codes.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('verify')}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                >
+                  <QrCode className="w-3.5 h-3.5" />
+                  <span>Verify Document QR</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('prescription')}
+                  className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Edit in Rx Tab</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Verifiable QR Token & RMP Integrity Badge Card */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                {qrDataUrl ? (
+                  <div className="bg-white p-2 rounded-xl shadow-md shrink-0">
+                    <img
+                      src={qrDataUrl}
+                      alt="NMC ABDM Verifiable QR Code"
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 bg-slate-800 rounded-xl flex items-center justify-center text-xs text-slate-400">
+                    Generating QR...
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs sm:text-sm font-black text-emerald-400">
+                      {verificationToken?.docId}
+                    </span>
+                    <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.2 rounded-full font-bold">
+                      SHA-256 SECURED
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    Attending RMP: <strong className="text-white">{doctorName}</strong> ({doctorRegNo})
+                  </p>
+                  <p className="text-[11px] text-slate-400 font-mono">
+                    108 CAD Token: <span className="text-rose-300">{verificationToken?.cadToken}</span> • OMC Registered
+                  </p>
+                  <div className="text-[10px] text-slate-400 truncate max-w-xs font-mono">
+                    Hash: {verificationToken?.securityHash}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:items-end gap-1 text-xs shrink-0">
+                <span className="text-[11px] text-slate-300">Transit Medical Escort Protocol:</span>
+                <span className="font-bold text-emerald-400">108 ALS Direct Drug Dispensation</span>
+                <span className="text-[10px] text-slate-400">Odisha OSMC Niramaya Free Drug Supply</span>
+              </div>
+            </div>
+
+            {/* Prescriptions Table (Rx) */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-600 border-b border-slate-200 text-[10px] uppercase font-bold">
+                    <th className="p-2.5">#</th>
+                    <th className="p-2.5">Generic Medicine (CAPITAL LETTERS)</th>
+                    <th className="p-2.5">Dose &amp; Form</th>
+                    <th className="p-2.5">Frequency / Route</th>
+                    <th className="p-2.5">Duration</th>
+                    <th className="p-2.5">Transit &amp; Administration Directive</th>
+                    <th className="p-2.5">Odisha Niramaya Scheme</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {medications.map((med, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/80">
+                      <td className="p-2.5 font-bold text-slate-400">{idx + 1}</td>
+                      <td className="p-2.5 font-black text-slate-900 font-mono tracking-wide">
+                        {med.name.toUpperCase()}
+                      </td>
+                      <td className="p-2.5 font-semibold text-slate-700">
+                        {med.dosage} ({med.form})
+                      </td>
+                      <td className="p-2.5 font-bold text-indigo-900">{med.freq}</td>
+                      <td className="p-2.5 text-slate-600">{med.duration}</td>
+                      <td className="p-2.5 text-slate-600 text-[11px] italic">{med.instruction}</td>
+                      <td className="p-2.5">
+                        <span className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-800 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 rounded">
+                          <Check className="w-2.5 h-2.5 text-emerald-600" />
+                          <span>ନିରାମୟ (NIRAMAYA FREE)</span>
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {/* Destination Apex Casualty Pre-Arrival Direct Dialer & Handover Logger */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
