@@ -588,8 +588,14 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     const originUrl = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://health-project-psi.vercel.app';
     const verifyLink = `${originUrl}/?verify=${docId}&reg=${encodeURIComponent(doctorRegNo)}`;
 
+    const resolvedDocType = activeTab === 'referral'
+      ? 'NHM_REFERRAL_SLIP'
+      : activeTab === 'sbar_handover'
+      ? 'NABH_SBAR_HANDOVER_SLIP'
+      : 'NMC_E_PRESCRIPTION';
+
     const payload = {
-      docType: activeTab === 'referral' ? 'NHM_REFERRAL_SLIP' : 'NMC_E_PRESCRIPTION',
+      docType: resolvedDocType,
       docId: docId,
       cadToken: cadToken,
       rmp: {
@@ -631,16 +637,28 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       url: payload.verifyUrl
     });
 
+    // Generate high-resolution clean QR Code
     QRCode.toDataURL(qrString, {
       width: 240,
       margin: 1,
+      errorCorrectionLevel: 'M',
       color: {
         dark: '#0f172a',
         light: '#ffffff'
       }
     })
       .then((url) => setQrDataUrl(url))
-      .catch((err) => console.warn('QR Code generation error', err));
+      .catch((err) => {
+        console.warn('QR Code generation primary error, falling back to verifyUrl', err);
+        // Fallback with just the essential URL to ensure QR is always rendered
+        QRCode.toDataURL(payload.verifyUrl, {
+          width: 240,
+          margin: 1,
+          errorCorrectionLevel: 'L'
+        })
+          .then((fallbackUrl) => setQrDataUrl(fallbackUrl))
+          .catch((fErr) => console.error('QR Fallback failed', fErr));
+      });
   }, [docId, cadToken, selectedCaseId, activeTab, doctorName, doctorRegNo, patientName, diagnosis, facilityName]);
 
   // Load vault list and inspect deep-linked URL parameters for instant verification
@@ -2805,6 +2823,62 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                   </div>
                 </div>
 
+                {/* Section 5.B En-Route Medications & Pharmacotherapy Handover (NMC 2023 Standard) */}
+                <div className="p-4 bg-white rounded-xl border border-indigo-200 space-y-3 text-xs shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-black text-indigo-900 font-serif">℞</span>
+                      <strong className="text-slate-900 font-bold uppercase tracking-wide text-[11px]">
+                        Administered &amp; En-Route Medications (NMC Generic Standard)
+                      </strong>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-black text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded">
+                        ODISHA NIRAMAYA FREE SUPPLY
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('prescription')}
+                        className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 flex items-center gap-1 cursor-pointer print:hidden"
+                      >
+                        <Edit3 className="w-2.5 h-2.5" />
+                        <span>Edit Rx</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 text-slate-600 border-b border-slate-200 text-[10px] uppercase font-bold">
+                          <th className="p-2">#</th>
+                          <th className="p-2">Generic Medicine (CAPITAL LETTERS)</th>
+                          <th className="p-2">Dose &amp; Form</th>
+                          <th className="p-2">Frequency / Route</th>
+                          <th className="p-2">Duration</th>
+                          <th className="p-2">Transit &amp; Administration Directive</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {medications.map((med, mIdx) => (
+                          <tr key={mIdx} className="hover:bg-slate-50/80">
+                            <td className="p-2 font-bold text-slate-400">{mIdx + 1}</td>
+                            <td className="p-2 font-black text-slate-900 font-mono tracking-wide">
+                              {med.name.toUpperCase()}
+                            </td>
+                            <td className="p-2 font-semibold text-slate-700">
+                              {med.dosage} ({med.form})
+                            </td>
+                            <td className="p-2 font-bold text-indigo-900">{med.freq}</td>
+                            <td className="p-2 text-slate-600">{med.duration}</td>
+                            <td className="p-2 text-slate-600 text-[11px] italic">{med.instruction}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
                 {/* NHM 108 Emergency Handover Checklist */}
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
                   <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider block">
@@ -3748,7 +3822,29 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = medications.map((m, i) => `${i + 1}. ${m.name} ${m.dosage} (${m.form}) - ${m.freq} x ${m.duration} [${m.instruction}]`).join('\n');
+                    navigator.clipboard.writeText(`NMC E-PRESCRIPTION (${docId})\nPatient: ${patientName} (${patientAge}y/${patientGender})\nDiagnosis: ${diagnosis}\n\nMedications:\n${text}`);
+                    alert('Prescription details copied to clipboard!');
+                  }}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                  title="Copy full prescription to clipboard"
+                >
+                  <Copy className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Copy Rx</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                  title="Print official prescription slip"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Slip</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('verify')}
@@ -3780,14 +3876,15 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                     />
                   </div>
                 ) : (
-                  <div className="w-20 h-20 bg-slate-800 rounded-xl flex items-center justify-center text-xs text-slate-400">
-                    Generating QR...
+                  <div className="w-20 h-20 bg-white p-2 rounded-xl shadow-md shrink-0 flex flex-col items-center justify-center text-center">
+                    <QrCode className="w-10 h-10 text-slate-800 animate-pulse" />
+                    <span className="text-[9px] text-slate-800 font-bold mt-1">Generating QR</span>
                   </div>
                 )}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs sm:text-sm font-black text-emerald-400">
-                      {verificationToken?.docId}
+                      {verificationToken?.docId || docId}
                     </span>
                     <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.2 rounded-full font-bold">
                       SHA-256 SECURED
