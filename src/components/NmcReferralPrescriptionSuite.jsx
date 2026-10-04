@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import QRCode from 'qrcode';
 import {
   FileText,
@@ -465,6 +465,8 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   const [oxygenReq, setOxygenReq] = useState(currentCase.oxygenReq);
 
   // Verifiable QR Code & Cryptographic Stamp
+  const [docId, setDocId] = useState(() => `NMC-OD-2026-${Math.floor(100000 + Math.random() * 900000)}`);
+  const [cadToken, setCadToken] = useState(() => `CAD-108-OD-${Math.floor(10000 + Math.random() * 90000)}`);
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [verificationToken, setVerificationToken] = useState(null);
   const [verifyStatus, setVerifyStatus] = useState(null); // 'VALID' | 'TAMPERED' | null
@@ -574,21 +576,22 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       setBloodRequisitionEnabled(false);
       setBloodGroupReq(currentCase.bloodGroup || 'O+');
     }
+
+    // Refresh stable IDs on clinical preset switch
+    setDocId(`NMC-OD-2026-${Math.floor(100000 + Math.random() * 900000)}`);
+    setCadToken(`CAD-108-OD-${Math.floor(10000 + Math.random() * 90000)}`);
   }, [selectedCaseId]);
 
   // Generate Unique Cryptographic Token and Real Verifiable QR Code
   useEffect(() => {
-    const docId = `NMC-OD-2026-${Math.floor(100000 + Math.random() * 900000)}`;
-    const cadId = `CAD-108-OD-${Math.floor(10000 + Math.random() * 90000)}`;
     const timestamp = new Date().toISOString();
-
     const originUrl = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://health-project-psi.vercel.app';
     const verifyLink = `${originUrl}/?verify=${docId}&reg=${encodeURIComponent(doctorRegNo)}`;
 
     const payload = {
       docType: activeTab === 'referral' ? 'NHM_REFERRAL_SLIP' : 'NMC_E_PRESCRIPTION',
       docId: docId,
-      cadToken: cadId,
+      cadToken: cadToken,
       rmp: {
         name: doctorName,
         regNo: doctorRegNo,
@@ -638,7 +641,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     })
       .then((url) => setQrDataUrl(url))
       .catch((err) => console.warn('QR Code generation error', err));
-  }, [selectedCaseId, activeTab, doctorName, doctorRegNo, patientName, diagnosis, facilityName]);
+  }, [docId, cadToken, selectedCaseId, activeTab, doctorName, doctorRegNo, patientName, diagnosis, facilityName]);
 
   // Load vault list and inspect deep-linked URL parameters for instant verification
   useEffect(() => {
@@ -675,7 +678,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   }, []);
 
   // Compute Physiological Shock & Mean Arterial Pressure (MAP)
-  const computeVitalsScores = () => {
+  const vitalScores = useMemo(() => {
     try {
       const bpParts = (vitals.bp || '120/80').split('/');
       const sbp = parseFloat(bpParts[0]) || 120;
@@ -700,12 +703,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     } catch {
       return { shockIndex: 0.6, map: 93, isShock: false };
     }
-  };
-
-  const vitalScores = computeVitalsScores();
+  }, [vitals]);
 
   // Calculate MEWS (Modified Early Warning Score: 0 - 14)
-  const computeMewsScore = () => {
+  const mewsScore = useMemo(() => {
     let score = 0;
     try {
       const bpParts = (vitals.bp || '120/80').split('/');
@@ -754,9 +755,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     } catch {
       return { score: 1, riskLevel: 'LOW', guidance: 'Normal monitoring', colorClass: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
     }
-  };
-
-  const mewsScore = computeMewsScore();
+  }, [vitals]);
 
   // Pediatric Body-Weight & Dosing Calculation Logic (IAP Guidelines)
   const isPediatricCase = (Number(patientAge) > 0 && Number(patientAge) <= 12) || (parseFloat(patientWeight) > 0 && parseFloat(patientWeight) <= 40);
@@ -1056,7 +1055,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   const hasAnyBrandDetected = medications.some((m) => checkBrandName(m.name) !== null);
 
   // Live Clinical Safety Guard: Drug-Allergy & Interaction Check
-  const checkPrescriptionSafety = () => {
+  const safetyWarnings = useMemo(() => {
     const warnings = [];
     const allergiesUpper = (patientAllergies || '').toUpperCase();
 
@@ -1115,9 +1114,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     }
 
     return warnings;
-  };
-
-  const safetyWarnings = checkPrescriptionSafety();
+  }, [patientAllergies, medications, diagnosis]);
 
   // Add medication row
   const handleAddMedication = () => {
@@ -1781,30 +1778,38 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   };
 
   // Destination apex live status lookup
-  const apexStatus = APEX_DESTINATION_STATUS[referralTarget] || {
-    nodalPhone: '0674-2391980',
-    emergencyOfficer: 'State Central Emergency Nodal Desk',
-    icuBeds: 2,
-    hduBeds: 5,
-    oxygenSupply: 'Normal Hospital Supply',
-    greenCorridor: 'Standard Transfer Protocol',
-    bloodBankUnits: 'Standard Regional Blood Bank Linked'
-  };
+  const apexStatus = useMemo(() => {
+    return APEX_DESTINATION_STATUS[referralTarget] || {
+      nodalPhone: '0674-2391980',
+      emergencyOfficer: 'State Central Emergency Nodal Desk',
+      icuBeds: 2,
+      hduBeds: 5,
+      oxygenSupply: 'Normal Hospital Supply',
+      greenCorridor: 'Standard Transfer Protocol',
+      bloodBankUnits: 'Standard Regional Blood Bank Linked'
+    };
+  }, [referralTarget]);
 
-  const transitRoute = ODISHA_TRANSIT_ROUTES[selectedCaseId] || {
-    distance: '18 km',
-    eta: '25 mins',
-    highway: 'State Highway Corridor',
-    oxygenRefillPost: 'District Central Health Depot',
-    pilotEscort: '108 Priority Green Siren Clearance'
-  };
+  const transitRoute = useMemo(() => {
+    return ODISHA_TRANSIT_ROUTES[selectedCaseId] || {
+      distance: '18 km',
+      eta: '25 mins',
+      highway: 'State Highway Corridor',
+      oxygenRefillPost: 'District Central Health Depot',
+      pilotEscort: '108 Priority Green Siren Clearance'
+    };
+  }, [selectedCaseId]);
 
-  const filteredIcdList = ICD10_DATABASE.filter(
-    (item) =>
-      item.code.toLowerCase().includes(icdSearchTerm.toLowerCase()) ||
-      item.name.toLowerCase().includes(icdSearchTerm.toLowerCase()) ||
-      item.category.toLowerCase().includes(icdSearchTerm.toLowerCase())
-  );
+  const filteredIcdList = useMemo(() => {
+    const term = icdSearchTerm.toLowerCase().trim();
+    if (!term) return ICD10_DATABASE;
+    return ICD10_DATABASE.filter(
+      (item) =>
+        item.code.toLowerCase().includes(term) ||
+        item.name.toLowerCase().includes(term) ||
+        item.category.toLowerCase().includes(term)
+    );
+  }, [icdSearchTerm]);
 
   return (
     <div className="space-y-6">
