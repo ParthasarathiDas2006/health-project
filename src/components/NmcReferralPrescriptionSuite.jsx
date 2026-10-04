@@ -2310,7 +2310,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             )}
 
             {/* 2. Patient Demographics & ABHA Information */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-xs">
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Patient Name</span>
                 <strong className="text-slate-900 text-sm font-black">{patientName}</strong>
@@ -2324,6 +2324,16 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">ABHA Health ID</span>
                 <span className="font-mono text-indigo-900 font-bold">{patientAbha}</span>
+              </div>
+
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Weight / ABO</span>
+                <span className="text-slate-800 font-bold">{patientWeight} • <span className="text-rose-700 font-extrabold">{currentCase.bloodGroup || 'O+'}</span></span>
+              </div>
+
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">District &amp; Phone</span>
+                <span className="text-slate-800 font-medium truncate block">{currentCase.district || 'Cuttack'} • {patientPhone}</span>
               </div>
 
               <div>
@@ -3329,6 +3339,46 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                     <span className="font-mono text-[11px] text-indigo-700 break-all">
                       {verificationToken?.securityHash}
                     </span>
+                  </div>
+
+                  {/* Decrypted Prescription Items Breakdown */}
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase font-bold text-slate-500">
+                        Prescribed NMC Generics ({medications.length} items)
+                      </span>
+                      <span className="text-[9px] text-emerald-800 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                        Niramaya Covered
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {medications.map((m, mIdx) => (
+                        <div key={mIdx} className="flex justify-between items-center text-[11px] py-1 border-b border-slate-100 last:border-none">
+                          <span className="font-bold text-slate-800 font-mono">{m.name}</span>
+                          <span className="text-slate-500">{m.dosage} • {m.freq}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('prescription')}
+                      className="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 rounded-xl text-xs font-bold border border-indigo-200 flex items-center justify-center gap-1 cursor-pointer transition-all"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>View Official Printable Slip</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadPdfDoc}
+                      className="py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-all"
+                      title="Download PDF"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>PDF</span>
+                    </button>
                   </div>
                 </div>
               </div>
