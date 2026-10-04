@@ -27,9 +27,15 @@ export const FIRESTORE_COLLECTIONS = {
   AMBULANCE_REQUESTS: 'swasthya_ambulance_requests',
   BLOOD_REQUESTS: 'swasthya_blood_requests',
   BLOOD_DONORS: 'swasthya_blood_donors',
+  BLOOD_INVENTORY: 'swasthya_blood_inventory',
   HOSPITAL_TRANSFERS: 'swasthya_hospital_transfers',
   TRIAGE_NOTES: 'swasthya_triage_notes',
-  AUDIT_LOGS: 'swasthya_audit_logs'
+  AUDIT_LOGS: 'swasthya_audit_logs',
+  COMMAND_DISTRICTS: 'swasthya_command_districts',
+  IDSP_OUTBREAKS: 'swasthya_idsp_outbreaks',
+  DRUG_INVENTORY: 'swasthya_drug_inventory',
+  DPDP_CONSENTS: 'swasthya_dpdp_consents',
+  RLHF_FEEDBACK: 'swasthya_rlhf_feedback'
 };
 
 /**
