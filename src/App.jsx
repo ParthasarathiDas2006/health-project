@@ -196,6 +196,17 @@ export default function App() {
     }
   }, []);
 
+  // Handle URL Deep-Linking for Verifiable QR Codes (?verify= or ?docId=)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('verify') || params.get('docId')) {
+        setActiveHub('doctor');
+        setActiveTab('nmc_referral');
+      }
+    }
+  }, []);
+
   const handleFirebaseConfigSaved = (cfg) => {
     const ready = Boolean(cfg && cfg.apiKey && cfg.projectId);
     setIsFirebaseReady(ready);
@@ -309,7 +320,7 @@ export default function App() {
     setActiveTab(tab);
     if (['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry'].includes(tab)) {
       setActiveHub('citizen');
-    } else if (['dashboard', 'nmc_referral', 't29_nmc_referral', 't29_discharge', 'drugallergy', 't13_drugallergy', 'differential', 't12_differential', 'xray', 'riskscores', 't14_riskscores', 'hospitals'].includes(tab)) {
+    } else if (['dashboard', 'prescriptions', 'nmc_referral', 't29_nmc_referral', 't29_discharge', 'drugallergy', 't13_drugallergy', 'differential', 't12_differential', 'xray', 'riskscores', 't14_riskscores', 'hospitals'].includes(tab)) {
       setActiveHub('doctor');
     } else if (['phc_offline', 'asha_voice', 't17_asha_voice', 'family_triage', 't19_family_triage', 'maternal_anc', 't30_anc_maternal', 'pain_map', 't18_pain_map'].includes(tab)) {
       setActiveHub('phc');
@@ -912,11 +923,12 @@ export default function App() {
         </div>
       )}
 
-      {(activeTab === 'nmc_referral' || activeTab === 't29_nmc_referral' || activeTab === 't29_discharge') && (
+      {(activeTab === 'prescriptions' || activeTab === 'nmc_referral' || activeTab === 't29_nmc_referral' || activeTab === 't29_discharge') && (
         <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading NMC Prescription Suite...</div>}>
           <NmcReferralPrescriptionSuite
             appLang={appLang}
             currentUser={currentUser}
+            initialTab={typeof window !== 'undefined' && window.location.search.includes('verify') ? 'verify' : 'prescription'}
             onNavigateBack={() => handleNavigateTab('dashboard')}
           />
         </Suspense>
