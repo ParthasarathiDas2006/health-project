@@ -660,6 +660,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   const [docId, setDocId] = useState(() => `NMC-OD-2026-${Math.floor(100000 + Math.random() * 900000)}`);
   const [cadToken, setCadToken] = useState(() => `CAD-108-OD-${Math.floor(10000 + Math.random() * 90000)}`);
   const [qrDataUrl, setQrDataUrl] = useState('');
+  const [abhaQrDataUrl, setAbhaQrDataUrl] = useState('');
   const [verificationToken, setVerificationToken] = useState(null);
   const [verifyStatus, setVerifyStatus] = useState(null); // 'VALID' | 'TAMPERED' | null
   const [simulateTamper, setSimulateTamper] = useState(false);
@@ -856,6 +857,33 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
           .catch((fErr) => console.error('QR Fallback failed', fErr));
       });
   }, [docId, cadToken, selectedCaseId, activeTab, doctorName, doctorRegNo, patientName, diagnosis, facilityName]);
+
+  // Generate Official ABDM Standard QR Code for ABHA Digital Card
+  useEffect(() => {
+    const abhaPayload = JSON.stringify({
+      hidn: patientAbha,
+      name: patientName,
+      gender: patientGender,
+      yob: new Date().getFullYear() - (parseInt(patientAge, 10) || 30),
+      district: currentCase.district || 'Cuttack',
+      state: 'Odisha',
+      phr: `${patientAbha.replace(/[^0-9]/g, '').slice(0, 10)}@abdm`,
+      auth: 'ABDM_M2_M3_VERIFIED',
+      scheme: 'BSKY_NHA_ODISHA'
+    });
+
+    QRCode.toDataURL(abhaPayload, {
+      width: 220,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: {
+        dark: '#0f766e', // Deep Teal
+        light: '#ffffff'
+      }
+    })
+      .then((url) => setAbhaQrDataUrl(url))
+      .catch((err) => console.warn('ABHA QR generation failed', err));
+  }, [patientAbha, patientName, patientGender, patientAge, currentCase.district]);
 
   // Load vault list and inspect deep-linked URL parameters for instant verification
   useEffect(() => {
@@ -2851,7 +2879,18 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             {/* 2. Patient Demographics & ABHA Information */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between bg-indigo-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
-                <span className="font-black text-indigo-300">SECTION 2-NO: PATIENT DEMOGRAPHICS &amp; ABHA HEALTH IDENTIFIER</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-indigo-300">SECTION 2-NO: PATIENT DEMOGRAPHICS &amp; ABHA HEALTH IDENTIFIER</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAbhaCardModal(true)}
+                    className="bg-teal-600 hover:bg-teal-500 text-white px-2 py-0.5 rounded text-[9px] font-black uppercase flex items-center gap-1 cursor-pointer transition-colors print:hidden"
+                    title="Open Official ABHA Digital Health Card"
+                  >
+                    <Award className="w-2.5 h-2.5" />
+                    <span>View ABHA Card</span>
+                  </button>
+                </div>
                 <span className="text-slate-300">INSTRUCTION: VERIFY IDENTITY WITH GOVT ID (AADHAAR / BSKY / ABHA CARD)</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-xs">
@@ -5502,77 +5541,234 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       )}
 
       {/* ───────────────────────────────────────────────────────── */}
-      {/* 10. MODAL: OFFICIAL ABHA DIGITAL HEALTH CARD */}
+      {/* 10. MODAL: OFFICIAL AYUSHMAN BHARAT HEALTH ACCOUNT (ABHA) DIGITAL CARD */}
       {/* ───────────────────────────────────────────────────────── */}
       {showAbhaCardModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 p-6 space-y-4 max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Award className="w-5 h-5 text-teal-600" />
-                <h3 className="font-bold text-sm text-slate-900">
-                  Ayushman Bharat Health Account (ABHA) Card
-                </h3>
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center shadow-xs">
+                  <Award className="w-5 h-5 text-teal-600" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                    <span>Ayushman Bharat Health Account (ABHA)</span>
+                    <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-300">
+                      M1 • M2 • M3
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    National Health Authority (NHA) • Ministry of Health &amp; Family Welfare, Govt. of India
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setShowAbhaCardModal(false)}
-                className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-sm font-bold cursor-pointer transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            {/* Official Indian ABHA Card Graphics */}
-            <div className="rounded-2xl border-2 border-teal-600 bg-gradient-to-br from-teal-50 via-white to-emerald-50 p-5 shadow-md relative overflow-hidden space-y-4">
-              {/* Top Indian Tricolor Stripe */}
-              <div className="h-1.5 w-full bg-gradient-to-r from-orange-500 via-white to-emerald-600 rounded-full"></div>
+            {/* THE OFFICIAL AUTHENTIC ABHA DIGITAL HEALTH CARD CANVAS */}
+            <div
+              id="printable-abha-card"
+              className="rounded-3xl border-2 border-teal-600 bg-gradient-to-br from-teal-900 via-teal-800 to-slate-900 text-white p-5 sm:p-6 shadow-xl relative overflow-hidden space-y-4"
+            >
+              {/* Indian National Tricolor Ribbon Header */}
+              <div className="h-1.5 w-full bg-gradient-to-r from-orange-500 via-white to-emerald-500 rounded-full shadow-xs mb-1"></div>
 
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] font-black uppercase text-teal-900 tracking-wider block">
-                    National Health Authority • Govt of India
+              {/* Card Apex Strip */}
+              <div className="flex justify-between items-start gap-2 border-b border-teal-700/60 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-white text-teal-900 flex items-center justify-center font-black text-xs shadow-md border border-teal-200 shrink-0">
+                    ABHA
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-teal-200 block">
+                      National Health Authority • Govt of India
+                    </span>
+                    <span className="text-xs sm:text-sm font-black text-white tracking-wide block">
+                      Ayushman Bharat Digital Mission (ABDM)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="bg-orange-500/20 text-orange-300 border border-orange-400/40 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider block">
+                    Odisha BSKY Linked
                   </span>
-                  <span className="text-xs font-black text-slate-900">ABHA Digital Health Card</span>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-teal-700 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
-                  ABHA
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-slate-200 border-2 border-teal-500 rounded-xl flex items-center justify-center text-slate-400 font-bold shrink-0">
-                  <User className="w-8 h-8 text-teal-800" />
-                </div>
-                <div className="space-y-0.5 text-xs">
-                  <strong className="text-slate-900 text-sm block font-black">{patientName}</strong>
-                  <div className="text-slate-600">{patientAge} Yrs / {patientGender}</div>
-                  <div className="text-slate-600">Blood Group: <strong>{currentCase.bloodGroup}</strong></div>
-                  <div className="text-slate-500 text-[10px]">District: {currentCase.district}, Odisha</div>
+                  <span className="text-[9px] text-teal-300/80 font-mono block mt-0.5">
+                    Tier: State Apex Health Card
+                  </span>
                 </div>
               </div>
 
-              <div className="p-3 bg-white/90 border border-teal-200 rounded-xl space-y-1">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">ABHA Number:</span>
-                <span className="font-mono text-base font-black text-teal-950 tracking-wider block">
-                  {patientAbha}
+              {/* Patient Core Identity Block with Real ABDM Scannable QR */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 items-center bg-teal-950/70 p-3.5 rounded-2xl border border-teal-700/50">
+                {/* Left Profile Avatar */}
+                <div className="flex flex-col items-center text-center sm:items-start sm:text-left gap-2 sm:col-span-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-600 to-emerald-600 border-2 border-white/40 flex items-center justify-center text-white shadow-inner shrink-0">
+                      <User className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-teal-300 uppercase tracking-wider block">
+                        Beneficiary Name
+                      </span>
+                      <strong className="text-white text-sm sm:text-base font-black tracking-tight block">
+                        {patientName}
+                      </strong>
+                      <div className="text-[11px] text-teal-200 font-semibold flex items-center gap-1.5 mt-0.5">
+                        <span>{patientAge} Yrs</span>
+                        <span>•</span>
+                        <span>{patientGender}</span>
+                        <span>•</span>
+                        <span className="text-rose-300 font-bold">ABO: {currentCase.bloodGroup || 'O+'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 w-full pt-2 border-t border-teal-800/60 text-[10px]">
+                    <div>
+                      <span className="text-teal-400 block font-bold">Domicile / District:</span>
+                      <span className="text-white font-medium">{currentCase.district || 'Cuttack'}, Odisha</span>
+                    </div>
+                    <div>
+                      <span className="text-teal-400 block font-bold">Registered Mobile:</span>
+                      <span className="font-mono text-white font-medium">{patientPhone}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Scannable ABDM QR Code */}
+                <div className="flex flex-col items-center justify-center p-2 bg-white rounded-xl border border-teal-300 shadow-md">
+                  {abhaQrDataUrl ? (
+                    <img
+                      src={abhaQrDataUrl}
+                      alt="ABHA Scannable QR Code"
+                      className="w-24 h-24 object-contain"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 bg-teal-50 flex items-center justify-center text-[10px] text-teal-800 font-bold">
+                      ABDM QR
+                    </div>
+                  )}
+                  <span className="text-[8px] font-black text-teal-950 uppercase tracking-widest mt-1">
+                    Scan for PHR
+                  </span>
+                </div>
+              </div>
+
+              {/* Official 14-Digit ABHA Number Strip */}
+              <div className="p-3 bg-gradient-to-r from-teal-950 via-slate-900 to-teal-950 rounded-2xl border border-teal-500/50 space-y-1.5">
+                <div className="flex justify-between items-center text-[10px]">
+                  <span className="text-teal-300 uppercase font-black tracking-wider flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>ABHA 14-Digit Health ID Number:</span>
+                  </span>
+                  <span className="text-emerald-400 font-mono font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-600/50">
+                    ✓ ACTIVE_VERIFIED
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-lg sm:text-xl font-black text-white tracking-widest block">
+                    {patientAbha}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(patientAbha);
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }}
+                    className="p-1.5 bg-teal-800/80 hover:bg-teal-700 text-teal-200 rounded-lg cursor-pointer transition-colors"
+                    title="Copy ABHA ID"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="flex justify-between items-center text-[10px] pt-1 border-t border-teal-800/60">
+                  <span className="text-teal-200 font-mono">
+                    ABHA Address: <strong>{patientAbha.replace(/[^0-9]/g, '').slice(0, 10)}@abdm</strong>
+                  </span>
+                  <span className="text-teal-300/80">
+                    Consent Manager: Eka Care / SHA Odisha
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom Card Security & Health Scheme Footer */}
+              <div className="flex flex-wrap justify-between items-center text-[9px] text-teal-200/90 pt-1 border-t border-teal-700/60">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                  <span>ABDM Milestone M1 (Creation), M2 (Discovery), M3 (Linking) Compliant</span>
+                </div>
+                <span className="font-mono text-teal-300">
+                  Govt. of Odisha • SwasthyaMitra Portal
                 </span>
-                <span className="text-[10px] text-teal-700 font-semibold block">
-                  ABHA Address: {patientAbha.replace(/[^0-9]/g, '').slice(0, 10)}@abdm
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-[10px] text-slate-500 pt-1">
-                <span>✓ Verified ABDM M1/M2/M3</span>
-                <span>SwasthyaMitra Odisha Portal</span>
               </div>
             </div>
 
-            <div className="flex justify-end pt-2">
+            {/* Modal Quick Actions Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const printContents = document.getElementById('printable-abha-card');
+                    if (printContents) {
+                      const printWindow = window.open('', '_blank');
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>ABHA Digital Card - ${patientName}</title>
+                            <script src="https://cdn.tailwindcss.com"></script>
+                            <style>
+                              body { font-family: system-ui, sans-serif; padding: 20px; display: flex; justify-content: center; }
+                              @media print { body { padding: 0; } }
+                            </style>
+                          </head>
+                          <body>
+                            <div style="max-width: 500px; width: 100%;">
+                              ${printContents.outerHTML}
+                            </div>
+                            <script>
+                              window.onload = function() { window.print(); window.close(); }
+                            </script>
+                          </body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                    }
+                  }}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Print ABHA Card</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`ABHA ID: ${patientAbha}\nName: ${patientName}\nABHA Address: ${patientAbha.replace(/[^0-9]/g, '').slice(0, 10)}@abdm\nState: Odisha (BSKY Linked)`);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2000);
+                  }}
+                  className="px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-xl font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-teal-200"
+                >
+                  <Copy className="w-3.5 h-3.5 text-teal-700" />
+                  <span>Copy Details</span>
+                </button>
+              </div>
+
               <button
                 onClick={() => setShowAbhaCardModal(false)}
-                className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-bold cursor-pointer"
+                className="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-md"
               >
-                Close Card
+                Done
               </button>
             </div>
           </div>
