@@ -769,6 +769,8 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   const [activeTab, setActiveTab] = useState(initialTab || 'prescription');
   const [selectedCaseId, setSelectedCaseId] = useState('CASE-01');
   const [selectedSectionFilter, setSelectedSectionFilter] = useState('ALL');
+  const [showCaseSelector, setShowCaseSelector] = useState(false);
+  const [showCockpit, setShowCockpit] = useState(false);
 
   // Clinician Details (Registered Medical Practitioner per NMC guidelines)
   const [doctorName, setDoctorName] = useState(currentUser?.name || 'Dr. Kumar');
@@ -2374,17 +2376,17 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
           </div>
         </div>
 
-        {/* Sub-Tabs: Prescription, Referral Slip, QR Verifier, Vault */}
+        {/* Sub-Tabs: Prescription, Referral Slip, QR Verifier, Vault, SBAR Handover */}
         <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-1">
           <button
             onClick={() => setActiveTab('prescription')}
             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'prescription'
-                ? 'bg-white text-indigo-950 shadow-md ring-2 ring-indigo-400/40'
+                ? 'bg-indigo-600 text-white shadow-md ring-2 ring-indigo-300'
                 : 'bg-indigo-950/60 text-indigo-200 hover:bg-indigo-800/60'
             }`}
           >
-            <Pill className="w-3.5 h-3.5 text-indigo-600" />
+            <Pill className="w-3.5 h-3.5 text-indigo-200" />
             {txt.tabRx}
           </button>
 
@@ -2392,11 +2394,11 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             onClick={() => setActiveTab('referral')}
             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'referral'
-                ? 'bg-white text-indigo-950 shadow-md ring-2 ring-indigo-400/40'
-                : 'bg-indigo-950/60 text-indigo-200 hover:bg-indigo-800/60'
+                ? 'bg-rose-600 text-white shadow-md ring-2 ring-rose-300'
+                : 'bg-rose-950/60 text-rose-200 hover:bg-rose-800/60'
             }`}
           >
-            <Ambulance className="w-3.5 h-3.5 text-rose-600" />
+            <Ambulance className="w-3.5 h-3.5 text-rose-200" />
             {txt.tabReferral}
           </button>
 
@@ -2404,11 +2406,11 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             onClick={() => setActiveTab('verify')}
             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'verify'
-                ? 'bg-white text-indigo-950 shadow-md ring-2 ring-indigo-400/40'
-                : 'bg-indigo-950/60 text-indigo-200 hover:bg-indigo-800/60'
+                ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-300'
+                : 'bg-emerald-950/60 text-emerald-200 hover:bg-emerald-800/60'
             }`}
           >
-            <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+            <QrCode className="w-3.5 h-3.5 text-emerald-200" />
             {txt.tabVerify}
           </button>
 
@@ -2416,13 +2418,15 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             onClick={() => setActiveTab('vault')}
             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'vault'
-                ? 'bg-white text-indigo-950 shadow-md ring-2 ring-indigo-400/40'
-                : 'bg-indigo-950/60 text-indigo-200 hover:bg-indigo-800/60'
+                ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300'
+                : 'bg-blue-950/60 text-blue-200 hover:bg-blue-800/60'
             }`}
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-200" />
             {txt.tabVault}
-            <span className="bg-indigo-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-black">
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+              activeTab === 'vault' ? 'bg-white/20 text-white' : 'bg-indigo-600 text-white'
+            }`}>
               {vaultList.length}
             </span>
           </button>
@@ -2431,21 +2435,127 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             onClick={() => setActiveTab('sbar_handover')}
             className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'sbar_handover'
-                ? 'bg-white text-indigo-950 shadow-md ring-2 ring-indigo-400/40'
-                : 'bg-indigo-950/60 text-indigo-200 hover:bg-indigo-800/60'
+                ? 'bg-purple-600 text-white shadow-md ring-2 ring-purple-300'
+                : 'bg-purple-950/60 text-purple-200 hover:bg-purple-800/60'
             }`}
           >
-            <HeartPulse className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+            <HeartPulse className="w-3.5 h-3.5 text-rose-300 animate-pulse" />
             {txt.tabSbar}
           </button>
         </div>
       </div>
 
       {/* ───────────────────────────────────────────────────────── */}
-      {/* 2. CLINICAL SCENARIOS SELECTOR STRIP (Differentiated Across 5 Distinct Clinical Sections) */}
+      {/* 2. DEDICATED SUITE BANNER & CLINICAL PRESETS (PRESCRIPTION & REFERRAL WORKFLOW ONLY) */}
       {/* ───────────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+      {(activeTab === 'prescription' || activeTab === 'referral') && (
+        <div className="space-y-4">
+          {/* Suite 1 (Rx) or Suite 2 (Referral) Dedicated Hero Ribbon */}
+          {activeTab === 'prescription' ? (
+            <div className="bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 rounded-2xl p-4 text-white border border-indigo-700/60 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-black shadow-md shrink-0">
+                  <Pill className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                      Suite 1 • NMC 2023 Statutory Format
+                    </span>
+                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30">
+                      Generic Rx Active
+                    </span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-black text-white mt-0.5">
+                    NMC e-Prescription Studio (Generic Formulations)
+                  </h3>
+                  <p className="text-xs text-indigo-200/80">
+                    Mandatory generic drug prescribing, Niramaya/OSMC supply indicators, drug interaction safety guard, and digital RMP signature.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs shrink-0 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setShowCaseSelector(!showCaseSelector)}
+                  className="px-3 py-1.5 bg-indigo-800 hover:bg-indigo-700 text-indigo-100 rounded-xl font-bold flex items-center gap-1.5 border border-indigo-600/60 shadow-2xs transition-all cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>{showCaseSelector ? 'Close Cases ▲' : 'Load Odisha Case (10) ▼'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCockpit(!showCockpit)}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold flex items-center gap-1.5 border border-slate-700 shadow-2xs transition-all cursor-pointer"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>{showCockpit ? 'Hide Cockpit ▲' : 'Doctor Cockpit ▼'}</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-rose-900 via-red-950 to-slate-900 rounded-2xl p-4 text-white border border-rose-700/60 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center font-black shadow-md shrink-0">
+                  <Ambulance className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-rose-500/30 text-rose-200 border border-rose-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                      Suite 2 • NHM Odisha 108 Dispatch
+                    </span>
+                    <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
+                      CAD Priority Transit
+                    </span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-black text-white mt-0.5">
+                    Hospital Referral Slip &amp; 108 CAD Transit Hub
+                  </h3>
+                  <p className="text-xs text-rose-200/80">
+                    Statutory inter-facility transfer documentation, live 108 CAD token telemetry, highway green corridors, Apex hospital bed allocation, and Form 27C blood requisition.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs shrink-0 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setShowCaseSelector(!showCaseSelector)}
+                  className="px-3 py-1.5 bg-rose-800 hover:bg-rose-700 text-rose-100 rounded-xl font-bold flex items-center gap-1.5 border border-rose-600/60 shadow-2xs transition-all cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>{showCaseSelector ? 'Close Cases ▲' : 'Load Odisha Case (10) ▼'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCockpit(!showCockpit)}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold flex items-center gap-1.5 border border-slate-700 shadow-2xs transition-all cursor-pointer"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-rose-400" />
+                  <span>{showCockpit ? 'Hide Cockpit ▲' : 'Doctor Cockpit ▼'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Active Case Summary Badge */}
+          <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-500">Active Scenario:</span>
+              <span className="font-bold text-slate-900">{currentCase.patientName}</span>
+              <span className="text-slate-400">•</span>
+              <span className="text-slate-600 font-medium">{currentCase.district}</span>
+              <span className="text-slate-400">•</span>
+              <span className="text-indigo-700 font-bold truncate max-w-sm">{currentCase.provisionalDiagnosis}</span>
+            </div>
+            <span className="font-mono text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 shrink-0">
+              ID: {currentCase.id} ({currentCase.sectionNo})
+            </span>
+          </div>
+
+          {/* Collapsible 10-Case Preset Grid */}
+          {showCaseSelector && (
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-black shadow-xs">
               <Activity className="w-5 h-5 text-white" />
@@ -2698,10 +2808,12 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
           })}
         </div>
       </div>
+    )}
 
-      {/* ───────────────────────────────────────────────────────── */}
-      {/* 2.5 DOCTOR CLINICAL COCKPIT (NMC & 108 TRANSIT INTEGRATED) */}
-      {/* ───────────────────────────────────────────────────────── */}
+    {/* ───────────────────────────────────────────────────────── */}
+    {/* 2.5 DOCTOR CLINICAL COCKPIT (NMC & 108 TRANSIT INTEGRATED) */}
+    {/* ───────────────────────────────────────────────────────── */}
+    {showCockpit && (
       <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-2xl border border-indigo-700/60 p-5 text-white shadow-xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-indigo-800/60 pb-3">
           <div className="flex items-center gap-3">
@@ -3070,6 +3182,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
           </div>
         </div>
       </div>
+    )}
+  </div>
+)}
 
       {/* ───────────────────────────────────────────────────────── */}
       {/* 3. PRINTABLE OFFICIAL DOCUMENT CANVAS (NMC RX OR REFERRAL) */}
@@ -4614,18 +4729,49 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       {/* 4. SUB-TAB 3: QR CODE VERIFIER & AUDIT SCANNER */}
       {/* ───────────────────────────────────────────────────────── */}
       {activeTab === 'verify' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left: Verifier Simulator */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-            <div className="border-b border-slate-100 pb-3">
-              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                <QrCode className="w-5 h-5 text-emerald-600" />
-                <span>NMC / ABDM Verifiable QR Code Scanner</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Simulates real-world QR audit at apex hospital casualty desks, pharmacies, and 108 transit checkpoints.
-              </p>
+        <div className="space-y-4">
+          {/* Suite 3 Dedicated Hero Ribbon */}
+          <div className="bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-900 rounded-2xl p-4 text-white border border-emerald-700/60 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center font-black shadow-md shrink-0">
+                <QrCode className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                    Suite 3 • Cryptographic Verifier
+                  </span>
+                  <span className="bg-teal-500/20 text-teal-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-teal-400/30">
+                    OMC Registry Audited
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-base font-black text-white mt-0.5">
+                  OMC &amp; ABDM Cryptographic QR Authenticity Verifier
+                </h3>
+                <p className="text-xs text-emerald-200/80">
+                  Real-time camera barcode scanner, digital signature verification, anti-tamper detection, and Odisha Medical Council registry audit.
+                </p>
+              </div>
             </div>
+            <div className="flex items-center gap-2 text-xs self-start sm:self-auto shrink-0">
+              <span className="text-[11px] font-mono font-bold text-emerald-300 bg-emerald-900/60 px-2.5 py-1 rounded-lg border border-emerald-700/60">
+                Algorithm: SHA-256 HMAC
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left: Verifier Simulator */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                  <QrCode className="w-5 h-5 text-emerald-600" />
+                  <span>NMC / ABDM Verifiable QR Code Scanner</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Simulates real-world QR audit at apex hospital casualty desks, pharmacies, and 108 transit checkpoints.
+                </p>
+              </div>
 
             {/* QR Visual or Live Camera Video */}
             <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300 relative overflow-hidden">
@@ -4845,23 +4991,57 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             )}
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* ───────────────────────────────────────────────────────── */}
       {/* 5. SUB-TAB 4: ISSUED CLINICAL DOCUMENTS VAULT */}
       {/* ───────────────────────────────────────────────────────── */}
       {activeTab === 'vault' && (
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-          <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
-            <div>
-              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-indigo-600" />
-                <span>Issued Clinical Documents Vault</span>
-              </h3>
-              <p className="text-xs text-slate-500">
-                Encrypted audit archive of all prescriptions and referral slips generated from this terminal.
-              </p>
+        <div className="space-y-4">
+          {/* Suite 4 Dedicated Hero Ribbon */}
+          <div className="bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-900 rounded-2xl p-4 text-white border border-blue-700/60 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-black shadow-md shrink-0">
+                <ShieldCheck className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-blue-500/30 text-blue-200 border border-blue-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                    Suite 4 • ABDM Encrypted Vault
+                  </span>
+                  <span className="bg-indigo-500/20 text-indigo-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-400/30">
+                    {vaultList.length} Archived Slips
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-base font-black text-white mt-0.5">
+                  ABDM-Compliant Clinical Document Vault &amp; Offline Archive
+                </h3>
+                <p className="text-xs text-blue-200/80">
+                  Encrypted audit archive of all prescriptions and referral slips. Supports 1-click re-printing, offline standalone HTML export, and cryptographic hash verification.
+                </p>
+              </div>
             </div>
+            <button
+              onClick={handleSaveToVault}
+              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer transition-all flex items-center gap-1.5 self-start sm:self-auto shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              <span>+ Archive Current Slip</span>
+            </button>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
+            <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-indigo-600" />
+                  <span>Issued Clinical Documents Vault</span>
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Encrypted audit archive of all prescriptions and referral slips generated from this terminal.
+                </p>
+              </div>
             <button
               onClick={handleSaveToVault}
               className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 cursor-pointer"
@@ -4954,7 +5134,8 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             </div>
           )}
         </div>
-      )}
+      </div>
+    )}
 
       {/* ───────────────────────────────────────────────────────── */}
       {/* 5. SUB-TAB 5: NABH SBAR TRANSIT HANDOVER & ABDM FHIR R4 */}
@@ -4962,11 +5143,11 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       {activeTab === 'sbar_handover' && (
         <div className="space-y-6">
           {/* Header Action Strip */}
-          <div className="bg-gradient-to-r from-rose-950 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl border border-rose-800/40 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl border border-purple-800/40 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="bg-rose-500/30 text-rose-200 border border-rose-400/40 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
-                  NABH &amp; WHO Patient Safety Protocol
+                <span className="bg-purple-500/30 text-purple-200 border border-purple-400/40 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+                  Suite 5 • NABH Patient Safety Protocol
                 </span>
                 <span className="bg-teal-500/30 text-teal-200 border border-teal-400/40 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
                   ABDM FHIR R4 Standard
