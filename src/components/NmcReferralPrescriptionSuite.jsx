@@ -61,7 +61,9 @@ import {
   Zap,
   Database,
   FolderHeart,
-  CreditCard
+  CreditCard,
+  Baby,
+  Flame
 } from 'lucide-react';
 import { getHospitalPartners } from '../data/hospitalPartners';
 
@@ -171,6 +173,24 @@ const APEX_DESTINATION_STATUS = {
     oxygenSupply: 'Mechanical Ventilators Ready (3 free)',
     greenCorridor: 'NH-18 Rapid Transit Siren Protocol On',
     bloodBankUnits: 'Anti-Snake Venom Stock: 140 Vials Available'
+  },
+  'SCB Medical College & Hospital (SCBMCH), Cuttack - Apex Level-1 Trauma ICU': {
+    nodalPhone: '0671-2414999',
+    emergencyOfficer: 'Dr. Subhransu Sekhar Mishra (Trauma Resuscitation Chief)',
+    icuBeds: 5,
+    hduBeds: 10,
+    oxygenSupply: 'Direct Line High-Flow 100% Medical O2 Standby',
+    greenCorridor: 'NH-16 Dedicated Golden Hour Trauma Green Corridor Active',
+    bloodBankUnits: 'Universal O- (8 Units), O+ (35 Units), Massive Transfusion Ready'
+  },
+  'AIIMS Bhubaneswar - Advanced Coronary Care Unit (CCU) & Cath Lab': {
+    nodalPhone: '0674-2476790',
+    emergencyOfficer: 'Dr. Satyabrata Tripathy (Lead Interventional Cardiologist)',
+    icuBeds: 4,
+    hduBeds: 6,
+    oxygenSupply: 'Continuous Cryogenic Pipeline Standby',
+    greenCorridor: 'NH-16 Sishu Bhawan Expressway Green Wave Cleared',
+    bloodBankUnits: 'Universal O- (10 Units), A+ (22 Units), B+ (28 Units)'
   }
 };
 
@@ -217,14 +237,44 @@ const ODISHA_TRANSIT_ROUTES = {
     highway: 'NH-18 (Betnoti to Baripada Bypass Corridor)',
     oxygenRefillPost: 'Baisinga PHC Transit Hub',
     pilotEscort: 'Mayurbhanj Highway Patrol Clearance'
+  },
+  'CASE-07': {
+    distance: '94 km',
+    eta: '1 hr 50 mins',
+    highway: 'NH-316 & Jagannath Sadak Expressway to Cuttack',
+    oxygenRefillPost: 'Pipili CHC & Phulnakhara Emergency Post',
+    pilotEscort: 'Odisha Highway Police Priority Green Corridor'
+  },
+  'CASE-08': {
+    distance: '3.4 km',
+    eta: '10 mins',
+    highway: 'Barracks Road & Medical College Road Corridor',
+    oxygenRefillPost: 'City Hospital Emergency Hub',
+    pilotEscort: 'Berhampur Urban Traffic Pilot Escort Active'
+  },
+  'CASE-09': {
+    distance: '58 km',
+    eta: '1 hr 08 mins',
+    highway: 'NH-16 (Khordha Bypass - Palasuni - Mahanadi Bridge)',
+    oxygenRefillPost: 'Bhubaneswar Capital Hospital Transit Refill Post',
+    pilotEscort: 'Odisha State Trauma ALS Pilot Escort Cleared'
+  },
+  'CASE-10': {
+    distance: '196 km',
+    eta: '3 hrs 25 mins',
+    highway: 'NH-16 (Balasore - Bhadrak - Cuttack - Bhubaneswar AIIMS Corridor)',
+    oxygenRefillPost: 'Bhadrak DHH & Jajpur Road CHC Oxygen Stations',
+    pilotEscort: 'Highway Patrol Green Corridor Trans-District Siren Active'
   }
 };
 
-// ─── 8 Authentic Odisha Clinical Scenarios Across 5 Sections ────────────────
+// ─── 10 Authentic Odisha Clinical Scenarios Across 5 Sections (2 Distinct Scenarios per Section) ────────────────
 const CLINICAL_PRESETS = [
+  // ─── SECTION 1-NO: EMERGENCY CASUALTY & TRAUMA TRIAGE (2 Scenarios) ───
   {
     id: 'CASE-01',
     sectionNo: '1-NO',
+    categoryTag: 'HEMORRHAGIC FEVER & CASUALTY TRIAGE',
     sectionTitle: 'SECTION 1-NO: EMERGENCY CASUALTY & FEVER TRIAGE',
     department: 'SCBMCH Cuttack • Emergency HDU & Critical Care',
     protocol: 'Platelet Transfusion & Fluid Resuscitation Protocol',
@@ -270,8 +320,60 @@ const CLINICAL_PRESETS = [
     followUp: 'Review in Emergency HDU after 24 hours with fresh Platelet Count report. SOS immediate ER visit if any bleeding occurs.'
   },
   {
+    id: 'CASE-09',
+    sectionNo: '1-NO',
+    categoryTag: 'GOLDEN-HOUR POLYTRAUMA & CHEST DRAIN',
+    sectionTitle: 'SECTION 1-NO: GOLDEN-HOUR TRAUMA & THORACIC RESUSCITATION',
+    department: 'SCBMCH Cuttack • Apex Level-1 Trauma ICU',
+    protocol: 'ATLS Resuscitation, Underwater Seal ICD & Massive Transfusion Protocol',
+    patientName: 'Debabrata Mohanty (ଦେବବ୍ରତ ମହାନ୍ତି)',
+    age: 38,
+    gender: 'Male',
+    abhaId: '91-5531-9042-8811',
+    phone: '+91 94370 81249',
+    district: 'Khordha',
+    address: 'National Highway 16 Toll Gate, Khordha - 752055',
+    bloodGroup: 'O+',
+    weight: '70 kg',
+    allergies: 'None Reported (NKDA)',
+    acuity: 'RED',
+    icdCode: 'S27.1',
+    icdName: 'Traumatic Hemopneumothorax with Multiple Rib Fractures & Pelvic Instability',
+    provisionalDiagnosis: 'Traumatic Hemopneumothorax with Multiple Rib Fractures & Pelvic Instability (ICD-10: S27.1)',
+    chiefComplaints: 'High-velocity road traffic collision (bike vs truck) 45 mins ago on NH-16; severe right chest wall deformity, paradoxical respiration, acute dyspnea, pelvic compression tenderness.',
+    vitals: { bp: '82/50 mmHg', pulse: '128 bpm', spo2: '88%', temp: '97.2°F', rr: '32/min' },
+    originFacility: 'District Headquarter Hospital (DHH), Khordha',
+    referredTo: 'SCB Medical College & Hospital (SCBMCH), Cuttack - Apex Level-1 Trauma ICU',
+    referralReason: 'Blunt chest trauma with massive right hemothorax (>1000ml drain ready), flail chest segment, and hemodynamic shock (Shock Index: 1.56); requires urgent thoracic surgery, pelvic binder & blood transfusion.',
+    transitTransport: '108 Apex Trauma ALS Ambulance with rigid cervical collar, pelvic binder & chest drain clamp ready',
+    oxygenReq: 'High Flow 100% O2 at 10 L/min via Non-Rebreathing Mask (NRBM)',
+    medications: [
+      { name: 'TRAMADOL HYDROCHLORIDE', dosage: '50 mg', form: 'Injection', freq: 'Slow IV STAT', duration: '1 Dose', instruction: 'For severe trauma analgesia. Monitor sedation.' },
+      { name: 'RINGER LACTATE', dosage: '1000 ml', form: 'IV Infusion', freq: 'Rapid Infuser under pressure bag', duration: 'STAT', instruction: 'Maintain target MAP > 65 mmHg.' },
+      { name: 'TRANEXAMIC ACID', dosage: '1 g (10 ml)', form: 'Injection', freq: 'Slow IV STAT over 10 mins', duration: 'CRASH-2 Protocol', instruction: 'Followed by 1g over 8 hours infusion.' },
+      { name: 'TETANUS TOXOID', dosage: '0.5 ml', form: 'Injection', freq: 'IM STAT', duration: '1 Dose', instruction: 'Administer deep intramuscular left deltoid.' }
+    ],
+    investigations: [
+      'eFAST Bedside Ultrasound (Hemoperitoneum & Pneumothorax check)',
+      'Digital Chest & Pelvis X-Ray AP Portable STAT',
+      'Blood Grouping & Cross Match for 4 Units PRBC + 2 Units FFP (Massive Transfusion)',
+      'Complete Blood Count with Serial Hematocrit STAT',
+      'Arterial Blood Gas (ABG) for Base Deficit and Serum Lactate'
+    ],
+    dietaryAdvice: 'Strictly NPO (Nil Per Os) for immediate emergency exploratory laparotomy / thoracotomy.',
+    redFlags: [
+      'Tracheal deviation to left, distended neck veins, or sudden SpO2 plummet below 85%',
+      'Loss of radial pulse, MAP falling below 55 mmHg, or sudden obtundation / GCS < 8',
+      'Chest tube drainage exceeding 200 ml/hour continuous over 2 hours'
+    ],
+    followUp: 'Immediate transfer to SCBMCH Level-1 Apex Trauma Operation Theatre for emergency ICD placement and pelvic stabilization.'
+  },
+
+  // ─── SECTION 2-NO: HIGH-RISK MATERNAL & OBSTETRIC ICU (2 Scenarios) ───
+  {
     id: 'CASE-02',
     sectionNo: '2-NO',
+    categoryTag: 'IMPENDING ECLAMPSIA & SEVERE GESTATIONAL HTN',
     sectionTitle: 'SECTION 2-NO: HIGH-RISK OBSTETRICS & MATERNAL ICU',
     department: 'MKCG Berhampur • Obstetric Intensive Care Unit',
     protocol: 'Pritchard Magnesium Sulphate & Labetalol BP Protocol',
@@ -316,8 +418,59 @@ const CLINICAL_PRESETS = [
     followUp: 'Continuous maternal-fetal surveillance in Obstetric ICU. Check blood pressure hourly; target Diastolic BP 90-100 mmHg.'
   },
   {
+    id: 'CASE-07',
+    sectionNo: '2-NO',
+    categoryTag: 'POSTPARTUM HEMORRHAGE & STAT PRBC RESCUE',
+    sectionTitle: 'SECTION 2-NO: OBSTETRIC HEMORRHAGE & SHOCK RESUSCITATION',
+    department: 'SCBMCH Cuttack • Emergency Labor HDU & Blood Bank',
+    protocol: 'Uterotonic Infusion & Form 27C STAT PRBC Crossmatch',
+    patientName: 'Pramila Das (ପ୍ରମିଳା ଦାସ)',
+    age: 26,
+    gender: 'Female',
+    abhaId: '91-4412-8820-1945',
+    phone: '+91 94371 90214',
+    district: 'Puri',
+    address: 'Brahmagiri Block, Puri - 752011',
+    bloodGroup: 'O-',
+    weight: '52 kg',
+    allergies: 'None (NKDA)',
+    acuity: 'RED',
+    icdCode: 'O72.1',
+    icdName: 'Severe Postpartum Hemorrhage (PPH) with Hypovolemic Shock',
+    provisionalDiagnosis: 'Severe Postpartum Hemorrhage (PPH) with Hypovolemic Shock (ICD-10: O72.1)',
+    chiefComplaints: 'Continuous profuse vaginal bleeding following delivery 3 hours ago, altered sensorium, severe pallor, cold clammy extremities.',
+    vitals: { bp: '78/44 mmHg', pulse: '136 bpm', spo2: '92%', temp: '97.4°F', rr: '28/min' },
+    originFacility: 'Community Health Centre (CHC), Brahmagiri, Puri',
+    referredTo: 'SCB Medical College & Hospital (SCBMCH), Cuttack - Emergency HDU',
+    referralReason: 'Uterine atony with active coagulopathy and hemorrhagic shock (Shock Index: 1.74); emergency laparotomy and emergency Form 27C Blood Requisition (PRBC 3 Units) needed.',
+    transitTransport: '108 ALS Mobile ICU with 2 wide-bore 16G IV lines and pressure infuser',
+    oxygenReq: 'Oxygen at 6 L/min via Non-Rebreather Face Mask (NRBM)',
+    medications: [
+      { name: 'OXYTOCIN', dosage: '20 IU', form: 'IV Infusion', freq: 'In 500 ml Ringer Lactate @ 60 drops/min', duration: 'Continuous', instruction: 'Monitor uterine tone continuously.' },
+      { name: 'TRANEXAMIC ACID', dosage: '1 g (10 ml)', form: 'Slow IV STAT', freq: 'Over 10 minutes', duration: 'Single Dose', instruction: 'Second dose after 30 mins if bleeding persists.' },
+      { name: 'MISOPROSTOL', dosage: '800 mcg (4 Tabs)', form: 'Sublingual / Rectal', freq: 'STAT', duration: 'Single Dose', instruction: 'Ensure rapid mucosal absorption.' }
+    ],
+    investigations: [
+      'Urgent Blood Grouping & Cross-Matching for 3 Units PRBC & 2 Units FFP',
+      'Complete Hemogram (Hb, Hematocrit & Platelet count STAT)',
+      'Coagulation Screen (PT/INR, aPTT, Serum Fibrinogen level)',
+      'Arterial Blood Gas Analysis (Serum Lactate & Base Deficit tracking)',
+      'Emergency Bedside Pelvic Ultrasound for Retained Placental Tissue'
+    ],
+    dietaryAdvice: 'Strictly NPO (Nil Per Os) in anticipation of emergency exploration / uterine tamponade / laparotomy.',
+    redFlags: [
+      'Continuing heavy soaking of sanitary pads (>1 pad every 15 minutes)',
+      'Systolic blood pressure declining below 75 mmHg or pulse rising >140 bpm',
+      'Cold peripheries, delayed capillary refill >3 sec, or unresponsiveness'
+    ],
+    followUp: 'Continuous vital signs & fundal height tracking every 15 mins in Emergency HDU until bleeding ceases and hematocrit stabilizes.'
+  },
+
+  // ─── SECTION 3-NO: ACUTE CARDIOLOGY, CATH LAB & CCU (2 Scenarios) ───
+  {
     id: 'CASE-03',
     sectionNo: '3-NO',
+    categoryTag: 'GOLDEN-HOUR STEMI & PPCI CATH-LAB',
     sectionTitle: 'SECTION 3-NO: ACUTE CARDIOLOGY & CATH LAB PPCI',
     department: 'AIIMS Bhubaneswar • Emergency Interventional Cath Lab',
     protocol: 'Golden Hour PPCI Coronary Angioplasty Protocol',
@@ -363,55 +516,60 @@ const CLINICAL_PRESETS = [
     followUp: 'Direct transfer to Interventional Cath Lab for Primary Angioplasty (PPCI). Post-procedure review in CCU.'
   },
   {
-    id: 'CASE-04',
-    sectionNo: '5-NO',
-    sectionTitle: 'SECTION 5-NO: METABOLIC COMPLICATIONS & VASCULAR SURGERY',
-    department: 'SCBMCH Cuttack • Diabetic Foot & Vascular Surgery Unit',
-    protocol: 'Deep Tissue Culture & Surgical Debridement Protocol',
-    patientName: 'Kalandi Charan Sethi (କାଳନ୍ଦୀ ଚରଣ ସେଠୀ)',
-    age: 55,
+    id: 'CASE-10',
+    sectionNo: '3-NO',
+    categoryTag: 'CARDIOGENIC SHOCK & CCU INOTROPE',
+    sectionTitle: 'SECTION 3-NO: ACUTE CARDIOGENIC SHOCK & CCU TELEMETRY',
+    department: 'AIIMS Bhubaneswar • Advanced Coronary Care Unit (CCU)',
+    protocol: 'Noradrenaline / Dobutamine Inotrope & Urgent Cath Lab Mechanical Support Protocol',
+    patientName: 'Niranjan Panigrahi (ନିରଞ୍ଜନ ପାଣିଗ୍ରାହୀ)',
+    age: 71,
     gender: 'Male',
-    abhaId: '91-6671-2290-7712',
-    phone: '+91 94374 77120',
-    district: 'Puri',
-    address: 'Grand Road, Near Gundicha, Puri - 752001',
-    bloodGroup: 'B+',
-    weight: '72 kg',
-    allergies: 'Sulfa Drugs (Erythema)',
-    acuity: 'YELLOW',
-    icdCode: 'E11.621',
-    icdName: 'Uncontrolled Type-2 Diabetes with Infected Neuropathic Foot Ulcer',
-    provisionalDiagnosis: 'Uncontrolled Type-2 Diabetes with Infected Neuropathic Foot Ulcer (Wagner Grade 2) (ICD-10: E11.621)',
-    chiefComplaints: 'Painless purulent ulcer right first metatarsal head for 10 days, fasting blood sugar 248 mg/dL, mild fever.',
-    vitals: { bp: '138/84 mmHg', pulse: '86 bpm', spo2: '98%', temp: '100.1°F', rr: '18/min' },
-    originFacility: 'District Headquarter Hospital (DHH), Puri',
-    referredTo: 'SCB Medical College & Hospital, Cuttack - Diabetic Foot & Vascular Surgery OPD',
-    referralReason: 'Deep tissue culture, radiographic evaluation for osteomyelitis, and specialized surgical debridement.',
-    transitTransport: 'Patient Transport Vehicle / 108 BLS Ambulance',
-    oxygenReq: 'Not Required',
+    abhaId: '91-6204-5519-3380',
+    phone: '+91 94378 11409',
+    district: 'Balasore',
+    address: 'Station Road, Balasore - 756001',
+    bloodGroup: 'AB-',
+    weight: '65 kg',
+    allergies: 'Penicillin (Severe urticaria)',
+    acuity: 'RED',
+    icdCode: 'R57.0',
+    icdName: 'Cardiogenic Shock secondary to Acute Anterior STEMI with Pulmonary Edema',
+    provisionalDiagnosis: 'Cardiogenic Shock secondary to Acute Anterior STEMI with Pulmonary Edema (ICD-10: R57.0)',
+    chiefComplaints: 'Severe orthopnea, frothy pink sputum, cold clammy extremities, worsening anuria for 6 hours; known CAD patient collapsed at Balasore.',
+    vitals: { bp: '74/46 mmHg', pulse: '138 bpm', spo2: '84%', temp: '96.8°F', rr: '34/min' },
+    originFacility: 'District Headquarter Hospital (DHH), Balasore',
+    referredTo: 'AIIMS Bhubaneswar - Advanced Coronary Care Unit (CCU) & Cath Lab',
+    referralReason: 'Refractory cardiogenic shock (Shock Index: 1.86, MAP: 55 mmHg) with extensive anterior wall STEMI and acute pulmonary edema; requires emergent intra-aortic balloon pump (IABP) / ECMO backup and primary PCI.',
+    transitTransport: 'Mobile Advanced Cardiac ICU 108 Ambulance with biphasic defibrillator, syringe infusion pumps & dual O2 cylinders',
+    oxygenReq: 'CPAP / BiPAP ventilation with PEEP 8 cmH2O at FiO2 60%',
     medications: [
-      { name: 'METFORMIN HYDROCHLORIDE', dosage: '500 mg', form: 'Tablet', freq: 'BD with meals', duration: '14 Days', instruction: 'Generic formulation. Avoid on empty stomach.' },
-      { name: 'TENELIGLIPTIN', dosage: '20 mg', form: 'Tablet', freq: 'OD (Morning)', duration: '14 Days', instruction: 'Take before breakfast.' },
-      { name: 'AMOXICILLIN + CLAVULANIC ACID', dosage: '625 mg', form: 'Tablet', freq: 'BD after food', duration: '7 Days', instruction: 'Broad-spectrum coverage for wound infection.' }
+      { name: 'NORADRENALINE', dosage: '4 mg in 50 ml D5W', form: 'IV Infusion', freq: 'At 5-15 mcg/min syringe pump', duration: 'Titrate to MAP > 65', instruction: 'Continuous arterial line / BP cuff monitoring.' },
+      { name: 'DOBUTAMINE', dosage: '250 mg in 50 ml D5W', form: 'IV Infusion', freq: 'At 5 mcg/kg/min continuous', duration: 'Continuous Infusion', instruction: 'Inotropic support for severe left ventricular failure.' },
+      { name: 'FUROSEMIDE', dosage: '40 mg', form: 'Injection', freq: 'Slow IV STAT', duration: '1 Dose', instruction: 'Administer with extreme caution while monitoring MAP.' },
+      { name: 'ATORVASTATIN', dosage: '80 mg', form: 'Tablet', freq: 'STAT orally', duration: 'Single Dose', instruction: 'High-intensity statin therapy.' }
     ],
     investigations: [
-      'Fasting & Post-Prandial Blood Sugar with Glycated Hemoglobin (HbA1c)',
-      'Deep Tissue Wound Swab Culture & Antibiotic Sensitivity (Gram stain)',
-      'Digital Plain Radiograph (X-Ray) Right Foot AP/Lateral for Osteomyelitis',
-      'Serum Creatinine & Microalbuminuria (Diabetic Nephropathy Screen)',
-      'Lower Extremity Arterial Color Doppler for Peripheral Vascular Disease'
+      'Continuous 12-Lead Holter / Telemetry monitoring for malignant arrhythmias',
+      'Bedside 2D Echo (LVEF assessment, anterior wall akinesia, acute MR check)',
+      'Serum Lactate STAT (Target clearance < 2 mmol/L)',
+      'High-Sensitivity Troponin-T & NT-proBNP STAT',
+      'Serum Creatinine, Electrolytes & Arterial Blood Gas (ABG)'
     ],
-    dietaryAdvice: 'Strict Diabetic Diet (1500 kcal): avoid refined sugars, sweets, potatoes, and white bread. Strictly non-weight bearing on right foot.',
+    dietaryAdvice: 'Strict NPO (Nil Per Os). Fluid restriction < 500 ml/day. Strict Foley catheter hourly urine output charting.',
     redFlags: [
-      'Spreading redness, swelling, or foul-smelling purulent discharge from foot',
-      'High-grade fever with chills or sudden spike in blood sugar >300 mg/dL',
-      'Blackish discoloration (gangrenous changes) of toes or numbness spreading upwards'
+      'Malignant Ventricular Tachycardia (VT) / Ventricular Fibrillation (VF) or asystole',
+      'Systolic BP falling below 70 mmHg despite dual inotropic support',
+      'Pink frothy tracheal secretions flooding airways or persistent SpO2 < 88% on BiPAP'
     ],
-    followUp: 'Review in Diabetic Foot Surgical Clinic in 5 days with culture report for wound inspection and debridement assessment.'
+    followUp: 'Immediate transfer to AIIMS Interventional Cath Lab for emergent coronary angiogram and IABP insertion.'
   },
+
+  // ─── SECTION 4-NO: PEDIATRIC CRITICAL CARE & PICU (2 Scenarios) ───
   {
     id: 'CASE-05',
     sectionNo: '4-NO',
+    categoryTag: 'PEDIATRIC MALARIA & ENCEPHALOPATHY',
     sectionTitle: 'SECTION 4-NO: PEDIATRIC CRITICAL CARE & PICU RESCUE',
     department: 'SLN Medical College Koraput • Pediatric ICU (PICU)',
     protocol: 'Pediatric IV Artesunate Reconstitution & Anticonvulsant Protocol',
@@ -457,102 +615,9 @@ const CLINICAL_PRESETS = [
     followUp: 'Continuous Pediatric ICU surveillance. Repeat IV Artesunate second dose at exactly 12 hours from initial loading dose.'
   },
   {
-    id: 'CASE-06',
-    sectionNo: '5-NO',
-    sectionTitle: 'SECTION 5-NO: SNAKEBITE TOXICOLOGY & ENVENOMATION',
-    department: 'PRM Medical College Baripada • Critical Care Envenomation Unit',
-    protocol: '10 Vials Polyvalent ASV & Neostigmine Challenge Protocol',
-    patientName: 'Bichitra Mohapatra (ବିଚିତ୍ର ମହାପାତ୍ର)',
-    age: 34,
-    gender: 'Male',
-    abhaId: '91-9922-1104-4458',
-    phone: '+91 94379 88123',
-    district: 'Mayurbhanj',
-    address: 'Betnoti Block, Mayurbhanj - 757025',
-    bloodGroup: 'AB+',
-    weight: '62 kg',
-    allergies: 'None (NKDA)',
-    acuity: 'RED',
-    icdCode: 'T63.0',
-    icdName: 'Acute Neurotoxic Snakebite (Common Krait) Envenomation',
-    provisionalDiagnosis: 'Acute Neurotoxic Snakebite (Common Krait) Envenomation (ICD-10: T63.0)',
-    chiefComplaints: 'Bitten on right ankle while sleeping on floor 2 hours ago; early bilateral ptosis (eyelid drooping), dysphagia, generalized muscle weakness.',
-    vitals: { bp: '104/68 mmHg', pulse: '98 bpm', spo2: '93%', temp: '98.2°F', rr: '16/min (Shallow)' },
-    originFacility: 'Community Health Centre (CHC), Betnoti, Mayurbhanj',
-    referredTo: 'PRM Medical College & Hospital, Baripada - Critical Care Envenomation Unit',
-    referralReason: 'Rapid progression of neurotoxic paralysis with impending respiratory arrest (Single Breath Count <15); emergency Anti-Snake Venom (ASV) & mechanical ventilation needed.',
-    transitTransport: '108 ALS Ambulance with Bag-Valve-Mask (Ambu) & Doctor escort',
-    oxygenReq: 'Continuous 6 L/min via non-rebreather mask (NRBM)',
-    medications: [
-      { name: 'POLYVALENT ANTI-SNAKE VENOM (ASV)', dosage: '10 Vials (100 ml)', form: 'IV Infusion', freq: 'In 200 ml Normal Saline over 1 hour', duration: 'Initial Loading Dose', instruction: 'Monitor for anaphylaxis; keep Adrenaline 1:1000 0.5ml IM at bedside.' },
-      { name: 'NEOSTIGMINE METHYLSULFATE', dosage: '0.5 mg', form: 'IV Injection', freq: 'With Atropine 0.6 mg STAT', duration: 'Challenge Dose', instruction: 'Evaluate response in 30 mins for neuromuscular improvement.' },
-      { name: 'TETANUS TOXOID', dosage: '0.5 ml', form: 'IM Injection', freq: 'STAT', duration: '1 Dose', instruction: 'Deep intramuscular right deltoid.' }
-    ],
-    investigations: [
-      '20-Minute Whole Blood Clotting Test (20WBCT) serial Q30min',
-      'Single Breath Count (SBC) tracking for diaphragmatic muscle weakness',
-      'Serum Creatinine, Blood Urea & Urine Examination (Myoglobinuria screen)',
-      'Coagulation Profile (PT/INR, aPTT, D-Dimer)',
-      'Arterial Blood Gas Analysis (pCO2 & pO2 monitoring for hypoventilation)'
-    ],
-    dietaryAdvice: 'Nil by mouth until bulbar reflexes and normal swallowing fully recover. Continuous IV hydration with Ringer Lactate.',
-    redFlags: [
-      'Progression of ptosis, dysphagia, or inability to clear oral secretions',
-      'Single Breath Count dropping below 15 or chest indrawing',
-      'Sudden loss of consciousness, bradycardia, or signs of ASV anaphylaxis'
-    ],
-    followUp: 'Continuous Envenomation ICU monitoring. Re-evaluate Single Breath Count & ptosis 30 minutes after Neostigmine challenge.'
-  },
-  {
-    id: 'CASE-07',
-    sectionNo: '2-NO',
-    sectionTitle: 'SECTION 2-NO: OBSTETRIC HEMORRHAGE & SHOCK RESUSCITATION',
-    department: 'SCBMCH Cuttack • Emergency Labor HDU & Blood Bank',
-    protocol: 'Uterotonic Infusion & Form 27C STAT PRBC Crossmatch',
-    patientName: 'Pramila Das (ପ୍ରମିଳା ଦାସ)',
-    age: 26,
-    gender: 'Female',
-    abhaId: '91-4412-8820-1945',
-    phone: '+91 94371 90214',
-    district: 'Puri',
-    address: 'Brahmagiri Block, Puri - 752011',
-    bloodGroup: 'O-',
-    weight: '52 kg',
-    allergies: 'None (NKDA)',
-    acuity: 'RED',
-    icdCode: 'O72.1',
-    icdName: 'Severe Postpartum Hemorrhage (PPH) with Hypovolemic Shock',
-    provisionalDiagnosis: 'Severe Postpartum Hemorrhage (PPH) with Hypovolemic Shock (ICD-10: O72.1)',
-    chiefComplaints: 'Continuous profuse vaginal bleeding following delivery 3 hours ago, altered sensorium, severe pallor, cold clammy extremities.',
-    vitals: { bp: '78/44 mmHg', pulse: '136 bpm', spo2: '92%', temp: '97.4°F', rr: '28/min' },
-    originFacility: 'Community Health Centre (CHC), Brahmagiri, Puri',
-    referredTo: 'SCB Medical College & Hospital (SCBMCH), Cuttack - Emergency HDU',
-    referralReason: 'Uterine atony with active coagulopathy and hemorrhagic shock (Shock Index: 1.74); emergency laparotomy and emergency Form 27C Blood Requisition (PRBC 3 Units) needed.',
-    transitTransport: '108 ALS Mobile ICU with 2 wide-bore 16G IV lines and pressure infuser',
-    oxygenReq: 'Oxygen at 6 L/min via Non-Rebreather Face Mask (NRBM)',
-    medications: [
-      { name: 'OXYTOCIN', dosage: '20 IU', form: 'IV Infusion', freq: 'In 500 ml Ringer Lactate @ 60 drops/min', duration: 'Continuous', instruction: 'Monitor uterine tone continuously.' },
-      { name: 'TRANEXAMIC ACID', dosage: '1 g (10 ml)', form: 'Slow IV STAT', freq: 'Over 10 minutes', duration: 'Single Dose', instruction: 'Second dose after 30 mins if bleeding persists.' },
-      { name: 'MISOPROSTOL', dosage: '800 mcg (4 Tabs)', form: 'Sublingual / Rectal', freq: 'STAT', duration: 'Single Dose', instruction: 'Ensure rapid mucosal absorption.' }
-    ],
-    investigations: [
-      'Urgent Blood Grouping & Cross-Matching for 3 Units PRBC & 2 Units FFP',
-      'Complete Hemogram (Hb, Hematocrit & Platelet count STAT)',
-      'Coagulation Screen (PT/INR, aPTT, Serum Fibrinogen level)',
-      'Arterial Blood Gas Analysis (Serum Lactate & Base Deficit tracking)',
-      'Emergency Bedside Pelvic Ultrasound for Retained Placental Tissue'
-    ],
-    dietaryAdvice: 'Strictly NPO (Nil Per Os) in anticipation of emergency exploration / uterine tamponade / laparotomy.',
-    redFlags: [
-      'Continuing heavy soaking of sanitary pads (>1 pad every 15 minutes)',
-      'Systolic blood pressure declining below 75 mmHg or pulse rising >140 bpm',
-      'Cold peripheries, delayed capillary refill >3 sec, or unresponsiveness'
-    ],
-    followUp: 'Continuous vital signs & fundal height tracking every 15 mins in Emergency HDU until bleeding ceases and hematocrit stabilizes.'
-  },
-  {
     id: 'CASE-08',
     sectionNo: '4-NO',
+    categoryTag: 'PEDIATRIC DENGUE SHOCK & MICROVASCULAR',
     sectionTitle: 'SECTION 4-NO: PEDIATRIC DENGUE SHOCK SYNDROME',
     department: 'MKCG Berhampur • Pediatric High Dependency Unit',
     protocol: 'Pediatric 7 ml/kg/hr Crystalloid & Microvascular Monitoring',
@@ -596,6 +661,104 @@ const CLINICAL_PRESETS = [
       'Urine output falling below 1 ml/kg/hr or spontaneous mucosal bleeding'
     ],
     followUp: 'Continuous Pediatric HDU vital signs and fluid balance monitoring. Step down IV fluids as hematocrit normalizes.'
+  },
+
+  // ─── SECTION 5-NO: TOXICOLOGY, ENVENOMATION & SURGERY (2 Scenarios) ───
+  {
+    id: 'CASE-04',
+    sectionNo: '5-NO',
+    categoryTag: 'WAGNER GR-2 DIABETIC FOOT & SURGERY',
+    sectionTitle: 'SECTION 5-NO: METABOLIC COMPLICATIONS & VASCULAR SURGERY',
+    department: 'SCBMCH Cuttack • Diabetic Foot & Vascular Surgery Unit',
+    protocol: 'Deep Tissue Culture & Surgical Debridement Protocol',
+    patientName: 'Kalandi Charan Sethi (କାଳନ୍ଦୀ ଚରଣ ସେଠୀ)',
+    age: 55,
+    gender: 'Male',
+    abhaId: '91-6671-2290-7712',
+    phone: '+91 94374 77120',
+    district: 'Puri',
+    address: 'Grand Road, Near Gundicha, Puri - 752001',
+    bloodGroup: 'B+',
+    weight: '72 kg',
+    allergies: 'Sulfa Drugs (Erythema)',
+    acuity: 'YELLOW',
+    icdCode: 'E11.621',
+    icdName: 'Uncontrolled Type-2 Diabetes with Infected Neuropathic Foot Ulcer',
+    provisionalDiagnosis: 'Uncontrolled Type-2 Diabetes with Infected Neuropathic Foot Ulcer (Wagner Grade 2) (ICD-10: E11.621)',
+    chiefComplaints: 'Painless purulent ulcer right first metatarsal head for 10 days, fasting blood sugar 248 mg/dL, mild fever.',
+    vitals: { bp: '138/84 mmHg', pulse: '86 bpm', spo2: '98%', temp: '100.1°F', rr: '18/min' },
+    originFacility: 'District Headquarter Hospital (DHH), Puri',
+    referredTo: 'SCB Medical College & Hospital, Cuttack - Diabetic Foot & Vascular Surgery OPD',
+    referralReason: 'Deep tissue culture, radiographic evaluation for osteomyelitis, and specialized surgical debridement.',
+    transitTransport: 'Patient Transport Vehicle / 108 BLS Ambulance',
+    oxygenReq: 'Not Required',
+    medications: [
+      { name: 'METFORMIN HYDROCHLORIDE', dosage: '500 mg', form: 'Tablet', freq: 'BD with meals', duration: '14 Days', instruction: 'Generic formulation. Avoid on empty stomach.' },
+      { name: 'TENELIGLIPTIN', dosage: '20 mg', form: 'Tablet', freq: 'OD (Morning)', duration: '14 Days', instruction: 'Take before breakfast.' },
+      { name: 'AMOXICILLIN + CLAVULANIC ACID', dosage: '625 mg', form: 'Tablet', freq: 'BD after food', duration: '7 Days', instruction: 'Broad-spectrum coverage for wound infection.' }
+    ],
+    investigations: [
+      'Fasting & Post-Prandial Blood Sugar with Glycated Hemoglobin (HbA1c)',
+      'Deep Tissue Wound Swab Culture & Antibiotic Sensitivity (Gram stain)',
+      'Digital Plain Radiograph (X-Ray) Right Foot AP/Lateral for Osteomyelitis',
+      'Serum Creatinine & Microalbuminuria (Diabetic Nephropathy Screen)',
+      'Lower Extremity Arterial Color Doppler for Peripheral Vascular Disease'
+    ],
+    dietaryAdvice: 'Strict Diabetic Diet (1500 kcal): avoid refined sugars, sweets, potatoes, and white bread. Strictly non-weight bearing on right foot.',
+    redFlags: [
+      'Spreading redness, swelling, or foul-smelling purulent discharge from foot',
+      'High-grade fever with chills or sudden spike in blood sugar >300 mg/dL',
+      'Blackish discoloration (gangrenous changes) of toes or numbness spreading upwards'
+    ],
+    followUp: 'Review in Diabetic Foot Surgical Clinic in 5 days with culture report for wound inspection and debridement assessment.'
+  },
+  {
+    id: 'CASE-06',
+    sectionNo: '5-NO',
+    categoryTag: 'NEUROTOXIC KRAIT & ASV ANTIDOTE RESCUE',
+    sectionTitle: 'SECTION 5-NO: SNAKEBITE TOXICOLOGY & ENVENOMATION',
+    department: 'PRM Medical College Baripada • Critical Care Envenomation Unit',
+    protocol: '10 Vials Polyvalent ASV & Neostigmine Challenge Protocol',
+    patientName: 'Bichitra Mohapatra (ବିଚିତ୍ର ମହାପାତ୍ର)',
+    age: 34,
+    gender: 'Male',
+    abhaId: '91-9922-1104-4458',
+    phone: '+91 94379 88123',
+    district: 'Mayurbhanj',
+    address: 'Betnoti Block, Mayurbhanj - 757025',
+    bloodGroup: 'AB+',
+    weight: '62 kg',
+    allergies: 'None (NKDA)',
+    acuity: 'RED',
+    icdCode: 'T63.0',
+    icdName: 'Acute Neurotoxic Snakebite (Common Krait) Envenomation',
+    provisionalDiagnosis: 'Acute Neurotoxic Snakebite (Common Krait) Envenomation (ICD-10: T63.0)',
+    chiefComplaints: 'Bitten on right ankle while sleeping on floor 2 hours ago; early bilateral ptosis (eyelid drooping), dysphagia, generalized muscle weakness.',
+    vitals: { bp: '104/68 mmHg', pulse: '98 bpm', spo2: '93%', temp: '98.2°F', rr: '16/min (Shallow)' },
+    originFacility: 'Community Health Centre (CHC), Betnoti, Mayurbhanj',
+    referredTo: 'PRM Medical College & Hospital, Baripada - Critical Care Envenomation Unit',
+    referralReason: 'Rapid progression of neurotoxic paralysis with impending respiratory arrest (Single Breath Count <15); emergency Anti-Snake Venom (ASV) & mechanical ventilation needed.',
+    transitTransport: '108 ALS Ambulance with Bag-Valve-Mask (Ambu) & Doctor escort',
+    oxygenReq: 'Continuous 6 L/min via non-rebreather mask (NRBM)',
+    medications: [
+      { name: 'POLYVALENT ANTI-SNAKE VENOM (ASV)', dosage: '10 Vials (100 ml)', form: 'IV Infusion', freq: 'In 200 ml Normal Saline over 1 hour', duration: 'Initial Loading Dose', instruction: 'Monitor for anaphylaxis; keep Adrenaline 1:1000 0.5ml IM at bedside.' },
+      { name: 'NEOSTIGMINE METHYLSULFATE', dosage: '0.5 mg', form: 'IV Injection', freq: 'With Atropine 0.6 mg STAT', duration: 'Challenge Dose', instruction: 'Evaluate response in 30 mins for neuromuscular improvement.' },
+      { name: 'TETANUS TOXOID', dosage: '0.5 ml', form: 'IM Injection', freq: 'STAT', duration: '1 Dose', instruction: 'Deep intramuscular right deltoid.' }
+    ],
+    investigations: [
+      '20-Minute Whole Blood Clotting Test (20WBCT) serial Q30min',
+      'Single Breath Count (SBC) tracking for diaphragmatic muscle weakness',
+      'Serum Creatinine, Blood Urea & Urine Examination (Myoglobinuria screen)',
+      'Coagulation Profile (PT/INR, aPTT, D-Dimer)',
+      'Arterial Blood Gas Analysis (pCO2 & pO2 monitoring for hypoventilation)'
+    ],
+    dietaryAdvice: 'Nil by mouth until bulbar reflexes and normal swallowing fully recover. Continuous IV hydration with Ringer Lactate.',
+    redFlags: [
+      'Progression of ptosis, dysphagia, or inability to clear oral secretions',
+      'Single Breath Count dropping below 15 or chest indrawing',
+      'Sudden loss of consciousness, bradycardia, or signs of ASV anaphylaxis'
+    ],
+    followUp: 'Continuous Envenomation ICU monitoring. Re-evaluate Single Breath Count & ptosis 30 minutes after Neostigmine challenge.'
   }
 ];
 
@@ -645,12 +808,12 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
 
   // 5 Differentiated Odisha Clinical Sections
   const CLINICAL_SECTION_TABS = useMemo(() => [
-    { id: 'ALL', label: 'All 5 Clinical Sections', count: CLINICAL_PRESETS.length, badge: 'ALL', color: 'indigo' },
-    { id: '1-NO', label: 'Section 1-No: Emergency & Triage', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '1-NO').length, badge: '1-NO', color: 'indigo' },
-    { id: '2-NO', label: 'Section 2-No: High-Risk Maternal ICU', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '2-NO').length, badge: '2-NO', color: 'rose' },
-    { id: '3-NO', label: 'Section 3-No: Cardiology & Cath Lab', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '3-NO').length, badge: '3-NO', color: 'red' },
-    { id: '4-NO', label: 'Section 4-No: Pediatric PICU', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '4-NO').length, badge: '4-NO', color: 'amber' },
-    { id: '5-NO', label: 'Section 5-No: Toxicology & Surgery', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '5-NO').length, badge: '5-NO', color: 'teal' }
+    { id: 'ALL', label: 'All 10 Authentic Scenarios (5 Sections)', count: CLINICAL_PRESETS.length, badge: 'ALL', color: 'indigo' },
+    { id: '1-NO', label: 'Section 1-No: Emergency & Golden-Hour Trauma', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '1-NO').length, badge: '1-NO', color: 'indigo' },
+    { id: '2-NO', label: 'Section 2-No: High-Risk Maternal & Obstetric ICU', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '2-NO').length, badge: '2-NO', color: 'rose' },
+    { id: '3-NO', label: 'Section 3-No: Cardiology, Cath Lab & CCU', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '3-NO').length, badge: '3-NO', color: 'red' },
+    { id: '4-NO', label: 'Section 4-No: Pediatric Critical Care & PICU', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '4-NO').length, badge: '4-NO', color: 'amber' },
+    { id: '5-NO', label: 'Section 5-No: Toxicology & Vascular Surgery', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '5-NO').length, badge: '5-NO', color: 'teal' }
   ], []);
 
   const filteredCases = useMemo(() => {
@@ -772,6 +935,24 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       setBloodComponentReq('Platelet Concentrate (RDP / SDP)');
       setBloodUnitsReq(4);
       setBloodUrgency('Urgent (Within 1 Hour / Crossmatched)');
+    } else if (currentCase.id === 'CASE-09') {
+      setBloodRequisitionEnabled(true);
+      setBloodGroupReq('O+');
+      setBloodComponentReq('Packed Red Blood Cells (PRBC) - Massive Transfusion Pack');
+      setBloodUnitsReq(4);
+      setBloodUrgency('STAT Emergency (Golden Hour Polytrauma Code)');
+    } else if (currentCase.id === 'CASE-10') {
+      setBloodRequisitionEnabled(true);
+      setBloodGroupReq('AB-');
+      setBloodComponentReq('Packed Red Blood Cells (PRBC) Standby for Cath Lab');
+      setBloodUnitsReq(2);
+      setBloodUrgency('Urgent (Cath Lab Standby)');
+    } else if (currentCase.id === 'CASE-01') {
+      setBloodRequisitionEnabled(false);
+      setBloodGroupReq('B+');
+      setBloodComponentReq('Single Donor Platelet (SDP) Requisition Standby');
+      setBloodUnitsReq(2);
+      setBloodUrgency('Urgent (Platelet < 40,000/mcL)');
     } else {
       setBloodRequisitionEnabled(false);
       setBloodGroupReq(currentCase.bloodGroup || 'O+');
@@ -2265,45 +2446,60 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       {/* ───────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-black">
-              <Activity className="w-4 h-4" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-black shadow-xs">
+              <Activity className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+              <div className="text-xs sm:text-sm font-black text-slate-900 flex flex-wrap items-center gap-2">
                 <span>Select Authentic Odisha Clinical Case to Load &amp; Edit:</span>
-                <span className="text-[10px] font-bold bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded-full border border-indigo-200">
-                  5 DISTINCT SECTIONS
+                <span className="text-[10px] font-black bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded-full border border-indigo-200">
+                  5 DISTINCT CLINICAL SECTIONS
+                </span>
+                <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
+                  10 CASES (2 PER SECTION)
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500">
-                Choose from 5 specialized clinical hospital sections (1-No to 5-No) with tailored statutory protocols &amp; NMC generic workflows.
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Every section contains 2 distinct life-critical clinical scenarios with specialized vitals, NMC generic drug protocols, and 108 emergency transit telemetry.
               </p>
             </div>
           </div>
-          <span className="text-[11px] font-mono font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 self-start sm:self-auto">
-            Active: {currentCase.id} ({currentCase.sectionNo})
-          </span>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="text-[11px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
+              Active: {currentCase.id} • {currentCase.sectionNo}
+            </span>
+          </div>
         </div>
 
         {/* 5 Distinct Clinical Section Filter Switcher */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
           {CLINICAL_SECTION_TABS.map((tab) => {
             const isActive = selectedSectionFilter === tab.id;
+            const tabIcons = {
+              'ALL': <Layers className="w-3.5 h-3.5" />,
+              '1-NO': <Flame className="w-3.5 h-3.5 text-rose-500" />,
+              '2-NO': <Baby className="w-3.5 h-3.5 text-pink-500" />,
+              '3-NO': <HeartPulse className="w-3.5 h-3.5 text-red-500" />,
+              '4-NO': <Activity className="w-3.5 h-3.5 text-amber-500" />,
+              '5-NO': <FlaskConical className="w-3.5 h-3.5 text-teal-500" />
+            };
+
             return (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setSelectedSectionFilter(tab.id)}
-                className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 whitespace-nowrap transition-all cursor-pointer border ${
+                className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer border ${
                   isActive
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-indigo-300'
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
               >
+                <span>{tabIcons[tab.id]}</span>
                 <span>{tab.label}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                  isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'
                 }`}>
                   {tab.count}
                 </span>
@@ -2313,79 +2509,188 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
         </div>
 
         {/* Differentiated Clinical Case Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3.5">
           {filteredCases.map((item) => {
             const isSelected = selectedCaseId === item.id;
-            const badgeBg =
-              item.sectionNo === '1-NO' ? 'bg-indigo-600' :
-              item.sectionNo === '2-NO' ? 'bg-rose-600' :
-              item.sectionNo === '3-NO' ? 'bg-red-600' :
-              item.sectionNo === '4-NO' ? 'bg-amber-600' :
-              'bg-teal-700';
+            const route = ODISHA_TRANSIT_ROUTES[item.id];
+
+            // Category-specific visual accents
+            const sectionConfig = {
+              '1-NO': {
+                headerGradient: 'bg-gradient-to-r from-red-600 via-rose-700 to-indigo-800',
+                badgeBg: 'bg-red-700 text-white',
+                tagBg: 'bg-red-50 text-red-900 border-red-200',
+                borderActive: 'border-red-500 ring-2 ring-red-300 shadow-md bg-gradient-to-br from-red-50/40 via-white to-slate-50',
+                icon: <Flame className="w-3.5 h-3.5 text-white" />,
+                accentColor: 'text-red-700'
+              },
+              '2-NO': {
+                headerGradient: 'bg-gradient-to-r from-rose-600 via-pink-700 to-rose-900',
+                badgeBg: 'bg-rose-700 text-white',
+                tagBg: 'bg-rose-50 text-rose-900 border-rose-200',
+                borderActive: 'border-rose-500 ring-2 ring-rose-300 shadow-md bg-gradient-to-br from-rose-50/40 via-white to-slate-50',
+                icon: <Baby className="w-3.5 h-3.5 text-white" />,
+                accentColor: 'text-rose-700'
+              },
+              '3-NO': {
+                headerGradient: 'bg-gradient-to-r from-red-700 via-rose-900 to-slate-900',
+                badgeBg: 'bg-red-800 text-white',
+                tagBg: 'bg-red-50 text-red-900 border-red-200',
+                borderActive: 'border-red-600 ring-2 ring-red-300 shadow-md bg-gradient-to-br from-red-50/40 via-white to-slate-50',
+                icon: <HeartPulse className="w-3.5 h-3.5 text-white" />,
+                accentColor: 'text-red-800'
+              },
+              '4-NO': {
+                headerGradient: 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-800',
+                badgeBg: 'bg-amber-700 text-white',
+                tagBg: 'bg-amber-50 text-amber-900 border-amber-200',
+                borderActive: 'border-amber-500 ring-2 ring-amber-300 shadow-md bg-gradient-to-br from-amber-50/40 via-white to-slate-50',
+                icon: <Activity className="w-3.5 h-3.5 text-white" />,
+                accentColor: 'text-amber-700'
+              },
+              '5-NO': {
+                headerGradient: 'bg-gradient-to-r from-teal-700 via-emerald-700 to-slate-900',
+                badgeBg: 'bg-teal-800 text-white',
+                tagBg: 'bg-teal-50 text-teal-900 border-teal-200',
+                borderActive: 'border-teal-500 ring-2 ring-teal-300 shadow-md bg-gradient-to-br from-teal-50/40 via-white to-slate-50',
+                icon: <FlaskConical className="w-3.5 h-3.5 text-white" />,
+                accentColor: 'text-teal-800'
+              }
+            }[item.sectionNo] || {
+              headerGradient: 'bg-gradient-to-r from-indigo-700 to-purple-800',
+              badgeBg: 'bg-indigo-700 text-white',
+              tagBg: 'bg-indigo-50 text-indigo-900 border-indigo-200',
+              borderActive: 'border-indigo-500 ring-2 ring-indigo-300 shadow-md',
+              icon: <Activity className="w-3.5 h-3.5 text-white" />,
+              accentColor: 'text-indigo-700'
+            };
 
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setSelectedCaseId(item.id)}
-                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer space-y-2.5 relative ${
+                className={`rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer relative overflow-hidden group ${
                   isSelected
-                    ? 'bg-gradient-to-br from-indigo-50/90 via-white to-slate-50 border-indigo-500 ring-2 ring-indigo-300 shadow-md'
-                    : 'bg-slate-50/70 hover:bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                    ? sectionConfig.borderActive
+                    : 'bg-slate-50/80 hover:bg-white border-slate-200 hover:border-slate-300 shadow-2xs hover:shadow-xs'
                 }`}
               >
                 <div>
-                  {/* Section Banner Header */}
-                  <div className="flex items-center justify-between gap-1 pb-1.5 border-b border-slate-200/80">
-                    <span className={`${badgeBg} text-white font-black text-[9px] px-2 py-0.5 rounded shadow-2xs uppercase tracking-wider`}>
-                      {item.sectionNo}
-                    </span>
-                    <span
-                      className={`text-[9px] px-2 py-0.5 rounded-full font-black ${
-                        item.acuity === 'RED'
-                          ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                          : 'bg-amber-100 text-amber-800 border border-amber-300'
-                      }`}
-                    >
-                      {item.acuity} EMERGENCY
-                    </span>
-                  </div>
-
-                  {/* Section Name & Department */}
-                  <div className="mt-1.5">
-                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-wide block truncate">
-                      {item.sectionTitle}
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-medium block truncate">
-                      🏥 {item.department}
-                    </span>
-                  </div>
-
-                  {/* Patient Name */}
-                  <div className="mt-2">
-                    <div className="font-extrabold text-sm text-slate-900 leading-snug">
-                      {item.patientName}
+                  {/* Distinct Section Colored Header Ribbon */}
+                  <div className={`${sectionConfig.headerGradient} px-3.5 py-2 text-white flex items-center justify-between`}>
+                    <div className="flex items-center gap-1.5 font-black text-[11px] tracking-wide">
+                      {sectionConfig.icon}
+                      <span>{item.sectionNo}</span>
+                      <span className="opacity-70 font-mono">•</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider">{item.categoryTag || item.id}</span>
                     </div>
-                    <div className="text-[10px] text-slate-500 font-medium">
-                      📍 {item.district} • {item.age} Yrs / {item.gender} • ABO: <strong>{item.bloodGroup}</strong>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`text-[9px] px-2 py-0.5 rounded-full font-black ${
+                          item.acuity === 'RED'
+                            ? 'bg-rose-500/90 text-white'
+                            : 'bg-amber-400 text-amber-950'
+                        }`}
+                      >
+                        {item.acuity} STAT
+                      </span>
+                      {isSelected && (
+                        <span className="bg-white text-slate-900 text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                          ACTIVE
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* Diagnosis */}
-                  <div className="p-2 bg-white rounded-xl border border-slate-200/90 text-[10px] font-bold text-slate-800 mt-2 line-clamp-2">
-                    {item.provisionalDiagnosis}
+                  <div className="p-3.5 space-y-2.5">
+                    {/* Patient Identity & Demographics */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-extrabold text-sm text-slate-900 leading-snug">
+                          {item.patientName}
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{item.district} District</span>
+                          <span>•</span>
+                          <span>{item.age} Yrs / {item.gender}</span>
+                          <span>•</span>
+                          <span className="font-bold text-slate-800">ABO: {item.bloodGroup}</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                        {item.id}
+                      </span>
+                    </div>
+
+                    {/* Live Telemetry Vitals Chips Bar */}
+                    <div className="grid grid-cols-4 gap-1 p-2 bg-slate-100/90 rounded-xl border border-slate-200 text-center">
+                      <div className="bg-white rounded p-1 border border-slate-200/60">
+                        <span className="block text-[8px] font-bold text-slate-400 uppercase">BP</span>
+                        <span className="block text-[10px] font-black text-slate-800 truncate">{item.vitals?.bp}</span>
+                      </div>
+                      <div className="bg-white rounded p-1 border border-slate-200/60">
+                        <span className="block text-[8px] font-bold text-slate-400 uppercase">Pulse</span>
+                        <span className="block text-[10px] font-black text-slate-800 truncate">{item.vitals?.pulse}</span>
+                      </div>
+                      <div className={`rounded p-1 border ${
+                        parseFloat(item.vitals?.spo2) < 92 ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-white border-slate-200/60 text-slate-800'
+                      }`}>
+                        <span className="block text-[8px] font-bold text-slate-400 uppercase">SpO2</span>
+                        <span className="block text-[10px] font-black truncate">{item.vitals?.spo2}</span>
+                      </div>
+                      <div className="bg-white rounded p-1 border border-slate-200/60">
+                        <span className="block text-[8px] font-bold text-slate-400 uppercase">Temp / RR</span>
+                        <span className="block text-[10px] font-black text-slate-800 truncate">{item.vitals?.temp || item.vitals?.rr}</span>
+                      </div>
+                    </div>
+
+                    {/* Provisional Diagnosis & ICD-10 */}
+                    <div className="p-2 bg-white rounded-xl border border-slate-200 text-[11px] font-bold text-slate-800 space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-mono font-black bg-indigo-50 text-indigo-800 px-1.5 py-0.2 rounded border border-indigo-200">
+                          {item.icdCode}
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-normal truncate">
+                          {item.originFacility.split(' (')[0]} ➔ Tertiary
+                        </span>
+                      </div>
+                      <p className="line-clamp-2 text-slate-800 font-bold leading-tight">
+                        {item.provisionalDiagnosis}
+                      </p>
+                    </div>
+
+                    {/* Generic Drug Regimen Preview */}
+                    <div className="text-[10px] text-slate-600 bg-amber-50/70 p-1.5 rounded-lg border border-amber-200/60 flex items-center gap-1.5">
+                      <Pill className="w-3 h-3 text-amber-700 shrink-0" />
+                      <span className="truncate font-medium">
+                        <strong>NMC Rx:</strong> {item.medications?.slice(0, 2).map((m) => m.name).join(' • ')}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Clinical Protocol & ID Footer */}
-                <div className="pt-1.5 border-t border-slate-200/80 space-y-1">
-                  <div className="text-[9px] font-bold text-indigo-900 bg-indigo-50/90 p-1.5 rounded-lg border border-indigo-100 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-indigo-600 shrink-0" />
-                    <span className="truncate">{item.protocol}</span>
+                {/* Card Footer: Protocol & 108 Transit Telemetry */}
+                <div className="p-3 bg-slate-50 border-t border-slate-200/80 space-y-1.5">
+                  <div className="text-[9px] font-bold text-indigo-900 bg-indigo-50/90 p-1.5 rounded-lg border border-indigo-100 flex items-center justify-between gap-1">
+                    <span className="flex items-center gap-1 truncate">
+                      <Sparkles className="w-3 h-3 text-indigo-600 shrink-0" />
+                      <span className="truncate">{item.protocol}</span>
+                    </span>
+                    {route && (
+                      <span className="text-[9px] font-mono text-slate-500 shrink-0">
+                        {route.distance} • {route.eta}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono px-0.5">
-                    <span>ID: {item.id}</span>
-                    <span className="text-emerald-700 font-bold">✓ NMC 2023 Validated</span>
+                  <div className="flex items-center justify-between text-[10px] px-0.5">
+                    <span className="text-slate-400 font-mono">
+                      🏥 {item.department.split(' • ')[0]}
+                    </span>
+                    <span className={`font-bold ${isSelected ? 'text-emerald-700' : 'text-slate-500 group-hover:text-indigo-600'}`}>
+                      {isSelected ? '✓ Loaded in Cockpit' : 'Click to Load & Edit →'}
+                    </span>
                   </div>
                 </div>
               </button>
