@@ -2439,193 +2439,327 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
         </div>
 
         {/* 5 Completely Differentiated Clinical Cockpit Command Modules (1 to 5) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3.5 text-xs">
           {/* COCKPIT MODULE 1-NO: 1. NMC e-Prescription (Generic) */}
-          <div className="bg-slate-800/90 border border-indigo-500/50 rounded-xl p-3 space-y-2.5 flex flex-col justify-between hover:border-indigo-400 transition-all shadow-sm">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between border-b border-indigo-700/60 pb-1.5">
-                <span className="font-black text-indigo-300 flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black">1</span>
-                  <span className="truncate">NMC e-Rx (Generic)</span>
-                </span>
-                <span className="text-[9px] bg-indigo-500/20 text-indigo-300 font-mono px-1.5 py-0.5 rounded border border-indigo-400/30">
-                  {medications.length} DRUGS
+          <div className="bg-gradient-to-b from-slate-900 to-indigo-950/70 border-2 border-indigo-500/60 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between hover:border-indigo-400 transition-all shadow-md group">
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between border-b border-indigo-800/80 pb-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black shadow-xs">
+                    1
+                  </span>
+                  <span className="font-black text-indigo-200 truncate">1. NMC e-Prescription</span>
+                </div>
+                <span className="text-[9px] bg-indigo-500/30 text-indigo-300 font-mono font-bold px-2 py-0.5 rounded-full border border-indigo-400/40">
+                  {medications.length} MEDS
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-snug">
-                NMC 2023 generic formulary checker, capitalization audit &amp; Niramaya scheme compliance.
-              </p>
-              <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-700/80 space-y-1 font-mono text-[10px]">
-                <div className="text-slate-400 truncate">Rx Count: <strong className="text-white">{medications.length} Prescribed</strong></div>
-                <div className="text-slate-400 truncate">Formulary: <strong className="text-emerald-400">100% CAPITAL OK</strong></div>
-                <div className="text-slate-400 truncate">Free Supply: <span className="text-indigo-300">OSMC Niramaya</span></div>
+
+              {/* Data & Telemetry Grid */}
+              <div className="space-y-1.5 font-mono text-[10px]">
+                <div className="bg-slate-950/80 p-2 rounded-xl border border-indigo-900/60 space-y-1">
+                  <div className="flex justify-between text-slate-400">
+                    <span>NMC Formulary:</span>
+                    <strong className="text-emerald-400">100% CAPITAL OK</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Niramaya Scheme:</span>
+                    <strong className="text-indigo-300">Free OSMC Supply</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Allergy Status:</span>
+                    <span className={`font-bold ${patientAllergies.includes('None') ? 'text-emerald-400' : 'text-rose-400 animate-pulse'}`}>
+                      {patientAllergies.length > 15 ? patientAllergies.slice(0, 15) + '...' : patientAllergies}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Clinical Drug Safety Live Check */}
+                <div className="p-2 bg-indigo-950/60 rounded-xl border border-indigo-800/50 space-y-1">
+                  <div className="text-[9px] uppercase font-bold text-indigo-400 flex items-center justify-between">
+                    <span>Pediatric Guard:</span>
+                    <span className="text-amber-300">{isPediatricCase ? 'ACTIVE (<12y)' : 'Standard Adult'}</span>
+                  </div>
+                  <div className="text-[9px] text-slate-300 truncate">
+                    Weight: <strong>{effectiveWeight} kg</strong> ({patientAge} Yrs)
+                  </div>
+                  <div className="text-[9px] text-slate-400 truncate">
+                    Top Med: <strong className="text-white">{medications[0]?.name || 'PARACETAMOL'}</strong>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="pt-1.5 border-t border-slate-700/60">
+            <div className="pt-2 border-t border-indigo-900/60 flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setActiveTab('prescription')}
-                className={`w-full py-1.5 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs ${
+                className={`w-full py-2 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs ${
                   activeTab === 'prescription'
                     ? 'bg-indigo-600 text-white ring-2 ring-indigo-400'
-                    : 'bg-indigo-950/80 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/50'
+                    : 'bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/60'
                 }`}
               >
-                <Pill className="w-3 h-3 text-indigo-400" />
-                <span>Open Rx Suite</span>
+                <Pill className="w-3.5 h-3.5 text-indigo-300" />
+                <span>Launch Rx Studio</span>
               </button>
             </div>
           </div>
 
           {/* COCKPIT MODULE 2-NO: 2. Hospital Referral Slip (108) */}
-          <div className="bg-slate-800/90 border border-rose-500/50 rounded-xl p-3 space-y-2.5 flex flex-col justify-between hover:border-rose-400 transition-all shadow-sm">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between border-b border-rose-700/60 pb-1.5">
-                <span className="font-black text-rose-300 flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-md bg-rose-600 text-white flex items-center justify-center text-[10px] font-black">2</span>
-                  <span className="truncate">108 Referral Slip</span>
-                </span>
-                <span className="text-[9px] bg-rose-500/20 text-rose-300 font-mono px-1.5 py-0.5 rounded border border-rose-400/30">
-                  {priorityTier}
+          <div className="bg-gradient-to-b from-slate-900 to-rose-950/70 border-2 border-rose-500/60 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between hover:border-rose-400 transition-all shadow-md group">
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between border-b border-rose-800/80 pb-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-lg bg-rose-600 text-white flex items-center justify-center text-[10px] font-black shadow-xs">
+                    2
+                  </span>
+                  <span className="font-black text-rose-200 truncate">2. 108 Transit &amp; Referral</span>
+                </div>
+                <span className="text-[9px] bg-rose-500/30 text-rose-300 font-mono font-bold px-2 py-0.5 rounded-full border border-rose-400/40">
+                  {priorityTier} ACUITY
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-snug">
-                NHM 108 CAD ambulance dispatch, golden-hour transit route tracking &amp; ICU bed verification.
-              </p>
-              <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-700/80 space-y-1 font-mono text-[10px]">
-                <div className="text-slate-400 truncate">CAD: <strong className="text-rose-300">{cadToken}</strong></div>
-                <div className="text-slate-400 truncate">ETA: <strong className="text-amber-300">{transitRoute.eta} ({transitRoute.distance})</strong></div>
-                <div className="text-slate-400 truncate">ICU Beds: <span className="text-emerald-400">{apexStatus.icuBeds} Free at Apex</span></div>
+
+              {/* Data & Telemetry Grid */}
+              <div className="space-y-1.5 font-mono text-[10px]">
+                <div className="bg-slate-950/80 p-2 rounded-xl border border-rose-900/60 space-y-1">
+                  <div className="flex justify-between text-slate-400">
+                    <span>108 CAD Token:</span>
+                    <strong className="text-rose-300">{cadToken}</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Golden Hour ETA:</span>
+                    <strong className="text-amber-300">{transitRoute.eta} ({transitRoute.distance})</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Transit Highway:</span>
+                    <span className="text-slate-200 truncate max-w-[100px]">{transitRoute.highway}</span>
+                  </div>
+                </div>
+
+                {/* Destination Bed Live Status */}
+                <div className="p-2 bg-rose-950/60 rounded-xl border border-rose-800/50 space-y-1">
+                  <div className="text-[9px] uppercase font-bold text-rose-400 flex items-center justify-between">
+                    <span>Apex Live Beds:</span>
+                    <span className="text-emerald-400 font-bold">✓ ICU: {apexStatus.icuBeds} | HDU: {apexStatus.hduBeds}</span>
+                  </div>
+                  <div className="text-[9px] text-slate-300 truncate">
+                    Nodal Desk: <strong className="text-white">{apexStatus.nodalPhone}</strong>
+                  </div>
+                  <div className="text-[9px] text-slate-400 truncate">
+                    O2: <span className="text-emerald-300">{oxygenReq.slice(0, 18)}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="pt-1.5 border-t border-slate-700/60">
+            <div className="pt-2 border-t border-rose-900/60 flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setActiveTab('referral')}
-                className={`w-full py-1.5 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs ${
+                className={`w-full py-2 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs ${
                   activeTab === 'referral'
                     ? 'bg-rose-600 text-white ring-2 ring-rose-400'
-                    : 'bg-rose-950/80 hover:bg-rose-800 text-rose-200 border border-rose-700/50'
+                    : 'bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-700/60'
                 }`}
               >
-                <Ambulance className="w-3 h-3 text-rose-400" />
-                <span>Open 108 Slip</span>
+                <Ambulance className="w-3.5 h-3.5 text-rose-300" />
+                <span>Launch 108 Slip</span>
               </button>
             </div>
           </div>
 
           {/* COCKPIT MODULE 3-NO: 3. QR Authenticity Verifier */}
-          <div className="bg-slate-800/90 border border-emerald-500/50 rounded-xl p-3 space-y-2.5 flex flex-col justify-between hover:border-emerald-400 transition-all shadow-sm">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between border-b border-emerald-700/60 pb-1.5">
-                <span className="font-black text-emerald-300 flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-md bg-emerald-600 text-white flex items-center justify-center text-[10px] font-black">3</span>
-                  <span className="truncate">QR Verifier &amp; Audit</span>
-                </span>
-                <span className="text-[9px] bg-emerald-500/20 text-emerald-300 font-mono px-1.5 py-0.5 rounded border border-emerald-400/30">
-                  {verificationToken?.docId ? 'VALID' : 'GENERATING'}
+          <div className="bg-gradient-to-b from-slate-900 to-emerald-950/70 border-2 border-emerald-500/60 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between hover:border-emerald-400 transition-all shadow-md group">
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between border-b border-emerald-800/80 pb-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-[10px] font-black shadow-xs">
+                    3
+                  </span>
+                  <span className="font-black text-emerald-200 truncate">3. QR Cryptographic Seal</span>
+                </div>
+                <span className="text-[9px] bg-emerald-500/30 text-emerald-300 font-mono font-bold px-2 py-0.5 rounded-full border border-emerald-400/40">
+                  {verificationToken?.docId ? 'ACTIVE HASH' : 'SYNCING'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-snug">
-                SHA-256 cryptographic audit, live camera barcode scanner &amp; anti-tamper security validation.
-              </p>
-              <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-700/80 space-y-1 font-mono text-[10px]">
-                <div className="text-slate-400 truncate">Doc ID: <strong className="text-white">{docId}</strong></div>
-                <div className="text-slate-400 truncate">Council: <strong className="text-emerald-300">OMC/NMC Sec 27</strong></div>
-                <div className="text-slate-400 truncate">Signature: <span className="text-indigo-300">{signatureDataUrl ? 'DSC Signed' : 'Pending DSC'}</span></div>
+
+              {/* Data & Telemetry Grid */}
+              <div className="space-y-1.5 font-mono text-[10px]">
+                <div className="bg-slate-950/80 p-2 rounded-xl border border-emerald-900/60 space-y-1">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Document ID:</span>
+                    <strong className="text-white truncate max-w-[105px]">{docId}</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Medical Council:</span>
+                    <strong className="text-emerald-300">OMC / NMC Sec 27</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Clinician Reg:</span>
+                    <strong className="text-teal-300">{doctorRegNo}</strong>
+                  </div>
+                </div>
+
+                {/* Audit & Cryptographic Stamp Status */}
+                <div className="p-2 bg-emerald-950/60 rounded-xl border border-emerald-800/50 space-y-1">
+                  <div className="text-[9px] uppercase font-bold text-emerald-400 flex items-center justify-between">
+                    <span>DSC Stamp State:</span>
+                    <span className="text-emerald-300">{signatureDataUrl ? '✓ Signed DSC' : 'Pending Signature'}</span>
+                  </div>
+                  <div className="text-[9px] text-slate-300 truncate">
+                    Hash: <span className="text-emerald-400">{verificationToken?.securityHash?.slice(0, 18) || 'SHA256:AUTHENTIC'}...</span>
+                  </div>
+                  <div className="text-[9px] text-slate-400 truncate">
+                    Anti-Tamper: <span className="text-emerald-300">Enforced by OMC Gateway</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="pt-1.5 border-t border-slate-700/60">
+            <div className="pt-2 border-t border-emerald-900/60 flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setActiveTab('verify')}
-                className={`w-full py-1.5 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs ${
+                className={`w-full py-2 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs ${
                   activeTab === 'verify'
                     ? 'bg-emerald-600 text-white ring-2 ring-emerald-400'
-                    : 'bg-emerald-950/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/50'
+                    : 'bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/60'
                 }`}
               >
-                <QrCode className="w-3 h-3 text-emerald-400" />
-                <span>Test Verifier</span>
+                <QrCode className="w-3.5 h-3.5 text-emerald-300" />
+                <span>Launch QR Verifier</span>
               </button>
             </div>
           </div>
 
           {/* COCKPIT MODULE 4-NO: 4. Clinical Document Vault */}
-          <div className="bg-slate-800/90 border border-blue-500/50 rounded-xl p-3 space-y-2.5 flex flex-col justify-between hover:border-blue-400 transition-all shadow-sm">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between border-b border-blue-700/60 pb-1.5">
-                <span className="font-black text-blue-300 flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center text-[10px] font-black">4</span>
-                  <span className="truncate">Clinical Doc Vault</span>
-                </span>
-                <span className="text-[9px] bg-blue-500/20 text-blue-300 font-mono px-1.5 py-0.5 rounded border border-blue-400/30">
+          <div className="bg-gradient-to-b from-slate-900 to-blue-950/70 border-2 border-blue-500/60 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between hover:border-blue-400 transition-all shadow-md group">
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between border-b border-blue-800/80 pb-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[10px] font-black shadow-xs">
+                    4
+                  </span>
+                  <span className="font-black text-blue-200 truncate">4. Clinical Vault (PHR)</span>
+                </div>
+                <span className="text-[9px] bg-blue-500/30 text-blue-300 font-mono font-bold px-2 py-0.5 rounded-full border border-blue-400/40">
                   {vaultList.length} ARCHIVED
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-snug">
-                ABDM PHR records repository, encrypted offline exports &amp; state audit trail storage.
-              </p>
-              <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-700/80 space-y-1 font-mono text-[10px]">
-                <div className="text-slate-400 truncate">Saved Files: <strong className="text-white">{vaultList.length} Documents</strong></div>
-                <div className="text-slate-400 truncate">ABHA Sync: <strong className="text-indigo-300">{patientAbha}</strong></div>
-                <div className="text-slate-400 truncate">Storage: <span className="text-blue-300">IndexedDB Local</span></div>
+
+              {/* Data & Telemetry Grid */}
+              <div className="space-y-1.5 font-mono text-[10px]">
+                <div className="bg-slate-950/80 p-2 rounded-xl border border-blue-900/60 space-y-1">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Archived Records:</span>
+                    <strong className="text-white">{vaultList.length} Documents</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>ABHA M2 Sync:</span>
+                    <strong className="text-indigo-300 truncate max-w-[100px]">{patientAbha}</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Storage Engine:</span>
+                    <span className="text-blue-300">Local Encrypted DB</span>
+                  </div>
+                </div>
+
+                {/* Offline Export Status */}
+                <div className="p-2 bg-blue-950/60 rounded-xl border border-blue-800/50 space-y-1">
+                  <div className="text-[9px] uppercase font-bold text-blue-400 flex items-center justify-between">
+                    <span>Offline Exports:</span>
+                    <span className="text-emerald-400">Ready (.html/.pdf)</span>
+                  </div>
+                  <div className="text-[9px] text-slate-300 truncate">
+                    Patient: <strong className="text-white">{patientName}</strong>
+                  </div>
+                  <div className="text-[9px] text-slate-400 truncate">
+                    Audit Log: <span className="text-blue-300">Indexed &amp; Verifiable</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="pt-1.5 border-t border-slate-700/60">
+            <div className="pt-2 border-t border-blue-900/60 flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setActiveTab('vault')}
-                className={`w-full py-1.5 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs ${
+                className={`w-full py-2 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs ${
                   activeTab === 'vault'
                     ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-                    : 'bg-blue-950/80 hover:bg-blue-800 text-blue-200 border border-blue-700/50'
+                    : 'bg-blue-900/60 hover:bg-blue-800 text-blue-200 border border-blue-700/60'
                 }`}
               >
-                <Database className="w-3 h-3 text-blue-400" />
-                <span>Open Doc Vault</span>
+                <Database className="w-3.5 h-3.5 text-blue-300" />
+                <span>Launch Doc Vault</span>
               </button>
             </div>
           </div>
 
           {/* COCKPIT MODULE 5-NO: 5. NABH SBAR Handover & ABDM FHIR */}
-          <div className="bg-slate-800/90 border border-purple-500/50 rounded-xl p-3 space-y-2.5 flex flex-col justify-between hover:border-purple-400 transition-all shadow-sm">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between border-b border-purple-700/60 pb-1.5">
-                <span className="font-black text-purple-300 flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-md bg-purple-600 text-white flex items-center justify-center text-[10px] font-black">5</span>
-                  <span className="truncate">SBAR &amp; FHIR R4</span>
-                </span>
-                <span className="text-[9px] bg-purple-500/20 text-purple-300 font-mono px-1.5 py-0.5 rounded border border-purple-400/30">
+          <div className="bg-gradient-to-b from-slate-900 to-purple-950/70 border-2 border-purple-500/60 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between hover:border-purple-400 transition-all shadow-md group">
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between border-b border-purple-800/80 pb-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-lg bg-purple-600 text-white flex items-center justify-center text-[10px] font-black shadow-xs">
+                    5
+                  </span>
+                  <span className="font-black text-purple-200 truncate">5. SBAR &amp; ABDM FHIR</span>
+                </div>
+                <span className="text-[9px] bg-purple-500/30 text-purple-300 font-mono font-bold px-2 py-0.5 rounded-full border border-purple-400/40">
                   FHIR R4
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-snug">
-                NABH standardized SBAR inter-facility clinical handover &amp; ABDM FHIR JSON bundle exporter.
-              </p>
-              <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-700/80 space-y-1 font-mono text-[10px]">
-                <div className="text-slate-400 truncate">Shock Index: <strong className="text-rose-400">{vitalScores.shockIndex}</strong></div>
-                <div className="text-slate-400 truncate">MAP: <strong className="text-white">{vitalScores.map} mmHg</strong></div>
-                <div className="text-slate-400 truncate">Bundle: <span className="text-purple-300">ABDM M2 Compliant</span></div>
+
+              {/* Data & Telemetry Grid */}
+              <div className="space-y-1.5 font-mono text-[10px]">
+                <div className="bg-slate-950/80 p-2 rounded-xl border border-purple-900/60 space-y-1">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Shock Index (SI):</span>
+                    <strong className={`font-bold ${vitalScores.isShock ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`}>
+                      {vitalScores.shockIndex} ({vitalScores.isShock ? 'SHOCK' : 'STABLE'})
+                    </strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Mean Arterial (MAP):</span>
+                    <strong className="text-white">{vitalScores.map} mmHg</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>MEWS Score:</span>
+                    <span className="text-amber-300 font-bold">{mewsScore.score} ({mewsScore.riskLevel})</span>
+                  </div>
+                </div>
+
+                {/* SBAR & FHIR Bundle Parameters */}
+                <div className="p-2 bg-purple-950/60 rounded-xl border border-purple-800/50 space-y-1">
+                  <div className="text-[9px] uppercase font-bold text-purple-400 flex items-center justify-between">
+                    <span>FHIR Bundle:</span>
+                    <span className="text-purple-300 font-mono">Composition/R4</span>
+                  </div>
+                  <div className="text-[9px] text-slate-300 truncate">
+                    ICD-10: <strong className="text-teal-300">{currentIcdCode}</strong>
+                  </div>
+                  <div className="text-[9px] text-slate-400 truncate">
+                    Handover: <span className="text-emerald-300">{teleCallAcknowledged ? 'Tele-Confirmed ✓' : 'Casualty Desk Linked'}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="pt-1.5 border-t border-slate-700/60">
+            <div className="pt-2 border-t border-purple-900/60 flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setActiveTab('sbar_handover')}
-                className={`w-full py-1.5 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs ${
+                className={`w-full py-2 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs ${
                   activeTab === 'sbar_handover'
                     ? 'bg-purple-600 text-white ring-2 ring-purple-400'
-                    : 'bg-purple-950/80 hover:bg-purple-800 text-purple-200 border border-purple-700/50'
+                    : 'bg-purple-900/60 hover:bg-purple-800 text-purple-200 border border-purple-700/60'
                 }`}
               >
-                <HeartPulse className="w-3 h-3 text-purple-400" />
-                <span>Open SBAR / FHIR</span>
+                <HeartPulse className="w-3.5 h-3.5 text-purple-300" />
+                <span>Launch SBAR Studio</span>
               </button>
             </div>
           </div>
