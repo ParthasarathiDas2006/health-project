@@ -3306,7 +3306,7 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
                   <input
                     type="email"
                     value={newUserData.email}
-                    onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                    onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value.toLowerCase() })}
                     placeholder="smruti@health.odisha.gov.in"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:border-purple-600 outline-none"
                     required

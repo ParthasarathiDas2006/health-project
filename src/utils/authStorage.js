@@ -530,22 +530,45 @@ export const getStoredUsers = () => {
   try {
     const raw = localStorage.getItem(USERS_STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
-      return DEFAULT_USERS;
+      const sanitizedDefaults = DEFAULT_USERS.map((u) => ({
+        ...u,
+        email: (u.email || '').trim().toLowerCase()
+      }));
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(sanitizedDefaults));
+      return sanitizedDefaults;
     }
     const parsed = JSON.parse(raw);
-    // Ensure all default verified users exist in the stored list and sync updated fields
     let updated = false;
-    DEFAULT_USERS.forEach((def) => {
-      const existingIdx = parsed.findIndex((u) => u.id === def.id || u.email === def.email);
-      if (existingIdx === -1) {
-        parsed.push(def);
-        updated = true;
-      } else if (def.id === 'USR-ADM-001' && parsed[existingIdx].name !== def.name) {
-        parsed[existingIdx].name = def.name;
+
+    // Ensure all stored user emails are strictly small letters (lowercase)
+    parsed.forEach((u) => {
+      if (u.email && u.email !== u.email.trim().toLowerCase()) {
+        u.email = u.email.trim().toLowerCase();
         updated = true;
       }
     });
+
+    // Ensure all default verified users exist in the stored list and sync updated fields
+    DEFAULT_USERS.forEach((def) => {
+      const defEmailLower = (def.email || '').trim().toLowerCase();
+      const existingIdx = parsed.findIndex(
+        (u) => u.id === def.id || (u.email || '').trim().toLowerCase() === defEmailLower
+      );
+      if (existingIdx === -1) {
+        parsed.push({ ...def, email: defEmailLower });
+        updated = true;
+      } else {
+        if (def.id === 'USR-ADM-001' && parsed[existingIdx].name !== def.name) {
+          parsed[existingIdx].name = def.name;
+          updated = true;
+        }
+        if (parsed[existingIdx].email !== defEmailLower) {
+          parsed[existingIdx].email = defEmailLower;
+          updated = true;
+        }
+      }
+    });
+
     if (updated) {
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(parsed));
     }
@@ -558,10 +581,13 @@ export const getStoredUsers = () => {
 
 export const saveUser = (newUser) => {
   const users = getStoredUsers();
+  const normalizedEmail = (newUser.email || '').trim().toLowerCase();
+  const normalizedStaffId = (newUser.staffId || '').trim().toLowerCase();
+
   const existing = users.find(
     (u) =>
-      u.email.toLowerCase() === newUser.email.toLowerCase() ||
-      (newUser.staffId && u.staffId?.toLowerCase() === newUser.staffId.toLowerCase())
+      (u.email && (u.email || '').trim().toLowerCase() === normalizedEmail) ||
+      (normalizedStaffId && (u.staffId || '').trim().toLowerCase() === normalizedStaffId)
   );
 
   if (existing) {
@@ -570,6 +596,7 @@ export const saveUser = (newUser) => {
 
   const userRecord = {
     ...newUser,
+    email: normalizedEmail,
     id: `USR-${Date.now().toString().slice(-6)}`,
     createdAt: new Date().toISOString()
   };
@@ -621,7 +648,10 @@ export const verifyCredentials = (identifier, password) => {
     throw new Error('Incorrect password. Please verify and try again (Default: password123).');
   }
 
-  return matched;
+  return {
+    ...matched,
+    email: (matched.email || '').toLowerCase().trim()
+  };
 };
 
 export const getCurrentUser = () => {
@@ -633,13 +663,22 @@ export const getCurrentUser = () => {
     const raw = localStorage.getItem(CURRENT_USER_KEY);
     if (!raw || raw === 'null') {
       // Default initial login for effortless first-time exploration
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(DEFAULT_USERS[0]));
-      return DEFAULT_USERS[0];
+      const defUser = {
+        ...DEFAULT_USERS[0],
+        email: (DEFAULT_USERS[0].email || '').trim().toLowerCase()
+      };
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(defUser));
+      return defUser;
     }
     const parsed = JSON.parse(raw);
-    if (parsed && parsed.id === 'USR-ADM-001' && parsed.name && parsed.name.includes('Dash')) {
-      parsed.name = 'Sunil Biswal (ସୁନୀଲ ବିଶ୍ୱାଳ)';
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(parsed));
+    if (parsed) {
+      if (parsed.email) {
+        parsed.email = parsed.email.trim().toLowerCase();
+      }
+      if (parsed.id === 'USR-ADM-001' && parsed.name && parsed.name.includes('Dash')) {
+        parsed.name = 'Sunil Biswal (ସୁନୀଲ ବିଶ୍ୱାଳ)';
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(parsed));
+      }
     }
     return parsed;
   } catch (e) {
@@ -650,8 +689,12 @@ export const getCurrentUser = () => {
 
 export const setCurrentUser = (user) => {
   if (user) {
+    const normalizedUser = {
+      ...user,
+      email: (user.email || '').trim().toLowerCase()
+    };
     localStorage.removeItem('triage_logged_out');
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(normalizedUser));
   } else {
     localStorage.setItem('triage_logged_out', 'true');
     localStorage.setItem(CURRENT_USER_KEY, 'null');

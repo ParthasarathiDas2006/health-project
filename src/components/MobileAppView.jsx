@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Phone,
   QrCode,
@@ -63,6 +63,11 @@ export default function MobileAppView({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMobileTab, setSelectedMobileTab] = useState(null);
   const [showMobileTeleModal, setShowMobileTeleModal] = useState(false);
+
+  useEffect(() => {
+    setMobileSection('home');
+    setSelectedMobileTab(null);
+  }, [currentUser?.id]);
 
   const abhaNumber = currentUser?.staffId || '91-1234-5678-9012';
   const patientName = currentUser?.name || 'Ravi Kumar';

@@ -10,13 +10,13 @@ import {
 } from './utils/authStorage';
 import { DoctorAvatar } from './utils/doctorPhotos';
 import MobileAppView from './components/MobileAppView';
+import AuthPage from './components/AuthPage';
 
 // Code-split heavy & secondary components to load on demand for instant site loading
 const GovtGovTechSuite = lazy(() => import('./components/GovtGovTechSuite'));
 const HospitalTieUpSystem = lazy(() => import('./components/HospitalTieUpSystem'));
 const TriageDoctorDashboard = lazy(() => import('./components/TriageDoctorDashboard'));
 const OcrUploader = lazy(() => import('./components/OcrUploader'));
-const AuthPage = lazy(() => import('./components/AuthPage'));
 const DoctorBookingSystem = lazy(() => import('./components/DoctorBookingSystem'));
 const BloodBankSystem = lazy(() => import('./components/BloodBankSystem'));
 const MedicineExpiryChecker = lazy(() => import('./components/MedicineExpiryChecker'));
@@ -229,25 +229,35 @@ export default function App() {
 
   // Authentication callbacks
   const handleLoginSuccess = (user) => {
-    setLoggedInUser(user);
-    if (user.preferredLanguage) {
+    const normalizedUser = user
+      ? { ...user, email: (user.email || '').trim().toLowerCase() }
+      : null;
+    setCurrentUser(normalizedUser);
+    setLoggedInUser(normalizedUser);
+    if (user?.preferredLanguage) {
       setAppLang(user.preferredLanguage);
     }
     setShowAuthPage(false);
     setShowProfileMenu(false);
-    if (user.roleCategory === 'admin') {
+    if (user?.roleCategory === 'admin') {
       setActiveHub('admin');
       setActiveTab('admin');
-    } else if (user.roleCategory === 'doctor' || user.roleCategory === 'nurse') {
+    } else if (user?.roleCategory === 'doctor' || user?.roleCategory === 'nurse') {
       setActiveHub('doctor');
       setActiveTab('dashboard');
-    } else if (user.roleCategory === 'asha' || user.roleCategory === 'anm') {
+    } else if (user?.roleCategory === 'asha' || user?.roleCategory === 'anm') {
       setActiveHub('phc');
       setActiveTab('phc_offline');
     } else {
       setActiveHub('citizen');
       setActiveTab('intake');
     }
+  };
+
+  const handleGuestContinue = () => {
+    const allUsers = getStoredUsers();
+    const guestUser = allUsers.find((u) => u.roleCategory === 'patient') || allUsers[0];
+    handleLoginSuccess(guestUser);
   };
 
   // Quick 1-Click Persona Switcher for Live Demo & Review
@@ -529,12 +539,14 @@ export default function App() {
   // If user requested Auth page or no user logged in
   if (showAuthPage || !currentUser) {
     return (
-      <AuthPage
-        themeMode={themeMode}
-        onThemeChange={(mode) => setThemeMode(mode)}
-        onLoginSuccess={handleLoginSuccess}
-        onCancel={currentUser ? () => setShowAuthPage(false) : null}
-      />
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-sans text-sm">Loading SwasthyaMitra Authentication...</div>}>
+        <AuthPage
+          themeMode={themeMode}
+          onThemeChange={(mode) => setThemeMode(mode)}
+          onLoginSuccess={handleLoginSuccess}
+          onCancel={currentUser ? () => setShowAuthPage(false) : handleGuestContinue}
+        />
+      </Suspense>
     );
   }
 
@@ -2029,17 +2041,7 @@ export default function App() {
     </div>
     )}
 
-      {/* Auth / Switch User Modal */}
-      {showAuthPage && (
-        <Suspense fallback={null}>
-          <AuthPage
-            themeMode={themeMode}
-            onThemeChange={(mode) => setThemeMode(mode)}
-            onLoginSuccess={handleLoginSuccess}
-            onCancel={() => setShowAuthPage(false)}
-          />
-        </Suspense>
-      )}
+
 
       {/* Firebase Cloud Firestore Config & Live Sync Modal (ADMIN ONLY) */}
       {isAdmin && (
