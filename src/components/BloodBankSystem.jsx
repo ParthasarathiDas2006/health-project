@@ -20,7 +20,8 @@ import {
   ArrowRight,
   RefreshCw,
   Share2,
-  Info
+  Info,
+  Lock
 } from 'lucide-react';
 import {
   ODISHA_DISTRICTS,
@@ -36,7 +37,7 @@ import {
   saveDonorPledge
 } from '../utils/bloodBankStorage';
 
-export default function BloodBankSystem({ currentUser, appLang }) {
+export default function BloodBankSystem({ currentUser, appLang, onRequireAuth }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   // Sub-tabs: 'receiver' | 'donor' | 'camps' | 'my-tokens'
@@ -152,7 +153,9 @@ export default function BloodBankSystem({ currentUser, appLang }) {
       campTarget: 'ଲକ୍ଷ୍ୟ:',
 
       emptyRequests: 'କୌଣସି ଜରୁରୀ ସଂରକ୍ଷଣ ଟୋକନ୍ ନାହିଁ।',
-      emptyPledges: 'କୌଣସି ରକ୍ତଦାନ କାର୍ଡ ନାହିଁ।'
+      emptyPledges: 'କୌଣସି ରକ୍ତଦାନ କାର୍ଡ ନାହିଁ।',
+      guestLockMsg: 'ଅତିଥି ଭାବରେ ରକ୍ତ ୟୁନିଟ୍ ସଂରକ୍ଷଣ କିମ୍ବା ରକ୍ତଦାନ ପଞ୍ଜୀକରଣ ଅନୁମୋଦିତ ନୁହେଁ। ଦୟାକରି ଲଗ୍-ଇନ୍ କରନ୍ତୁ।',
+      guestLoginBtn: '🔑 ଲଗ୍-ଇନ୍ / ରେଜିଷ୍ଟ୍ରେସନ୍ କରନ୍ତୁ'
     },
     'hi-IN': {
       title: 'ओडिशा अस्पताल रक्त बैंक एवं रक्तदान पोर्टल',
@@ -223,7 +226,9 @@ export default function BloodBankSystem({ currentUser, appLang }) {
       campTarget: 'लक्ष्य:',
 
       emptyRequests: 'कोई आपातकालीन आरक्षण टोकन उपलब्ध नहीं है।',
-      emptyPledges: 'कोई रक्तदान कार्ड उपलब्ध नहीं है।'
+      emptyPledges: 'कोई रक्तदान कार्ड उपलब्ध नहीं है।',
+      guestLockMsg: 'अतिथि खाते से रक्त आरक्षण या रक्तदान पंजीकरण मान्य नहीं है। कृपया डिजिटल टोकन हेतु लॉगिन करें।',
+      guestLoginBtn: '🔑 लॉगिन / नया खाता बनाएं'
     },
     'en-IN': {
       title: 'Odisha Hospital Blood Bank & Donor Portal',
@@ -294,7 +299,9 @@ export default function BloodBankSystem({ currentUser, appLang }) {
       campTarget: 'Target:',
 
       emptyRequests: 'No active blood reservation tokens.',
-      emptyPledges: 'No active donor pledge cards.'
+      emptyPledges: 'No active donor pledge cards.',
+      guestLockMsg: 'Blood reservation and donor registration are restricted for Guest accounts. Please log in or register to issue a verified token.',
+      guestLoginBtn: '🔑 Sign In / Register to Request Blood'
     }
   }[lang] || {};
 
@@ -329,6 +336,16 @@ export default function BloodBankSystem({ currentUser, appLang }) {
     e.preventDefault();
     if (!reservingBloodBank) return;
 
+    if (currentUser?.isGuest) {
+      if (onRequireAuth) {
+        setReservingBloodBank(null);
+        onRequireAuth();
+      } else {
+        alert(txt.guestLockMsg);
+      }
+      return;
+    }
+
     const requestData = {
       bloodBankId: reservingBloodBank.id,
       bloodBankName: reservingBloodBank.name,
@@ -356,6 +373,16 @@ export default function BloodBankSystem({ currentUser, appLang }) {
   const handleConfirmPledge = (e) => {
     e.preventDefault();
     if (!schedulingBloodBank) return;
+
+    if (currentUser?.isGuest) {
+      if (onRequireAuth) {
+        setSchedulingBloodBank(null);
+        onRequireAuth();
+      } else {
+        alert(txt.guestLockMsg);
+      }
+      return;
+    }
 
     const pledgeData = {
       bloodBankId: schedulingBloodBank.id,
@@ -1084,20 +1111,54 @@ export default function BloodBankSystem({ currentUser, appLang }) {
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setReservingBloodBank(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-xs"
-                >
-                  {txt.confirmReserveBtn}
-                </button>
+              <div className="pt-2 space-y-2.5">
+                {currentUser?.isGuest && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start gap-2.5">
+                    <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-[11px] font-semibold leading-relaxed">
+                        {txt.guestLockMsg}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReservingBloodBank(null);
+                          if (onRequireAuth) onRequireAuth();
+                        }}
+                        className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-[11px] shadow-xs cursor-pointer transition active:scale-95"
+                      >
+                        {txt.guestLoginBtn}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReservingBloodBank(null)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className={`px-4 py-2 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                      currentUser?.isGuest
+                        ? 'bg-amber-600 hover:bg-amber-700'
+                        : 'bg-rose-600 hover:bg-rose-700'
+                    }`}
+                  >
+                    {currentUser?.isGuest ? (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>{txt.guestLoginBtn}</span>
+                      </>
+                    ) : (
+                      txt.confirmReserveBtn
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -1295,20 +1356,54 @@ export default function BloodBankSystem({ currentUser, appLang }) {
                 </select>
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSchedulingBloodBank(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs"
-                >
-                  {txt.confirmPledgeBtn}
-                </button>
+              <div className="pt-2 space-y-2.5">
+                {currentUser?.isGuest && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start gap-2.5">
+                    <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-[11px] font-semibold leading-relaxed">
+                        {txt.guestLockMsg}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSchedulingBloodBank(null);
+                          if (onRequireAuth) onRequireAuth();
+                        }}
+                        className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-[11px] shadow-xs cursor-pointer transition active:scale-95"
+                      >
+                        {txt.guestLoginBtn}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSchedulingBloodBank(null)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className={`px-4 py-2 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                      currentUser?.isGuest
+                        ? 'bg-amber-600 hover:bg-amber-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
+                  >
+                    {currentUser?.isGuest ? (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>{txt.guestLoginBtn}</span>
+                      </>
+                    ) : (
+                      txt.confirmPledgeBtn
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

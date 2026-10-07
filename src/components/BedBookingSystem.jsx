@@ -23,7 +23,8 @@ import {
   Trash2,
   ExternalLink,
   Sparkles,
-  FileText
+  FileText,
+  Lock
 } from 'lucide-react';
 import { getBedBookings, saveBedBooking, cancelBedBooking } from '../utils/authStorage';
 
@@ -305,7 +306,7 @@ const HOSPITALS_DATABASE = [
   }
 ];
 
-export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite }) {
+export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite, onRequireAuth }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('inventory'); // 'inventory' | 'my-reservations'
@@ -394,7 +395,9 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite 
       cancelBookingPrompt: 'ଆପଣ ଏହି ବେଡ୍ ବୁକିଂ ବାତିଲ କରିବାକୁ ଚାହାଁନ୍ତି କି?',
       bedGalleryTitle: 'ବେଡ୍ ପ୍ରକାର ଓ ଫଟୋ ଗ୍ୟାଲେରୀ (Bed Types & Imagery)',
       totalFreeOverall: 'ମୋଟ ଖାଲି ବେଡ୍:',
-      icuBedsFree: 'ଆଇସିୟୁ ବେଡ୍ ଖାଲି:'
+      icuBedsFree: 'ଆଇସିୟୁ ବେଡ୍ ଖାଲି:',
+      guestLockMsg: 'ଅତିଥି ଭାବରେ ହସ୍ପିଟାଲ୍ ବେଡ୍ ରିଜର୍ଭେସନ୍ କରିବା ଅନୁମୋଦିତ ନୁହେଁ। ବେଡ୍ ନିଶ୍ଚିତ କରିବା ପାଇଁ ଦୟାକରି ଲଗ୍-ଇନ୍ କରନ୍ତୁ।',
+      guestLoginBtn: '🔑 ଲଗ୍-ଇନ୍ / ରେଜିଷ୍ଟ୍ରେସନ୍ କରନ୍ତୁ'
     },
     'hi-IN': {
       headerTitle: 'अस्पताल बेड उपलब्धता एवं डिजिटल प्रवेश (Bed Booking)',
@@ -443,7 +446,9 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite 
       cancelBookingPrompt: 'क्या आप इस बेड आरक्षण को रद्द करना चाहते हैं?',
       bedGalleryTitle: 'बेड प्रकार एवं फोटोग्राफ गैलरी (Bed Types & Real Imagery)',
       totalFreeOverall: 'कुल खाली बेड:',
-      icuBedsFree: 'आईसीयू खाली बेड:'
+      icuBedsFree: 'आईसीयू खाली बेड:',
+      guestLockMsg: 'अतिथि खाते से अस्पताल बेड आरक्षित करना मान्य नहीं है। कृपया डिजिटल प्रवेश पास जारी करने हेतु लॉगिन करें।',
+      guestLoginBtn: '🔑 लॉगिन / नया खाता बनाएं'
     },
     'en-IN': {
       headerTitle: 'Hospital Bed Availability & Digital Admission Pass',
@@ -492,7 +497,9 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite 
       cancelBookingPrompt: 'Are you sure you want to cancel this bed reservation?',
       bedGalleryTitle: 'Bed Categories & Visual Showcase (Real Medical Imagery)',
       totalFreeOverall: 'Total Available Beds:',
-      icuBedsFree: 'Free ICU Beds:'
+      icuBedsFree: 'Free ICU Beds:',
+      guestLockMsg: 'Hospital bed reservation is restricted for Guest accounts. Please sign in or register to secure your digital admission pass.',
+      guestLoginBtn: '🔑 Sign In / Register to Book Bed'
     }
   }[lang] || {};
 
@@ -506,6 +513,15 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite 
   // Submit booking
   const handleConfirmBooking = (e) => {
     e.preventDefault();
+    if (currentUser?.isGuest) {
+      if (onRequireAuth) {
+        setBookingModalOpen(false);
+        onRequireAuth();
+      } else {
+        alert(txt.guestLockMsg);
+      }
+      return;
+    }
     if (!patientName.trim() || !patientPhone.trim() || !targetHospital || !targetBedType) {
       alert('Please fill in all mandatory fields.');
       return;
@@ -1263,21 +1279,57 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite 
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setBookingModalOpen(false)}
-                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-bold"
-                >
-                  {txt.cancelBtn}
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-md flex items-center gap-2"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  {txt.confirmBookingBtn}
-                </button>
+              <div className="pt-3 border-t border-slate-200 space-y-3">
+                {currentUser?.isGuest && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start gap-2.5">
+                    <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-[11px] font-semibold leading-relaxed">
+                        {txt.guestLockMsg}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBookingModalOpen(false);
+                          if (onRequireAuth) onRequireAuth();
+                        }}
+                        className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-[11px] shadow-xs cursor-pointer transition active:scale-95"
+                      >
+                        {txt.guestLoginBtn}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setBookingModalOpen(false)}
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-bold"
+                  >
+                    {txt.cancelBtn}
+                  </button>
+                  <button
+                    type="submit"
+                    className={`px-6 py-2.5 text-white font-bold rounded-xl shadow-md flex items-center gap-2 transition-all cursor-pointer ${
+                      currentUser?.isGuest
+                        ? 'bg-amber-600 hover:bg-amber-700'
+                        : 'bg-teal-600 hover:bg-teal-700'
+                    }`}
+                  >
+                    {currentUser?.isGuest ? (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>{txt.guestLoginBtn}</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>{txt.confirmBookingBtn}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

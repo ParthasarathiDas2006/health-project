@@ -30,7 +30,8 @@ import {
   ThumbsUp,
   BadgePercent,
   DollarSign,
-  Check
+  Check,
+  Lock
 } from 'lucide-react';
 import { getBookedAppointments, saveAppointment, cancelAppointment } from '../utils/authStorage';
 import { getDoctorsList, ODISHA_DISTRICTS } from '../data/doctorsData';
@@ -47,7 +48,7 @@ import TelemedicineVideoSuite from './TelemedicineVideoSuite';
  * 5. High-performance client-side pagination with useMemo search caching.
  * 6. 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
  */
-export default function DoctorBookingSystem({ currentUser, appLang, onBookedCountChange, onOpenNmcSuite, onOpenTeleconsult }) {
+export default function DoctorBookingSystem({ currentUser, appLang, onBookedCountChange, onOpenNmcSuite, onOpenTeleconsult, onRequireAuth }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('directory'); // 'directory', 'recommendations', or 'my-bookings'
@@ -222,7 +223,9 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       bannerRecommenderTitle: 'ଉପଯୁକ୍ତ ହସ୍ପିଟାଲ୍ କିମ୍ବା ଡାକ୍ତର ଚୟନରେ ସାହାଯ୍ୟ ଆବଶ୍ୟକ କି?',
       bannerRecommenderBtn: 'ସ୍ମାର୍ଟ AI ସୁପାରିଶ ବ୍ୟବସ୍ଥା ଖୋଲନ୍ତୁ',
       topRecommendation: 'ଶ୍ରେଷ୍ଠ ସୁପାରିଶ (Top Ranked Match)',
-      noRecFound: 'ଆପଣଙ୍କ ମାନଦଣ୍ଡ ସହିତ କୌଣସି ହସ୍ପିଟାଲ୍ ମେଳ ଖାଇଲା ନାହିଁ। ଦୟାକରି ଫିଲ୍ଟର୍ ପରିବର୍ତ୍ତନ କରନ୍ତୁ।'
+      noRecFound: 'ଆପଣଙ୍କ ମାନଦଣ୍ଡ ସହିତ କୌଣସି ହସ୍ପିଟାଲ୍ ମେଳ ଖାଇଲା ନାହିଁ। ଦୟାକରି ଫିଲ୍ଟର୍ ପରିବର୍ତ୍ତନ କରନ୍ତୁ।',
+      guestLockMsg: 'ଅତିଥି ଭାବରେ ଆପଏଣ୍ଟମେଣ୍ଟ ବୁକ୍ କରିବା ଅନୁମୋଦିତ ନୁହେଁ। ଦୟାକରି ବୁକ୍ କରିବା ପାଇଁ ଲଗ୍-ଇନ୍ କରନ୍ତୁ କିମ୍ବା ଆକାଉଣ୍ଟ ଖୋଲନ୍ତୁ।',
+      guestLoginBtn: '🔑 ଲଗ୍-ଇନ୍ / ରେଜିଷ୍ଟ୍ରେସନ୍ କରନ୍ତୁ'
     },
     'hi-IN': {
       tabDirectory: 'डॉक्टर सूची (Doctor Directory)',
@@ -334,7 +337,9 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       bannerRecommenderTitle: 'उचित अस्पताल अथवा डॉक्टर चुनने में सहायता चाहिए?',
       bannerRecommenderBtn: 'स्मार्ट AI सिफारिश प्रणाली खोलें',
       topRecommendation: 'शीर्ष अनुशंसित विकल्प (Top Ranked Match)',
-      noRecFound: 'आपके मानदंडों से मेल खाने वाला कोई अस्पताल नहीं मिला। कृपया फिल्टर बदलें।'
+      noRecFound: 'आपके मानदंडों से मेल खाने वाला कोई अस्पताल नहीं मिला। कृपया फिल्टर बदलें।',
+      guestLockMsg: 'अतिथि खाते से अपॉइंटमेंट बुक करना मान्य नहीं है। कृपया बुकिंग के लिए लॉगिन करें अथवा पंजीकरण करें।',
+      guestLoginBtn: '🔑 लॉगिन / नया खाता बनाएं'
     },
     'en-IN': {
       tabDirectory: 'Doctor Directory',
@@ -446,7 +451,9 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
       bannerRecommenderTitle: 'Unsure which hospital or doctor is best suited for your condition?',
       bannerRecommenderBtn: 'Open Smart AI Recommendation Engine',
       topRecommendation: 'Top Ranked Recommendation',
-      noRecFound: 'No hospitals matched your exact filter combination. Please broaden your criteria.'
+      noRecFound: 'No hospitals matched your exact filter combination. Please broaden your criteria.',
+      guestLockMsg: 'Booking an OPD appointment is restricted for Guest accounts. Please log in or register to secure your digital appointment slip.',
+      guestLoginBtn: '🔑 Sign In / Register to Book'
     }
   }[lang] || {};
 
@@ -775,6 +782,15 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
 
   const handleConfirmBooking = (e) => {
     e.preventDefault();
+    if (currentUser?.isGuest) {
+      if (onRequireAuth) {
+        setSelectedDoctor(null);
+        onRequireAuth();
+      } else {
+        alert(txt.guestLockMsg);
+      }
+      return;
+    }
     if (!selectedDate || !selectedTimeSlot) {
       alert(txt.selectSlotNotice);
       return;
@@ -1746,19 +1762,24 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
 
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  if (currentUser?.isGuest) {
+                    if (onRequireAuth) onRequireAuth();
+                    else alert(txt.guestLockMsg);
+                    return;
+                  }
                   setActiveVideoCallDoctor({
                     name: 'Dr. Soumya Ranjan Mohanty',
                     specialty: 'MD (General Medicine), SCB Medical College',
                     regNo: 'OMC-48921-2014',
                     facility: 'SCB Medical College & Hospital, Cuttack',
                     avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&auto=format&fit=crop&q=80'
-                  })
-                }
+                  });
+                }}
                 className="px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs rounded-xl shadow-lg flex items-center gap-2 cursor-pointer shrink-0 active:scale-95 transition-all"
               >
-                <Video className="w-4 h-4" />
-                <span>Start Live Video Call Now</span>
+                {currentUser?.isGuest ? <Lock className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+                <span>{currentUser?.isGuest ? txt.guestLoginBtn : 'Start Live Video Call Now'}</span>
               </button>
             </div>
           </div>
@@ -1819,11 +1840,22 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                   <span className="text-[10px] font-mono text-slate-500">{sp.regNo}</span>
                   <button
                     type="button"
-                    onClick={() => setActiveVideoCallDoctor(sp)}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-2xs cursor-pointer transition active:scale-95"
+                    onClick={() => {
+                      if (currentUser?.isGuest) {
+                        if (onRequireAuth) onRequireAuth();
+                        else alert(txt.guestLockMsg);
+                        return;
+                      }
+                      setActiveVideoCallDoctor(sp);
+                    }}
+                    className={`px-3 py-1.5 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-2xs cursor-pointer transition active:scale-95 ${
+                      currentUser?.isGuest
+                        ? 'bg-amber-600 hover:bg-amber-700'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
                   >
-                    <Video className="w-3.5 h-3.5" />
-                    <span>Connect Live</span>
+                    {currentUser?.isGuest ? <Lock className="w-3.5 h-3.5" /> : <Video className="w-3.5 h-3.5" />}
+                    <span>{currentUser?.isGuest ? 'Sign In' : 'Connect Live'}</span>
                   </button>
                 </div>
               </div>
@@ -2184,22 +2216,58 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSelectedDoctor(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl"
-                >
-                  {txt.cancelBtn}
-                </button>
+              <div className="pt-3 border-t border-slate-100 space-y-3">
+                {currentUser?.isGuest && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start gap-2.5">
+                    <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-[11px] font-semibold leading-relaxed">
+                        {txt.guestLockMsg}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedDoctor(null);
+                          if (onRequireAuth) onRequireAuth();
+                        }}
+                        className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-[11px] shadow-xs cursor-pointer transition active:scale-95"
+                      >
+                        {txt.guestLoginBtn}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  {txt.confirmBtn}
-                </button>
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDoctor(null)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl"
+                  >
+                    {txt.cancelBtn}
+                  </button>
+
+                  <button
+                    type="submit"
+                    className={`flex-1 py-2.5 text-white font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 ${
+                      currentUser?.isGuest
+                        ? 'bg-amber-600 hover:bg-amber-700 cursor-pointer'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
+                  >
+                    {currentUser?.isGuest ? (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>{txt.guestLoginBtn}</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>{txt.confirmBtn}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

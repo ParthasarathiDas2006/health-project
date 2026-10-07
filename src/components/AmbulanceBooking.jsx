@@ -28,7 +28,8 @@ import {
   Zap,
   Gauge,
   Video,
-  Check
+  Check,
+  Lock
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -36,7 +37,7 @@ import { getAmbulanceRequests, saveAmbulanceRequest, cancelAmbulanceRequest } fr
 import { ODISHA_MEDICAL_FACILITIES, ODISHA_LOCATIONS, calculateDistanceKm } from '../utils/nearestMedicalData';
 import TeleConsultationSuite from './TeleConsultationSuite';
 
-export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNearest, onOpenNmcSuite }) {
+export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNearest, onOpenNmcSuite, onRequireAuth }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('book'); // 'book' | 'track' | 'my-requests'
@@ -132,7 +133,9 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       stage1: '୧. ଡିସ୍ପ୍ୟାଚ୍ ହେଲା',
       stage2: '୨. ରାସ୍ତାରେ ଅଛି (En Route)',
       stage3: '୩. ପହଞ୍ଚିଗଲା (Arrived)',
-      stage4: '୪. ହସ୍ପିଟାଲ୍ ଯାତ୍ରା (Transporting)'
+      stage4: '୪. ହସ୍ପିଟାଲ୍ ଯାତ୍ରା (Transporting)',
+      guestLockMsg: 'ଅତିଥି ଭାବରେ ୧୦୮ ଆମ୍ବୁଲାନ୍ସ ଡିସ୍ପ୍ୟାଚ୍ କରିବା ଅନୁମୋଦିତ ନୁହେଁ। ଦୟାକରି ତୁରନ୍ତ ଡିସ୍ପ୍ୟାଚ୍ ପାଇଁ ଲଗ୍-ଇନ୍ କରନ୍ତୁ କିମ୍ବା ୧୦୮ ରେ କଲ୍ କରନ୍ତୁ।',
+      guestLoginBtn: '🔑 ଲଗ୍-ଇନ୍ / ରେଜିଷ୍ଟ୍ରେସନ୍ କରନ୍ତୁ'
     },
     'hi-IN': {
       tabBook: '🚑 एम्बुलेंस बुलाएं',
@@ -184,7 +187,9 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       stage1: '1. डिस्पैच हुई',
       stage2: '2. रास्ते में है (En Route)',
       stage3: '3. पहुंच चुकी है (Arrived)',
-      stage4: '4. अस्पताल यात्रा (Transporting)'
+      stage4: '4. अस्पताल यात्रा (Transporting)',
+      guestLockMsg: 'अतिथि खाते से 108 एम्बुलेंस डिस्पैच करना मान्य नहीं है। कृपया डिस्पैच हेतु लॉगिन करें या सीधे 108 पर कॉल करें।',
+      guestLoginBtn: '🔑 लॉगिन / नया खाता बनाएं'
     },
     'en-IN': {
       tabBook: '🚑 Book Ambulance',
@@ -236,7 +241,9 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       stage1: '1. Dispatched',
       stage2: '2. En Route (Siren Active)',
       stage3: '3. Arrived at Scene',
-      stage4: '4. Transporting to Hospital'
+      stage4: '4. Transporting to Hospital',
+      guestLockMsg: 'Emergency 108 ambulance dispatch is restricted for Guest accounts. Please log in or call 108 directly for immediate emergency dispatch.',
+      guestLoginBtn: '🔑 Sign In / Register to Dispatch'
     }
   }[lang] || {};
 
@@ -328,6 +335,15 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
   const handleDispatch = (e) => {
     if (e) e.preventDefault();
     setFormError('');
+
+    if (currentUser?.isGuest) {
+      if (onRequireAuth) {
+        onRequireAuth();
+      } else {
+        alert(txt.guestLockMsg);
+      }
+      return;
+    }
 
     if (!patientName.trim() || !patientPhone.trim() || !pickupAddress.trim()) {
       setFormError(txt.errorFields);
@@ -1097,14 +1113,58 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
             </div>
 
             {/* Dispatch Button */}
-            <button
-              type="button"
-              onClick={handleDispatch}
-              className="w-full py-3.5 bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 active:scale-[0.99] text-white font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm cursor-pointer border border-rose-500/40"
-            >
-              <Phone className="w-4 h-4 text-white" />
-              <span>{txt.dispatchBtn}</span>
-            </button>
+            <div className="space-y-3">
+              {currentUser?.isGuest && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start gap-2.5">
+                  <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-[11px] font-semibold leading-relaxed">
+                      {txt.guestLockMsg}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onRequireAuth) onRequireAuth();
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-[11px] shadow-xs cursor-pointer transition active:scale-95"
+                      >
+                        {txt.guestLoginBtn}
+                      </button>
+                      <a
+                        href="tel:108"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-[11px] shadow-xs cursor-pointer transition active:scale-95"
+                      >
+                        <Phone className="w-3 h-3" />
+                        <span>Dial 108 Emergency</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleDispatch}
+                className={`w-full py-3.5 text-white font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm cursor-pointer border ${
+                  currentUser?.isGuest
+                    ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 border-amber-500/40'
+                    : 'bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 border-rose-500/40 active:scale-[0.99]'
+                }`}
+              >
+                {currentUser?.isGuest ? (
+                  <>
+                    <Lock className="w-4 h-4 text-white" />
+                    <span>{txt.guestLoginBtn}</span>
+                  </>
+                ) : (
+                  <>
+                    <Phone className="w-4 h-4 text-white" />
+                    <span>{txt.dispatchBtn}</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -808,6 +808,7 @@ export default function App() {
               onBookedCountChange={(cnt) => setBookedCount(cnt)}
               onOpenNmcSuite={() => handleNavigateTab('nmc_referral')}
               onOpenTeleconsult={handleOpenTeleconsult}
+              onRequireAuth={() => setShowAuthPage(true)}
             />
           </Suspense>
         </div>
@@ -832,6 +833,7 @@ export default function App() {
               currentUser={currentUser}
               appLang={appLang}
               onNavigateToNearest={() => handleNavigateTab('nearest')}
+              onRequireAuth={() => setShowAuthPage(true)}
             />
           </Suspense>
         </div>
@@ -1042,6 +1044,7 @@ export default function App() {
             <BedBookingSystem
               currentUser={currentUser}
               appLang={appLang}
+              onRequireAuth={() => setShowAuthPage(true)}
             />
           </Suspense>
         </div>
@@ -1053,6 +1056,7 @@ export default function App() {
             <BloodBankSystem
               currentUser={currentUser}
               appLang={appLang}
+              onRequireAuth={() => setShowAuthPage(true)}
             />
           </Suspense>
         </div>
