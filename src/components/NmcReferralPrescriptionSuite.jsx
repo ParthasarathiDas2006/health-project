@@ -607,11 +607,12 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   const [selectedSectionFilter, setSelectedSectionFilter] = useState('ALL');
 
   // Clinician Details (Registered Medical Practitioner per NMC guidelines)
-  const [doctorName, setDoctorName] = useState(currentUser?.name || 'Dr. Soumya Ranjan Nayak');
+  const [doctorName, setDoctorName] = useState(currentUser?.name || 'Dr. Kumar');
   const [doctorRegNo, setDoctorRegNo] = useState(currentUser?.staffId || 'OMC-2017-66431');
   const [doctorDegrees, setDoctorDegrees] = useState('MBBS, MD (Emergency & Internal Medicine)');
   const [facilityName, setFacilityName] = useState(currentUser?.facility || 'SCB Medical College & Hospital, Cuttack');
   const [facilityDistrict, setFacilityDistrict] = useState(currentUser?.district || 'Cuttack, Odisha');
+  const [toastMessage, setToastMessage] = useState(null);
 
   // Patient Clinical State (loaded from preset or editable)
   const currentCase = CLINICAL_PRESETS.find((c) => c.id === selectedCaseId) || CLINICAL_PRESETS[0];
@@ -1463,22 +1464,26 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       : '';
 
     if (lang === 'or-IN') {
-      return `[ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଓଡ଼ିଶା ୧୦୮ ଜରୁରୀ ସ୍ଥାନାନ୍ତରଣ ଟୋକନ୍]\nରୋଗୀ: ${patientName} (${patientAge}ବର୍ଷ, ${patientGender})\nABHA: ${patientAbha}\nଡାକ୍ତରଖାନା: ${facilityName} ରୁ ${referralTarget}\nପ୍ରାଥମିକତା: ${currentCase.acuity} PRIORITY\nରୋଗ ନିର୍ଣ୍ଣୟ: ${diagnosis}\n୧୦୮ CAD ଟୋକନ୍: ${cadId}\nଡାକ୍ତର: ${doctorName} (OMC Reg: ${doctorRegNo})${bloodLineOr}\nQR ଯାଞ୍ଚ ଲିଙ୍କ୍: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
+      return `🏥 [ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଓଡ଼ିଶା • ୧୦୮ ଜରୁରୀକାଳୀନ ସ୍ଥାନାନ୍ତରଣ ଟୋକନ୍]\n━━━━━━━━━━━━━━━━━━━━\n👤 ରୋଗୀ: ${patientName} (${patientAge} ବର୍ଷ, ${patientGender})\n🆔 ABHA ID: ${patientAbha}\n🚑 ୧୦୮ CAD ଟୋକନ୍: ${cadId}\n🏥 ସ୍ଥାନାନ୍ତରଣ: ${facilityName} ➔ ${referralTarget}\n🚨 ପ୍ରାଥମିକତା: ${currentCase.acuity} EMERGENCY\n🩺 ରୋଗ ନିର୍ଣ୍ଣୟ: ${diagnosis}\n👨‍⚕️ RMP ଡାକ୍ତର: ${doctorName} (OMC Reg: ${doctorRegNo})${bloodLineOr}\n━━━━━━━━━━━━━━━━━━━━\n🔍 ସରକାରୀ QR ଯାଞ୍ଚ ଲିଙ୍କ୍: ${originUrl}/?verify=${docId}\n📞 ଓଡ଼ିଶା ମାଗଣା ଆମ୍ବୁଲାନ୍ସ: 108 / 102 (24x7)`;
     } else if (lang === 'hi-IN') {
-      return `[स्वास्थ्य मित्र ओडिशा 108 आपातकालीन ट्रांसफर टोकन]\nमरीज: ${patientName} (${patientAge} वर्ष, ${patientGender})\nABHA ID: ${patientAbha}\nअस्पताल: ${facilityName} से ${referralTarget}\nप्राथमिकता: ${currentCase.acuity} PRIORITY\nनिदान: ${diagnosis}\n108 CAD टोकन: ${cadId}\nडॉक्टर: ${doctorName} (OMC Reg: ${doctorRegNo})${bloodLineHi}\nQR सत्यापन: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
+      return `🏥 [स्वास्थ्य मित्र ओडिशा • 108 आपातकालीन ट्रांसफर टोकन]\n━━━━━━━━━━━━━━━━━━━━\n👤 मरीज: ${patientName} (${patientAge} वर्ष, ${patientGender})\n🆔 ABHA ID: ${patientAbha}\n🚑 108 CAD टोकन: ${cadId}\n🏥 ट्रांसफर: ${facilityName} ➔ ${referralTarget}\n🚨 प्राथमिकता: ${currentCase.acuity} EMERGENCY\n🩺 संभावित निदान: ${diagnosis}\n👨‍⚕️ RMP डॉक्टर: ${doctorName} (OMC Reg: ${doctorRegNo})${bloodLineHi}\n━━━━━━━━━━━━━━━━━━━━\n🔍 आधिकारिक QR सत्यापन: ${originUrl}/?verify=${docId}\n📞 ओडिशा मुफ्त एम्बुलेंस: 108 / 102 (24x7)`;
     }
-    return `[SwasthyaMitra Odisha 108 Emergency Transfer Token]\nPatient: ${patientName} (${patientAge}y, ${patientGender})\nABHA: ${patientAbha}\nTransfer: From ${facilityName} TO ${referralTarget}\nAcuity: ${currentCase.acuity} PRIORITY\nDiagnosis: ${diagnosis}\n108 CAD Token: ${cadId}\nRMP Doctor: ${doctorName} (OMC: ${doctorRegNo})${bloodLineEn}\nVerify QR: https://swasthyamitra.odisha.gov.in/verify?docId=${docId}`;
+    return `🏥 [SwasthyaMitra Odisha • 108 Emergency Transfer Token]\n━━━━━━━━━━━━━━━━━━━━\n👤 Patient: ${patientName} (${patientAge}y, ${patientGender})\n🆔 ABHA ID: ${patientAbha}\n🚑 108 CAD Token: ${cadId}\n🏥 Route: ${facilityName} ➔ ${referralTarget}\n🚨 Priority: ${currentCase.acuity} EMERGENCY\n🩺 Diagnosis: ${diagnosis}\n👨‍⚕️ Attending RMP: ${doctorName} (OMC Reg: ${doctorRegNo})${bloodLineEn}\n━━━━━━━━━━━━━━━━━━━━\n🔍 Official Verification Link: ${originUrl}/?verify=${docId}\n📞 Odisha Free Ambulance: Dial 108 / 102 (24x7)`;
   };
 
-  // WhatsApp 1-Click Dispatch Link
+  // WhatsApp 1-Click Family & Attendant Referral Dispatch
   const handleWhatsAppDispatch = () => {
     const cleanPhone = (patientPhone || '').replace(/[^0-9]/g, '');
     const sms = generateSmsText();
-    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(sms)}`;
+    const url = cleanPhone.length >= 10
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}&text=${encodeURIComponent(sms)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(sms)}`;
     window.open(url, '_blank');
+    setToastMessage('WhatsApp referral dispatch launched successfully!');
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Save current slip to localStorage vault
+  // Save current slip to localStorage vault with full details
   const handleSaveToVault = () => {
     if (!verificationToken) return;
     const entry = {
@@ -1486,10 +1491,16 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       cadToken: verificationToken.cadToken,
       docType: activeTab === 'referral' ? 'Referral Slip (108)' : 'NMC Prescription (Generic)',
       patientName: patientName,
+      age: patientAge,
+      gender: patientGender,
+      doctorName: doctorName,
+      doctorRegNo: doctorRegNo,
       abhaId: patientAbha,
       diagnosis: diagnosis,
-      date: new Date().toLocaleDateString(),
-      hash: verificationToken.securityHash
+      date: new Date().toLocaleString(),
+      hash: verificationToken.securityHash,
+      medicationsCount: medications.length,
+      facility: facilityName
     };
     const updated = [entry, ...vaultList.filter((v) => v.id !== entry.id)];
     setVaultList(updated);
@@ -1498,30 +1509,46 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     } catch (e) {
       console.warn(e);
     }
-    alert(`Document ${entry.id} saved to Clinical Vault!`);
+    setToastMessage(`✓ Document ${entry.id} securely archived in Clinical Vault!`);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Download Offline Standalone HTML Certificate
+  // Download Offline Standalone HTML Certificate with full styling and real QR embedded
   const handleDownloadOfflineCertificate = () => {
     const slipEl = document.getElementById('printable-clinical-slip');
     if (!slipEl) return;
     const htmlContent = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>${verificationToken?.docId || 'Clinical-Document'}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Official Clinical Document - ${verificationToken?.docId || docId}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; padding: 24px; color: #0f172a; }
-    .card { max-width: 900px; margin: 0 auto; background: white; border: 2px solid #cbd5e1; border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; }
-    th { background: #f1f5f9; text-transform: uppercase; font-size: 11px; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-weight: bold; font-size: 11px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; padding: 24px 12px; color: #0f172a; }
+    .offline-container { max-width: 960px; margin: 0 auto; background: #ffffff; border-radius: 20px; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); overflow: hidden; }
+    .offline-banner { background: linear-gradient(135deg, #1e1b4b, #0f172a); color: #ffffff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    @media print {
+      body { background: white; padding: 0; }
+      .offline-banner { display: none; }
+      .offline-container { box-shadow: none; border-radius: 0; }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    ${slipEl.innerHTML}
+  <div class="offline-container">
+    <div class="offline-banner">
+      <div>
+        <h3 style="margin: 0; font-size: 14px; font-weight: 800; color: #a5b4fc;">SWASTHYAMITRA ODISHA • OFFLINE ENCRYPTED CLINICAL RECORD</h3>
+        <p style="margin: 2px 0 0; font-size: 11px; color: #cbd5e1;">NMC Act 2019 Sec 27 & ABDM Milestone Compliant | Issued by: ${doctorName}</p>
+      </div>
+      <button onclick="window.print()" style="background: #4f46e5; color: white; border: none; padding: 6px 14px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">
+        Print / PDF
+      </button>
+    </div>
+    <div style="padding: 24px;">
+      ${slipEl.innerHTML}
+    </div>
   </div>
 </body>
 </html>`;
@@ -1529,9 +1556,11 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${verificationToken?.docId || 'NMC-Prescription'}.html`;
+    a.download = `${verificationToken?.docId || 'NMC-Prescription'}_Offline_Record.html`;
     a.click();
     URL.revokeObjectURL(url);
+    setToastMessage('✓ Offline Encrypted HTML Certificate downloaded!');
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   // High-Resolution Official Printable Slip PDF Download / Export
@@ -1551,10 +1580,11 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
 <head>
   <meta charset="utf-8">
   <title>${verificationToken?.docId || 'NMC-Clinical-Document'}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @page { size: A4; margin: 10mm; }
+    @page { size: A4; margin: 8mm; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #ffffff; color: #0f172a; margin: 0; padding: 12px; }
-    .print-hide { display: none !important; }
+    .print\\:hidden, button, [role="button"] { display: none !important; }
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid #cbd5e1; padding: 6px 10px; font-size: 11px; text-align: left; }
     th { background: #f1f5f9; font-weight: 700; text-transform: uppercase; font-size: 10px; }
@@ -1568,12 +1598,14 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       setTimeout(function() {
         window.print();
         window.close();
-      }, 400);
+      }, 500);
     };
   <\/script>
 </body>
 </html>`);
     printWindow.document.close();
+    setToastMessage('✓ PDF Print dialogue opened!');
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   // Initialize Retina Hi-DPI Canvas Buffer
@@ -2054,7 +2086,14 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   }, [icdSearchTerm]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Real-time Dynamic Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-6 right-6 z-50 bg-slate-900/95 text-white border-2 border-emerald-400 px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs font-bold animate-bounce backdrop-blur-md">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
       {/* ───────────────────────────────────────────────────────── */}
       {/* 1. SUITE HEADER BANNER */}
       {/* ───────────────────────────────────────────────────────── */}
@@ -4391,34 +4430,77 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
           </div>
 
           {vaultList.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 text-xs">
               {vaultList.map((doc, i) => (
                 <div
                   key={i}
-                  className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2 hover:border-indigo-300 transition-all shadow-2xs"
+                  className="p-4 bg-gradient-to-br from-white to-slate-50 border border-slate-200 hover:border-indigo-400 rounded-2xl space-y-3 transition-all shadow-xs hover:shadow-md flex flex-col justify-between"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-[10px] font-mono text-indigo-700 font-bold block">{doc.id}</span>
-                      <strong className="text-slate-900 text-sm block mt-0.5">{doc.patientName}</strong>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <span className="text-[10px] font-mono text-indigo-700 font-bold bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded block w-fit">
+                          {doc.id}
+                        </span>
+                        <strong className="text-slate-900 text-sm font-black block mt-1">{doc.patientName}</strong>
+                        <span className="text-[10px] text-slate-500 font-mono">ABHA: {doc.abhaId}</span>
+                      </div>
+                      <span className="text-[9px] bg-slate-900 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-wider shrink-0">
+                        {doc.docType}
+                      </span>
                     </div>
-                    <span className="text-[9px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-bold">
-                      {doc.docType}
-                    </span>
+
+                    <p className="text-slate-700 text-[11px] font-medium line-clamp-2 leading-relaxed bg-slate-100/70 p-2 rounded-lg border border-slate-200">
+                      <strong>Diagnosis:</strong> {doc.diagnosis}
+                    </p>
+
+                    <div className="text-[10px] text-slate-500 space-y-0.5 font-mono">
+                      <div>Attending Clinician: <strong className="text-slate-800">{doc.doctorName || doctorName}</strong></div>
+                      <div>Archived: <span>{doc.date}</span></div>
+                    </div>
                   </div>
 
-                  <p className="text-slate-600 text-[11px] line-clamp-2">{doc.diagnosis}</p>
+                  <div className="pt-2.5 border-t border-slate-200 flex items-center justify-between gap-1 text-[11px]">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          window.print();
+                        }}
+                        className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold flex items-center gap-1 cursor-pointer transition-colors border border-indigo-200"
+                        title="Print document"
+                      >
+                        <Printer className="w-3 h-3 text-indigo-600" />
+                        <span>Print</span>
+                      </button>
 
-                  <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-500">
-                    <span>Issued: {doc.date}</span>
+                      <button
+                        onClick={() => {
+                          handleDownloadOfflineCertificate();
+                        }}
+                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                        title="Download Standalone Offline HTML"
+                      >
+                        <FileDown className="w-3 h-3 text-amber-600" />
+                        <span>HTML</span>
+                      </button>
+                    </div>
+
                     <button
                       onClick={() => {
-                        window.print();
+                        const updated = vaultList.filter((_, idx) => idx !== i);
+                        setVaultList(updated);
+                        try {
+                          localStorage.setItem('nhp_clinical_docs_vault', JSON.stringify(updated));
+                        } catch (e) {
+                          console.warn(e);
+                        }
+                        setToastMessage(`Document ${doc.id} removed from Vault`);
+                        setTimeout(() => setToastMessage(null), 2500);
                       }}
-                      className="text-indigo-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                      className="p-1 text-slate-300 hover:text-rose-600 rounded cursor-pointer transition-colors"
+                      title="Delete from Vault"
                     >
-                      <Printer className="w-3 h-3" />
-                      <span>Re-Print</span>
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -4427,7 +4509,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
           ) : (
             <div className="p-12 text-center text-slate-400 border border-dashed rounded-2xl">
               <FileText className="w-12 h-12 mx-auto mb-2 text-slate-300" />
-              <p className="text-xs font-medium">No documents saved in vault yet. Click "Save to Vault" to archive slips.</p>
+              <p className="text-xs font-medium">No documents saved in vault yet. Click "+ Archive Current" to archive slips.</p>
             </div>
           )}
         </div>
