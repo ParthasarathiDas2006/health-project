@@ -496,6 +496,28 @@ export default function App() {
             : 'Severe Respiratory Distress: Inability to speak in full sentences')
         );
       }
+      if (answers.chest_spread === 'yes_arm') {
+        urgency = 'RED';
+        score = Math.max(score, 96);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'ହୃଦରୋଗ ସତର୍କତା: ଛାତି କଷ୍ଟ ବାମ ହାତକୁ ବ୍ୟାପୁଛି (ସନ୍ଦିଗ୍ଧ ହାର୍ଟ ଆଟାକ୍)'
+            : (appLang === 'hi-IN'
+            ? 'हृदय आपातकाल: सीने का दर्द बाएं हाथ में फैल रहा है (हार्ट अटैक जोखिम)'
+            : 'Cardiac Emergency: Precordial chest pain radiating to left arm')
+        );
+      }
+      if (currentIntake?.redFlags && currentIntake.redFlags.length > 0) {
+        currentIntake.redFlags.forEach((rf) => {
+          if (!flags.some(f => f.includes(rf.symptom))) {
+            flags.push(`Clinical Red Flag: ${rf.symptom} (${rf.note})`);
+          }
+        });
+        if (currentIntake.urgencyTier === 'RED') {
+          urgency = 'RED';
+          score = Math.max(score, currentIntake.urgencyScore || 90);
+        }
+      }
 
       const note = {
         id: Math.floor(1000 + Math.random() * 9000),
@@ -759,6 +781,8 @@ export default function App() {
             appLang={appLang}
             onLanguageChange={handleLanguageChange}
             onIntakeComplete={handleIntakeComplete}
+            onOpenTeleconsult={handleOpenTeleconsult}
+            onNavigateTab={handleNavigateTab}
           />
         </div>
       )}
