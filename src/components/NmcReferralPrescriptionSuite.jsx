@@ -53,7 +53,12 @@ import {
   Droplet,
   RotateCcw,
   PenTool,
-  ScanLine
+  ScanLine,
+  FlaskConical,
+  Apple,
+  BellRing,
+  CalendarClock,
+  Zap
 } from 'lucide-react';
 import { getHospitalPartners } from '../data/hospitalPartners';
 
@@ -245,7 +250,21 @@ const CLINICAL_PRESETS = [
       { name: 'PARACETAMOL', dosage: '500 mg', form: 'Tablet', freq: 'QID (6th hourly)', duration: '3 Days', instruction: 'For fever >100°F. Do NOT take NSAIDs / Ibuprofen.' },
       { name: 'NORMAL SALINE 0.9% IV', dosage: '500 ml', form: 'IV Infusion', freq: 'At 100 ml/hr', duration: 'During Transit', instruction: 'Maintain strict fluid chart.' },
       { name: 'PANTOPRAZOLE', dosage: '40 mg', form: 'Injection', freq: 'IV STAT', duration: '1 Dose', instruction: 'Gastroprotection.' }
-    ]
+    ],
+    investigations: [
+      'Complete Blood Count (CBC) with Platelets Q12H STAT',
+      'Hematocrit (Hct) & Serum Electrolytes',
+      'Dengue NS1 Antigen & IgM/IgG Serology',
+      'Liver Function Test (SGOT/SGPT, Bilirubin)',
+      'Ultrasound Whole Abdomen (Ascites & Gallbladder Wall Edema Screen)'
+    ],
+    dietaryAdvice: 'Strict oral rehydration: ORS, tender coconut water & fluids > 2.5 L/day. Soft bland diet. Strictly avoid NSAIDs (Ibuprofen/Aspirin).',
+    redFlags: [
+      'Spontaneous bleeding from nose/gums or blood in vomit/stools',
+      'Persistent severe abdominal pain or unrelenting vomiting',
+      'Sudden dizziness, cold clammy extremities, or extreme restlessness/lethargy'
+    ],
+    followUp: 'Review in Emergency HDU after 24 hours with fresh Platelet Count report. SOS immediate ER visit if any bleeding occurs.'
   },
   {
     id: 'CASE-02',
@@ -277,7 +296,21 @@ const CLINICAL_PRESETS = [
     medications: [
       { name: 'LABETALOL', dosage: '100 mg', form: 'Tablet', freq: 'BD (Twice daily)', duration: '5 Days', instruction: 'Titrate according to BP monitoring.' },
       { name: 'MAGNESIUM SULPHATE 50%', dosage: '4 g (20% IV)', form: 'IV STAT', freq: 'Slow over 15 mins', duration: 'Loading Dose', instruction: 'Followed by 5g IM in each buttock (Pritchard regimen).' }
-    ]
+    ],
+    investigations: [
+      'Urine Routine for Proteinuria (Dipstick 3+ confirmation)',
+      'Complete Blood Count with Platelet Count & Hemoglobin',
+      'Serum Creatinine, Blood Urea & Uric Acid',
+      'Liver Enzymes (AST/ALT/LDH for HELLP Syndrome Screen)',
+      'Obstetric USG with Fetal Doppler & Amniotic Fluid Index'
+    ],
+    dietaryAdvice: 'Strict low-sodium diet (<2g salt/day). Left lateral tilt bed rest to optimize uteroplacental blood flow. Strict fluid charting.',
+    redFlags: [
+      'Severe throbbing headache or sudden blurring/loss of vision',
+      'Right upper quadrant / epigastric pain or nausea',
+      'Decreased fetal kicks or sudden worsening facial/pedal edema'
+    ],
+    followUp: 'Continuous maternal-fetal surveillance in Obstetric ICU. Check blood pressure hourly; target Diastolic BP 90-100 mmHg.'
   },
   {
     id: 'CASE-03',
@@ -310,7 +343,21 @@ const CLINICAL_PRESETS = [
       { name: 'ASPIRIN (DISPERSIBLE)', dosage: '300 mg', form: 'Tablet', freq: 'STAT', duration: 'Single Dose', instruction: 'Chew immediately.' },
       { name: 'CLOPIDOGREL', dosage: '300 mg', form: 'Tablet', freq: 'STAT', duration: 'Single Dose', instruction: 'Loading dose taken with water.' },
       { name: 'ATORVASTATIN', dosage: '80 mg', form: 'Tablet', freq: 'STAT at night', duration: 'Single Dose', instruction: 'High-intensity statin therapy.' }
-    ]
+    ],
+    investigations: [
+      'Serial 12-Lead Electrocardiogram (ECG) Q30min',
+      'Serum High-Sensitivity Cardiac Troponin-I STAT',
+      'Serum Creatinine & Electrolytes (Pre-contrast Angiography check)',
+      'Lipid Profile (Fasting: Total Cholesterol, LDL, Triglycerides)',
+      'Bedside 2D Echocardiography with Left Ventricle Ejection Fraction'
+    ],
+    dietaryAdvice: 'Zero saturated fat, no fried foods. Sodium restriction <1.5g/day. Absolute bed rest in Cardiac ICU.',
+    redFlags: [
+      'Recurrent crushing central chest pain radiating to neck/jaw/left arm',
+      'Acute severe breathlessness, orthopnea, or cold profuse diaphoresis',
+      'Severe palpitations, presyncope, or sudden loss of consciousness'
+    ],
+    followUp: 'Direct transfer to Interventional Cath Lab for Primary Angioplasty (PPCI). Post-procedure review in CCU.'
   },
   {
     id: 'CASE-04',
@@ -343,7 +390,21 @@ const CLINICAL_PRESETS = [
       { name: 'METFORMIN HYDROCHLORIDE', dosage: '500 mg', form: 'Tablet', freq: 'BD with meals', duration: '14 Days', instruction: 'Generic formulation. Avoid on empty stomach.' },
       { name: 'TENELIGLIPTIN', dosage: '20 mg', form: 'Tablet', freq: 'OD (Morning)', duration: '14 Days', instruction: 'Take before breakfast.' },
       { name: 'AMOXICILLIN + CLAVULANIC ACID', dosage: '625 mg', form: 'Tablet', freq: 'BD after food', duration: '7 Days', instruction: 'Broad-spectrum coverage for wound infection.' }
-    ]
+    ],
+    investigations: [
+      'Fasting & Post-Prandial Blood Sugar with Glycated Hemoglobin (HbA1c)',
+      'Deep Tissue Wound Swab Culture & Antibiotic Sensitivity (Gram stain)',
+      'Digital Plain Radiograph (X-Ray) Right Foot AP/Lateral for Osteomyelitis',
+      'Serum Creatinine & Microalbuminuria (Diabetic Nephropathy Screen)',
+      'Lower Extremity Arterial Color Doppler for Peripheral Vascular Disease'
+    ],
+    dietaryAdvice: 'Strict Diabetic Diet (1500 kcal): avoid refined sugars, sweets, potatoes, and white bread. Strictly non-weight bearing on right foot.',
+    redFlags: [
+      'Spreading redness, swelling, or foul-smelling purulent discharge from foot',
+      'High-grade fever with chills or sudden spike in blood sugar >300 mg/dL',
+      'Blackish discoloration (gangrenous changes) of toes or numbness spreading upwards'
+    ],
+    followUp: 'Review in Diabetic Foot Surgical Clinic in 5 days with culture report for wound inspection and debridement assessment.'
   },
   {
     id: 'CASE-05',
@@ -376,7 +437,21 @@ const CLINICAL_PRESETS = [
       { name: 'ARTESUNATE', dosage: '40 mg (2.4 mg/kg)', form: 'IV Injection', freq: 'STAT Loading', duration: '1 Dose', instruction: 'Reconstitute with 5% Sodium Bicarbonate and normal saline. Repeat at 12 & 24 hours.' },
       { name: 'MIDAZOLAM', dosage: '1.5 mg (0.1 mg/kg)', form: 'IV/Intranasal', freq: 'PRN for Seizures', duration: 'SOS', instruction: 'Administer slowly if convulsion lasts >3 mins.' },
       { name: 'PARACETAMOL', dosage: '250 mg', form: 'Suppository', freq: 'Rectal STAT', duration: '1 Dose', instruction: 'For rapid temperature reduction.' }
-    ]
+    ],
+    investigations: [
+      'Peripheral Blood Smear for Malaria Parasite (MP Thick & Thin Film)',
+      'Rapid Diagnostic Test (RDT) for Plasmodium falciparum / vivax',
+      'Random Blood Sugar STAT (Hypoglycemia watch: target >60 mg/dL)',
+      'Complete Hemogram with Platelet count & Hematocrit',
+      'Venous Blood Gas & Serum Lactate for Metabolic Acidosis screen'
+    ],
+    dietaryAdvice: 'Strictly NPO (Nil Per Os) during altered sensorium/coma. Maintain maintenance IV dextrose-saline infusion as per pediatric chart.',
+    redFlags: [
+      'Further seizures or convulsions lasting longer than 3 minutes',
+      'Deep acidotic sighing respirations or oxygen saturation dropping below 92%',
+      'Sudden drop in blood glucose (<54 mg/dL) or absent pupil light reflexes'
+    ],
+    followUp: 'Continuous Pediatric ICU surveillance. Repeat IV Artesunate second dose at exactly 12 hours from initial loading dose.'
   },
   {
     id: 'CASE-06',
@@ -409,7 +484,21 @@ const CLINICAL_PRESETS = [
       { name: 'POLYVALENT ANTI-SNAKE VENOM (ASV)', dosage: '10 Vials (100 ml)', form: 'IV Infusion', freq: 'In 200 ml Normal Saline over 1 hour', duration: 'Initial Loading Dose', instruction: 'Monitor for anaphylaxis; keep Adrenaline 1:1000 0.5ml IM at bedside.' },
       { name: 'NEOSTIGMINE METHYLSULFATE', dosage: '0.5 mg', form: 'IV Injection', freq: 'With Atropine 0.6 mg STAT', duration: 'Challenge Dose', instruction: 'Evaluate response in 30 mins for neuromuscular improvement.' },
       { name: 'TETANUS TOXOID', dosage: '0.5 ml', form: 'IM Injection', freq: 'STAT', duration: '1 Dose', instruction: 'Deep intramuscular right deltoid.' }
-    ]
+    ],
+    investigations: [
+      '20-Minute Whole Blood Clotting Test (20WBCT) serial Q30min',
+      'Single Breath Count (SBC) tracking for diaphragmatic muscle weakness',
+      'Serum Creatinine, Blood Urea & Urine Examination (Myoglobinuria screen)',
+      'Coagulation Profile (PT/INR, aPTT, D-Dimer)',
+      'Arterial Blood Gas Analysis (pCO2 & pO2 monitoring for hypoventilation)'
+    ],
+    dietaryAdvice: 'Nil by mouth until bulbar reflexes and normal swallowing fully recover. Continuous IV hydration with Ringer Lactate.',
+    redFlags: [
+      'Progression of ptosis, dysphagia, or inability to clear oral secretions',
+      'Single Breath Count dropping below 15 or chest indrawing',
+      'Sudden loss of consciousness, bradycardia, or signs of ASV anaphylaxis'
+    ],
+    followUp: 'Continuous Envenomation ICU monitoring. Re-evaluate Single Breath Count & ptosis 30 minutes after Neostigmine challenge.'
   },
   {
     id: 'CASE-07',
@@ -442,7 +531,21 @@ const CLINICAL_PRESETS = [
       { name: 'OXYTOCIN', dosage: '20 IU', form: 'IV Infusion', freq: 'In 500 ml Ringer Lactate @ 60 drops/min', duration: 'Continuous', instruction: 'Monitor uterine tone continuously.' },
       { name: 'TRANEXAMIC ACID', dosage: '1 g (10 ml)', form: 'Slow IV STAT', freq: 'Over 10 minutes', duration: 'Single Dose', instruction: 'Second dose after 30 mins if bleeding persists.' },
       { name: 'MISOPROSTOL', dosage: '800 mcg (4 Tabs)', form: 'Sublingual / Rectal', freq: 'STAT', duration: 'Single Dose', instruction: 'Ensure rapid mucosal absorption.' }
-    ]
+    ],
+    investigations: [
+      'Urgent Blood Grouping & Cross-Matching for 3 Units PRBC & 2 Units FFP',
+      'Complete Hemogram (Hb, Hematocrit & Platelet count STAT)',
+      'Coagulation Screen (PT/INR, aPTT, Serum Fibrinogen level)',
+      'Arterial Blood Gas Analysis (Serum Lactate & Base Deficit tracking)',
+      'Emergency Bedside Pelvic Ultrasound for Retained Placental Tissue'
+    ],
+    dietaryAdvice: 'Strictly NPO (Nil Per Os) in anticipation of emergency exploration / uterine tamponade / laparotomy.',
+    redFlags: [
+      'Continuing heavy soaking of sanitary pads (>1 pad every 15 minutes)',
+      'Systolic blood pressure declining below 75 mmHg or pulse rising >140 bpm',
+      'Cold peripheries, delayed capillary refill >3 sec, or unresponsiveness'
+    ],
+    followUp: 'Continuous vital signs & fundal height tracking every 15 mins in Emergency HDU until bleeding ceases and hematocrit stabilizes.'
   },
   {
     id: 'CASE-08',
@@ -475,7 +578,21 @@ const CLINICAL_PRESETS = [
       { name: 'PARACETAMOL', dosage: '330 mg (15 mg/kg)', form: 'Oral Suspension', freq: 'SOS Q6H (Max 4 times/day)', duration: '3 Days', instruction: 'Strictly avoid NSAIDs like Ibuprofen/Aspirin.' },
       { name: 'RINGER LACTATE (PEDIATRIC)', dosage: '150 ml (7 ml/kg/hr)', form: 'IV Infusion', freq: 'Titrate to urine output > 1 ml/kg/hr', duration: 'First 2 Hours', instruction: 'Reduce rate as hematocrit normalizes.' },
       { name: 'ONDANSETRON', dosage: '3.3 mg (0.15 mg/kg)', form: 'Slow IV', freq: 'TDS (8 Hourly)', duration: '2 Days', instruction: 'To control intractable vomiting.' }
-    ]
+    ],
+    investigations: [
+      'Micro-Hematocrit (Hct) monitoring every 4 to 6 hours',
+      'Platelet Count STAT (Serial Q12H tracking)',
+      'Serum Albumin & Total Protein (Plasma leakage screen)',
+      'Liver Function Test (AST/ALT) & Serum Electrolytes',
+      'Ultrasound Chest & Abdomen for Pleural Effusion / Ascites'
+    ],
+    dietaryAdvice: 'Small frequent sips of ORS, coconut water & clear fluids once vomiting settles. Strictly avoid dark foods (cola/chocolate) that confound melena.',
+    redFlags: [
+      'Narrowed pulse pressure (SBP - DBP ≤ 20 mmHg) or impalpable peripheral pulse',
+      'Severe unremitting abdominal pain, sudden extreme irritability or drowsiness',
+      'Urine output falling below 1 ml/kg/hr or spontaneous mucosal bleeding'
+    ],
+    followUp: 'Continuous Pediatric HDU vital signs and fluid balance monitoring. Step down IV fluids as hematocrit normalizes.'
   }
 ];
 
@@ -508,6 +625,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   const [chiefComplaints, setChiefComplaints] = useState(currentCase.chiefComplaints);
   const [vitals, setVitals] = useState(currentCase.vitals);
   const [medications, setMedications] = useState(currentCase.medications);
+  const [investigations, setInvestigations] = useState(currentCase.investigations || []);
+  const [dietaryAdvice, setDietaryAdvice] = useState(currentCase.dietaryAdvice || '');
+  const [redFlags, setRedFlags] = useState(currentCase.redFlags || []);
+  const [followUpSchedule, setFollowUpSchedule] = useState(currentCase.followUp || '');
   const [referralTarget, setReferralTarget] = useState(currentCase.referredTo);
   const [referralReason, setReferralReason] = useState(currentCase.referralReason);
   const [transportMode, setTransportMode] = useState(currentCase.transitTransport);
@@ -622,6 +743,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     setChiefComplaints(currentCase.chiefComplaints);
     setVitals(currentCase.vitals);
     setMedications(currentCase.medications);
+    setInvestigations(currentCase.investigations || []);
+    setDietaryAdvice(currentCase.dietaryAdvice || '');
+    setRedFlags(currentCase.redFlags || []);
+    setFollowUpSchedule(currentCase.followUp || '');
     setReferralTarget(currentCase.referredTo);
     setReferralReason(currentCase.referralReason);
     setTransportMode(currentCase.transitTransport);
@@ -3068,6 +3193,291 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                       })}
                     </tbody>
                   </table>
+                </div>
+
+                {/* 1-Click Fast Generic Formulary Shelf (Odisha Niramaya / OSMC Essential List) */}
+                <div className="p-3 bg-gradient-to-r from-slate-50 via-indigo-50/40 to-slate-50 rounded-xl border border-indigo-100 space-y-2 print:hidden">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <span className="text-[11px] font-black uppercase text-indigo-950 tracking-wide">
+                        Quick-Add NMC Core Generics (Odisha Niramaya Essential Drug List)
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-semibold">
+                      1-Click insert to prescription table
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { name: 'PARACETAMOL', dosage: '650 mg', form: 'Tablet', freq: 'TDS SOS (After food)', duration: '3 Days', instruction: 'Take for body ache or temperature > 99.5°F' },
+                      { name: 'PANTO PRAZOLE', dosage: '40 mg', form: 'Tablet', freq: 'OD (30 mins before breakfast)', duration: '7 Days', instruction: 'Swallow whole on empty stomach' },
+                      { name: 'AMOXICILLIN + CLAVULANIC ACID', dosage: '625 mg', form: 'Tablet', freq: 'BD after food', duration: '5 Days', instruction: 'Complete full 5-day antibiotic course' },
+                      { name: 'ONDANSETRON', dosage: '4 mg', form: 'Tablet / Mouth Dissolving', freq: 'TDS SOS', duration: '2 Days', instruction: 'Dissolve on tongue 30 mins before food' },
+                      { name: 'ORAL REHYDRATION SALTS (ORS)', dosage: '20.5 g Sachet', form: 'Oral Powder', freq: 'Frequent sips in 1L boiled water', duration: 'Till recovery', instruction: 'Discard unconsumed solution after 24 hours' },
+                      { name: 'AZITHROMYCIN', dosage: '500 mg', form: 'Tablet', freq: 'OD (1 hour before food)', duration: '3 Days', instruction: 'Strict daily timing; do not skip' },
+                      { name: 'METFORMIN', dosage: '500 mg', form: 'Tablet PR', freq: 'BD with meals', duration: '30 Days', instruction: 'Monitor fasting blood sugar weekly' },
+                      { name: 'AMLODIPINE', dosage: '5 mg', form: 'Tablet', freq: 'OD (Morning)', duration: '30 Days', instruction: 'Regular daily BP recording required' },
+                      { name: 'CEFTRIAXONE', dosage: '1 g', form: 'IV Injection', freq: 'BD (12 Hourly)', duration: '3 Days', instruction: 'Slow IV after test dose' },
+                      { name: 'TRAMADOL', dosage: '50 mg', form: 'Slow IV / IM', freq: 'SOS for severe pain', duration: 'Single Dose', instruction: 'Monitor sedation and nausea' }
+                    ].map((drug, dIdx) => (
+                      <button
+                        key={dIdx}
+                        type="button"
+                        onClick={() => {
+                          setMedications([
+                            ...medications,
+                            drug
+                          ]);
+                        }}
+                        className="px-2 py-1 bg-white hover:bg-indigo-600 hover:text-white border border-slate-200 hover:border-indigo-600 rounded-lg text-[10px] font-bold text-slate-700 flex items-center gap-1 transition-all shadow-2xs cursor-pointer group"
+                      >
+                        <Plus className="w-2.5 h-2.5 text-indigo-500 group-hover:text-white" />
+                        <span>{drug.name}</span>
+                        <span className="text-[9px] text-slate-400 group-hover:text-indigo-200">({drug.dosage})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ───────────────────────────────────────────────────────── */}
+                {/* 4 ENRICHED DISTINCT CLINICAL FEATURE CARDS ("SHOW IN DIFFERENT THING") */}
+                {/* ───────────────────────────────────────────────────────── */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-3">
+                  {/* CARD 1: DIAGNOSTIC LABORATORY & RADIOLOGY ORDERS */}
+                  <div className="bg-gradient-to-br from-white to-sky-50/50 p-4 rounded-xl border border-sky-200 shadow-2xs space-y-2.5">
+                    <div className="flex items-center justify-between border-b border-sky-200 pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-sky-600 text-white flex items-center justify-center shadow-xs">
+                          <FlaskConical className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <strong className="text-xs font-black text-sky-950 uppercase tracking-wide block">
+                            Section 5.1-No: Diagnostic Investigations Ordered
+                          </strong>
+                          <span className="text-[10px] text-sky-800 font-semibold">
+                            Laboratory, Biochemical &amp; Radiology Orders (NMC Standard)
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-black bg-sky-100 text-sky-800 border border-sky-300 px-2 py-0.5 rounded-full uppercase">
+                        STAT / Priority
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {investigations && investigations.length > 0 ? (
+                        investigations.map((test, tIdx) => (
+                          <div
+                            key={tIdx}
+                            className="p-2 bg-white rounded-lg border border-sky-100 flex items-start justify-between gap-2 text-[11px] shadow-2xs group hover:border-sky-300 transition-all"
+                          >
+                            <div className="flex items-start gap-1.5 flex-1">
+                              <span className="w-4 h-4 rounded-full bg-sky-100 text-sky-800 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
+                                {tIdx + 1}
+                              </span>
+                              <input
+                                type="text"
+                                value={test}
+                                onChange={(e) => {
+                                  const updated = [...investigations];
+                                  updated[tIdx] = e.target.value;
+                                  setInvestigations(updated);
+                                }}
+                                className="w-full font-bold text-slate-800 bg-transparent border-none outline-none focus:bg-sky-50/50 rounded px-1"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInvestigations(investigations.filter((_, i) => i !== tIdx));
+                              }}
+                              className="text-slate-300 hover:text-rose-600 shrink-0 print:hidden cursor-pointer"
+                              title="Remove test"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-[11px] text-slate-400 italic">No investigations currently ordered.</p>
+                      )}
+                    </div>
+
+                    <div className="pt-1 flex items-center justify-between print:hidden">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInvestigations([...investigations, 'Urgent Serum Electrolytes (Na+, K+, Cl-) & Renal Function Test']);
+                        }}
+                        className="text-[10px] font-bold text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 flex items-center gap-1 transition-all cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Add Diagnostic Order</span>
+                      </button>
+                      <span className="text-[9px] text-slate-500 font-mono">
+                        NMC Rule 8.4 Compliant
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* CARD 2: CLINICAL NUTRITION & LIFESTYLE DIRECTIVES */}
+                  <div className="bg-gradient-to-br from-white to-emerald-50/50 p-4 rounded-xl border border-emerald-200 shadow-2xs space-y-2.5">
+                    <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                          <Apple className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <strong className="text-xs font-black text-emerald-950 uppercase tracking-wide block">
+                            Section 5.2-No: Nutrition &amp; Non-Pharmacological Care
+                          </strong>
+                          <span className="text-[10px] text-emerald-800 font-semibold">
+                            Dietary Protocol, Fluid Restrictions &amp; Physical Rest
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full uppercase">
+                        Protocol Guard
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 bg-white rounded-lg border border-emerald-100 shadow-2xs">
+                      <textarea
+                        rows={3}
+                        value={dietaryAdvice}
+                        onChange={(e) => setDietaryAdvice(e.target.value)}
+                        placeholder="Enter tailored dietary instructions, fluid balance directives, salt restrictions, and non-pharmacological care..."
+                        className="w-full text-xs font-medium text-slate-800 bg-transparent border-none outline-none leading-relaxed resize-none focus:bg-emerald-50/40 rounded p-1"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1.5 text-[10px] pt-1">
+                      <div className="p-1.5 bg-white rounded border border-emerald-100 text-center">
+                        <span className="text-slate-400 block text-[9px] font-semibold">HYDRATION</span>
+                        <strong className="text-emerald-900 font-bold">Oral / IV Calibrated</strong>
+                      </div>
+                      <div className="p-1.5 bg-white rounded border border-emerald-100 text-center">
+                        <span className="text-slate-400 block text-[9px] font-semibold">SALT / SODIUM</span>
+                        <strong className="text-emerald-900 font-bold">&lt; 2g / Day (Low Salt)</strong>
+                      </div>
+                      <div className="p-1.5 bg-white rounded border border-emerald-100 text-center">
+                        <span className="text-slate-400 block text-[9px] font-semibold">ACTIVITY</span>
+                        <strong className="text-emerald-900 font-bold">Strict Bed Rest</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CARD 3: CRITICAL RED-FLAG DANGER SIGNS (EMERGENCY 108 TRIGGER) */}
+                  <div className="bg-gradient-to-br from-white to-rose-50/60 p-4 rounded-xl border border-rose-300 shadow-2xs space-y-2.5">
+                    <div className="flex items-center justify-between border-b border-rose-200 pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                          <BellRing className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <strong className="text-xs font-black text-rose-950 uppercase tracking-wide block">
+                            Section 5.3-No: Red-Flag Danger Signs (Emergency Trigger)
+                          </strong>
+                          <span className="text-[10px] text-rose-800 font-semibold">
+                            Immediate 108 Ambulance / Emergency Casualty Escalation Signs
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-black bg-rose-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                        SOS ALERT
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {redFlags && redFlags.length > 0 ? (
+                        redFlags.map((flag, fIdx) => (
+                          <div
+                            key={fIdx}
+                            className="p-2 bg-white rounded-lg border border-rose-200 flex items-start justify-between gap-2 text-[11px] shadow-2xs hover:border-rose-400 transition-all"
+                          >
+                            <div className="flex items-start gap-1.5 flex-1">
+                              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                              <input
+                                type="text"
+                                value={flag}
+                                onChange={(e) => {
+                                  const updated = [...redFlags];
+                                  updated[fIdx] = e.target.value;
+                                  setRedFlags(updated);
+                                }}
+                                className="w-full font-bold text-rose-950 bg-transparent border-none outline-none focus:bg-rose-50/50 rounded px-1"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRedFlags(redFlags.filter((_, i) => i !== fIdx));
+                              }}
+                              className="text-slate-300 hover:text-rose-600 shrink-0 print:hidden cursor-pointer"
+                              title="Remove danger sign"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-[11px] text-slate-400 italic">No red flag signs specified.</p>
+                      )}
+                    </div>
+
+                    <div className="p-2 bg-rose-100/70 border border-rose-300 rounded-lg flex items-center justify-between text-[10px] text-rose-950">
+                      <span className="font-extrabold flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-rose-700" />
+                        <span>Odisha Free Emergency: <strong>Dial 108 / 102</strong></span>
+                      </span>
+                      <span className="font-semibold text-rose-800">
+                        24x7 State Casualty Desk
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* CARD 4: CLINICAL REVIEW & FOLLOW-UP SCHEDULE */}
+                  <div className="bg-gradient-to-br from-white to-purple-50/50 p-4 rounded-xl border border-purple-200 shadow-2xs space-y-2.5">
+                    <div className="flex items-center justify-between border-b border-purple-200 pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center shadow-xs">
+                          <CalendarClock className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <strong className="text-xs font-black text-purple-950 uppercase tracking-wide block">
+                            Section 5.4-No: Clinical Review &amp; Follow-Up Schedule
+                          </strong>
+                          <span className="text-[10px] text-purple-800 font-semibold">
+                            Mandatory OPD Revisit Date &amp; Clinical Progress Review
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-black bg-purple-100 text-purple-800 border border-purple-300 px-2 py-0.5 rounded-full uppercase">
+                        Scheduled
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 bg-white rounded-lg border border-purple-100 shadow-2xs">
+                      <textarea
+                        rows={3}
+                        value={followUpSchedule}
+                        onChange={(e) => setFollowUpSchedule(e.target.value)}
+                        placeholder="Enter clinical review timeline, next OPD date, investigations to bring on revisit, and emergency contact directives..."
+                        className="w-full text-xs font-medium text-slate-800 bg-transparent border-none outline-none leading-relaxed resize-none focus:bg-purple-50/40 rounded p-1"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px]">
+                      <div className="flex items-center gap-1.5 text-purple-900 font-bold">
+                        <Clock className="w-3 h-3 text-purple-600" />
+                        <span>Review at: <strong>{facilityName.split(',')[0]}</strong></span>
+                      </div>
+                      <span className="bg-purple-100 text-purple-800 font-mono text-[9px] px-2 py-0.5 rounded font-black">
+                        SOS REVISIT ANYTIME IF SYMPTOMS AGGRAVATE
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
