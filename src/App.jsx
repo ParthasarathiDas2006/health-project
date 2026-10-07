@@ -6,7 +6,8 @@ import {
   logoutUser,
   getBookedAppointments,
   getHospitalTransfers,
-  getStoredUsers
+  getStoredUsers,
+  GUEST_USER
 } from './utils/authStorage';
 import { DoctorAvatar } from './utils/doctorPhotos';
 import MobileAppView from './components/MobileAppView';
@@ -282,9 +283,11 @@ export default function App() {
 
   const handleLogout = () => {
     logoutUser();
-    setLoggedInUser(null);
+    setLoggedInUser(GUEST_USER);
     setShowProfileMenu(false);
-    setShowAuthPage(true);
+    setShowAuthPage(false);
+    setActiveHub('citizen');
+    setActiveTab('intake');
   };
 
   const handleLanguageChange = (newLang) => {
@@ -536,15 +539,15 @@ export default function App() {
     }, 800);
   };
 
-  // If user requested Auth page or no user logged in
-  if (showAuthPage || !currentUser) {
+  // Only show full-screen AuthPage if the user explicitly clicked Sign In / Create Account
+  if (showAuthPage) {
     return (
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-sans text-sm">Loading SwasthyaMitra Authentication...</div>}>
         <AuthPage
           themeMode={themeMode}
           onThemeChange={(mode) => setThemeMode(mode)}
           onLoginSuccess={handleLoginSuccess}
-          onCancel={currentUser ? () => setShowAuthPage(false) : handleGuestContinue}
+          onCancel={() => setShowAuthPage(false)}
         />
       </Suspense>
     );
@@ -1184,25 +1187,41 @@ export default function App() {
             <span>Mobile App</span>
           </button>
           <span className="hidden sm:inline">|</span>
-          <button
-            onClick={() => {
-              setShowProfileMenu(false);
-              setShowAuthPage(true);
-            }}
-            className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[10px] font-semibold transition-all cursor-pointer"
-            title="Switch user account"
-          >
-            <LogIn className="w-2.5 h-2.5 text-emerald-400" />
-            <span>{uiText.switchUser || 'Switch'}</span>
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-white border border-rose-800/60 text-[10px] font-semibold transition-all cursor-pointer"
-            title="Sign out of current session"
-          >
-            <LogOut className="w-2.5 h-2.5 text-rose-400" />
-            <span>{uiText.signOut || 'Sign Out'}</span>
-          </button>
+          {currentUser?.isGuest ? (
+            <button
+              onClick={() => {
+                setShowProfileMenu(false);
+                setShowAuthPage(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-sm transition-all cursor-pointer animate-pulse hover:animate-none"
+              title="Sign in with Mobile OTP, Aadhaar, or Password"
+            >
+              <LogIn className="w-3 h-3" />
+              <span>{appLang === 'or-IN' ? 'ଲଗ୍-ଇନ୍ / ପଞ୍ଜୀକରଣ (Sign In)' : 'Sign In / Register'}</span>
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  setShowAuthPage(true);
+                }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[10px] font-semibold transition-all cursor-pointer"
+                title="Switch user account"
+              >
+                <LogIn className="w-2.5 h-2.5 text-emerald-400" />
+                <span>{uiText.switchUser || 'Switch'}</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-white border border-rose-800/60 text-[10px] font-semibold transition-all cursor-pointer"
+                title="Sign out of current session"
+              >
+                <LogOut className="w-2.5 h-2.5 text-rose-400" />
+                <span>{uiText.signOut || 'Sign Out'}</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 

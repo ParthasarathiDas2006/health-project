@@ -622,7 +622,16 @@ export default function MobileAppView({
               </button>
             )}
 
-            {currentUser && (
+            {currentUser?.isGuest ? (
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md active:scale-98 transition-all cursor-pointer animate-pulse"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Sign In / Create Account (ଲଗ୍-ଇନ୍ / ଖାତା ଖୋଲନ୍ତୁ)</span>
+              </button>
+            ) : (
               <button
                 type="button"
                 onClick={onLogout}

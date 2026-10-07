@@ -654,21 +654,32 @@ export const verifyCredentials = (identifier, password) => {
   };
 };
 
+export const GUEST_USER = {
+  id: 'USR-GUEST-000',
+  name: 'Citizen Explorer (ଅତିଥି ନାଗରିକ)',
+  role: 'Guest Citizen / Explorer',
+  roleCategory: 'patient',
+  staffId: 'GUEST-EXPLORER',
+  facility: 'Capital Hospital, Unit-6, Bhubaneswar',
+  state: 'Odisha (ଓଡ଼ିଶା)',
+  district: 'Khurda',
+  email: 'guest.explorer@swasthyaportal.gov.in',
+  phone: '+91 94370 00000',
+  qualifications: 'Public Guest Access',
+  shift: 'Citizen Self-Service Access',
+  isGuest: true,
+  preferredLanguage: 'or-IN'
+};
+
 export const getCurrentUser = () => {
   try {
     const isLoggedOut = localStorage.getItem('triage_logged_out');
     if (isLoggedOut === 'true') {
-      return null;
+      return GUEST_USER;
     }
     const raw = localStorage.getItem(CURRENT_USER_KEY);
     if (!raw || raw === 'null') {
-      // Default initial login for effortless first-time exploration
-      const defUser = {
-        ...DEFAULT_USERS[0],
-        email: (DEFAULT_USERS[0].email || '').trim().toLowerCase()
-      };
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(defUser));
-      return defUser;
+      return GUEST_USER;
     }
     const parsed = JSON.parse(raw);
     if (parsed) {
@@ -683,27 +694,30 @@ export const getCurrentUser = () => {
     return parsed;
   } catch (e) {
     console.error('Failed to read current user:', e);
-    return null;
+    return GUEST_USER;
   }
 };
 
 export const setCurrentUser = (user) => {
-  if (user) {
+  if (user && !user.isGuest) {
     const normalizedUser = {
       ...user,
       email: (user.email || '').trim().toLowerCase()
     };
     localStorage.removeItem('triage_logged_out');
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(normalizedUser));
+  } else if (user && user.isGuest) {
+    localStorage.setItem('triage_logged_out', 'true');
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(GUEST_USER));
   } else {
     localStorage.setItem('triage_logged_out', 'true');
-    localStorage.setItem(CURRENT_USER_KEY, 'null');
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(GUEST_USER));
   }
 };
 
 export const logoutUser = () => {
   localStorage.setItem('triage_logged_out', 'true');
-  localStorage.setItem(CURRENT_USER_KEY, 'null');
+  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(GUEST_USER));
 };
 
 // ─────────────────────────────────────────────
