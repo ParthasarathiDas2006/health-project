@@ -227,6 +227,8 @@ const CLINICAL_PRESETS = [
     weight: '64 kg',
     allergies: 'None Reported (NKDA)',
     acuity: 'RED',
+    icdCode: 'A97.2',
+    icdName: 'Severe Dengue with Thrombocytopenia & Hemorrhagic Risk',
     provisionalDiagnosis: 'Severe Dengue with Thrombocytopenia & Hemorrhagic Risk (ICD-10: A97.2)',
     chiefComplaints: 'High fever for 4 days (103.4°F), epistaxis (nasal bleeding) this morning, severe retro-orbital headache, abdominal pain.',
     vitals: { bp: '96/60 mmHg', pulse: '112 bpm', spo2: '94%', temp: '103.4°F', rr: '24/min' },
@@ -254,6 +256,8 @@ const CLINICAL_PRESETS = [
     weight: '58 kg',
     allergies: 'Penicillin Allergy (Skin rash)',
     acuity: 'RED',
+    icdCode: 'O14.1',
+    icdName: 'Severe Gestational Pre-eclampsia at 32 Weeks',
     provisionalDiagnosis: 'Severe Gestational Pre-eclampsia at 32 Weeks (ICD-10: O14.1)',
     chiefComplaints: 'Severe throbbing frontal headache, blurring of vision, facial puffiness, urine output decreased.',
     vitals: { bp: '168/104 mmHg', pulse: '92 bpm', spo2: '98%', temp: '98.6°F', rr: '20/min' },
@@ -280,6 +284,8 @@ const CLINICAL_PRESETS = [
     weight: '68 kg',
     allergies: 'None (NKDA)',
     acuity: 'RED',
+    icdCode: 'I21.1',
+    icdName: 'Acute ST-Elevation Myocardial Infarction (STEMI - Inferior Wall)',
     provisionalDiagnosis: 'Acute ST-Elevation Myocardial Infarction (STEMI - Inferior Wall) (ICD-10: I21.1)',
     chiefComplaints: 'Crushing retrosternal chest pain radiating to left arm and jaw for 90 minutes, profuse diaphoresis, nausea.',
     vitals: { bp: '110/70 mmHg', pulse: '64 bpm', spo2: '95%', temp: '98.4°F', rr: '22/min' },
@@ -307,6 +313,8 @@ const CLINICAL_PRESETS = [
     weight: '72 kg',
     allergies: 'Sulfa Drugs (Erythema)',
     acuity: 'YELLOW',
+    icdCode: 'E11.621',
+    icdName: 'Uncontrolled Type-2 Diabetes with Infected Neuropathic Foot Ulcer',
     provisionalDiagnosis: 'Uncontrolled Type-2 Diabetes with Infected Neuropathic Foot Ulcer (Wagner Grade 2) (ICD-10: E11.621)',
     chiefComplaints: 'Painless purulent ulcer right first metatarsal head for 10 days, fasting blood sugar 248 mg/dL, mild fever.',
     vitals: { bp: '138/84 mmHg', pulse: '86 bpm', spo2: '98%', temp: '100.1°F', rr: '18/min' },
@@ -334,6 +342,8 @@ const CLINICAL_PRESETS = [
     weight: '16 kg',
     allergies: 'None Reported (NKDA)',
     acuity: 'RED',
+    icdCode: 'B50.0',
+    icdName: 'Pediatric Cerebral Malaria with Repeated Convulsions',
     provisionalDiagnosis: 'Pediatric Cerebral Malaria with Repeated Convulsions (ICD-10: B50.0)',
     chiefComplaints: 'High fever 104.2°F for 3 days, altered sensorium, generalized tonic-clonic convulsions 20 mins ago, unarousable coma.',
     vitals: { bp: '84/50 mmHg', pulse: '142 bpm', spo2: '91%', temp: '104.2°F', rr: '36/min' },
@@ -361,6 +371,8 @@ const CLINICAL_PRESETS = [
     weight: '62 kg',
     allergies: 'None (NKDA)',
     acuity: 'RED',
+    icdCode: 'T63.0',
+    icdName: 'Acute Neurotoxic Snakebite (Common Krait) Envenomation',
     provisionalDiagnosis: 'Acute Neurotoxic Snakebite (Common Krait) Envenomation (ICD-10: T63.0)',
     chiefComplaints: 'Bitten on right ankle while sleeping on floor 2 hours ago; early bilateral ptosis (eyelid drooping), dysphagia, generalized muscle weakness.',
     vitals: { bp: '104/68 mmHg', pulse: '98 bpm', spo2: '93%', temp: '98.2°F', rr: '16/min (Shallow)' },
@@ -388,6 +400,8 @@ const CLINICAL_PRESETS = [
     weight: '52 kg',
     allergies: 'None (NKDA)',
     acuity: 'RED',
+    icdCode: 'O72.1',
+    icdName: 'Severe Postpartum Hemorrhage (PPH) with Hypovolemic Shock',
     provisionalDiagnosis: 'Severe Postpartum Hemorrhage (PPH) with Hypovolemic Shock (ICD-10: O72.1)',
     chiefComplaints: 'Continuous profuse vaginal bleeding following delivery 3 hours ago, altered sensorium, severe pallor, cold clammy extremities.',
     vitals: { bp: '78/44 mmHg', pulse: '136 bpm', spo2: '92%', temp: '97.4°F', rr: '28/min' },
@@ -415,6 +429,8 @@ const CLINICAL_PRESETS = [
     weight: '22 kg',
     allergies: 'None Reported (NKDA)',
     acuity: 'RED',
+    icdCode: 'A97.2',
+    icdName: 'Severe Dengue with Severe Thrombocytopenia & Plasma Leakage',
     provisionalDiagnosis: 'Severe Dengue with Severe Thrombocytopenia & Plasma Leakage (ICD-10: A97.2)',
     chiefComplaints: 'High fever for 5 days, severe abdominal pain, persistent vomiting, spontaneous epistaxis (nosebleed), platelets 14,000/mcL.',
     vitals: { bp: '86/56 mmHg', pulse: '124 bpm', spo2: '94%', temp: '101.8°F', rr: '30/min' },
@@ -463,6 +479,11 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   const [referralReason, setReferralReason] = useState(currentCase.referralReason);
   const [transportMode, setTransportMode] = useState(currentCase.transitTransport);
   const [oxygenReq, setOxygenReq] = useState(currentCase.oxygenReq);
+
+  // Clinical Acuity Priority & Safe ICD-10 Fallbacks
+  const priorityTier = currentCase?.acuity || 'RED';
+  const currentIcdCode = currentCase?.icdCode || diagnosis.match(/ICD-10:\s*([A-Z0-9.]+)/i)?.[1] || 'Z00.0';
+  const currentIcdName = currentCase?.icdName || diagnosis.replace(/\(ICD-10:.*?\)/i, '').trim() || 'Clinical Evaluation';
 
   // Verifiable QR Code & Cryptographic Stamp
   const [docId, setDocId] = useState(() => `NMC-OD-2026-${Math.floor(100000 + Math.random() * 900000)}`);
@@ -868,11 +889,11 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
           }
         }] : []),
         {
-          fullUrl: `urn:uuid:condition-${currentCase.icdCode.replace(/[^a-zA-Z0-9]/g, '')}`,
+          fullUrl: `urn:uuid:condition-${String(currentIcdCode).replace(/[^a-zA-Z0-9]/g, '')}`,
           resource: {
             resourceType: "Condition",
             code: {
-              coding: [{ system: "http://hl7.org/fhir/sid/icd-10", code: currentCase.icdCode, display: currentCase.icdName }],
+              coding: [{ system: "http://hl7.org/fhir/sid/icd-10", code: currentIcdCode, display: currentIcdName }],
               text: diagnosis
             },
             subject: { reference: `urn:uuid:patient-${patientAbha.replace(/[^0-9]/g, '') || '9123456789'}`, display: patientName }
@@ -890,7 +911,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             dosageInstruction: [
               {
                 text: `${med.freq} for ${med.duration}`,
-                additionalInstruction: [{ text: med.instructions }]
+                additionalInstruction: [{ text: med.instruction || med.instructions || '' }]
               }
             ]
           }
@@ -3412,7 +3433,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
 
                   <div className="p-3 bg-white border border-slate-200 rounded-xl text-xs space-y-1">
                     <span className="text-[10px] uppercase font-bold text-slate-500 block">Provisional Diagnosis &amp; Clinical Justification:</span>
-                    <p className="font-extrabold text-slate-900">{diagnosis} ({currentCase.icdCode})</p>
+                    <p className="font-extrabold text-slate-900">{diagnosis} ({currentIcdCode})</p>
                     <p className="text-slate-700">{referralReason}</p>
                   </div>
 
@@ -3860,7 +3881,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                   <span className="text-[10px] font-bold text-rose-900 uppercase block">Active Provisional Diagnosis:</span>
                   <p className="font-extrabold text-slate-900 text-xs">{diagnosis}</p>
                   <span className="text-[10px] font-mono text-rose-700 font-bold bg-white px-2 py-0.5 rounded border border-rose-200 inline-block">
-                    ICD-10: {currentCase.icdCode} - {currentCase.icdName}
+                    ICD-10: {currentIcdCode} - {currentIcdName}
                   </span>
                 </div>
 
