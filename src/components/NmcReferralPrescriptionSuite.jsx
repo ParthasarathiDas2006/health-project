@@ -212,10 +212,14 @@ const ODISHA_TRANSIT_ROUTES = {
   }
 };
 
-// ─── 6 Authentic Odisha Clinical Scenarios ──────────────────────────────────
+// ─── 8 Authentic Odisha Clinical Scenarios Across 5 Sections ────────────────
 const CLINICAL_PRESETS = [
   {
     id: 'CASE-01',
+    sectionNo: '1-NO',
+    sectionTitle: 'SECTION 1-NO: EMERGENCY CASUALTY & FEVER TRIAGE',
+    department: 'SCBMCH Cuttack • Emergency HDU & Critical Care',
+    protocol: 'Platelet Transfusion & Fluid Resuscitation Protocol',
     patientName: 'Rameswar Lal (ରମେଶ୍ୱର ଲାଲ୍)',
     age: 48,
     gender: 'Male',
@@ -245,6 +249,10 @@ const CLINICAL_PRESETS = [
   },
   {
     id: 'CASE-02',
+    sectionNo: '2-NO',
+    sectionTitle: 'SECTION 2-NO: HIGH-RISK OBSTETRICS & MATERNAL ICU',
+    department: 'MKCG Berhampur • Obstetric Intensive Care Unit',
+    protocol: 'Pritchard Magnesium Sulphate & Labetalol BP Protocol',
     patientName: 'Sunita Devi (ସୁନୀତା ଦେବୀ)',
     age: 26,
     gender: 'Female',
@@ -273,6 +281,10 @@ const CLINICAL_PRESETS = [
   },
   {
     id: 'CASE-03',
+    sectionNo: '3-NO',
+    sectionTitle: 'SECTION 3-NO: ACUTE CARDIOLOGY & CATH LAB PPCI',
+    department: 'AIIMS Bhubaneswar • Emergency Interventional Cath Lab',
+    protocol: 'Golden Hour PPCI Coronary Angioplasty Protocol',
     patientName: 'Basanti Jena (ବାସନ୍ତୀ ଜେନା)',
     age: 62,
     gender: 'Female',
@@ -302,6 +314,10 @@ const CLINICAL_PRESETS = [
   },
   {
     id: 'CASE-04',
+    sectionNo: '5-NO',
+    sectionTitle: 'SECTION 5-NO: METABOLIC COMPLICATIONS & VASCULAR SURGERY',
+    department: 'SCBMCH Cuttack • Diabetic Foot & Vascular Surgery Unit',
+    protocol: 'Deep Tissue Culture & Surgical Debridement Protocol',
     patientName: 'Kalandi Charan Sethi (କାଳନ୍ଦୀ ଚରଣ ସେଠୀ)',
     age: 55,
     gender: 'Male',
@@ -331,6 +347,10 @@ const CLINICAL_PRESETS = [
   },
   {
     id: 'CASE-05',
+    sectionNo: '4-NO',
+    sectionTitle: 'SECTION 4-NO: PEDIATRIC CRITICAL CARE & PICU RESCUE',
+    department: 'SLN Medical College Koraput • Pediatric ICU (PICU)',
+    protocol: 'Pediatric IV Artesunate Reconstitution & Anticonvulsant Protocol',
     patientName: 'Babula Muduli (ବାବୁଲା ମୁଦୁଲି)',
     age: 5,
     gender: 'Male',
@@ -360,6 +380,10 @@ const CLINICAL_PRESETS = [
   },
   {
     id: 'CASE-06',
+    sectionNo: '5-NO',
+    sectionTitle: 'SECTION 5-NO: SNAKEBITE TOXICOLOGY & ENVENOMATION',
+    department: 'PRM Medical College Baripada • Critical Care Envenomation Unit',
+    protocol: '10 Vials Polyvalent ASV & Neostigmine Challenge Protocol',
     patientName: 'Bichitra Mohapatra (ବିଚିତ୍ର ମହାପାତ୍ର)',
     age: 34,
     gender: 'Male',
@@ -389,6 +413,10 @@ const CLINICAL_PRESETS = [
   },
   {
     id: 'CASE-07',
+    sectionNo: '2-NO',
+    sectionTitle: 'SECTION 2-NO: OBSTETRIC HEMORRHAGE & SHOCK RESUSCITATION',
+    department: 'SCBMCH Cuttack • Emergency Labor HDU & Blood Bank',
+    protocol: 'Uterotonic Infusion & Form 27C STAT PRBC Crossmatch',
     patientName: 'Pramila Das (ପ୍ରମିଳା ଦାସ)',
     age: 26,
     gender: 'Female',
@@ -418,6 +446,10 @@ const CLINICAL_PRESETS = [
   },
   {
     id: 'CASE-08',
+    sectionNo: '4-NO',
+    sectionTitle: 'SECTION 4-NO: PEDIATRIC DENGUE SHOCK SYNDROME',
+    department: 'MKCG Berhampur • Pediatric High Dependency Unit',
+    protocol: 'Pediatric 7 ml/kg/hr Crystalloid & Microvascular Monitoring',
     patientName: 'Master Ansuman Barik (ମାଷ୍ଟର ଅଂଶୁମାନ ବାରିକ)',
     age: 8,
     gender: 'Male',
@@ -453,6 +485,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   // Active view: 'prescription' | 'referral' | 'verify' | 'vault' | 'sbar_handover'
   const [activeTab, setActiveTab] = useState(initialTab || 'prescription');
   const [selectedCaseId, setSelectedCaseId] = useState('CASE-01');
+  const [selectedSectionFilter, setSelectedSectionFilter] = useState('ALL');
 
   // Clinician Details (Registered Medical Practitioner per NMC guidelines)
   const [doctorName, setDoctorName] = useState(currentUser?.name || 'Dr. Soumya Ranjan Nayak');
@@ -484,6 +517,21 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   const priorityTier = currentCase?.acuity || 'RED';
   const currentIcdCode = currentCase?.icdCode || diagnosis.match(/ICD-10:\s*([A-Z0-9.]+)/i)?.[1] || 'Z00.0';
   const currentIcdName = currentCase?.icdName || diagnosis.replace(/\(ICD-10:.*?\)/i, '').trim() || 'Clinical Evaluation';
+
+  // 5 Differentiated Odisha Clinical Sections
+  const CLINICAL_SECTION_TABS = useMemo(() => [
+    { id: 'ALL', label: 'All 5 Clinical Sections', count: CLINICAL_PRESETS.length, badge: 'ALL', color: 'indigo' },
+    { id: '1-NO', label: 'Section 1-No: Emergency & Triage', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '1-NO').length, badge: '1-NO', color: 'indigo' },
+    { id: '2-NO', label: 'Section 2-No: High-Risk Maternal ICU', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '2-NO').length, badge: '2-NO', color: 'rose' },
+    { id: '3-NO', label: 'Section 3-No: Cardiology & Cath Lab', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '3-NO').length, badge: '3-NO', color: 'red' },
+    { id: '4-NO', label: 'Section 4-No: Pediatric PICU', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '4-NO').length, badge: '4-NO', color: 'amber' },
+    { id: '5-NO', label: 'Section 5-No: Toxicology & Surgery', count: CLINICAL_PRESETS.filter(c => c.sectionNo === '5-NO').length, badge: '5-NO', color: 'teal' }
+  ], []);
+
+  const filteredCases = useMemo(() => {
+    if (selectedSectionFilter === 'ALL') return CLINICAL_PRESETS;
+    return CLINICAL_PRESETS.filter((c) => c.sectionNo === selectedSectionFilter);
+  }, [selectedSectionFilter]);
 
   // Verifiable QR Code & Cryptographic Stamp
   const [docId, setDocId] = useState(() => `NMC-OD-2026-${Math.floor(100000 + Math.random() * 900000)}`);
@@ -2017,53 +2065,136 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       </div>
 
       {/* ───────────────────────────────────────────────────────── */}
-      {/* 2. CLINICAL SCENARIOS SELECTOR STRIP (6 Authentic Cases) */}
+      {/* 2. CLINICAL SCENARIOS SELECTOR STRIP (Differentiated Across 5 Distinct Clinical Sections) */}
       {/* ───────────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-            <Activity className="w-4 h-4 text-indigo-600" />
-            <span>Select Authentic Odisha Clinical Case to Load &amp; Edit:</span>
+      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-black">
+              <Activity className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                <span>Select Authentic Odisha Clinical Case to Load &amp; Edit:</span>
+                <span className="text-[10px] font-bold bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded-full border border-indigo-200">
+                  5 DISTINCT SECTIONS
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Choose from 5 specialized clinical hospital sections (1-No to 5-No) with tailored statutory protocols &amp; NMC generic workflows.
+              </p>
+            </div>
           </div>
-          <span className="text-[11px] text-slate-400">
-            Full dynamic editing, NMC generic validation &amp; print ready
+          <span className="text-[11px] font-mono font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 self-start sm:self-auto">
+            Active: {currentCase.id} ({currentCase.sectionNo})
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-          {CLINICAL_PRESETS.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setSelectedCaseId(item.id)}
-              className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                selectedCaseId === item.id
-                  ? 'bg-indigo-50 border-indigo-400 ring-2 ring-indigo-200 shadow-2xs'
-                  : 'bg-slate-50 border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="font-extrabold text-xs text-slate-900 truncate">
-                    {item.patientName}
-                  </span>
-                  <span
-                    className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
-                      item.acuity === 'RED'
-                        ? 'bg-rose-100 text-rose-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {item.acuity}
-                  </span>
+        {/* 5 Distinct Clinical Section Filter Switcher */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+          {CLINICAL_SECTION_TABS.map((tab) => {
+            const isActive = selectedSectionFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setSelectedSectionFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 whitespace-nowrap transition-all cursor-pointer border ${
+                  isActive
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                  isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Differentiated Clinical Case Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filteredCases.map((item) => {
+            const isSelected = selectedCaseId === item.id;
+            const badgeBg =
+              item.sectionNo === '1-NO' ? 'bg-indigo-600' :
+              item.sectionNo === '2-NO' ? 'bg-rose-600' :
+              item.sectionNo === '3-NO' ? 'bg-red-600' :
+              item.sectionNo === '4-NO' ? 'bg-amber-600' :
+              'bg-teal-700';
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setSelectedCaseId(item.id)}
+                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer space-y-2.5 relative ${
+                  isSelected
+                    ? 'bg-gradient-to-br from-indigo-50/90 via-white to-slate-50 border-indigo-500 ring-2 ring-indigo-300 shadow-md'
+                    : 'bg-slate-50/70 hover:bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                }`}
+              >
+                <div>
+                  {/* Section Banner Header */}
+                  <div className="flex items-center justify-between gap-1 pb-1.5 border-b border-slate-200/80">
+                    <span className={`${badgeBg} text-white font-black text-[9px] px-2 py-0.5 rounded shadow-2xs uppercase tracking-wider`}>
+                      {item.sectionNo}
+                    </span>
+                    <span
+                      className={`text-[9px] px-2 py-0.5 rounded-full font-black ${
+                        item.acuity === 'RED'
+                          ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                          : 'bg-amber-100 text-amber-800 border border-amber-300'
+                      }`}
+                    >
+                      {item.acuity} EMERGENCY
+                    </span>
+                  </div>
+
+                  {/* Section Name & Department */}
+                  <div className="mt-1.5">
+                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-wide block truncate">
+                      {item.sectionTitle}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium block truncate">
+                      🏥 {item.department}
+                    </span>
+                  </div>
+
+                  {/* Patient Name */}
+                  <div className="mt-2">
+                    <div className="font-extrabold text-sm text-slate-900 leading-snug">
+                      {item.patientName}
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-medium">
+                      📍 {item.district} • {item.age} Yrs / {item.gender} • ABO: <strong>{item.bloodGroup}</strong>
+                    </div>
+                  </div>
+
+                  {/* Diagnosis */}
+                  <div className="p-2 bg-white rounded-xl border border-slate-200/90 text-[10px] font-bold text-slate-800 mt-2 line-clamp-2">
+                    {item.provisionalDiagnosis}
+                  </div>
                 </div>
-                <p className="text-[10px] text-slate-500 line-clamp-1">{item.provisionalDiagnosis}</p>
-              </div>
-              <div className="text-[10px] text-indigo-700 font-semibold mt-2 flex items-center justify-between">
-                <span>📍 {item.district} • {item.age}y/{item.gender}</span>
-                <span className="text-slate-400 font-mono text-[9px]">{item.id}</span>
-              </div>
-            </button>
-          ))}
+
+                {/* Clinical Protocol & ID Footer */}
+                <div className="pt-1.5 border-t border-slate-200/80 space-y-1">
+                  <div className="text-[9px] font-bold text-indigo-900 bg-indigo-50/90 p-1.5 rounded-lg border border-indigo-100 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-indigo-600 shrink-0" />
+                    <span className="truncate">{item.protocol}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono px-0.5">
+                    <span>ID: {item.id}</span>
+                    <span className="text-emerald-700 font-bold">✓ NMC 2023 Validated</span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
