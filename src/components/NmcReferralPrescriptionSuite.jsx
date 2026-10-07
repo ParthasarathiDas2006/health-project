@@ -2606,751 +2606,349 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       </div>
 
       {/* ───────────────────────────────────────────────────────── */}
-      {/* 2. DEDICATED SUITE BANNER & CLINICAL PRESETS (PRESCRIPTION & REFERRAL WORKFLOW ONLY) */}
       {/* ───────────────────────────────────────────────────────── */}
-      {(activeTab === 'prescription' || activeTab === 'referral') && (
+      {/* 2. SUITE 1: DEDICATED NMC e-PRESCRIPTION STUDIO (OUTPATIENT CLINICAL RX) */}
+      {/* ───────────────────────────────────────────────────────── */}
+      {activeTab === 'prescription' && (
         <div className="space-y-4">
-          {/* Suite 1 (Rx) or Suite 2 (Referral) Dedicated Hero Ribbon */}
-          {activeTab === 'prescription' ? (
-            <div className="bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 rounded-2xl p-4 text-white border border-indigo-700/60 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-black shadow-md shrink-0">
-                  <Pill className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                      Suite 1 • NMC 2023 Statutory Format
-                    </span>
-                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30">
-                      Generic Rx Active
-                    </span>
-                  </div>
-                  <h3 className="text-sm sm:text-base font-black text-white mt-0.5">
-                    NMC e-Prescription Studio (Generic Formulations)
-                  </h3>
-                  <p className="text-xs text-indigo-200/80">
-                    Mandatory generic drug prescribing, Niramaya/OSMC supply indicators, drug interaction safety guard, and digital RMP signature.
-                  </p>
-                </div>
+          {/* Suite 1 Dedicated Doctor Rx Hero Banner */}
+          <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900 rounded-2xl p-4 sm:p-5 text-white border border-indigo-700/60 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center font-black shadow-md shrink-0">
+                <Pill className="w-6 h-6 text-white" />
               </div>
-              <div className="flex items-center gap-2 text-xs shrink-0 self-start sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => setShowCaseSelector(!showCaseSelector)}
-                  className="px-3 py-1.5 bg-indigo-800 hover:bg-indigo-700 text-indigo-100 rounded-xl font-bold flex items-center gap-1.5 border border-indigo-600/60 shadow-2xs transition-all cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                  <span>{showCaseSelector ? 'Close Cases ▲' : 'Load Odisha Case (10) ▼'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCockpit(!showCockpit)}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold flex items-center gap-1.5 border border-slate-700 shadow-2xs transition-all cursor-pointer"
-                >
-                  <Sliders className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>{showCockpit ? 'Hide Cockpit ▲' : 'Doctor Cockpit ▼'}</span>
-                </button>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    Suite 1 • NMC 2023 Statutory Format
+                  </span>
+                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30">
+                    Generic Rx Active
+                  </span>
+                  <span className="bg-blue-500/20 text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-400/30">
+                    Niramaya EDL Free Supply
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-white mt-1">
+                  NMC e-Prescription Studio (Generic Formulations)
+                </h3>
+                <p className="text-xs text-indigo-200/90 leading-relaxed max-w-2xl">
+                  Mandatory generic drug prescribing in CAPITAL LETTERS, Niramaya/OSMC free supply indicators, real-time drug interaction safety guard, and digital RMP signature.
+                </p>
               </div>
             </div>
-          ) : (
-            <div className="bg-gradient-to-r from-rose-900 via-red-950 to-slate-900 rounded-2xl p-4 text-white border border-rose-700/60 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center font-black shadow-md shrink-0">
-                  <Ambulance className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-rose-500/30 text-rose-200 border border-rose-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                      Suite 2 • NHM Odisha 108 Dispatch
-                    </span>
-                    <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
-                      CAD Priority Transit
-                    </span>
-                  </div>
-                  <h3 className="text-sm sm:text-base font-black text-white mt-0.5">
-                    Hospital Referral Slip &amp; 108 CAD Transit Hub
-                  </h3>
-                  <p className="text-xs text-rose-200/80">
-                    Statutory inter-facility transfer documentation, live 108 CAD token telemetry, highway green corridors, Apex hospital bed allocation, and Form 27C blood requisition.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-xs shrink-0 self-start sm:self-auto">
+
+            {/* Top Doctor Rx Toolbar */}
+            <div className="flex flex-wrap items-center gap-2 text-xs shrink-0">
+              {hasAnyBrandDetected && (
                 <button
                   type="button"
-                  onClick={() => setShowCaseSelector(!showCaseSelector)}
-                  className="px-3 py-1.5 bg-rose-800 hover:bg-rose-700 text-rose-100 rounded-xl font-bold flex items-center gap-1.5 border border-rose-600/60 shadow-2xs transition-all cursor-pointer"
+                  onClick={handleAutoFixAllBrands}
+                  className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer animate-pulse"
+                  title="Convert all commercial brands to NMC uppercase generic standard"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                  <span>{showCaseSelector ? 'Close Cases ▲' : 'Load Odisha Case (10) ▼'}</span>
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-200" />
+                  <span>Auto-Fix All to Generic (NMC)</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCockpit(!showCockpit)}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold flex items-center gap-1.5 border border-slate-700 shadow-2xs transition-all cursor-pointer"
-                >
-                  <Sliders className="w-3.5 h-3.5 text-rose-400" />
-                  <span>{showCockpit ? 'Hide Cockpit ▲' : 'Doctor Cockpit ▼'}</span>
-                </button>
-              </div>
+              )}
+              <button
+                type="button"
+                onClick={handleAddMedication}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Add Medication</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAbhaCardModal(true)}
+                className="px-3 py-1.5 bg-teal-700 hover:bg-teal-600 text-teal-100 rounded-xl font-bold flex items-center gap-1.5 border border-teal-500/50 shadow-sm transition-all cursor-pointer"
+                title="View Official ABHA Digital Health Card"
+              >
+                <Award className="w-3.5 h-3.5 text-teal-300" />
+                <span>ABHA Card</span>
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold flex items-center gap-1.5 border border-slate-600 shadow-sm transition-all cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5 text-indigo-300" />
+                <span>Print Rx</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCaseSelector(!showCaseSelector)}
+                className="px-3 py-1.5 bg-indigo-800 hover:bg-indigo-700 text-indigo-100 rounded-xl font-bold flex items-center gap-1.5 border border-indigo-600/60 shadow-sm transition-all cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>{showCaseSelector ? 'Close Cases ▲' : 'Load Clinical Case (10) ▼'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCockpit(!showCockpit)}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold flex items-center gap-1.5 border border-slate-700 shadow-sm transition-all cursor-pointer"
+              >
+                <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{showCockpit ? 'Hide Cockpit ▲' : 'Rx Cockpit ▼'}</span>
+              </button>
             </div>
-          )}
+          </div>
 
           {/* Quick Active Case Summary Badge */}
           <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-500">Active Scenario:</span>
-              <span className="font-bold text-slate-900">{currentCase.patientName}</span>
+              <span className="font-bold text-slate-500">Active OPD Case:</span>
+              <span className="font-black text-slate-900">{currentCase.patientName}</span>
               <span className="text-slate-400">•</span>
               <span className="text-slate-600 font-medium">{currentCase.district}</span>
               <span className="text-slate-400">•</span>
               <span className="text-indigo-700 font-bold truncate max-w-sm">{currentCase.provisionalDiagnosis}</span>
             </div>
-            <span className="font-mono text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 shrink-0">
-              ID: {currentCase.id} ({currentCase.sectionNo})
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="font-mono text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                {medications.length} Prescribed Meds
+              </span>
+              <span className="font-mono text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                ID: {currentCase.id} ({currentCase.sectionNo})
+              </span>
+            </div>
           </div>
 
-          {/* Collapsible 10-Case Preset Grid */}
+          {/* Collapsible 10-Case Preset Grid (Outpatient Focus) */}
           {showCaseSelector && (
             <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-black shadow-xs">
-              <Activity className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 flex flex-wrap items-center gap-2">
-                <span>Select Authentic Odisha Clinical Case to Load &amp; Edit:</span>
-                <span className="text-[10px] font-black bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded-full border border-indigo-200">
-                  5 DISTINCT CLINICAL SECTIONS
-                </span>
-                <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
-                  10 CASES (2 PER SECTION)
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Every section contains 2 distinct life-critical clinical scenarios with specialized vitals, NMC generic drug protocols, and 108 emergency transit telemetry.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-[11px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
-              Active: {currentCase.id} • {currentCase.sectionNo}
-            </span>
-          </div>
-        </div>
-
-        {/* 5 Distinct Clinical Section Filter Switcher */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          {CLINICAL_SECTION_TABS.map((tab) => {
-            const isActive = selectedSectionFilter === tab.id;
-            const tabIcons = {
-              'ALL': <Layers className="w-3.5 h-3.5" />,
-              '1-NO': <Flame className="w-3.5 h-3.5 text-rose-500" />,
-              '2-NO': <Baby className="w-3.5 h-3.5 text-pink-500" />,
-              '3-NO': <HeartPulse className="w-3.5 h-3.5 text-red-500" />,
-              '4-NO': <Activity className="w-3.5 h-3.5 text-amber-500" />,
-              '5-NO': <FlaskConical className="w-3.5 h-3.5 text-teal-500" />
-            };
-
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setSelectedSectionFilter(tab.id)}
-                className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer border ${
-                  isActive
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-indigo-300'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                }`}
-              >
-                <span>{tabIcons[tab.id]}</span>
-                <span>{tab.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Differentiated Clinical Case Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3.5">
-          {filteredCases.map((item) => {
-            const isSelected = selectedCaseId === item.id;
-            const route = ODISHA_TRANSIT_ROUTES[item.id];
-
-            // Category-specific visual accents
-            const sectionConfig = {
-              '1-NO': {
-                headerGradient: 'bg-gradient-to-r from-red-600 via-rose-700 to-indigo-800',
-                badgeBg: 'bg-red-700 text-white',
-                tagBg: 'bg-red-50 text-red-900 border-red-200',
-                borderActive: 'border-red-500 ring-2 ring-red-300 shadow-md bg-gradient-to-br from-red-50/40 via-white to-slate-50',
-                icon: <Flame className="w-3.5 h-3.5 text-white" />,
-                accentColor: 'text-red-700'
-              },
-              '2-NO': {
-                headerGradient: 'bg-gradient-to-r from-rose-600 via-pink-700 to-rose-900',
-                badgeBg: 'bg-rose-700 text-white',
-                tagBg: 'bg-rose-50 text-rose-900 border-rose-200',
-                borderActive: 'border-rose-500 ring-2 ring-rose-300 shadow-md bg-gradient-to-br from-rose-50/40 via-white to-slate-50',
-                icon: <Baby className="w-3.5 h-3.5 text-white" />,
-                accentColor: 'text-rose-700'
-              },
-              '3-NO': {
-                headerGradient: 'bg-gradient-to-r from-red-700 via-rose-900 to-slate-900',
-                badgeBg: 'bg-red-800 text-white',
-                tagBg: 'bg-red-50 text-red-900 border-red-200',
-                borderActive: 'border-red-600 ring-2 ring-red-300 shadow-md bg-gradient-to-br from-red-50/40 via-white to-slate-50',
-                icon: <HeartPulse className="w-3.5 h-3.5 text-white" />,
-                accentColor: 'text-red-800'
-              },
-              '4-NO': {
-                headerGradient: 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-800',
-                badgeBg: 'bg-amber-700 text-white',
-                tagBg: 'bg-amber-50 text-amber-900 border-amber-200',
-                borderActive: 'border-amber-500 ring-2 ring-amber-300 shadow-md bg-gradient-to-br from-amber-50/40 via-white to-slate-50',
-                icon: <Activity className="w-3.5 h-3.5 text-white" />,
-                accentColor: 'text-amber-700'
-              },
-              '5-NO': {
-                headerGradient: 'bg-gradient-to-r from-teal-700 via-emerald-700 to-slate-900',
-                badgeBg: 'bg-teal-800 text-white',
-                tagBg: 'bg-teal-50 text-teal-900 border-teal-200',
-                borderActive: 'border-teal-500 ring-2 ring-teal-300 shadow-md bg-gradient-to-br from-teal-50/40 via-white to-slate-50',
-                icon: <FlaskConical className="w-3.5 h-3.5 text-white" />,
-                accentColor: 'text-teal-800'
-              }
-            }[item.sectionNo] || {
-              headerGradient: 'bg-gradient-to-r from-indigo-700 to-purple-800',
-              badgeBg: 'bg-indigo-700 text-white',
-              tagBg: 'bg-indigo-50 text-indigo-900 border-indigo-200',
-              borderActive: 'border-indigo-500 ring-2 ring-indigo-300 shadow-md',
-              icon: <Activity className="w-3.5 h-3.5 text-white" />,
-              accentColor: 'text-indigo-700'
-            };
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedCaseId(item.id)}
-                className={`rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer relative overflow-hidden group ${
-                  isSelected
-                    ? sectionConfig.borderActive
-                    : 'bg-slate-50/80 hover:bg-white border-slate-200 hover:border-slate-300 shadow-2xs hover:shadow-xs'
-                }`}
-              >
-                <div>
-                  {/* Distinct Section Colored Header Ribbon */}
-                  <div className={`${sectionConfig.headerGradient} px-3.5 py-2 text-white flex items-center justify-between`}>
-                    <div className="flex items-center gap-1.5 font-black text-[11px] tracking-wide">
-                      {sectionConfig.icon}
-                      <span>{item.sectionNo}</span>
-                      <span className="opacity-70 font-mono">•</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider">{item.categoryTag || item.id}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`text-[9px] px-2 py-0.5 rounded-full font-black ${
-                          item.acuity === 'RED'
-                            ? 'bg-rose-500/90 text-white'
-                            : 'bg-amber-400 text-amber-950'
-                        }`}
-                      >
-                        {item.acuity} STAT
-                      </span>
-                      {isSelected && (
-                        <span className="bg-white text-slate-900 text-[9px] font-black px-1.5 py-0.2 rounded-full">
-                          ACTIVE
-                        </span>
-                      )}
-                    </div>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-black shadow-xs">
+                    <Activity className="w-5 h-5 text-white" />
                   </div>
-
-                  <div className="p-3.5 space-y-2.5">
-                    {/* Patient Identity & Demographics */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="font-extrabold text-sm text-slate-900 leading-snug">
-                          {item.patientName}
-                        </div>
-                        <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span>{item.district} District</span>
-                          <span>•</span>
-                          <span>{item.age} Yrs / {item.gender}</span>
-                          <span>•</span>
-                          <span className="font-bold text-slate-800">ABO: {item.bloodGroup}</span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                        {item.id}
+                  <div>
+                    <div className="text-xs sm:text-sm font-black text-slate-900 flex flex-wrap items-center gap-2">
+                      <span>Select Authentic Clinical Case to Load &amp; Prescribe:</span>
+                      <span className="text-[10px] font-black bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded-full border border-indigo-200">
+                        5 DISTINCT CLINICAL SECTIONS
+                      </span>
+                      <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
+                        10 CASES (2 PER SECTION)
                       </span>
                     </div>
+                    <p className="text-[11px] text-slate-500">
+                      Click any scenario to populate authentic patient demographics, vitals, diagnosis, and full NMC generic pharmacotherapy.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCaseSelector(false)}
+                  className="text-xs font-bold text-slate-500 hover:text-slate-800 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors self-start sm:self-auto cursor-pointer"
+                >
+                  ✕ Close Cases
+                </button>
+              </div>
 
-                    {/* Live Telemetry Vitals Chips Bar */}
-                    <div className="grid grid-cols-4 gap-1 p-2 bg-slate-100/90 rounded-xl border border-slate-200 text-center">
-                      <div className="bg-white rounded p-1 border border-slate-200/60">
-                        <span className="block text-[8px] font-bold text-slate-400 uppercase">BP</span>
-                        <span className="block text-[10px] font-black text-slate-800 truncate">{item.vitals?.bp}</span>
-                      </div>
-                      <div className="bg-white rounded p-1 border border-slate-200/60">
-                        <span className="block text-[8px] font-bold text-slate-400 uppercase">Pulse</span>
-                        <span className="block text-[10px] font-black text-slate-800 truncate">{item.vitals?.pulse}</span>
-                      </div>
-                      <div className={`rounded p-1 border ${
-                        parseFloat(item.vitals?.spo2) < 92 ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-white border-slate-200/60 text-slate-800'
+              {/* Section Tabs (5 Categories) */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-100">
+                {CLINICAL_SECTION_TABS.map((tab) => {
+                  const isSecActive = selectedSectionTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setSelectedSectionTab(tab.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+                        isSecActive
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      <span>{tab.badge}</span>
+                      <span>{tab.label}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                        isSecActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
                       }`}>
-                        <span className="block text-[8px] font-bold text-slate-400 uppercase">SpO2</span>
-                        <span className="block text-[10px] font-black truncate">{item.vitals?.spo2}</span>
-                      </div>
-                      <div className="bg-white rounded p-1 border border-slate-200/60">
-                        <span className="block text-[8px] font-bold text-slate-400 uppercase">Temp / RR</span>
-                        <span className="block text-[10px] font-black text-slate-800 truncate">{item.vitals?.temp || item.vitals?.rr}</span>
-                      </div>
-                    </div>
-
-                    {/* Provisional Diagnosis & ICD-10 */}
-                    <div className="p-2 bg-white rounded-xl border border-slate-200 text-[11px] font-bold text-slate-800 space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-mono font-black bg-indigo-50 text-indigo-800 px-1.5 py-0.2 rounded border border-indigo-200">
-                          {item.icdCode}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-normal truncate">
-                          {item.originFacility.split(' (')[0]} ➔ Tertiary
-                        </span>
-                      </div>
-                      <p className="line-clamp-2 text-slate-800 font-bold leading-tight">
-                        {item.provisionalDiagnosis}
-                      </p>
-                    </div>
-
-                    {/* Generic Drug Regimen Preview */}
-                    <div className="text-[10px] text-slate-600 bg-amber-50/70 p-1.5 rounded-lg border border-amber-200/60 flex items-center gap-1.5">
-                      <Pill className="w-3 h-3 text-amber-700 shrink-0" />
-                      <span className="truncate font-medium">
-                        <strong>NMC Rx:</strong> {item.medications?.slice(0, 2).map((m) => m.name).join(' • ')}
+                        2 Cases
                       </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Filtered 2 Cases Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {filteredCases.map((c) => {
+                  const isSelected = selectedCaseId === c.id;
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => handleLoadPresetCase(c.id)}
+                      className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-3 text-xs relative ${
+                        isSelected
+                          ? 'bg-indigo-50/70 border-indigo-600 shadow-sm ring-1 ring-indigo-500'
+                          : 'bg-slate-50/80 border-slate-200 hover:border-indigo-300 hover:bg-white shadow-2xs'
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-mono font-bold text-slate-400">
+                                {c.sectionNo} • {c.id}
+                              </span>
+                              <span className={`text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase ${
+                                c.acuity === 'RED'
+                                  ? 'bg-rose-100 text-rose-800'
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}>
+                                {c.acuity} PRIORITY
+                              </span>
+                            </div>
+                            <h4 className="font-black text-slate-900 text-sm mt-0.5">
+                              {c.patientName}
+                            </h4>
+                            <span className="text-[11px] text-slate-500">
+                              {c.age} Yrs / {c.gender} • {c.district}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-2xs">
+                              ACTIVE
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="bg-white p-2.5 rounded-lg border border-slate-200/80 space-y-1">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block">Provisional Diagnosis:</span>
+                          <strong className="text-indigo-950 font-bold block leading-snug">
+                            {c.provisionalDiagnosis}
+                          </strong>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {c.medications.slice(0, 3).map((m, mIdx) => (
+                            <span key={mIdx} className="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
+                              ℞ {m.name}
+                            </span>
+                          ))}
+                          {c.medications.length > 3 && (
+                            <span className="text-[10px] text-slate-400 font-bold self-center">
+                              +{c.medications.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500">
+                          EDL Free Supply: <strong className="text-emerald-700">✓ Niramaya</strong>
+                        </span>
+                        <span className="font-bold text-indigo-600 hover:text-indigo-800">
+                          {isSelected ? '✓ Loaded' : 'Click to Load →'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Card Footer: Protocol & 108 Transit Telemetry */}
-                <div className="p-3 bg-slate-50 border-t border-slate-200/80 space-y-1.5">
-                  <div className="text-[9px] font-bold text-indigo-900 bg-indigo-50/90 p-1.5 rounded-lg border border-indigo-100 flex items-center justify-between gap-1">
-                    <span className="flex items-center gap-1 truncate">
-                      <Sparkles className="w-3 h-3 text-indigo-600 shrink-0" />
-                      <span className="truncate">{item.protocol}</span>
-                    </span>
-                    {route && (
-                      <span className="text-[9px] font-mono text-slate-500 shrink-0">
-                        {route.distance} • {route.eta}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] px-0.5">
-                    <span className="text-slate-400 font-mono">
-                      🏥 {item.department.split(' • ')[0]}
-                    </span>
-                    <span className={`font-bold ${isSelected ? 'text-emerald-700' : 'text-slate-500 group-hover:text-indigo-600'}`}>
-                      {isSelected ? '✓ Loaded in Cockpit' : 'Click to Load & Edit →'}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    )}
-
-    {/* ───────────────────────────────────────────────────────── */}
-    {/* 2.5 DOCTOR CLINICAL COCKPIT (NMC & 108 TRANSIT INTEGRATED) */}
-    {/* ───────────────────────────────────────────────────────── */}
-    {showCockpit && (
-      <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-2xl border border-indigo-700/60 p-5 text-white shadow-xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-indigo-800/60 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-black text-white shadow-md">
-              <Sliders className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base font-black text-white tracking-tight flex items-center gap-2">
-                  <span>Doctor Clinical Cockpit (ଡାକ୍ତରୀ କ୍ଲିନିକାଲ୍ କକ୍ପିଟ୍)</span>
-                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    LIVE NMC &amp; 108 CAD
-                  </span>
-                </h3>
+                  );
+                })}
               </div>
-              <p className="text-xs text-indigo-200/80">
-                Centralized real-time clinical control deck across all 5 distinct suites: 1. NMC e-Prescription (Generic), 2. Hospital Referral Slip (108), 3. QR Authenticity Verifier, 4. Clinical Document Vault, and 5. NABH SBAR Handover &amp; ABDM FHIR.
-              </p>
             </div>
-          </div>
+          )}
 
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => setShowDoctorModal(true)}
-              className="px-3 py-1.5 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-xl font-bold flex items-center gap-1.5 border border-indigo-500/40 shadow-2xs transition-all cursor-pointer"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>RMP Credentials</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowSignModal(true)}
-              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
-            >
-              <PenTool className="w-3.5 h-3.5" />
-              <span>Digital DSC Pad</span>
-            </button>
-          </div>
-        </div>
-
-        {/* 5 Completely Differentiated Clinical Cockpit Command Modules (1 to 5) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3.5 text-xs">
-          {/* COCKPIT MODULE 1-NO: 1. NMC e-Prescription (Generic) */}
-          <div className="bg-gradient-to-b from-slate-900 to-indigo-950/70 border-2 border-indigo-500/60 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between hover:border-indigo-400 transition-all shadow-md group">
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between border-b border-indigo-800/80 pb-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black shadow-xs">
-                    1
-                  </span>
-                  <span className="font-black text-indigo-200 truncate">1. NMC e-Prescription</span>
+          {/* Collapsible Doctor Prescription Cockpit */}
+          {showCockpit && (
+            <div className="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 text-white space-y-4 shadow-md">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <Sliders className="w-5 h-5 text-indigo-400" />
+                  <div>
+                    <h4 className="text-sm font-bold text-white">
+                      Doctor Clinical Cockpit • Outpatient Prescribing Controls
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Real-time pharmacotherapy compliance, pediatric body-weight calibration, and drug safety engine.
+                    </p>
+                  </div>
                 </div>
-                <span className="text-[9px] bg-indigo-500/30 text-indigo-300 font-mono font-bold px-2 py-0.5 rounded-full border border-indigo-400/40">
-                  {medications.length} MEDS
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowCockpit(false)}
+                  className="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded-lg cursor-pointer"
+                >
+                  ✕ Close
+                </button>
               </div>
 
-              {/* Data & Telemetry Grid */}
-              <div className="space-y-1.5 font-mono text-[10px]">
-                <div className="bg-slate-950/80 p-2 rounded-xl border border-indigo-900/60 space-y-1">
-                  <div className="flex justify-between text-slate-400">
-                    <span>NMC Formulary:</span>
-                    <strong className="text-emerald-400">100% CAPITAL OK</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Niramaya Scheme:</span>
-                    <strong className="text-indigo-300">Free OSMC Supply</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Allergy Status:</span>
-                    <span className={`font-bold ${patientAllergies.includes('None') ? 'text-emerald-400' : 'text-rose-400 animate-pulse'}`}>
-                      {patientAllergies.length > 15 ? patientAllergies.slice(0, 15) + '...' : patientAllergies}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                {/* Cockpit Card 1: NMC Compliance */}
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-indigo-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-indigo-300 uppercase text-[10px]">NMC Standard:</span>
+                    <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">
+                      100% Capitalized
                     </span>
                   </div>
-                </div>
-
-                {/* Clinical Drug Safety Live Check */}
-                <div className="p-2 bg-indigo-950/60 rounded-xl border border-indigo-800/50 space-y-1">
-                  <div className="text-[9px] uppercase font-bold text-indigo-400 flex items-center justify-between">
-                    <span>Pediatric Guard:</span>
-                    <span className="text-amber-300">{isPediatricCase ? 'ACTIVE (<12y)' : 'Standard Adult'}</span>
+                  <div className="text-slate-200 text-xs font-medium">
+                    All prescribed generic salts conform to NMC 2023 Gazette Notification.
                   </div>
-                  <div className="text-[9px] text-slate-300 truncate">
-                    Weight: <strong>{effectiveWeight} kg</strong> ({patientAge} Yrs)
-                  </div>
-                  <div className="text-[9px] text-slate-400 truncate">
-                    Top Med: <strong className="text-white">{medications[0]?.name || 'PARACETAMOL'}</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-indigo-900/60 flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setActiveTab('prescription')}
-                className={`w-full py-2 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs ${
-                  activeTab === 'prescription'
-                    ? 'bg-indigo-600 text-white ring-2 ring-indigo-400'
-                    : 'bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/60'
-                }`}
-              >
-                <Pill className="w-3.5 h-3.5 text-indigo-300" />
-                <span>Launch Rx Studio</span>
-              </button>
-            </div>
-          </div>
-
-          {/* COCKPIT MODULE 2-NO: 2. Hospital Referral Slip (108) */}
-          <div className="bg-gradient-to-b from-slate-900 to-rose-950/70 border-2 border-rose-500/60 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between hover:border-rose-400 transition-all shadow-md group">
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between border-b border-rose-800/80 pb-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-lg bg-rose-600 text-white flex items-center justify-center text-[10px] font-black shadow-xs">
-                    2
-                  </span>
-                  <span className="font-black text-rose-200 truncate">2. 108 Transit &amp; Referral</span>
-                </div>
-                <span className="text-[9px] bg-rose-500/30 text-rose-300 font-mono font-bold px-2 py-0.5 rounded-full border border-rose-400/40">
-                  {priorityTier} ACUITY
-                </span>
-              </div>
-
-              {/* Data & Telemetry Grid */}
-              <div className="space-y-1.5 font-mono text-[10px]">
-                <div className="bg-slate-950/80 p-2 rounded-xl border border-rose-900/60 space-y-1">
-                  <div className="flex justify-between text-slate-400">
-                    <span>108 CAD Token:</span>
-                    <strong className="text-rose-300">{cadToken}</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Golden Hour ETA:</span>
-                    <strong className="text-amber-300">{transitRoute.eta} ({transitRoute.distance})</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Transit Highway:</span>
-                    <span className="text-slate-200 truncate max-w-[100px]">{transitRoute.highway}</span>
+                  <div className="pt-1 text-[11px] text-slate-400">
+                    Formulary Match: <strong className="text-emerald-400">Odisha EDL 2026</strong>
                   </div>
                 </div>
 
-                {/* Destination Bed Live Status */}
-                <div className="p-2 bg-rose-950/60 rounded-xl border border-rose-800/50 space-y-1">
-                  <div className="text-[9px] uppercase font-bold text-rose-400 flex items-center justify-between">
-                    <span>Apex Live Beds:</span>
-                    <span className="text-emerald-400 font-bold">✓ ICU: {apexStatus.icuBeds} | HDU: {apexStatus.hduBeds}</span>
+                {/* Cockpit Card 2: Pediatric Guard */}
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-amber-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-amber-300 uppercase text-[10px]">Pediatric Guard:</span>
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                      isPediatricCase ? 'bg-amber-500/20 text-amber-300 animate-pulse' : 'bg-slate-700 text-slate-400'
+                    }`}>
+                      {isPediatricCase ? 'ACTIVE (<12Y)' : 'Standard Adult'}
+                    </span>
                   </div>
-                  <div className="text-[9px] text-slate-300 truncate">
-                    Nodal Desk: <strong className="text-white">{apexStatus.nodalPhone}</strong>
+                  <div className="text-slate-200 text-xs font-medium">
+                    Weight Calibrated: <strong>{effectiveWeight} kg</strong> ({patientAge} Yrs)
                   </div>
-                  <div className="text-[9px] text-slate-400 truncate">
-                    O2: <span className="text-emerald-300">{oxygenReq.slice(0, 18)}</span>
+                  <div className="pt-1 text-[11px] text-slate-400">
+                    Dose Limit: <strong className="text-white">Auto-Calculated mg/kg</strong>
+                  </div>
+                </div>
+
+                {/* Cockpit Card 3: Drug Interaction Matrix */}
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-rose-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-rose-300 uppercase text-[10px]">Interactions:</span>
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                      drugInteractions.length > 0 ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'
+                    }`}>
+                      {drugInteractions.length > 0 ? `${drugInteractions.length} Flagged` : '0 Critical'}
+                    </span>
+                  </div>
+                  <div className="text-slate-200 text-xs font-medium truncate">
+                    {drugInteractions.length > 0 ? drugInteractions[0].message : 'All drug pairings safe'}
+                  </div>
+                  <div className="pt-1 text-[11px] text-slate-400">
+                    Safety Matrix: <strong className="text-emerald-400">Real-Time Protected</strong>
+                  </div>
+                </div>
+
+                {/* Cockpit Card 4: Niramaya Scheme Free Supply */}
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-teal-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-teal-300 uppercase text-[10px]">Niramaya Stock:</span>
+                    <span className="text-[9px] bg-teal-500/20 text-teal-300 px-2 py-0.5 rounded-full font-bold">
+                      OSMC EDL Active
+                    </span>
+                  </div>
+                  <div className="text-slate-200 text-xs font-medium">
+                    100% Free medicine dispensing at hospital Niramaya counter.
+                  </div>
+                  <div className="pt-1 text-[11px] text-slate-400">
+                    Digital RMP Sign: <strong className="text-emerald-400">{signatureDataUrl ? 'Attached ✓' : 'Draft'}</strong>
                   </div>
                 </div>
               </div>
             </div>
+          )}
 
-            <div className="pt-2 border-t border-rose-900/60 flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setActiveTab('referral')}
-                className={`w-full py-2 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs ${
-                  activeTab === 'referral'
-                    ? 'bg-rose-600 text-white ring-2 ring-rose-400'
-                    : 'bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-700/60'
-                }`}
-              >
-                <Ambulance className="w-3.5 h-3.5 text-rose-300" />
-                <span>Launch 108 Slip</span>
-              </button>
-            </div>
-          </div>
-
-          {/* COCKPIT MODULE 3-NO: 3. QR Authenticity Verifier */}
-          <div className="bg-gradient-to-b from-slate-900 to-emerald-950/70 border-2 border-emerald-500/60 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between hover:border-emerald-400 transition-all shadow-md group">
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between border-b border-emerald-800/80 pb-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-[10px] font-black shadow-xs">
-                    3
-                  </span>
-                  <span className="font-black text-emerald-200 truncate">3. QR Cryptographic Seal</span>
-                </div>
-                <span className="text-[9px] bg-emerald-500/30 text-emerald-300 font-mono font-bold px-2 py-0.5 rounded-full border border-emerald-400/40">
-                  {verificationToken?.docId ? 'ACTIVE HASH' : 'SYNCING'}
-                </span>
-              </div>
-
-              {/* Data & Telemetry Grid */}
-              <div className="space-y-1.5 font-mono text-[10px]">
-                <div className="bg-slate-950/80 p-2 rounded-xl border border-emerald-900/60 space-y-1">
-                  <div className="flex justify-between text-slate-400">
-                    <span>Document ID:</span>
-                    <strong className="text-white truncate max-w-[105px]">{docId}</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Medical Council:</span>
-                    <strong className="text-emerald-300">OMC / NMC Sec 27</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Clinician Reg:</span>
-                    <strong className="text-teal-300">{doctorRegNo}</strong>
-                  </div>
-                </div>
-
-                {/* Audit & Cryptographic Stamp Status */}
-                <div className="p-2 bg-emerald-950/60 rounded-xl border border-emerald-800/50 space-y-1">
-                  <div className="text-[9px] uppercase font-bold text-emerald-400 flex items-center justify-between">
-                    <span>DSC Stamp State:</span>
-                    <span className="text-emerald-300">{signatureDataUrl ? '✓ Signed DSC' : 'Pending Signature'}</span>
-                  </div>
-                  <div className="text-[9px] text-slate-300 truncate">
-                    Hash: <span className="text-emerald-400">{verificationToken?.securityHash?.slice(0, 18) || 'SHA256:AUTHENTIC'}...</span>
-                  </div>
-                  <div className="text-[9px] text-slate-400 truncate">
-                    Anti-Tamper: <span className="text-emerald-300">Enforced by OMC Gateway</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-emerald-900/60 flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setActiveTab('verify')}
-                className={`w-full py-2 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs ${
-                  activeTab === 'verify'
-                    ? 'bg-emerald-600 text-white ring-2 ring-emerald-400'
-                    : 'bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/60'
-                }`}
-              >
-                <QrCode className="w-3.5 h-3.5 text-emerald-300" />
-                <span>Launch QR Verifier</span>
-              </button>
-            </div>
-          </div>
-
-          {/* COCKPIT MODULE 4-NO: 4. Clinical Document Vault */}
-          <div className="bg-gradient-to-b from-slate-900 to-blue-950/70 border-2 border-blue-500/60 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between hover:border-blue-400 transition-all shadow-md group">
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between border-b border-blue-800/80 pb-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[10px] font-black shadow-xs">
-                    4
-                  </span>
-                  <span className="font-black text-blue-200 truncate">4. Clinical Vault (PHR)</span>
-                </div>
-                <span className="text-[9px] bg-blue-500/30 text-blue-300 font-mono font-bold px-2 py-0.5 rounded-full border border-blue-400/40">
-                  {vaultList.length} ARCHIVED
-                </span>
-              </div>
-
-              {/* Data & Telemetry Grid */}
-              <div className="space-y-1.5 font-mono text-[10px]">
-                <div className="bg-slate-950/80 p-2 rounded-xl border border-blue-900/60 space-y-1">
-                  <div className="flex justify-between text-slate-400">
-                    <span>Archived Records:</span>
-                    <strong className="text-white">{vaultList.length} Documents</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>ABHA M2 Sync:</span>
-                    <strong className="text-indigo-300 truncate max-w-[100px]">{patientAbha}</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Storage Engine:</span>
-                    <span className="text-blue-300">Local Encrypted DB</span>
-                  </div>
-                </div>
-
-                {/* Offline Export Status */}
-                <div className="p-2 bg-blue-950/60 rounded-xl border border-blue-800/50 space-y-1">
-                  <div className="text-[9px] uppercase font-bold text-blue-400 flex items-center justify-between">
-                    <span>Offline Exports:</span>
-                    <span className="text-emerald-400">Ready (.html/.pdf)</span>
-                  </div>
-                  <div className="text-[9px] text-slate-300 truncate">
-                    Patient: <strong className="text-white">{patientName}</strong>
-                  </div>
-                  <div className="text-[9px] text-slate-400 truncate">
-                    Audit Log: <span className="text-blue-300">Indexed &amp; Verifiable</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-blue-900/60 flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setActiveTab('vault')}
-                className={`w-full py-2 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs ${
-                  activeTab === 'vault'
-                    ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-                    : 'bg-blue-900/60 hover:bg-blue-800 text-blue-200 border border-blue-700/60'
-                }`}
-              >
-                <Database className="w-3.5 h-3.5 text-blue-300" />
-                <span>Launch Doc Vault</span>
-              </button>
-            </div>
-          </div>
-
-          {/* COCKPIT MODULE 5-NO: 5. NABH SBAR Handover & ABDM FHIR */}
-          <div className="bg-gradient-to-b from-slate-900 to-purple-950/70 border-2 border-purple-500/60 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between hover:border-purple-400 transition-all shadow-md group">
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between border-b border-purple-800/80 pb-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-lg bg-purple-600 text-white flex items-center justify-center text-[10px] font-black shadow-xs">
-                    5
-                  </span>
-                  <span className="font-black text-purple-200 truncate">5. SBAR &amp; ABDM FHIR</span>
-                </div>
-                <span className="text-[9px] bg-purple-500/30 text-purple-300 font-mono font-bold px-2 py-0.5 rounded-full border border-purple-400/40">
-                  FHIR R4
-                </span>
-              </div>
-
-              {/* Data & Telemetry Grid */}
-              <div className="space-y-1.5 font-mono text-[10px]">
-                <div className="bg-slate-950/80 p-2 rounded-xl border border-purple-900/60 space-y-1">
-                  <div className="flex justify-between text-slate-400">
-                    <span>Shock Index (SI):</span>
-                    <strong className={`font-bold ${vitalScores.isShock ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`}>
-                      {vitalScores.shockIndex} ({vitalScores.isShock ? 'SHOCK' : 'STABLE'})
-                    </strong>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Mean Arterial (MAP):</span>
-                    <strong className="text-white">{vitalScores.map} mmHg</strong>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>MEWS Score:</span>
-                    <span className="text-amber-300 font-bold">{mewsScore.score} ({mewsScore.riskLevel})</span>
-                  </div>
-                </div>
-
-                {/* SBAR & FHIR Bundle Parameters */}
-                <div className="p-2 bg-purple-950/60 rounded-xl border border-purple-800/50 space-y-1">
-                  <div className="text-[9px] uppercase font-bold text-purple-400 flex items-center justify-between">
-                    <span>FHIR Bundle:</span>
-                    <span className="text-purple-300 font-mono">Composition/R4</span>
-                  </div>
-                  <div className="text-[9px] text-slate-300 truncate">
-                    ICD-10: <strong className="text-teal-300">{currentIcdCode}</strong>
-                  </div>
-                  <div className="text-[9px] text-slate-400 truncate">
-                    Handover: <span className="text-emerald-300">{teleCallAcknowledged ? 'Tele-Confirmed ✓' : 'Casualty Desk Linked'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-purple-900/60 flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setActiveTab('sbar_handover')}
-                className={`w-full py-2 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs ${
-                  activeTab === 'sbar_handover'
-                    ? 'bg-purple-600 text-white ring-2 ring-purple-400'
-                    : 'bg-purple-900/60 hover:bg-purple-800 text-purple-200 border border-purple-700/60'
-                }`}
-              >
-                <HeartPulse className="w-3.5 h-3.5 text-purple-300" />
-                <span>Launch SBAR Studio</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-  </div>
-)}
-
-      {/* ───────────────────────────────────────────────────────── */}
-      {/* 3. PRINTABLE OFFICIAL DOCUMENT CANVAS (NMC RX OR REFERRAL) */}
-      {/* ───────────────────────────────────────────────────────── */}
-      {(activeTab === 'prescription' || activeTab === 'referral') && (
-        <div className="space-y-4">
           {/* Clinical Drug Safety Alerts Strip */}
           {safetyWarnings.length > 0 && (
             <div className="space-y-2">
@@ -3372,31 +2970,15 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             </div>
           )}
 
-          {/* Compliance, Live Apex Status, Print Stationery & Security Watermark Toggle */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+          {/* Prescription Format Controls & Security Watermark Bar */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-center justify-between gap-2 shadow-2xs">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span className="font-medium">{txt.nmcNotice}</span>
+                <span className="font-medium">NMC 2023 Mandatory Generic Prescribing Notice</span>
               </div>
               <span className="bg-amber-200/80 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded shrink-0">
                 NMC Sec 27
-              </span>
-            </div>
-
-            {/* Destination Apex Live Bed Availability Widget */}
-            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-900 text-xs flex items-center justify-between gap-2 shadow-2xs">
-              <div className="flex items-center gap-2 truncate">
-                <Bed className="w-4 h-4 text-indigo-600 shrink-0" />
-                <div className="truncate">
-                  <span className="font-bold block truncate">{txt.liveBedTitle}</span>
-                  <span className="text-[10px] text-indigo-700 block truncate">
-                    ICU: <strong>{apexStatus.icuBeds} Free</strong> • HDU: <strong>{apexStatus.hduBeds} Free</strong>
-                  </span>
-                </div>
-              </div>
-              <span className="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shrink-0">
-                LIVE VACANCY
               </span>
             </div>
 
@@ -3408,58 +2990,28 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
               </div>
               <div className="flex items-center gap-1 text-[10px]">
                 <button
+                  type="button"
                   onClick={() => setPrintStationeryMode('full_letterhead')}
-                  className={`px-2 py-1 rounded font-bold cursor-pointer transition-all ${
+                  className={`px-2.5 py-1 rounded font-bold cursor-pointer transition-all ${
                     printStationeryMode === 'full_letterhead'
                       ? 'bg-slate-900 text-white shadow-2xs'
                       : 'bg-white text-slate-600 hover:bg-slate-200'
                   }`}
-                  title="Print full header logo & title"
+                  title="Print full header logo & doctor details"
                 >
                   Full Header
                 </button>
                 <button
-                  onClick={() => setPrintStationeryMode('blank_pad')}
-                  className={`px-2 py-1 rounded font-bold cursor-pointer transition-all ${
-                    printStationeryMode === 'blank_pad'
+                  type="button"
+                  onClick={() => setPrintStationeryMode('pre_printed_pad')}
+                  className={`px-2.5 py-1 rounded font-bold cursor-pointer transition-all ${
+                    printStationeryMode === 'pre_printed_pad'
                       ? 'bg-slate-900 text-white shadow-2xs'
                       : 'bg-white text-slate-600 hover:bg-slate-200'
                   }`}
-                  title="Hide header for pre-printed hospital letterhead pads"
+                  title="Suppress header to print on pre-printed doctor pad stationery"
                 >
                   Pad Mode
-                </button>
-              </div>
-            </div>
-
-            {/* Triplicate Copy Set Switcher */}
-            <div className="p-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 text-xs flex items-center justify-between gap-2 shadow-2xs">
-              <div className="flex items-center gap-2">
-                <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="font-bold">Copy Set:</span>
-              </div>
-              <div className="flex items-center gap-1 text-[10px]">
-                <button
-                  onClick={() => setPrintCopyMode('single')}
-                  className={`px-2 py-1 rounded font-bold cursor-pointer transition-all ${
-                    printCopyMode === 'single'
-                      ? 'bg-slate-900 text-white shadow-2xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-200'
-                  }`}
-                  title="Single Referral Slip"
-                >
-                  Single
-                </button>
-                <button
-                  onClick={() => setPrintCopyMode('triplicate')}
-                  className={`px-2 py-1 rounded font-bold cursor-pointer transition-all ${
-                    printCopyMode === 'triplicate'
-                      ? 'bg-slate-900 text-white shadow-2xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-200'
-                  }`}
-                  title="Official 3-Copy Triplicate Set (Patient + Hospital MRD + 108 Ambulance)"
-                >
-                  Triplicate
                 </button>
               </div>
             </div>
@@ -3471,8 +3023,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                 <span className="font-bold">Govt Seal:</span>
               </div>
               <button
+                type="button"
                 onClick={() => setSecurityWatermarkEnabled(!securityWatermarkEnabled)}
-                className={`px-2 py-1 rounded font-bold text-[10px] cursor-pointer transition-all ${
+                className={`px-2.5 py-1 rounded font-bold text-[10px] cursor-pointer transition-all ${
                   securityWatermarkEnabled
                     ? 'bg-indigo-700 text-white shadow-2xs'
                     : 'bg-white text-slate-600 hover:bg-slate-200'
@@ -3484,44 +3037,12 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             </div>
           </div>
 
-          {/* 108 Emergency Transit Corridor & ETA Strip */}
-          {activeTab === 'referral' && (
-            <div className="p-3.5 bg-gradient-to-r from-rose-50 via-red-50 to-orange-50 border border-rose-200 rounded-xl text-xs space-y-2 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <span className="font-black text-rose-950 flex items-center gap-1.5">
-                  <Navigation className="w-4 h-4 text-rose-600" />
-                  <span>{txt.etaLabel}</span>
-                </span>
-                <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                  108 PRIORITY DISPATCH
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
-                <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
-                  <span className="text-slate-400 block text-[10px]">Total Distance:</span>
-                  <strong className="text-rose-950 text-sm">{transitRoute.distance}</strong>
-                </div>
-                <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
-                  <span className="text-slate-400 block text-[10px]">Golden Hour ETA:</span>
-                  <strong className="text-rose-950 text-sm">{transitRoute.eta}</strong>
-                </div>
-                <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
-                  <span className="text-slate-400 block text-[10px]">Primary Transit Highway:</span>
-                  <strong className="text-slate-900 block truncate">{transitRoute.highway}</strong>
-                </div>
-                <div className="bg-white/80 p-2 rounded-lg border border-rose-100">
-                  <span className="text-slate-400 block text-[10px]">En-Route Oxygen Post:</span>
-                  <strong className="text-emerald-800 block truncate">{transitRoute.oxygenRefillPost}</strong>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* THE OFFICIAL SLIP (PRINTABLE REAL PDF FORMAT) */}
+          {/* ───────────────────────────────────────────────────────── */}
+          {/* THE OFFICIAL NMC OPD PRESCRIPTION PAD (PRINTABLE CANVAS) */}
+          {/* ───────────────────────────────────────────────────────── */}
           <div
             id="printable-clinical-slip"
-            className="bg-white rounded-2xl border-2 border-slate-300 shadow-lg p-6 sm:p-8 space-y-6 text-slate-800 font-sans print:border-none print:shadow-none print:p-0 print:m-0 relative overflow-hidden"
+            className="bg-white rounded-2xl border-2 border-indigo-200 shadow-lg p-6 sm:p-8 space-y-6 text-slate-800 font-sans print:border-none print:shadow-none print:p-0 print:m-0 relative overflow-hidden"
           >
             {/* Anti-Counterfeit State Security Watermark */}
             {securityWatermarkEnabled && (
@@ -3529,20 +3050,21 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden opacity-[0.035] print:opacity-[0.055] z-0"
               >
-                <div className="transform -rotate-25 text-center font-black tracking-widest text-slate-900 border-8 border-dashed border-slate-900 p-8 rounded-3xl">
+                <div className="transform -rotate-25 text-center font-black tracking-widest text-indigo-950 border-8 border-dashed border-indigo-900 p-8 rounded-3xl">
                   <div className="text-4xl sm:text-6xl font-black">GOVT OF ODISHA</div>
                   <div className="text-2xl sm:text-3xl mt-2 font-extrabold tracking-normal">DEPT OF HEALTH &amp; FAMILY WELFARE</div>
-                  <div className="text-lg sm:text-2xl mt-2 font-bold text-rose-900">NMC 2023 COMPLIANT • ABDM CERTIFIED</div>
+                  <div className="text-lg sm:text-2xl mt-2 font-bold text-indigo-900">NMC 2023 COMPLIANT • ABDM CERTIFIED</div>
                   <div className="text-sm mt-1 font-mono tracking-widest">{verificationToken?.docId || 'VERIFIED-DOC'}</div>
                 </div>
               </div>
             )}
-            {/* 1. Official Letterhead Header (Can be hidden if printing onto pre-printed stationary) */}
+
+            {/* 1. Official Outpatient Letterhead Header */}
             {printStationeryMode === 'full_letterhead' ? (
               <div className="border-b-2 border-slate-900 pb-4 space-y-2">
-                <div className="flex items-center justify-between bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
-                  <span className="font-black text-amber-300">SECTION 1-NO: OFFICIAL APEX LETTERHEAD &amp; NMC VERIFIABLE QR SEAL</span>
-                  <span className="text-slate-300">STATUTORY INSTRUCTION: PRESERVE FOR CLINICAL AUDIT &amp; LEGAL VERIFICATION</span>
+                <div className="flex items-center justify-between bg-indigo-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                  <span className="font-black text-amber-300">OFFICIAL MEDICAL COUNCIL OUTPATIENT (OPD) PRESCRIPTION PAD</span>
+                  <span className="text-indigo-200">STATUTORY INSTRUCTION: VALID FOR NIRAMAYA FREE DRUG DISPENSARY</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   {/* Hospital & Govt Emblems */}
@@ -3555,25 +3077,30 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                       {facilityName}
                     </h3>
                     <p className="text-xs text-slate-600 font-medium">
-                      {facilityDistrict} • 24x7 Emergency Clinical Facility • BSKY &amp; NHM Accredited
+                      {facilityDistrict} • Outpatient Department (OPD) • Clinic Room #4 • Timings: 09:00 AM - 01:00 PM
                     </p>
+                    <div className="pt-1 flex items-center gap-2 text-[11px] text-indigo-950 font-bold">
+                      <span>Attending Physician:</span>
+                      <span className="text-indigo-900 underline font-black">{doctorName}</span>
+                      <span className="text-slate-400">|</span>
+                      <span className="font-mono text-slate-600">Reg: {doctorRegNo} (OMC)</span>
+                    </div>
                   </div>
 
                   {/* Verifiable QR Code & Document ID Stamp */}
-                  <div className="flex items-center sm:items-start gap-3 bg-slate-50 border border-slate-200 p-2.5 rounded-xl shrink-0">
+                  <div className="flex items-center sm:items-start gap-3 bg-indigo-50/50 border border-indigo-200 p-2.5 rounded-xl shrink-0">
                     {qrDataUrl && (
                       <img
                         src={qrDataUrl}
                         alt="Verifiable QR Code"
-                        className="w-20 h-20 sm:w-24 sm:h-24 rounded border border-slate-300 shadow-2xs"
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded border border-indigo-200 shadow-2xs"
                       />
                     )}
                     <div className="text-[10px] space-y-0.5 text-slate-600 font-mono">
                       <span className="block font-black text-slate-900 text-xs">
                         {verificationToken?.docId}
                       </span>
-                      <span className="text-emerald-700 font-bold block">✓ ABDM VERIFIABLE</span>
-                      <span>108 CAD: <strong>{verificationToken?.cadToken}</strong></span>
+                      <span className="text-emerald-700 font-bold block">✓ ABDM VERIFIABLE RX</span>
                       <span>Date: {new Date().toLocaleDateString()}</span>
                       <span>Time: {new Date().toLocaleTimeString()}</span>
                       <span className="text-[9px] text-slate-400 block truncate max-w-[120px]">
@@ -3583,39 +3110,16 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                   </div>
                 </div>
 
-                {/* Document Banner Type & Triplicate Stamp */}
-                <div className="mt-4 pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-black uppercase tracking-wider">
-                      {activeTab === 'prescription' ? (
-                        <>
-                          <Pill className="w-3.5 h-3.5 text-indigo-400" />
-                          <span>Official Medical Prescription (NMC Regulations 2023)</span>
-                        </>
-                      ) : (
-                        <>
-                          <Ambulance className="w-3.5 h-3.5 text-rose-400" />
-                          <span>Inter-Facility Clinical Referral Slip (NHM 108 Transit)</span>
-                        </>
-                      )}
-                    </span>
-                    {printCopyMode === 'triplicate' && (
-                      <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black px-2.5 py-1 rounded-md shadow-2xs">
-                        SHEET 1 OF 3: ORIGINAL (PATIENT &amp; APEX COPY)
-                      </span>
-                    )}
-                  </div>
-
+                {/* Document Banner Type */}
+                <div className="mt-3 pt-2.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-950 text-white rounded-lg text-xs font-black uppercase tracking-wider">
+                    <Pill className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Official Medical Prescription (NMC Regulations 2023)</span>
+                  </span>
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="font-bold text-slate-600">Acuity Status:</span>
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full font-black text-[11px] ${
-                        currentCase.acuity === 'RED'
-                          ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                          : 'bg-amber-100 text-amber-800 border border-amber-300'
-                      }`}
-                    >
-                      {currentCase.acuity} PRIORITY EMERGENCY
+                    <span className="font-bold text-slate-600">Clinical Status:</span>
+                    <span className="px-2.5 py-0.5 rounded-full font-black text-[11px] bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      ACTIVE OUTPATIENT THERAPY
                     </span>
                   </div>
                 </div>
@@ -3635,7 +3139,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
             <div className="space-y-1.5">
               <div className="flex items-center justify-between bg-indigo-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
                 <div className="flex items-center gap-2">
-                  <span className="font-black text-indigo-300">SECTION 2-NO: PATIENT DEMOGRAPHICS &amp; ABHA HEALTH IDENTIFIER</span>
+                  <span className="font-black text-indigo-300">SECTION 1-NO: PATIENT DEMOGRAPHICS &amp; ABHA HEALTH IDENTIFIER</span>
                   <button
                     type="button"
                     onClick={() => setShowAbhaCardModal(true)}
@@ -3683,19 +3187,11 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
               </div>
             </div>
 
-            {/* 3. Vitals & Examination Findings + Shock Index */}
+            {/* 3. Vitals & Outpatient Examination */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
-                <span className="font-black text-rose-300">SECTION 3-NO: PHYSIOLOGICAL VITALS, EXAMINATION &amp; SHOCK INDEX</span>
-                <span className="text-slate-300">INSTRUCTION: RE-EVALUATE EVERY 15 MINS DURING TRANSIT / ADMISSION</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-500 block">
-                  {txt.vitalsLabel}
-                </span>
-                <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
-                  MEWS Alert: {mewsScore.riskLevel}
-                </span>
+                <span className="font-black text-rose-300">SECTION 2-NO: PHYSIOLOGICAL VITALS &amp; OUTPATIENT EXAMINATION</span>
+                <span className="text-slate-300">INSTRUCTION: RECORDED AT OPD TRIAGE STATION</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100 text-center text-xs">
                 <div>
@@ -3719,32 +3215,12 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                   <strong className="text-indigo-950 font-black text-sm">{vitals.rr}</strong>
                 </div>
               </div>
-
-              {/* Physiological Critical Indices Strip */}
-              <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-100/80 rounded-lg text-[11px] font-mono">
-                <div className="flex items-center gap-1.5">
-                  <HeartPulse className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>
-                    Shock Index: <strong>{vitalScores.shockIndex}</strong>{' '}
-                    <span
-                      className={`px-1.5 py-0.2 rounded font-bold text-[9px] ${
-                        vitalScores.isShock ? 'bg-rose-600 text-white' : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      {vitalScores.isShock ? 'SHOCK HAZARD' : 'NORMAL RANGE'}
-                    </span>
-                  </span>
-                </div>
-                <div className="text-slate-600">
-                  Mean Arterial Pressure (MAP): <strong>{vitalScores.map} mmHg</strong>
-                </div>
-              </div>
             </div>
 
-            {/* 4. Clinical Diagnosis & Chief Complaints */}
+            {/* 4. Clinical Diagnosis & Chief Presenting Complaints */}
             <div className="space-y-3">
               <div className="flex items-center justify-between bg-teal-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
-                <span className="font-black text-teal-300">SECTION 4-NO: CLINICAL PROVISIONAL DIAGNOSIS &amp; CHIEF COMPLAINTS</span>
+                <span className="font-black text-teal-300">SECTION 3-NO: CLINICAL PROVISIONAL DIAGNOSIS &amp; CHIEF COMPLAINTS</span>
                 <span className="text-slate-300">INSTRUCTION: MANDATORY WHO ICD-10 CODE &amp; SYMPTOM CHRONOLOGY SPECIFIED</span>
               </div>
               <div>
@@ -3754,6 +3230,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                   </span>
                   <div className="flex items-center gap-2 print:hidden">
                     <button
+                      type="button"
                       onClick={() => setShowIcdModal(true)}
                       className="text-[10px] font-bold text-teal-700 hover:text-teal-900 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 flex items-center gap-1 cursor-pointer"
                     >
@@ -3761,6 +3238,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                       <span>{txt.icdBtn}</span>
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleToggleVoiceDictation('diagnosis')}
                       className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1 cursor-pointer"
                     >
@@ -3790,6 +3268,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                     {txt.complaintLabel}
                   </span>
                   <button
+                    type="button"
                     onClick={() => handleToggleVoiceDictation('complaints')}
                     className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1 print:hidden cursor-pointer"
                   >
@@ -3813,1112 +3292,510 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
               </div>
             </div>
 
-            {/* 5. A. PRESCRIPTION SECTION (WHEN IN RX TAB) */}
-            {activeTab === 'prescription' && (
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between bg-indigo-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
-                  <span className="font-black text-indigo-300">SECTION 5-NO: NMC COMPLIANT GENERIC PHARMACOTHERAPY &amp; DOSAGE DIRECTIVES</span>
-                  <span className="text-slate-300">INSTRUCTION: MANDATORY CAPITAL LETTERS (NMC 2023) • FREE NIRAMAYA SUPPLY</span>
+            {/* 5. NMC Compliant Generic Pharmacotherapy Section */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between bg-indigo-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-indigo-300">SECTION 4-NO: NMC COMPLIANT GENERIC PHARMACOTHERAPY &amp; DOSAGE DIRECTIVES</span>
+                <span className="text-slate-300">INSTRUCTION: MANDATORY CAPITAL LETTERS (NMC 2023) • FREE NIRAMAYA SUPPLY</span>
+              </div>
+              <div className="flex items-center justify-between border-b-2 border-slate-900 pb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-black text-slate-900 font-serif">℞</span>
+                  <span className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                    Generic Medications (NMC Compliant)
+                  </span>
                 </div>
-                <div className="flex items-center justify-between border-b-2 border-slate-900 pb-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black text-slate-900 font-serif">℞</span>
-                    <span className="text-sm font-black text-slate-900 uppercase tracking-wider">
-                      Generic Medications (NMC Compliant)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 print:hidden">
-                    {hasAnyBrandDetected && (
-                      <button
-                        onClick={handleAutoFixAllBrands}
-                        className="text-[11px] font-black bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-2.5 py-1 rounded-lg shadow-2xs flex items-center gap-1 cursor-pointer transition-all animate-pulse"
-                        title="Convert all commercial brands to NMC uppercase generic standard"
-                      >
-                        <Sparkles className="w-3 h-3 text-yellow-200" />
-                        <span>Auto-Fix All to Generic (NMC 2023)</span>
-                      </button>
-                    )}
+                <div className="flex items-center gap-2 print:hidden">
+                  {hasAnyBrandDetected && (
                     <button
-                      onClick={handleAddMedication}
-                      className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 flex items-center gap-1 cursor-pointer"
+                      type="button"
+                      onClick={handleAutoFixAllBrands}
+                      className="text-[11px] font-black bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-2.5 py-1 rounded-lg shadow-2xs flex items-center gap-1 cursor-pointer transition-all animate-pulse"
+                      title="Convert all commercial brands to NMC uppercase generic standard"
                     >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>{txt.addMedBtn}</span>
+                      <Sparkles className="w-3 h-3 text-yellow-200" />
+                      <span>Auto-Fix All to Generic (NMC 2023)</span>
                     </button>
-                  </div>
-                </div>
-
-                {/* Pediatric Body-Weight Auto-Dose Safety Guard & Calibrator */}
-                {isPediatricCase && (
-                  <div className="p-3.5 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border border-amber-300 rounded-xl space-y-2 text-xs shadow-2xs print:hidden">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          PEDIATRIC SAFETY GUARD (&lt;12 YRS / &lt;40 KG)
-                        </span>
-                        <span className="font-extrabold text-amber-950">
-                          Weight Calibrated: <strong>{effectiveWeight} kg</strong> (Age: {patientAge} yrs)
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-amber-800 font-semibold">
-                        Auto-calibrated per Indian Academy of Pediatrics (IAP) weight standards
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-1 text-[11px]">
-                      {/* Paracetamol */}
-                      <div className="bg-white/95 p-2.5 rounded-lg border border-amber-200 flex flex-col justify-between shadow-2xs">
-                        <div>
-                          <strong className="text-slate-900 block font-bold">PARACETAMOL</strong>
-                          <span className="text-[10px] text-slate-500 block">15 mg/kg/dose (Q6H PRN)</span>
-                          <span className="text-amber-900 font-extrabold text-xs block mt-1">
-                            {Math.round(effectiveWeight * 15)} mg / dose
-                          </span>
-                          <span className="text-[10px] text-slate-500">
-                            ≈ {((effectiveWeight * 15) / 50).toFixed(1)} mL (250mg/5mL syrup)
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleAddPediatricMed('PARACETAMOL', `${Math.round(effectiveWeight * 15)} mg (${((effectiveWeight * 15) / 50).toFixed(1)} ml of 250mg/5ml)`, 'Syrup', 'Q6H SOS for fever > 100°F', '3 Days', 'Do not exceed 4 doses in 24 hours.')}
-                          className="mt-2 py-1 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-all"
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>Apply Dose to Rx</span>
-                        </button>
-                      </div>
-
-                      {/* Amoxicillin */}
-                      <div className="bg-white/95 p-2.5 rounded-lg border border-amber-200 flex flex-col justify-between shadow-2xs">
-                        <div>
-                          <strong className="text-slate-900 block font-bold">AMOXICILLIN</strong>
-                          <span className="text-[10px] text-slate-500 block">30 mg/kg/day (divided BD)</span>
-                          <span className="text-amber-900 font-extrabold text-xs block mt-1">
-                            {Math.round((effectiveWeight * 30) / 2)} mg / dose BD
-                          </span>
-                          <span className="text-[10px] text-slate-500">
-                            ≈ {(((effectiveWeight * 30) / 2) / 50).toFixed(1)} mL (250mg/5mL susp)
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleAddPediatricMed('AMOXICILLIN', `${Math.round((effectiveWeight * 30) / 2)} mg`, 'Oral Suspension', 'BD after food', '5 Days', 'Complete 5-day course.')}
-                          className="mt-2 py-1 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-all"
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>Apply Dose to Rx</span>
-                        </button>
-                      </div>
-
-                      {/* Ondansetron */}
-                      <div className="bg-white/95 p-2.5 rounded-lg border border-amber-200 flex flex-col justify-between shadow-2xs">
-                        <div>
-                          <strong className="text-slate-900 block font-bold">ONDANSETRON</strong>
-                          <span className="text-[10px] text-slate-500 block">0.15 mg/kg/dose (TDS)</span>
-                          <span className="text-amber-900 font-extrabold text-xs block mt-1">
-                            {(effectiveWeight * 0.15).toFixed(1)} mg / dose
-                          </span>
-                          <span className="text-[10px] text-slate-500">
-                            ≈ {(((effectiveWeight * 0.15) / 2) * 5).toFixed(1)} mL (2mg/5mL syrup)
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleAddPediatricMed('ONDANSETRON', `${(effectiveWeight * 0.15).toFixed(1)} mg`, 'Syrup', 'TDS (8 Hourly) before food', '2 Days', 'Stop when vomiting subsides.')}
-                          className="mt-2 py-1 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-all"
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>Apply Dose to Rx</span>
-                        </button>
-                      </div>
-
-                      {/* Oral Rehydration Salts */}
-                      <div className="bg-white/95 p-2.5 rounded-lg border border-amber-200 flex flex-col justify-between shadow-2xs">
-                        <div>
-                          <strong className="text-slate-900 block font-bold">ORS (WHO-FORMULA)</strong>
-                          <span className="text-[10px] text-slate-500 block">75 mL/kg over 4 hours</span>
-                          <span className="text-amber-900 font-extrabold text-xs block mt-1">
-                            {Math.round(effectiveWeight * 75)} mL total
-                          </span>
-                          <span className="text-[10px] text-slate-500">
-                            + 50-100 mL after each loose stool
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleAddPediatricMed('ORAL REHYDRATION SALTS (ORS)', `${Math.round(effectiveWeight * 75)} mL`, 'Oral Solution', 'Sip frequently over 4 hours', 'Till diarrhea resolves', 'Prepare in freshly boiled and cooled water.')}
-                          className="mt-2 py-1 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-all"
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>Apply Dose to Rx</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ─── CLINICAL DRUG SAFETY & INTERACTION GUARD ─── */}
-                <div className="space-y-2 print:hidden">
-                  {drugInteractions.length > 0 ? (
-                    <div className="p-3 bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 border border-amber-300 rounded-xl space-y-2 shadow-2xs">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 font-black text-xs text-rose-950">
-                          <ShieldAlert className="w-4 h-4 text-rose-600" />
-                          <span>Clinical Pharmacotherapy Safety &amp; Interaction Guard</span>
-                          <span className="text-[10px] font-bold bg-rose-600 text-white px-2 py-0.2 rounded-full">
-                            {drugInteractions.length} Alerts Active
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-amber-800 font-semibold font-mono">
-                          NMC Ethics Reg 2023 Rule 8.2
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
-                        {drugInteractions.map((alert, aIdx) => (
-                          <div
-                            key={aIdx}
-                            className={`p-2.5 rounded-lg border flex flex-col justify-between ${
-                              alert.severity === 'CRITICAL'
-                                ? 'bg-rose-100/90 border-rose-400 text-rose-950'
-                                : alert.severity === 'HIGH'
-                                ? 'bg-amber-100/90 border-amber-400 text-amber-950'
-                                : 'bg-white border-slate-200 text-slate-800'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-1">
-                              <strong className="font-extrabold text-xs block">{alert.title}</strong>
-                              <span
-                                className={`text-[8px] font-black px-1.5 py-0.2 rounded uppercase shrink-0 ${
-                                  alert.severity === 'CRITICAL'
-                                    ? 'bg-rose-600 text-white animate-pulse'
-                                    : alert.severity === 'HIGH'
-                                    ? 'bg-amber-600 text-white'
-                                    : 'bg-slate-200 text-slate-700'
-                                }`}
-                              >
-                                {alert.severity}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-slate-700 leading-snug mt-1">{alert.detail}</p>
-                            <div className="text-[9px] font-mono text-slate-500 mt-1">Focus: {alert.pair}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs flex items-center justify-between text-emerald-900 shadow-2xs">
-                      <div className="flex items-center gap-1.5 font-bold">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        <span>Zero Critical Drug Interactions Detected • NMC Formulary Guard Verified</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-emerald-700">OSMC Safe Formulary</span>
-                    </div>
                   )}
-
-                  {/* Statutory Schedule H / H1 / Schedule X Cautionary Box */}
-                  <div className="p-2.5 bg-gradient-to-r from-red-50 to-slate-50 border-2 border-red-500 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                    <div className="flex items-start sm:items-center gap-2">
-                      <span className="font-serif font-black text-red-700 text-sm px-1.5 py-0.5 bg-red-100 rounded border border-red-300">
-                        ℞
-                      </span>
-                      <div>
-                        <strong className="text-red-950 text-xs font-black uppercase tracking-wider block">
-                          Schedule H / H1 Prescription Drug Statutory Warning
-                        </strong>
-                        <p className="text-[10px] text-slate-600">
-                          <strong>Warning:</strong> To be sold by retail on the prescription of a Registered Medical Practitioner only. Mandatory capital-letter generic names under NMC Regulations 2023.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right sm:border-l sm:pl-3 border-red-200 shrink-0 text-[10px] font-mono">
-                      <span className="text-red-800 font-bold block">Central Drugs Act 1940</span>
-                      <span className="text-slate-500">Free Supply @ Niramaya Kendra</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-100 text-slate-600 border-b border-slate-200 text-[10px] uppercase font-bold">
-                        <th className="p-2.5">#</th>
-                        <th className="p-2.5">Generic Medicine Name (CAPITAL)</th>
-                        <th className="p-2.5">Strength / Form</th>
-                        <th className="p-2.5">Frequency &amp; Timing</th>
-                        <th className="p-2.5">Duration</th>
-                        <th className="p-2.5">Special Instructions</th>
-                        <th className="p-2.5">Odisha Scheme &amp; Barcode</th>
-                        <th className="p-2.5 print:hidden">Compliance</th>
-                        <th className="p-2.5 print:hidden">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {medications.map((med, idx) => {
-                        const brandMatch = checkBrandName(med.name);
-                        const osmcCode = `OSMC-${med.name.substring(0, 3).toUpperCase()}-${Math.floor(100 + (idx * 37) % 899)}`;
-                        return (
-                          <tr key={idx} className="hover:bg-slate-50/80">
-                            <td className="p-2.5 font-bold text-slate-400">{idx + 1}</td>
-                            <td className="p-2.5 font-black text-slate-900 font-mono tracking-wide">
-                              {med.name.toUpperCase()}
-                              {brandMatch && (
-                                <span className="block text-[9px] text-amber-700 font-sans font-bold">
-                                  ⚠️ Brand-like text
-                                </span>
-                              )}
-                            </td>
-                            <td className="p-2.5 font-semibold text-slate-700">
-                              {med.dosage} ({med.form})
-                            </td>
-                            <td className="p-2.5 font-bold text-indigo-900">{med.freq}</td>
-                            <td className="p-2.5 text-slate-600">{med.duration}</td>
-                            <td className="p-2.5 text-slate-600 text-[11px] italic">{med.instruction}</td>
-                            <td className="p-2.5">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-800 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 rounded w-fit">
-                                  <Check className="w-2.5 h-2.5 text-emerald-600" />
-                                  <span>ନିରାମୟ (NIRAMAYA FREE)</span>
-                                </span>
-                                <span className="text-[8px] font-mono text-slate-500 tracking-wider">
-                                  ||| {osmcCode} |||
-                                </span>
-                              </div>
-                            </td>
-                            <td className="p-2.5 print:hidden">
-                              {brandMatch ? (
-                                <button
-                                  onClick={() => handleAutoFixBrand(idx, brandMatch)}
-                                  className="px-2 py-0.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-[10px] font-black flex items-center gap-1 shadow-2xs cursor-pointer"
-                                  title={txt.autoFixTooltip}
-                                >
-                                  <Sparkles className="w-2.5 h-2.5" />
-                                  <span>Auto-Fix</span>
-                                </button>
-                              ) : (
-                                <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-0.5">
-                                  <Check className="w-3 h-3" />
-                                  <span>NMC Generic</span>
-                                </span>
-                              )}
-                            </td>
-                            <td className="p-2.5 print:hidden">
-                              <button
-                                onClick={() => handleDeleteMedication(idx)}
-                                className="text-slate-400 hover:text-rose-600 cursor-pointer"
-                                title="Delete Row"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* 1-Click Fast Generic Formulary Shelf with Category Switcher (Odisha Niramaya / OSMC Essential List) */}
-                <div className="p-3 bg-gradient-to-r from-slate-50 via-indigo-50/40 to-slate-50 rounded-xl border border-indigo-100 space-y-2.5 print:hidden">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100/80 pb-2">
-                    <div className="flex items-center gap-1.5">
-                      <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                      <span className="text-[11px] font-black uppercase text-indigo-950 tracking-wide">
-                        Quick-Add NMC Core Generics (Odisha Niramaya Essential Drug List)
-                      </span>
-                    </div>
-                    {/* Category Filter Chips */}
-                    <div className="flex items-center gap-1 overflow-x-auto text-[10px]">
-                      {[
-                        { id: 'ALL', label: 'All Generics' },
-                        { id: 'EMERGENCY', label: 'Emergency & Critical' },
-                        { id: 'CARDIO', label: 'Cardiology' },
-                        { id: 'ANTIMICROBIAL', label: 'Antibiotics' },
-                        { id: 'GI', label: 'GI & Fluids' },
-                        { id: 'ANALGESIC', label: 'Pain & Fever' }
-                      ].map((cat) => (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => setFormularyCategory(cat.id)}
-                          className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer whitespace-nowrap ${
-                            formularyCategory === cat.id
-                              ? 'bg-indigo-600 text-white shadow-2xs'
-                              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                          }`}
-                        >
-                          {cat.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      { category: 'ANALGESIC', name: 'PARACETAMOL', dosage: '650 mg', form: 'Tablet', freq: 'TDS SOS (After food)', duration: '3 Days', instruction: 'Take for body ache or temperature > 99.5°F' },
-                      { category: 'GI', name: 'PANTO PRAZOLE', dosage: '40 mg', form: 'Tablet', freq: 'OD (30 mins before breakfast)', duration: '7 Days', instruction: 'Swallow whole on empty stomach' },
-                      { category: 'ANTIMICROBIAL', name: 'AMOXICILLIN + CLAVULANIC ACID', dosage: '625 mg', form: 'Tablet', freq: 'BD after food', duration: '5 Days', instruction: 'Complete full 5-day antibiotic course' },
-                      { category: 'GI', name: 'ONDANSETRON', dosage: '4 mg', form: 'Tablet / Mouth Dissolving', freq: 'TDS SOS', duration: '2 Days', instruction: 'Dissolve on tongue 30 mins before food' },
-                      { category: 'GI', name: 'ORAL REHYDRATION SALTS (ORS)', dosage: '20.5 g Sachet', form: 'Oral Powder', freq: 'Frequent sips in 1L boiled water', duration: 'Till recovery', instruction: 'Discard unconsumed solution after 24 hours' },
-                      { category: 'ANTIMICROBIAL', name: 'AZITHROMYCIN', dosage: '500 mg', form: 'Tablet', freq: 'OD (1 hour before food)', duration: '3 Days', instruction: 'Strict daily timing; do not skip' },
-                      { category: 'CARDIO', name: 'METFORMIN', dosage: '500 mg', form: 'Tablet PR', freq: 'BD with meals', duration: '30 Days', instruction: 'Monitor fasting blood sugar weekly' },
-                      { category: 'CARDIO', name: 'AMLODIPINE', dosage: '5 mg', form: 'Tablet', freq: 'OD (Morning)', duration: '30 Days', instruction: 'Regular daily BP recording required' },
-                      { category: 'CARDIO', name: 'ASPIRIN (DISPERSIBLE)', dosage: '75 mg', form: 'Tablet', freq: 'OD (After lunch)', duration: '30 Days', instruction: 'Disperse in water. Do not take on empty stomach.' },
-                      { category: 'CARDIO', name: 'CLOPIDOGREL', dosage: '75 mg', form: 'Tablet', freq: 'OD (After food)', duration: '30 Days', instruction: 'Take with Aspirin for DAPT protocol.' },
-                      { category: 'EMERGENCY', name: 'CEFTRIAXONE', dosage: '1 g', form: 'IV Injection', freq: 'BD (12 Hourly)', duration: '3 Days', instruction: 'Slow IV after test dose' },
-                      { category: 'EMERGENCY', name: 'TRAMADOL', dosage: '50 mg', form: 'Slow IV / IM', freq: 'SOS for severe pain', duration: 'Single Dose', instruction: 'Monitor sedation and nausea' }
-                    ]
-                      .filter((drug) => formularyCategory === 'ALL' || drug.category === formularyCategory)
-                      .map((drug, dIdx) => (
-                        <button
-                          key={dIdx}
-                          type="button"
-                          onClick={() => {
-                            setMedications([
-                              ...medications,
-                              drug
-                            ]);
-                          }}
-                          className="px-2 py-1 bg-white hover:bg-indigo-600 hover:text-white border border-slate-200 hover:border-indigo-600 rounded-lg text-[10px] font-bold text-slate-700 flex items-center gap-1 transition-all shadow-2xs cursor-pointer group"
-                        >
-                          <Plus className="w-2.5 h-2.5 text-indigo-500 group-hover:text-white" />
-                          <span>{drug.name}</span>
-                          <span className="text-[9px] text-slate-400 group-hover:text-indigo-200">({drug.dosage})</span>
-                        </button>
-                      ))}
-                  </div>
-                </div>
-
-                {/* ───────────────────────────────────────────────────────── */}
-                {/* 4 ENRICHED DISTINCT CLINICAL FEATURE CARDS ("SHOW IN DIFFERENT THING") */}
-                {/* ───────────────────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-3">
-                  {/* CARD 1: DIAGNOSTIC LABORATORY & RADIOLOGY ORDERS */}
-                  <div className="bg-gradient-to-br from-white to-sky-50/50 p-4 rounded-xl border border-sky-200 shadow-2xs space-y-2.5">
-                    <div className="flex items-center justify-between border-b border-sky-200 pb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-sky-600 text-white flex items-center justify-center shadow-xs">
-                          <FlaskConical className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <strong className="text-xs font-black text-sky-950 uppercase tracking-wide block">
-                            Section 5.1-No: Diagnostic Investigations Ordered
-                          </strong>
-                          <span className="text-[10px] text-sky-800 font-semibold">
-                            Laboratory, Biochemical &amp; Radiology Orders (NMC Standard)
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[9px] font-black bg-sky-100 text-sky-800 border border-sky-300 px-2 py-0.5 rounded-full uppercase">
-                        STAT / Priority
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      {investigations && investigations.length > 0 ? (
-                        investigations.map((test, tIdx) => (
-                          <div
-                            key={tIdx}
-                            className="p-2 bg-white rounded-lg border border-sky-100 flex items-start justify-between gap-2 text-[11px] shadow-2xs group hover:border-sky-300 transition-all"
-                          >
-                            <div className="flex items-start gap-1.5 flex-1">
-                              <span className="w-4 h-4 rounded-full bg-sky-100 text-sky-800 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
-                                {tIdx + 1}
-                              </span>
-                              <input
-                                type="text"
-                                value={test}
-                                onChange={(e) => {
-                                  const updated = [...investigations];
-                                  updated[tIdx] = e.target.value;
-                                  setInvestigations(updated);
-                                }}
-                                className="w-full font-bold text-slate-800 bg-transparent border-none outline-none focus:bg-sky-50/50 rounded px-1"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setInvestigations(investigations.filter((_, i) => i !== tIdx));
-                              }}
-                              className="text-slate-300 hover:text-rose-600 shrink-0 print:hidden cursor-pointer"
-                              title="Remove test"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-[11px] text-slate-400 italic">No investigations currently ordered.</p>
-                      )}
-                    </div>
-
-                    <div className="pt-1 flex items-center justify-between print:hidden">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setInvestigations([...investigations, 'Urgent Serum Electrolytes (Na+, K+, Cl-) & Renal Function Test']);
-                        }}
-                        className="text-[10px] font-bold text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 flex items-center gap-1 transition-all cursor-pointer"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>Add Diagnostic Order</span>
-                      </button>
-                      <span className="text-[9px] text-slate-500 font-mono">
-                        NMC Rule 8.4 Compliant
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* CARD 2: CLINICAL NUTRITION & LIFESTYLE DIRECTIVES */}
-                  <div className="bg-gradient-to-br from-white to-emerald-50/50 p-4 rounded-xl border border-emerald-200 shadow-2xs space-y-2.5">
-                    <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-                          <Apple className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <strong className="text-xs font-black text-emerald-950 uppercase tracking-wide block">
-                            Section 5.2-No: Nutrition &amp; Non-Pharmacological Care
-                          </strong>
-                          <span className="text-[10px] text-emerald-800 font-semibold">
-                            Dietary Protocol, Fluid Restrictions &amp; Physical Rest
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full uppercase">
-                        Protocol Guard
-                      </span>
-                    </div>
-
-                    <div className="p-2.5 bg-white rounded-lg border border-emerald-100 shadow-2xs">
-                      <textarea
-                        rows={3}
-                        value={dietaryAdvice}
-                        onChange={(e) => setDietaryAdvice(e.target.value)}
-                        placeholder="Enter tailored dietary instructions, fluid balance directives, salt restrictions, and non-pharmacological care..."
-                        className="w-full text-xs font-medium text-slate-800 bg-transparent border-none outline-none leading-relaxed resize-none focus:bg-emerald-50/40 rounded p-1"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px] pt-1">
-                      <div className="p-1.5 bg-white rounded border border-emerald-100 text-center">
-                        <span className="text-slate-400 block text-[9px] font-semibold">HYDRATION</span>
-                        <strong className="text-emerald-900 font-bold">Oral / IV Calibrated</strong>
-                      </div>
-                      <div className="p-1.5 bg-white rounded border border-emerald-100 text-center">
-                        <span className="text-slate-400 block text-[9px] font-semibold">SALT / SODIUM</span>
-                        <strong className="text-emerald-900 font-bold">&lt; 2g / Day (Low Salt)</strong>
-                      </div>
-                      <div className="p-1.5 bg-white rounded border border-emerald-100 text-center">
-                        <span className="text-slate-400 block text-[9px] font-semibold">ACTIVITY</span>
-                        <strong className="text-emerald-900 font-bold">Strict Bed Rest</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CARD 3: CRITICAL RED-FLAG DANGER SIGNS (EMERGENCY 108 TRIGGER) */}
-                  <div className="bg-gradient-to-br from-white to-rose-50/60 p-4 rounded-xl border border-rose-300 shadow-2xs space-y-2.5">
-                    <div className="flex items-center justify-between border-b border-rose-200 pb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center shadow-xs">
-                          <BellRing className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <strong className="text-xs font-black text-rose-950 uppercase tracking-wide block">
-                            Section 5.3-No: Red-Flag Danger Signs (Emergency Trigger)
-                          </strong>
-                          <span className="text-[10px] text-rose-800 font-semibold">
-                            Immediate 108 Ambulance / Emergency Casualty Escalation Signs
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[9px] font-black bg-rose-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
-                        SOS ALERT
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      {redFlags && redFlags.length > 0 ? (
-                        redFlags.map((flag, fIdx) => (
-                          <div
-                            key={fIdx}
-                            className="p-2 bg-white rounded-lg border border-rose-200 flex items-start justify-between gap-2 text-[11px] shadow-2xs hover:border-rose-400 transition-all"
-                          >
-                            <div className="flex items-start gap-1.5 flex-1">
-                              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
-                              <input
-                                type="text"
-                                value={flag}
-                                onChange={(e) => {
-                                  const updated = [...redFlags];
-                                  updated[fIdx] = e.target.value;
-                                  setRedFlags(updated);
-                                }}
-                                className="w-full font-bold text-rose-950 bg-transparent border-none outline-none focus:bg-rose-50/50 rounded px-1"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setRedFlags(redFlags.filter((_, i) => i !== fIdx));
-                              }}
-                              className="text-slate-300 hover:text-rose-600 shrink-0 print:hidden cursor-pointer"
-                              title="Remove danger sign"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-[11px] text-slate-400 italic">No red flag signs specified.</p>
-                      )}
-                    </div>
-
-                    <div className="p-2 bg-rose-100/70 border border-rose-300 rounded-lg flex items-center justify-between text-[10px] text-rose-950">
-                      <span className="font-extrabold flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-rose-700" />
-                        <span>Odisha Free Emergency: <strong>Dial 108 / 102</strong></span>
-                      </span>
-                      <span className="font-semibold text-rose-800">
-                        24x7 State Casualty Desk
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* CARD 4: CLINICAL REVIEW & FOLLOW-UP SCHEDULE */}
-                  <div className="bg-gradient-to-br from-white to-purple-50/50 p-4 rounded-xl border border-purple-200 shadow-2xs space-y-2.5">
-                    <div className="flex items-center justify-between border-b border-purple-200 pb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center shadow-xs">
-                          <CalendarClock className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <strong className="text-xs font-black text-purple-950 uppercase tracking-wide block">
-                            Section 5.4-No: Clinical Review &amp; Follow-Up Schedule
-                          </strong>
-                          <span className="text-[10px] text-purple-800 font-semibold">
-                            Mandatory OPD Revisit Date &amp; Clinical Progress Review
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[9px] font-black bg-purple-100 text-purple-800 border border-purple-300 px-2 py-0.5 rounded-full uppercase">
-                        Scheduled
-                      </span>
-                    </div>
-
-                    <div className="p-2.5 bg-white rounded-lg border border-purple-100 shadow-2xs">
-                      <textarea
-                        rows={3}
-                        value={followUpSchedule}
-                        onChange={(e) => setFollowUpSchedule(e.target.value)}
-                        placeholder="Enter clinical review timeline, next OPD date, investigations to bring on revisit, and emergency contact directives..."
-                        className="w-full text-xs font-medium text-slate-800 bg-transparent border-none outline-none leading-relaxed resize-none focus:bg-purple-50/40 rounded p-1"
-                      />
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px]">
-                      <div className="flex items-center gap-1.5 text-purple-900 font-bold">
-                        <Clock className="w-3 h-3 text-purple-600" />
-                        <span>Review at: <strong>{facilityName.split(',')[0]}</strong></span>
-                      </div>
-                      <span className="bg-purple-100 text-purple-800 font-mono text-[9px] px-2 py-0.5 rounded font-black">
-                        SOS REVISIT ANYTIME IF SYMPTOMS AGGRAVATE
-                      </span>
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddMedication}
+                    className="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{txt.addMedBtn}</span>
+                  </button>
                 </div>
               </div>
-            )}
 
-            {/* 5. B. REFERRAL SLIP SECTION (WHEN IN REFERRAL TAB) */}
-            {activeTab === 'referral' && (
-              <div className="space-y-4 pt-2">
-                <div className="flex items-center justify-between bg-rose-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
-                  <span className="font-black text-rose-300">SECTION 5-NO: NHM 108 INTER-FACILITY REFERRAL, SBAR HANDOVER &amp; EN-ROUTE RX</span>
-                  <span className="text-slate-300">INSTRUCTION: MANDATORY EMT ESCORT, TELE-HANDOVER CALL &amp; DUAL-FACILITY TRIAGE</span>
-                </div>
-                <div className="border-b-2 border-rose-900 pb-1 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Ambulance className="w-5 h-5 text-rose-700" />
-                    <span className="text-sm font-black text-rose-950 uppercase tracking-wider">
-                      Emergency Inter-Facility Transfer Protocol
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                    CAD ID: {verificationToken?.cadToken}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Origin & Destination Units */}
-                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                        Referring Facility (Origin)
-                      </span>
-                      <strong className="text-slate-900 block text-xs">{facilityName}</strong>
-                      <span className="text-[11px] text-slate-500">{facilityDistrict}</span>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-200">
-                      <span className="text-[10px] uppercase font-bold text-indigo-700 block">
-                        Target Apex Center (Referred To)
-                      </span>
-                      <strong className="text-indigo-950 block text-xs">{referralTarget}</strong>
-                      <div className="mt-1 p-2 bg-indigo-50/70 border border-indigo-200 rounded-lg text-[10px] space-y-0.5">
-                        <div className="flex justify-between text-indigo-900">
-                          <span>Nodal Emergency Desk:</span>
-                          <strong className="font-mono">{apexStatus.nodalPhone}</strong>
-                        </div>
-                        <div className="text-slate-600">Officer: {apexStatus.emergencyOfficer}</div>
-                        <div className="text-emerald-700 font-bold">
-                          ✓ ICU: {apexStatus.icuBeds} Free | HDU: {apexStatus.hduBeds} Free
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Transfer Justification & Logistics */}
-                  <div className="p-4 bg-rose-50/60 rounded-xl border border-rose-200 space-y-2 text-xs">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-rose-700 block">
-                        Clinical Justification for Referral
-                      </span>
-                      <p className="text-rose-950 font-medium text-xs mt-0.5 leading-relaxed">
-                        {referralReason}
-                      </p>
-                    </div>
-
-                    <div className="pt-2 border-t border-rose-200 text-[11px] space-y-1">
-                      <div>
-                        <strong>Transport Protocol:</strong> {transportMode}
-                      </div>
-                      <div>
-                        <strong>In-Transit Oxygen:</strong> {oxygenReq}
-                      </div>
-                      <div className="text-rose-800 font-semibold pt-1">
-                        <strong>Green Corridor:</strong> {apexStatus.greenCorridor}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* NABH SBAR (Situation-Background-Assessment-Recommendation) Protocol Block */}
-                <div className="p-4 bg-gradient-to-r from-slate-50 via-indigo-50/40 to-slate-50 rounded-xl border border-indigo-200 space-y-3 text-xs">
-                  <div className="flex items-center justify-between border-b border-indigo-200/60 pb-2">
+              {/* Pediatric Body-Weight Auto-Dose Safety Guard & Calibrator */}
+              {isPediatricCase && (
+                <div className="p-3.5 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border border-amber-300 rounded-xl space-y-2 text-xs shadow-2xs print:hidden">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <HeartPulse className="w-4 h-4 text-rose-600" />
-                      <strong className="text-slate-900 font-bold uppercase tracking-wide text-[11px]">
-                        NABH SBAR Clinical Handover Protocol (Inter-Facility 108 Standard)
-                      </strong>
+                      <span className="bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        PEDIATRIC SAFETY GUARD (&lt;12 YRS / &lt;40 KG)
+                      </span>
+                      <span className="font-extrabold text-amber-950">
+                        Weight Calibrated: <strong>{effectiveWeight} kg</strong> (Age: {patientAge} yrs)
+                      </span>
                     </div>
-                    <span className="text-[10px] font-mono text-indigo-800 font-bold bg-white px-2 py-0.5 rounded border border-indigo-200">
-                      MEWS Score: {mewsScore.score} ({mewsScore.riskLevel})
+                    <span className="text-[11px] font-mono font-bold text-amber-900 bg-white/80 px-2 py-0.5 rounded border border-amber-200">
+                      Standard Formula: [Dose = mg/kg/day ÷ frequency]
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-[11px]">
-                    <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                      <span className="text-[10px] font-bold text-rose-700 uppercase block mb-1">
-                        [S] Situation
-                      </span>
-                      <p className="text-slate-800 leading-snug line-clamp-2">{diagnosis}</p>
-                      <span className="text-[9px] text-slate-500 block mt-1">Priority: {currentCase.acuity} Emergency</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
+                    <div className="bg-white/90 p-2 rounded-lg border border-amber-200">
+                      <span className="text-slate-500 block text-[10px] font-semibold">Paracetamol Syrup:</span>
+                      <strong className="text-amber-950">
+                        {calculatePediatricDose('PARACETAMOL', effectiveWeight, 15)} (15 mg/kg/dose)
+                      </strong>
                     </div>
-
-                    <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                      <span className="text-[10px] font-bold text-indigo-700 uppercase block mb-1">
-                        [B] Background
-                      </span>
-                      <p className="text-slate-800 leading-snug line-clamp-2">{chiefComplaints}</p>
-                      <span className="text-[9px] text-amber-700 font-bold block mt-1">Allergy: {patientAllergies}</span>
+                    <div className="bg-white/90 p-2 rounded-lg border border-amber-200">
+                      <span className="text-slate-500 block text-[10px] font-semibold">Amoxicillin Susp:</span>
+                      <strong className="text-amber-950">
+                        {calculatePediatricDose('AMOXICILLIN', effectiveWeight, 25)} (25 mg/kg/dose TID)
+                      </strong>
                     </div>
-
-                    <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                      <span className="text-[10px] font-bold text-emerald-700 uppercase block mb-1">
-                        [A] Assessment
-                      </span>
-                      <div className="space-y-0.5 text-[10px] text-slate-700 font-mono">
-                        <div>BP: <strong>{vitals.bp}</strong> | Pulse: <strong>{vitals.pulse}</strong></div>
-                        <div>SpO2: <strong>{vitals.spo2}</strong> | Temp: <strong>{vitals.temp}</strong></div>
-                        <div className="text-emerald-800 font-bold">Shock Index: {vitalScores.shockIndex} | MAP: {vitalScores.map} mmHg</div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                      <span className="text-[10px] font-bold text-purple-700 uppercase block mb-1">
-                        [R] Recommendation
-                      </span>
-                      <p className="text-slate-800 leading-snug line-clamp-2">{referralReason}</p>
-                      <span className="text-[9px] text-indigo-700 font-bold block mt-1">Direct Admission: Emergency HDU / ICU</span>
+                    <div className="bg-white/90 p-2 rounded-lg border border-amber-200">
+                      <span className="text-slate-500 block text-[10px] font-semibold">Azithromycin Susp:</span>
+                      <strong className="text-amber-950">
+                        {calculatePediatricDose('AZITHROMYCIN', effectiveWeight, 10)} (10 mg/kg OD)
+                      </strong>
                     </div>
                   </div>
                 </div>
+              )}
 
-                {/* Section 5.B En-Route Medications & Pharmacotherapy Handover (NMC 2023 Standard) */}
-                <div className="p-4 bg-white rounded-xl border border-indigo-200 space-y-3 text-xs shadow-2xs">
-                  <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-black text-indigo-900 font-serif">℞</span>
-                      <strong className="text-slate-900 font-bold uppercase tracking-wide text-[11px]">
-                        Administered &amp; En-Route Medications (NMC Generic Standard)
-                      </strong>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-black text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded">
-                        ODISHA NIRAMAYA FREE SUPPLY
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('prescription')}
-                        className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 flex items-center gap-1 cursor-pointer print:hidden"
-                      >
-                        <Edit3 className="w-2.5 h-2.5" />
-                        <span>Edit Rx</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-left border-collapse">
-                      <thead>
-                        <tr className="bg-slate-100 text-slate-600 border-b border-slate-200 text-[10px] uppercase font-bold">
-                          <th className="p-2">#</th>
-                          <th className="p-2">Generic Medicine (CAPITAL LETTERS)</th>
-                          <th className="p-2">Dose &amp; Form</th>
-                          <th className="p-2">Frequency / Route</th>
-                          <th className="p-2">Duration</th>
-                          <th className="p-2">Transit &amp; Administration Directive</th>
+              {/* Prescribed Medications Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-600 border-b border-slate-200 text-[10px] uppercase font-bold">
+                      <th className="p-2">#</th>
+                      <th className="p-2">Generic Medicine (CAPITAL LETTERS)</th>
+                      <th className="p-2">Dose &amp; Form</th>
+                      <th className="p-2">Frequency / Route</th>
+                      <th className="p-2">Duration</th>
+                      <th className="p-2">Instructions</th>
+                      <th className="p-2 print:hidden text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {medications.map((med, idx) => {
+                      const brandMatch = findBrandAlternative(med.name);
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50/80">
+                          <td className="p-2 font-bold text-slate-400">{idx + 1}</td>
+                          <td className="p-2 font-black text-slate-900 font-mono tracking-wide">
+                            <div className="flex flex-col">
+                              <span className="flex items-center gap-1.5">
+                                <span>{med.name.toUpperCase()}</span>
+                                <span className="text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 px-1 rounded print:hidden">
+                                  NIRAMAYA
+                                </span>
+                              </span>
+                              {brandMatch && (
+                                <div className="flex items-center gap-1.5 mt-0.5 print:hidden">
+                                  <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 flex items-center gap-1">
+                                    <AlertTriangle className="w-2.5 h-2.5 text-amber-600" />
+                                    <span>Brand Detected ({brandMatch.brand})</span>
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAutoFixBrand(idx, brandMatch)}
+                                    className="text-[10px] font-bold text-indigo-700 underline hover:text-indigo-900 cursor-pointer"
+                                  >
+                                    Auto-Fix to Generic
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-2 font-semibold text-slate-700">
+                            {med.dosage} ({med.form})
+                          </td>
+                          <td className="p-2 font-bold text-indigo-900">{med.freq}</td>
+                          <td className="p-2 text-slate-600">{med.duration}</td>
+                          <td className="p-2 text-slate-600 text-[11px] italic">{med.instruction}</td>
+                          <td className="p-2 print:hidden text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMedication(idx)}
+                              className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors cursor-pointer"
+                              title="Delete Medication"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {medications.map((med, mIdx) => (
-                          <tr key={mIdx} className="hover:bg-slate-50/80">
-                            <td className="p-2 font-bold text-slate-400">{mIdx + 1}</td>
-                            <td className="p-2 font-black text-slate-900 font-mono tracking-wide">
-                              {med.name.toUpperCase()}
-                            </td>
-                            <td className="p-2 font-semibold text-slate-700">
-                              {med.dosage} ({med.form})
-                            </td>
-                            <td className="p-2 font-bold text-indigo-900">{med.freq}</td>
-                            <td className="p-2 text-slate-600">{med.duration}</td>
-                            <td className="p-2 text-slate-600 text-[11px] italic">{med.instruction}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Clinical Drug-Drug Interaction Safety Matrix */}
+              {drugInteractions.length > 0 && (
+                <div className="p-3.5 bg-gradient-to-br from-rose-50 via-red-50 to-amber-50 border-2 border-rose-300 rounded-xl space-y-2 text-xs shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-rose-200 pb-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                      </div>
+                      <strong className="text-rose-950 font-black uppercase tracking-wider text-[11px]">
+                        Clinical Drug-Drug Interaction Guard (Active Prescribing Shield)
+                      </strong>
+                    </div>
+                    <span className="text-[10px] font-mono font-black bg-rose-600 text-white px-2 py-0.5 rounded-full uppercase animate-pulse">
+                      {drugInteractions.length} Warning(s)
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {drugInteractions.map((inter, iIdx) => (
+                      <div
+                        key={iIdx}
+                        className={`p-2.5 rounded-lg border text-[11px] flex items-start justify-between gap-2 shadow-2xs ${
+                          inter.severity === 'HIGH'
+                            ? 'bg-rose-100/90 border-rose-300 text-rose-950 font-semibold'
+                            : 'bg-amber-100/90 border-amber-300 text-amber-950'
+                        }`}
+                      >
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-black text-slate-900 bg-white/80 px-1.5 py-0.2 rounded border border-slate-300">
+                              {inter.pair[0]} + {inter.pair[1]}
+                            </span>
+                            <span className={`text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase ${
+                              inter.severity === 'HIGH' ? 'bg-rose-700 text-white' : 'bg-amber-600 text-white'
+                            }`}>
+                              {inter.severity} RISK
+                            </span>
+                          </div>
+                          <p className="text-slate-800 leading-relaxed font-medium">{inter.message}</p>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                          Odisha EDL Matrix
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
+              )}
 
-                {/* NHM 108 Emergency Handover Checklist */}
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
-                  <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider block">
-                    NHM 108 Inter-Facility Handover Verification Checklist:
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={handoverChecks.ivLine}
-                        onChange={(e) => setHandoverChecks({ ...handoverChecks, ivLine: e.target.checked })}
-                        className="rounded text-indigo-600"
-                      />
-                      <span>IV Cannula (18G) Patent</span>
-                    </label>
-
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={handoverChecks.pulseOx}
-                        onChange={(e) => setHandoverChecks({ ...handoverChecks, pulseOx: e.target.checked })}
-                        className="rounded text-indigo-600"
-                      />
-                      <span>Pulse Oximeter Connected</span>
-                    </label>
-
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={handoverChecks.o2Pressure}
-                        onChange={(e) => setHandoverChecks({ ...handoverChecks, o2Pressure: e.target.checked })}
-                        className="rounded text-indigo-600"
-                      />
-                      <span>O2 Cylinder Pressure &gt;150 Bar</span>
-                    </label>
-
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={handoverChecks.attendantConsent}
-                        onChange={(e) => setHandoverChecks({ ...handoverChecks, attendantConsent: e.target.checked })}
-                        className="rounded text-indigo-600"
-                      />
-                      <span>Attendant Transfer Consent OK</span>
-                    </label>
-
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={handoverChecks.casualtyNotified}
-                        onChange={(e) => setHandoverChecks({ ...handoverChecks, casualtyNotified: e.target.checked })}
-                        className="rounded text-indigo-600"
-                      />
-                      <span>Casualty Desk Tele-Informed</span>
-                    </label>
-
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={handoverChecks.emtEscort}
-                        onChange={(e) => setHandoverChecks({ ...handoverChecks, emtEscort: e.target.checked })}
-                        className="rounded text-indigo-600"
-                      />
-                      <span>Staff Nurse / EMT Escort Named</span>
-                    </label>
+              {/* Statutory Schedule H1 Warning Register */}
+              {hasScheduleH1Drugs && (
+                <div className="p-3 bg-rose-50 border-2 border-rose-400 rounded-xl text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-rose-950 uppercase tracking-wider flex items-center gap-1.5 text-[11px]">
+                      <AlertCircle className="w-4 h-4 text-rose-600" />
+                      <span>Statutory Schedule H1 Drug Warning (NMC Reg Sec 27)</span>
+                    </span>
+                    <span className="bg-rose-600 text-white text-[9px] font-mono font-black px-2 py-0.5 rounded">
+                      SCHEDULE H1
+                    </span>
                   </div>
+                  <p className="text-rose-900 text-[11px] leading-relaxed">
+                    <strong>WARNING:</strong> To be sold by retail on the prescription of a Registered Medical Practitioner only. Not to be dispensed without signature and date. Red RX logo printed on label.
+                  </p>
+                </div>
+              )}
 
-                  {/* Casualty MO Pre-Arrival Call Confirmation Strip */}
-                  <div className="mt-2.5 pt-2.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+              {/* Fast Prescribing Formulary Shelf (1-Click Niramaya Add) */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 print:hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-indigo-600" />
+                    <span className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">
+                      Categorized Fast Formulary Shelf (Odisha Niramaya EDL 2026):
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    Click any essential medicine below to append to prescription
+                  </span>
+                </div>
+
+                {/* Formulary Category Selector Tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                  {FORMULARY_CATEGORIES.map((cat) => {
+                    const isCatActive = formularyCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setFormularyCategory(cat.id)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap cursor-pointer transition-all ${
+                          isCatActive
+                            ? 'bg-indigo-700 text-white shadow-2xs'
+                            : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Filtered Generic Medications Shelf */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 pt-1">
+                  {filteredFormulary.map((fm, fIdx) => (
+                    <button
+                      key={fIdx}
+                      type="button"
+                      onClick={() => handleAddFormularyItem(fm)}
+                      className="p-2 bg-white rounded-lg border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 text-left transition-all text-[11px] space-y-0.5 group shadow-2xs cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between">
+                        <strong className="text-slate-900 group-hover:text-indigo-900 font-mono text-[10px] block truncate">
+                          {fm.name}
+                        </strong>
+                        <Plus className="w-3 h-3 text-slate-400 group-hover:text-indigo-600 shrink-0" />
+                      </div>
+                      <div className="text-[10px] text-slate-500">
+                        {fm.dosage} • {fm.form}
+                      </div>
+                      <div className="text-[9px] font-mono text-emerald-700 font-semibold">
+                        OSMC: {fm.edlCode}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4 Multi-Line Clinical Directive Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-2">
+                {/* CARD 1: DIAGNOSTIC & LAB INVESTIGATIONS ORDERED */}
+                <div className="bg-gradient-to-br from-white to-blue-50/50 p-4 rounded-xl border border-blue-200 shadow-2xs space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-blue-200 pb-2">
                     <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-[10px] text-slate-700">
-                        Casualty Desk: <strong className="text-slate-900">{apexStatus.emergencyOfficer}</strong> ({apexStatus.nodalPhone})
-                      </span>
+                      <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                        <Microscope className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <strong className="text-xs font-black text-blue-950 uppercase tracking-wide block">
+                          Section 4.1-No: Diagnostic &amp; Lab Investigations
+                        </strong>
+                        <span className="text-[10px] text-blue-700 font-semibold">
+                          Pathology, Biochemistry &amp; Radiology Orders
+                        </span>
+                      </div>
                     </div>
-
                     <button
                       type="button"
                       onClick={() => {
-                        setTeleCallAcknowledged(!teleCallAcknowledged);
-                        if (!teleCallAcknowledged) {
-                          setHandoverChecks((prev) => ({ ...prev, casualtyNotified: true }));
+                        const input = window.prompt('Enter new investigation order (e.g. Serum Creatinine, Chest X-Ray PA):');
+                        if (input && input.trim()) {
+                          setDiagnosticOrders([...diagnosticOrders, input.trim()]);
                         }
                       }}
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${
-                        teleCallAcknowledged
-                          ? 'bg-emerald-600 text-white shadow-2xs'
-                          : 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100'
-                      }`}
+                      className="text-[10px] font-bold bg-blue-100 hover:bg-blue-200 text-blue-900 px-2 py-0.5 rounded-lg border border-blue-300 flex items-center gap-1 print:hidden cursor-pointer"
                     >
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>{teleCallAcknowledged ? 'Casualty Tele-Handover Confirmed ✓' : 'Confirm Pre-Arrival Tele-Handover'}</span>
+                      <Plus className="w-3 h-3" />
+                      <span>Add Test</span>
                     </button>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {diagnosticOrders && diagnosticOrders.length > 0 ? (
+                      diagnosticOrders.map((test, tIdx) => (
+                        <div
+                          key={tIdx}
+                          className="p-2 bg-white rounded-lg border border-blue-100 flex items-center justify-between gap-2 text-[11px] shadow-2xs hover:border-blue-300 transition-all"
+                        >
+                          <div className="flex items-center gap-2 flex-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
+                            <input
+                              type="text"
+                              value={test}
+                              onChange={(e) => {
+                                const updated = [...diagnosticOrders];
+                                updated[tIdx] = e.target.value;
+                                setDiagnosticOrders(updated);
+                              }}
+                              className="w-full font-bold text-slate-800 bg-transparent border-none outline-none focus:bg-blue-50/50 rounded px-1"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDiagnosticOrders(diagnosticOrders.filter((_, i) => i !== tIdx));
+                            }}
+                            className="text-slate-300 hover:text-rose-600 shrink-0 print:hidden cursor-pointer"
+                            title="Remove test"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-[11px] text-slate-400 italic">No investigations ordered.</p>
+                    )}
                   </div>
                 </div>
 
-                {/* Emergency Blood & Blood Component Requisition Voucher (Form 27C / National Blood Policy) */}
-                <div
-                  className={`p-4 rounded-xl border transition-all ${
-                    bloodRequisitionEnabled
-                      ? 'bg-rose-50/80 border-rose-300 ring-1 ring-rose-300 shadow-2xs'
-                      : 'bg-slate-50 border-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={bloodRequisitionEnabled}
-                        onChange={(e) => setBloodRequisitionEnabled(e.target.checked)}
-                        className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500"
-                      />
-                      <span className="font-extrabold text-xs sm:text-sm text-rose-950 flex items-center gap-1.5">
-                        <Droplet className="w-4 h-4 text-rose-600 fill-rose-600" />
-                        <span>Emergency Blood &amp; Component Requisition Voucher (Form 27C / National Blood Policy)</span>
-                      </span>
-                    </label>
-                    <span
-                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded shrink-0 ${
-                        bloodRequisitionEnabled
-                          ? 'bg-rose-600 text-white shadow-2xs animate-pulse'
-                          : 'bg-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {bloodRequisitionEnabled ? 'VOUCHER ACTIVE (MANDATORY)' : 'STANDBY (OPTIONAL)'}
-                    </span>
-                  </div>
-
-                  {bloodRequisitionEnabled && (
-                    <div className="mt-3 pt-3 border-t border-rose-200 space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
-                            Recipient ABO/Rh:
-                          </label>
-                          <select
-                            value={bloodGroupReq}
-                            onChange={(e) => setBloodGroupReq(e.target.value)}
-                            className="w-full p-2 bg-white border border-rose-300 rounded-lg font-black text-rose-900 text-xs outline-none"
-                          >
-                            {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'Bombay Oh (Unconfirmed)'].map((bg) => (
-                              <option key={bg} value={bg}>{bg}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
-                            Component Required:
-                          </label>
-                          <select
-                            value={bloodComponentReq}
-                            onChange={(e) => setBloodComponentReq(e.target.value)}
-                            className="w-full p-2 bg-white border border-rose-300 rounded-lg font-bold text-slate-800 text-xs outline-none"
-                          >
-                            <option value="Packed Red Blood Cells (PRBC)">Packed Red Cells (PRBC)</option>
-                            <option value="Platelet Concentrate (RDP / SDP)">Platelets (RDP / SDP)</option>
-                            <option value="Fresh Frozen Plasma (FFP)">Fresh Frozen Plasma (FFP)</option>
-                            <option value="Cryoprecipitate">Cryoprecipitate (Factor VIII)</option>
-                            <option value="Whole Blood">Whole Human Blood</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
-                            Units Requisitioned:
-                          </label>
-                          <select
-                            value={bloodUnitsReq}
-                            onChange={(e) => setBloodUnitsReq(Number(e.target.value))}
-                            className="w-full p-2 bg-white border border-rose-300 rounded-lg font-black text-slate-800 text-xs outline-none"
-                          >
-                            <option value={1}>1 Unit (350/450 mL)</option>
-                            <option value={2}>2 Units (Standard Transfusion)</option>
-                            <option value={3}>3 Units (Acute Anemia / Shock)</option>
-                            <option value={4}>4 Units (MTP Protocol Tier 1)</option>
-                            <option value={6}>6 Units (Massive Transfusion Protocol)</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
-                            Clinical Urgency:
-                          </label>
-                          <select
-                            value={bloodUrgency}
-                            onChange={(e) => setBloodUrgency(e.target.value)}
-                            className="w-full p-2 bg-white border border-rose-300 rounded-lg font-bold text-rose-700 text-xs outline-none"
-                          >
-                            <option value="STAT Emergency (Immediate O- Negative Release)">STAT Emergency (O- Release)</option>
-                            <option value="Urgent (Within 1 Hour / Crossmatched)">Urgent (Within 1 Hour)</option>
-                            <option value="Elective Pre-Op Crossmatch Reserve">Elective Reserve (Pre-Op)</option>
-                          </select>
-                        </div>
+                {/* CARD 2: NON-PHARMACOLOGICAL LIFESTYLE & DIETARY ADVICE */}
+                <div className="bg-gradient-to-br from-white to-emerald-50/50 p-4 rounded-xl border border-emerald-200 shadow-2xs space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                        <Utensils className="w-4 h-4" />
                       </div>
-
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-rose-100/70 border border-rose-300 rounded-lg text-[11px] text-rose-950 font-medium">
-                        <div className="flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-rose-700 shrink-0" />
-                          <span><strong>Crossmatch Status:</strong> {bloodCrossmatchStatus}</span>
-                        </div>
-                        <span className="text-[10px] font-mono text-rose-800 bg-white px-2 py-0.5 rounded border border-rose-200">
-                          Apex Bank Reserve: {apexStatus.bloodBankUnits || 'Stocks Active'}
+                      <div>
+                        <strong className="text-xs font-black text-emerald-950 uppercase tracking-wide block">
+                          Section 4.2-No: Non-Pharmacological &amp; Dietary Directives
+                        </strong>
+                        <span className="text-[10px] text-emerald-700 font-semibold">
+                          Nutritional Guidance, Fluid Restriction &amp; Lifestyle
                         </span>
                       </div>
                     </div>
-                  )}
+                  </div>
+
+                  <div className="p-2.5 bg-white rounded-lg border border-emerald-100 shadow-2xs">
+                    <textarea
+                      rows={3}
+                      value={dietaryAdvice}
+                      onChange={(e) => setDietaryAdvice(e.target.value)}
+                      placeholder="Enter lifestyle, salt intake, fluid management, bed rest, and activity guidelines..."
+                      className="w-full text-xs font-medium text-slate-800 bg-transparent border-none outline-none leading-relaxed resize-none focus:bg-emerald-50/40 rounded p-1"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1.5 text-[10px] pt-1">
+                    <div className="p-1.5 bg-white rounded border border-emerald-100 text-center">
+                      <span className="text-slate-400 block text-[9px] font-semibold">HYDRATION</span>
+                      <strong className="text-emerald-900 font-bold">Oral / IV Calibrated</strong>
+                    </div>
+                    <div className="p-1.5 bg-white rounded border border-emerald-100 text-center">
+                      <span className="text-slate-400 block text-[9px] font-semibold">SALT / SODIUM</span>
+                      <strong className="text-emerald-900 font-bold">&lt; 2g / Day</strong>
+                    </div>
+                    <div className="p-1.5 bg-white rounded border border-emerald-100 text-center">
+                      <span className="text-slate-400 block text-[9px] font-semibold">ACTIVITY</span>
+                      <strong className="text-emerald-900 font-bold">Rest Advised</strong>
+                    </div>
+                  </div>
                 </div>
 
-                {/* ─── PARAMEDIC SERIAL EN-ROUTE VITALS TIMELINE (108 AMBULANCE LOG SHEET) ─── */}
-                <div className="p-4 bg-gradient-to-br from-white via-rose-50/40 to-slate-50 rounded-xl border border-rose-200 space-y-3 text-xs shadow-2xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rose-100 pb-2">
+                {/* CARD 3: CRITICAL RED-FLAG DANGER SIGNS (EMERGENCY 108 TRIGGER) */}
+                <div className="bg-gradient-to-br from-white to-rose-50/60 p-4 rounded-xl border border-rose-300 shadow-2xs space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-rose-200 pb-2">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center shadow-xs">
-                        <Activity className="w-4 h-4" />
+                        <BellRing className="w-4 h-4" />
                       </div>
                       <div>
                         <strong className="text-xs font-black text-rose-950 uppercase tracking-wide block">
-                          Section 5.3-No: Paramedic Serial En-Route Vitals &amp; Infusion Timeline Log
+                          Section 4.3-No: Red-Flag Danger Signs (Emergency Trigger)
                         </strong>
                         <span className="text-[10px] text-rose-800 font-semibold">
-                          NHM Odisha 108 Emergency Medical Services • Statutory Golden Hour Transit Log
+                          Immediate 108 Ambulance / Emergency Casualty Escalation Signs
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 print:hidden">
-                      <button
-                        type="button"
-                        onClick={() => setShowAddVitalModal(true)}
-                        className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>+ Log En-Route Vitals</span>
-                      </button>
-                    </div>
+                    <span className="text-[9px] font-black bg-rose-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                      SOS ALERT
+                    </span>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-left border-collapse">
-                      <thead>
-                        <tr className="bg-rose-100/70 text-rose-950 border-b border-rose-200 text-[10px] uppercase font-bold">
-                          <th className="p-2">Milestone / Time</th>
-                          <th className="p-2">GPS Location</th>
-                          <th className="p-2">BP (mmHg)</th>
-                          <th className="p-2">HR (bpm)</th>
-                          <th className="p-2">SpO2 / O2 Flow</th>
-                          <th className="p-2">GCS Score</th>
-                          <th className="p-2">IV Infusion</th>
-                          <th className="p-2">En-Route Notes &amp; Paramedic</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-rose-100/80">
-                        {enRouteVitalsLog.map((log) => (
-                          <tr key={log.id} className="hover:bg-white/80">
-                            <td className="p-2 font-bold text-slate-900 whitespace-nowrap">
-                              <span className="block text-[11px]">{log.milestone}</span>
-                              <span className="text-[9px] font-mono text-slate-500">{log.time}</span>
-                            </td>
-                            <td className="p-2 text-slate-700 font-medium whitespace-nowrap">{log.location}</td>
-                            <td className="p-2 font-bold text-rose-950 font-mono">{log.bp}</td>
-                            <td className="p-2 font-bold text-slate-900 font-mono">{log.hr}</td>
-                            <td className="p-2 whitespace-nowrap">
-                              <span className="font-extrabold text-emerald-800">{log.spo2}</span>
-                              <span className="text-[9px] text-slate-500 block">({log.o2})</span>
-                            </td>
-                            <td className="p-2 font-mono font-bold text-indigo-900">{log.gcs}</td>
-                            <td className="p-2 text-slate-700 font-mono text-[10px]">{log.ivDrip}</td>
-                            <td className="p-2 text-[10px] text-slate-600">
-                              <span className="block font-medium">{log.notes}</span>
-                              <span className="text-[9px] font-mono text-rose-800 font-bold">{log.emt}</span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="space-y-1.5">
+                    {redFlags && redFlags.length > 0 ? (
+                      redFlags.map((flag, fIdx) => (
+                        <div
+                          key={fIdx}
+                          className="p-2 bg-white rounded-lg border border-rose-200 flex items-start justify-between gap-2 text-[11px] shadow-2xs hover:border-rose-400 transition-all"
+                        >
+                          <div className="flex items-start gap-1.5 flex-1">
+                            <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                            <input
+                              type="text"
+                              value={flag}
+                              onChange={(e) => {
+                                const updated = [...redFlags];
+                                updated[fIdx] = e.target.value;
+                                setRedFlags(updated);
+                              }}
+                              className="w-full font-bold text-rose-950 bg-transparent border-none outline-none focus:bg-rose-50/50 rounded px-1"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRedFlags(redFlags.filter((_, i) => i !== fIdx));
+                            }}
+                            className="text-slate-300 hover:text-rose-600 shrink-0 print:hidden cursor-pointer"
+                            title="Remove danger sign"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-[11px] text-slate-400 italic">No red flag signs specified.</p>
+                    )}
                   </div>
 
-                  {/* Highway Convoy, FASTag & Green Corridor Telemetry Strip */}
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-1 text-[10px] border-t border-rose-100">
-                    <div className="p-2 bg-white rounded-lg border border-rose-100">
-                      <span className="text-slate-400 block font-semibold">108 ALS VEHICLE</span>
-                      <strong className="text-slate-900 font-mono text-xs">OD-02-AX-1081</strong>
-                      <span className="text-[9px] text-slate-500 block">Driver: Ramesh Sahoo</span>
+                  <div className="p-2 bg-rose-100/70 border border-rose-300 rounded-lg flex items-center justify-between text-[10px] text-rose-950">
+                    <span className="font-extrabold flex items-center gap-1">
+                      <Phone className="w-3 h-3 text-rose-700" />
+                      <span>Odisha Free Emergency: <strong>Dial 108 / 102</strong></span>
+                    </span>
+                    <span className="font-semibold text-rose-800">
+                      24x7 State Casualty Desk
+                    </span>
+                  </div>
+                </div>
+
+                {/* CARD 4: CLINICAL REVIEW & FOLLOW-UP SCHEDULE */}
+                <div className="bg-gradient-to-br from-white to-purple-50/50 p-4 rounded-xl border border-purple-200 shadow-2xs space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-purple-200 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center shadow-xs">
+                        <CalendarClock className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <strong className="text-xs font-black text-purple-950 uppercase tracking-wide block">
+                          Section 4.4-No: Clinical Review &amp; Follow-Up Schedule
+                        </strong>
+                        <span className="text-[10px] text-purple-800 font-semibold">
+                          Mandatory OPD Revisit Date &amp; Clinical Progress Review
+                        </span>
+                      </div>
                     </div>
-                    <div className="p-2 bg-white rounded-lg border border-rose-100">
-                      <span className="text-slate-400 block font-semibold">FASTAG AUTO-TOLL PASS</span>
-                      <strong className="text-emerald-800 font-mono text-xs">FASTAG-EMERG-OD-891</strong>
-                      <span className="text-[9px] text-emerald-700 block">Zero-Stoppage Toll Clearance</span>
+                    <span className="text-[9px] font-black bg-purple-100 text-purple-800 border border-purple-300 px-2 py-0.5 rounded-full uppercase">
+                      Scheduled
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 bg-white rounded-lg border border-purple-100 shadow-2xs">
+                    <textarea
+                      rows={3}
+                      value={followUpSchedule}
+                      onChange={(e) => setFollowUpSchedule(e.target.value)}
+                      placeholder="Enter clinical review timeline, next OPD date, investigations to bring on revisit..."
+                      className="w-full text-xs font-medium text-slate-800 bg-transparent border-none outline-none leading-relaxed resize-none focus:bg-purple-50/40 rounded p-1"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px]">
+                    <div className="flex items-center gap-1.5 text-purple-900 font-bold">
+                      <Clock className="w-3 h-3 text-purple-600" />
+                      <span>Review at: <strong>{facilityName.split(',')[0]}</strong></span>
                     </div>
-                    <div className="p-2 bg-white rounded-lg border border-rose-100">
-                      <span className="text-slate-400 block font-semibold">POLICE VHF CORRIDOR</span>
-                      <strong className="text-indigo-900 font-mono text-xs">VHF CH-04 GREEN</strong>
-                      <span className="text-[9px] text-indigo-700 block">Traffic Escort Coordinated</span>
-                    </div>
-                    <div className="p-2 bg-white rounded-lg border border-rose-100">
-                      <span className="text-slate-400 block font-semibold">COLD CHAIN BOX PROBE</span>
-                      <strong className="text-rose-900 font-mono text-xs">+3.8°C (2°C - 6°C)</strong>
-                      <span className="text-[9px] text-emerald-700 block">Datalogger Seal: OD-27C-88219</span>
-                    </div>
+                    <span className="bg-purple-100 text-purple-800 font-mono text-[9px] px-2 py-0.5 rounded font-black">
+                      SOS REVISIT ANYTIME IF SYMPTOMS AGGRAVATE
+                    </span>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* 6. Attending RMP Signature & Verification Seal */}
+            {/* 6. Registered Medical Practitioner (RMP) Digital Signature & Official Seal */}
             <div className="border-t-2 border-slate-900 pt-4 mt-6 space-y-4">
-              <div className="flex items-center justify-between bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
-                <span className="font-black text-emerald-400">SECTION 6-NO: REGISTERED MEDICAL PRACTITIONER (RMP) DIGITAL SIGNATURE &amp; LEGAL CERTIFICATION</span>
+              <div className="flex items-center justify-between bg-indigo-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-emerald-400">SECTION 5-NO: REGISTERED MEDICAL PRACTITIONER (RMP) DIGITAL SIGNATURE &amp; SEAL</span>
                 <span className="text-slate-300">STATUTORY MANDATE: SIGNED PER SECTION 27 OF NMC ACT 2019 &amp; ABDM DSC STANDARD</span>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -4928,65 +3805,1266 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                     National Health Mission • Odisha State Health Authority
                   </p>
                   <p>
-                    This document is generated by an authorized Registered Medical Practitioner (RMP) under Section 27 of NMC Act 2019 and signed with ABDM cryptographic hash.
+                    This prescription is issued by a Registered Medical Practitioner (RMP) under Section 27 of NMC Act 2019 and digitally authenticated with ABDM cryptographic hash.
                   </p>
                 </div>
 
-              {/* RMP Signature Seal with Vector Signature Overlay */}
-              <div className="text-right sm:border-l sm:pl-6 border-slate-300 space-y-1 shrink-0">
-                <div className="flex flex-col items-end">
-                  {signatureDataUrl ? (
-                    <div className="flex flex-col items-end mb-1 p-2 bg-slate-50/90 rounded-xl border border-slate-200 shadow-2xs">
-                      <img
-                        src={signatureDataUrl}
-                        alt="Doctor Digital Signature"
-                        className="h-14 max-w-[220px] object-contain"
-                      />
-                      <div className="flex items-center gap-1 text-[9px] text-emerald-800 font-bold font-mono mt-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                        <span>VERIFIED RMP DIGITAL SIGNATURE ({signatureType.toUpperCase()})</span>
+                {/* RMP Signature Seal */}
+                <div className="text-right sm:border-l sm:pl-6 border-slate-300 space-y-1 shrink-0">
+                  <div className="flex flex-col items-end">
+                    {signatureDataUrl ? (
+                      <div className="flex flex-col items-end mb-1 p-2 bg-slate-50/90 rounded-xl border border-slate-200 shadow-2xs">
+                        <img
+                          src={signatureDataUrl}
+                          alt="Doctor Digital Signature"
+                          className="h-14 max-w-[220px] object-contain"
+                        />
+                        <div className="flex items-center gap-1 text-[9px] text-emerald-800 font-bold font-mono mt-1">
+                          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                          <span>VERIFIED RMP DIGITAL SIGNATURE ({signatureType.toUpperCase()})</span>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowSignModal(true)}
-                      className="inline-flex items-center gap-1.5 border-2 border-dashed border-indigo-400 bg-indigo-50 hover:bg-indigo-100/80 px-3.5 py-2 rounded-xl text-xs font-bold text-indigo-900 mb-1 transition-all cursor-pointer shadow-xs print:border-slate-400"
-                    >
-                      <Edit3 className="w-4 h-4 text-indigo-700" />
-                      <span>{txt.btnSignOff || 'Doctor Digital Signature (Click to Sign)'}</span>
-                    </button>
-                  )}
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowSignModal(true)}
+                        className="mb-2 px-3 py-2 border-2 border-dashed border-indigo-400 hover:border-indigo-600 rounded-xl text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/50 text-xs font-bold flex items-center gap-2 cursor-pointer transition-all print:hidden"
+                      >
+                        <PenTool className="w-3.5 h-3.5" />
+                        <span>Doctor Digital Signature (Click to Sign)</span>
+                      </button>
+                    )}
 
-                  {/* Interactive Button to Re-sign or Modify when signature is attached */}
-                  {signatureDataUrl && (
-                    <button
-                      type="button"
-                      onClick={() => setShowSignModal(true)}
-                      className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 print:hidden cursor-pointer mb-0.5"
-                    >
-                      <Edit3 className="w-2.5 h-2.5" />
-                      <span>Change / Re-Sign</span>
-                    </button>
-                  )}
-                </div>
+                    {signatureDataUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setShowSignModal(true)}
+                        className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 print:hidden cursor-pointer mb-0.5"
+                      >
+                        <Edit3 className="w-2.5 h-2.5" />
+                        <span>Change / Re-Sign</span>
+                      </button>
+                    )}
+                  </div>
 
-                <div className="font-black text-slate-900 text-sm leading-tight">{doctorName}</div>
-                <div className="text-xs font-bold text-indigo-800 leading-tight">{doctorDegrees}</div>
-                <div className="text-[11px] font-mono text-slate-600 leading-tight">
-                  Reg No: <strong>{doctorRegNo}</strong> (Odisha Medical Council)
-                </div>
-                <div className="text-[9px] text-slate-400 font-mono">
-                  Signed: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()} • ABDM SHA-256
+                  <div className="font-black text-slate-900 text-sm leading-tight">{doctorName}</div>
+                  <div className="text-xs font-bold text-indigo-800 leading-tight">{doctorDegrees}</div>
+                  <div className="text-[11px] font-mono text-slate-600 leading-tight">
+                    Reg No: <strong>{doctorRegNo}</strong> (Odisha Medical Council)
+                  </div>
+                  <div className="text-[9px] text-slate-400 font-mono">
+                    Signed: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()} • ABDM SHA-256
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      )}
 
-            {/* ── TRIPLICATE HOSPITAL SET (SHEET 2 & SHEET 3) ── */}
+      {/* ───────────────────────────────────────────────────────── */}
+      {/* 3. SUITE 2: DEDICATED 108 EMERGENCY REFERRAL & TRANSIT DISPATCH CONSOLE */}
+      {/* ───────────────────────────────────────────────────────── */}
+      {activeTab === 'referral' && (
+        <div className="space-y-4">
+          {/* Suite 2 Dedicated Emergency 108 Hero Banner */}
+          <div className="bg-gradient-to-r from-rose-950 via-red-950 to-slate-900 rounded-2xl p-4 sm:p-5 text-white border border-rose-700/60 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center font-black shadow-md shrink-0">
+                <Ambulance className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="bg-rose-500/30 text-rose-200 border border-rose-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    Suite 2 • NHM Odisha 108 Transit Command
+                  </span>
+                  <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
+                    CAD Priority Green Corridor
+                  </span>
+                  <span className="bg-red-500/20 text-red-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-400/30">
+                    Form 27 Statutory
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-white mt-1">
+                  108 CAD Emergency Referral Hub &amp; Inter-Facility Transfer Console
+                </h3>
+                <p className="text-xs text-rose-200/90 leading-relaxed max-w-2xl">
+                  Statutory inter-facility transfer documentation (Form 27), live 108 CAD token telemetry, golden hour highway corridors, Apex hospital bed allocation, and Form 27C blood requisition.
+                </p>
+              </div>
+            </div>
+
+            {/* Top 108 CAD Emergency Toolbar */}
+            <div className="flex flex-wrap items-center gap-2 text-xs shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowSmsModal(true)}
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                title="Send 108 CAD SMS Dispatch Token to Attendant & ASHA"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>{txt.btnSmsDispatch}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleWhatsAppDispatch}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                title="Send Form 27 Referral Slip to Family WhatsApp"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>{txt.btnWhatsAppDispatch}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold flex items-center gap-1.5 border border-slate-600 shadow-sm transition-all cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5 text-rose-300" />
+                <span>Print Form 27</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveToVault}
+                className="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-600 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Save PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCaseSelector(!showCaseSelector)}
+                className="px-3 py-1.5 bg-rose-800 hover:bg-rose-700 text-rose-100 rounded-xl font-bold flex items-center gap-1.5 border border-rose-600/60 shadow-sm transition-all cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>{showCaseSelector ? 'Close Cases ▲' : 'Load Critical Case (10) ▼'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCockpit(!showCockpit)}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold flex items-center gap-1.5 border border-slate-700 shadow-sm transition-all cursor-pointer"
+              >
+                <Sliders className="w-3.5 h-3.5 text-rose-400" />
+                <span>{showCockpit ? 'Hide Cockpit ▲' : 'Transit Cockpit ▼'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 108 Emergency Transit Corridor & Golden Hour Highway Ribbon */}
+          <div className="p-4 bg-gradient-to-r from-rose-950 via-slate-900 to-rose-900 border border-rose-700/60 rounded-2xl text-white text-xs space-y-3 shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rose-800/60 pb-2.5">
+              <div className="flex items-center gap-2">
+                <Navigation className="w-4 h-4 text-rose-400 animate-pulse" />
+                <span className="font-black text-rose-100 uppercase tracking-wider text-xs">
+                  {txt.etaLabel}: <span className="text-amber-300 font-mono text-sm">{transitRoute.eta}</span> ({transitRoute.distance})
+                </span>
+                <span className="text-slate-400">•</span>
+                <span className="text-slate-300 font-bold">{transitRoute.highway}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="bg-rose-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+                  108 PRIORITY DISPATCH
+                </span>
+                {/* Audio Triage Dispatcher */}
+                <button
+                  type="button"
+                  onClick={() => setAudioPlaying(!audioPlaying)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1.5 cursor-pointer transition-all shadow-xs ${
+                    audioPlaying
+                      ? 'bg-rose-500 text-white ring-2 ring-rose-300 animate-pulse'
+                      : 'bg-slate-800 hover:bg-slate-700 text-rose-200 border border-rose-700/60'
+                  }`}
+                  title="Simulate 108 Emergency Tele-Triage radio broadcast"
+                >
+                  {audioPlaying ? <Volume2 className="w-3.5 h-3.5 text-white" /> : <VolumeX className="w-3.5 h-3.5 text-rose-300" />}
+                  <span>{audioPlaying ? 'Radio Stream Active' : 'Listen 108 Radio'}</span>
+                  {audioPlaying && (
+                    <span className="flex items-center gap-0.5 ml-1">
+                      <span className="w-1 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-1 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-[11px]">
+              <div className="bg-slate-950/70 p-2.5 rounded-xl border border-rose-900/60">
+                <span className="text-slate-400 block text-[10px]">CAD Dispatch Token:</span>
+                <strong className="font-mono text-rose-300 text-xs">{verificationToken?.cadToken}</strong>
+              </div>
+              <div className="bg-slate-950/70 p-2.5 rounded-xl border border-rose-900/60">
+                <span className="text-slate-400 block text-[10px]">Destination Apex Hospital:</span>
+                <strong className="text-indigo-200 truncate block">{referralTarget}</strong>
+              </div>
+              <div className="bg-slate-950/70 p-2.5 rounded-xl border border-rose-900/60">
+                <span className="text-slate-400 block text-[10px]">Live Apex Bed Vacancies:</span>
+                <strong className="text-emerald-400 block">
+                  ICU: {apexStatus.icuBeds} Free • HDU: {apexStatus.hduBeds} Free
+                </strong>
+              </div>
+              <div className="bg-slate-950/70 p-2.5 rounded-xl border border-rose-900/60">
+                <span className="text-slate-400 block text-[10px]">En-Route Oxygen Post:</span>
+                <strong className="text-amber-300 block truncate">{transitRoute.oxygenRefillPost}</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Active Emergency Case Badge */}
+          <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-500">Active Emergency Case:</span>
+              <span className="font-black text-slate-900">{currentCase.patientName}</span>
+              <span className="text-slate-400">•</span>
+              <span className="text-slate-600 font-medium">{currentCase.district}</span>
+              <span className="text-slate-400">•</span>
+              <span className="text-rose-700 font-bold truncate max-w-sm">{currentCase.provisionalDiagnosis}</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="font-black text-[10px] bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-0.5 rounded-full uppercase">
+                {currentCase.acuity} PRIORITY EMERGENCY
+              </span>
+              <span className="font-mono text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                ID: {currentCase.id} ({currentCase.sectionNo})
+              </span>
+            </div>
+          </div>
+
+          {/* Collapsible 10-Case Preset Grid (Emergency Care Focus) */}
+          {showCaseSelector && (
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 to-red-600 text-white flex items-center justify-center font-black shadow-xs">
+                    <Ambulance className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-sm font-black text-slate-900 flex flex-wrap items-center gap-2">
+                      <span>Select Critical Emergency Case for 108 Inter-Facility Transfer:</span>
+                      <span className="text-[10px] font-black bg-rose-100 text-rose-900 px-2 py-0.5 rounded-full border border-rose-200">
+                        5 EMERGENCY CATEGORIES
+                      </span>
+                      <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
+                        10 REFERRAL SCENARIOS
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Click any emergency scenario to load pre-transit resuscitation details, CAD dispatch data, and destination tertiary center.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCaseSelector(false)}
+                  className="text-xs font-bold text-slate-500 hover:text-slate-800 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors self-start sm:self-auto cursor-pointer"
+                >
+                  ✕ Close Cases
+                </button>
+              </div>
+
+              {/* Section Tabs (5 Categories) */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-100">
+                {CLINICAL_SECTION_TABS.map((tab) => {
+                  const isSecActive = selectedSectionTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setSelectedSectionTab(tab.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+                        isSecActive
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      <span>{tab.badge}</span>
+                      <span>{tab.label}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                        isSecActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        2 Cases
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Filtered 2 Emergency Cases Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {filteredCases.map((c) => {
+                  const isSelected = selectedCaseId === c.id;
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => handleLoadPresetCase(c.id)}
+                      className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-3 text-xs relative ${
+                        isSelected
+                          ? 'bg-rose-50/70 border-rose-600 shadow-sm ring-1 ring-rose-500'
+                          : 'bg-slate-50/80 border-slate-200 hover:border-rose-300 hover:bg-white shadow-2xs'
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-mono font-bold text-slate-400">
+                                {c.sectionNo} • {c.id}
+                              </span>
+                              <span className="text-[9px] font-black bg-rose-600 text-white px-2 py-0.2 rounded-full uppercase">
+                                {c.acuity} CRITICAL
+                              </span>
+                            </div>
+                            <h4 className="font-black text-slate-900 text-sm mt-0.5">
+                              {c.patientName}
+                            </h4>
+                            <span className="text-[11px] text-slate-500">
+                              {c.age} Yrs / {c.gender} • Origin: {c.district}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-2xs">
+                              ACTIVE REFERRAL
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="bg-white p-2.5 rounded-lg border border-slate-200/80 space-y-1">
+                          <span className="text-[10px] uppercase font-bold text-rose-700 block">Transfer Indication:</span>
+                          <strong className="text-slate-900 font-bold block leading-snug">
+                            {c.provisionalDiagnosis}
+                          </strong>
+                          <p className="text-[11px] text-slate-600 line-clamp-1">{c.referralReason}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono pt-1">
+                          <div className="bg-slate-100 p-1.5 rounded text-slate-700">
+                            BP: <strong>{c.vitals.bp}</strong> | Pulse: <strong>{c.vitals.pulse}</strong>
+                          </div>
+                          <div className="bg-slate-100 p-1.5 rounded text-slate-700">
+                            SpO2: <strong>{c.vitals.spo2}</strong> | GCS: <strong>{c.gcs.e + c.gcs.v + c.gcs.m}/15</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500">
+                          Destination: <strong className="text-indigo-900">{c.referralTarget.split(',')[0]}</strong>
+                        </span>
+                        <span className="font-bold text-rose-600 hover:text-rose-800">
+                          {isSelected ? '✓ Loaded' : 'Click to Load Transfer →'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Collapsible Emergency Transit Cockpit */}
+          {showCockpit && (
+            <div className="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 text-white space-y-4 shadow-md">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <Sliders className="w-5 h-5 text-rose-400" />
+                  <div>
+                    <h4 className="text-sm font-bold text-white">
+                      Emergency Transit Cockpit • NHM 108 CAD Telemetry Hub
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Real-time highway corridors, apex bed allocations, vital shock indices, and Form 27C cold chain monitoring.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCockpit(false)}
+                  className="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded-lg cursor-pointer"
+                >
+                  ✕ Close
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                {/* Cockpit Card 1: 108 CAD Priority Telemetry */}
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-rose-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-rose-300 uppercase text-[10px]">108 CAD Telemetry:</span>
+                    <span className="text-[9px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-full font-bold">
+                      ALS Live Link
+                    </span>
+                  </div>
+                  <div className="text-slate-200 text-xs font-medium">
+                    Ambulance OD-02-AX-1081 • Fastag RFID Pass Active
+                  </div>
+                  <div className="pt-1 text-[11px] text-slate-400">
+                    Police Green Corridor: <strong className="text-indigo-400">VHF CH-04</strong>
+                  </div>
+                </div>
+
+                {/* Cockpit Card 2: Transport Protocol */}
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-amber-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-amber-300 uppercase text-[10px]">Life Support:</span>
+                    <span className="text-[9px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold">
+                      Ventilator Ready
+                    </span>
+                  </div>
+                  <div className="text-slate-200 text-xs font-medium">
+                    Transport Mode: <strong>{transportMode}</strong>
+                  </div>
+                  <div className="pt-1 text-[11px] text-slate-400">
+                    O2 Demand: <strong className="text-emerald-400">{oxygenReq}</strong>
+                  </div>
+                </div>
+
+                {/* Cockpit Card 3: Shock Index & Vitals */}
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-red-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-red-300 uppercase text-[10px]">Shock Index:</span>
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                      vitalScores.isShock ? 'bg-rose-600 text-white animate-pulse' : 'bg-emerald-500/20 text-emerald-300'
+                    }`}>
+                      {vitalScores.shockIndex} ({vitalScores.isShock ? 'HAZARD' : 'STABLE'})
+                    </span>
+                  </div>
+                  <div className="text-slate-200 text-xs font-medium">
+                    MAP: <strong>{vitalScores.map} mmHg</strong> • GCS: <strong>{totalGcsScore}/15</strong>
+                  </div>
+                  <div className="pt-1 text-[11px] text-slate-400">
+                    MEWS Alert: <strong className="text-amber-300">{mewsScore.riskLevel}</strong>
+                  </div>
+                </div>
+
+                {/* Cockpit Card 4: Form 27C Blood Transport */}
+                <div className="bg-slate-800/80 p-3.5 rounded-xl border border-rose-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-rose-300 uppercase text-[10px]">Blood Box Cold Chain:</span>
+                    <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">
+                      +3.8°C OK
+                    </span>
+                  </div>
+                  <div className="text-slate-200 text-xs font-medium">
+                    PRBC Transport Seal: <strong>OD-27C-88219</strong>
+                  </div>
+                  <div className="pt-1 text-[11px] text-slate-400">
+                    Crossmatch: <strong className="text-rose-400">{bloodCrossmatchStatus.split(' ')[0]}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Referral Document Controls & Triplicate Copy Switcher */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {/* Triplicate Copy Set Switcher */}
+            <div className="p-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 text-xs flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="font-bold">Copy Set:</span>
+              </div>
+              <div className="flex items-center gap-1 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setPrintCopyMode('single')}
+                  className={`px-2.5 py-1 rounded font-bold cursor-pointer transition-all ${
+                    printCopyMode === 'single'
+                      ? 'bg-slate-900 text-white shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-200'
+                  }`}
+                  title="Single Referral Slip"
+                >
+                  Single
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrintCopyMode('triplicate')}
+                  className={`px-2.5 py-1 rounded font-bold cursor-pointer transition-all ${
+                    printCopyMode === 'triplicate'
+                      ? 'bg-slate-900 text-white shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-200'
+                  }`}
+                  title="Official 3-Copy Triplicate Set (Apex + MRD + 108 Unit)"
+                >
+                  Triplicate Set
+                </button>
+              </div>
+            </div>
+
+            {/* Anti-Counterfeit State Security Watermark Switcher */}
+            <div className="p-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 text-xs flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-rose-600 shrink-0" />
+                <span className="font-bold">Govt Seal:</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSecurityWatermarkEnabled(!securityWatermarkEnabled)}
+                className={`px-2.5 py-1 rounded font-bold text-[10px] cursor-pointer transition-all ${
+                  securityWatermarkEnabled
+                    ? 'bg-rose-700 text-white shadow-2xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-200'
+                }`}
+                title="Toggle anti-tamper watermark & official government emblem"
+              >
+                {securityWatermarkEnabled ? '🔒 Watermark ON' : '⚪ Watermark OFF'}
+              </button>
+            </div>
+
+            {/* Pre-Arrival Tele-Handover Call Status */}
+            <div className="p-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 text-xs flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="font-bold">Apex Casualty Call:</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setTeleCallAcknowledged(!teleCallAcknowledged);
+                  if (!teleCallAcknowledged) {
+                    setHandoverChecks((prev) => ({ ...prev, casualtyNotified: true }));
+                  }
+                }}
+                className={`px-2 py-1 rounded font-bold text-[10px] cursor-pointer transition-all ${
+                  teleCallAcknowledged
+                    ? 'bg-emerald-600 text-white shadow-2xs'
+                    : 'bg-amber-100 text-amber-900 border border-amber-300'
+                }`}
+              >
+                {teleCallAcknowledged ? '✓ Tele-Informed' : 'Pending Call'}
+              </button>
+            </div>
+          </div>
+
+          {/* ───────────────────────────────────────────────────────── */}
+          {/* THE OFFICIAL INTER-FACILITY REFERRAL CERTIFICATE (FORM 27 / NHM ODISHA) */}
+          {/* ───────────────────────────────────────────────────────── */}
+          <div
+            id="printable-clinical-slip"
+            className="bg-white rounded-2xl border-2 border-rose-300 shadow-lg p-6 sm:p-8 space-y-6 text-slate-800 font-sans print:border-none print:shadow-none print:p-0 print:m-0 relative overflow-hidden"
+          >
+            {/* Anti-Counterfeit State Security Watermark */}
+            {securityWatermarkEnabled && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden opacity-[0.035] print:opacity-[0.055] z-0"
+              >
+                <div className="transform -rotate-25 text-center font-black tracking-widest text-rose-950 border-8 border-dashed border-rose-900 p-8 rounded-3xl">
+                  <div className="text-4xl sm:text-6xl font-black">GOVT OF ODISHA</div>
+                  <div className="text-2xl sm:text-3xl mt-2 font-extrabold tracking-normal">DEPT OF HEALTH &amp; FAMILY WELFARE</div>
+                  <div className="text-lg sm:text-2xl mt-2 font-bold text-rose-900">NHM 108 EMERGENCY REFERRAL • FORM 27</div>
+                  <div className="text-sm mt-1 font-mono tracking-widest">{verificationToken?.docId || 'VERIFIED-DOC'}</div>
+                </div>
+              </div>
+            )}
+
+            {/* 1. Official Emergency Letterhead Header */}
+            <div className="border-b-2 border-rose-900 pb-4 space-y-2">
+              <div className="flex items-center justify-between bg-rose-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-amber-300">GOVERNMENT OF ODISHA • NHM 108 EMERGENCY INTER-FACILITY REFERRAL (FORM 27)</span>
+                <span className="text-rose-200">STATUTORY INSTRUCTION: MANDATORY FOR 108 TRANSIT &amp; APEX CASUALTY ADMISSION</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                {/* Referring Hospital Details */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-rose-900">
+                    <span className="bg-rose-100 px-2 py-0.5 rounded">Department of Health &amp; Family Welfare</span>
+                    <span>Government of Odisha</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    {facilityName}
+                  </h3>
+                  <p className="text-xs text-slate-600 font-medium">
+                    {facilityDistrict} • 24x7 Emergency Casualty Desk • NHM 108 Base Station
+                  </p>
+                  <div className="pt-1 flex items-center gap-2 text-[11px] text-rose-950 font-bold">
+                    <span>Referring Medical Officer:</span>
+                    <span className="text-rose-900 underline font-black">{doctorName}</span>
+                    <span className="text-slate-400">|</span>
+                    <span className="font-mono text-slate-600">Reg: {doctorRegNo} (OMC)</span>
+                  </div>
+                </div>
+
+                {/* 108 CAD Token & Verification Stamp */}
+                <div className="flex items-center sm:items-start gap-3 bg-rose-50/70 border border-rose-200 p-2.5 rounded-xl shrink-0">
+                  {qrDataUrl && (
+                    <img
+                      src={qrDataUrl}
+                      alt="Verifiable QR Code"
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded border border-rose-300 shadow-2xs"
+                    />
+                  )}
+                  <div className="text-[10px] space-y-0.5 text-slate-600 font-mono">
+                    <span className="block font-black text-rose-950 text-xs">
+                      {verificationToken?.docId}
+                    </span>
+                    <span className="text-rose-700 font-bold block">108 CAD: {verificationToken?.cadToken}</span>
+                    <span>Departure: {new Date().toLocaleTimeString()}</span>
+                    <span>Date: {new Date().toLocaleDateString()}</span>
+                    <span className="text-[9px] text-slate-400 block truncate max-w-[120px]">
+                      {verificationToken?.securityHash}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Document Banner Type & Triplicate Stamp */}
+              <div className="mt-3 pt-2.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-950 text-white rounded-lg text-xs font-black uppercase tracking-wider">
+                    <Ambulance className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Inter-Facility Clinical Referral Certificate (Form 27)</span>
+                  </span>
+                  {printCopyMode === 'triplicate' && (
+                    <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black px-2.5 py-1 rounded-md shadow-2xs">
+                      SHEET 1 OF 3: ORIGINAL (RECEIVING APEX CASUALTY COPY)
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="font-bold text-slate-600">Acuity Status:</span>
+                  <span className="px-2.5 py-0.5 rounded-full font-black text-[11px] bg-rose-100 text-rose-800 border border-rose-300">
+                    {currentCase.acuity} PRIORITY EMERGENCY
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 1: Referral Origin & Target Apex Facility Pair */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-amber-300">SECTION 1-NO: INTER-FACILITY TRANSFER ROUTE &amp; APEX CASUALTY CONTACT</span>
+                <span className="text-slate-300">INSTRUCTION: DUAL MEDICAL OFFICER TELE-HANDOVER MANDATORY</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Origin Facility */}
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      Referring Facility (Origin)
+                    </span>
+                    <strong className="text-slate-900 block text-xs">{facilityName}</strong>
+                    <span className="text-[11px] text-slate-500">{facilityDistrict}</span>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200 text-[11px] space-y-0.5">
+                    <div>Referring Clinician: <strong>{doctorName}</strong> ({doctorRegNo})</div>
+                    <div className="text-slate-500">Departure Timestamp: {new Date().toLocaleTimeString()}</div>
+                  </div>
+                </div>
+
+                {/* Target Apex Center */}
+                <div className="p-4 bg-indigo-50/70 rounded-xl border border-indigo-200 space-y-2 text-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-indigo-700 block">
+                      Target Apex Center (Referred To)
+                    </span>
+                    <strong className="text-indigo-950 block text-xs">{referralTarget}</strong>
+                  </div>
+
+                  <div className="mt-1 p-2 bg-white rounded-lg border border-indigo-200 text-[10px] space-y-0.5">
+                    <div className="flex justify-between text-indigo-900">
+                      <span>Nodal Emergency Desk:</span>
+                      <strong className="font-mono">{apexStatus.nodalPhone}</strong>
+                    </div>
+                    <div className="text-slate-600">Casualty Officer: {apexStatus.emergencyOfficer}</div>
+                    <div className="text-emerald-700 font-bold">
+                      ✓ Reserved Bed: ICU: {apexStatus.icuBeds} Free | HDU: {apexStatus.hduBeds} Free
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Patient Emergency Demographics & Identification */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between bg-rose-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-rose-300">SECTION 2-NO: PATIENT EMERGENCY DEMOGRAPHICS &amp; IDENTIFICATION</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAbhaCardModal(true)}
+                    className="bg-teal-600 hover:bg-teal-500 text-white px-2 py-0.5 rounded text-[9px] font-black uppercase flex items-center gap-1 cursor-pointer transition-colors print:hidden"
+                    title="Open Official ABHA Digital Health Card"
+                  >
+                    <Award className="w-2.5 h-2.5" />
+                    <span>View ABHA Card</span>
+                  </button>
+                </div>
+                <span className="text-slate-300">INSTRUCTION: VERIFY IDENTITY WITH GOVT ID (AADHAAR / BSKY / ABHA CARD)</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-xs">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Patient Name</span>
+                  <strong className="text-slate-900 text-sm font-black">{patientName}</strong>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Age / Gender</span>
+                  <span className="text-slate-800 font-bold">{patientAge} Yrs / {patientGender}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">ABHA Health ID</span>
+                  <span className="font-mono text-indigo-900 font-bold">{patientAbha}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Weight / ABO</span>
+                  <span className="text-slate-800 font-bold">{patientWeight} • <span className="text-rose-700 font-extrabold">{currentCase.bloodGroup || 'O+'}</span></span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Attendant &amp; Phone</span>
+                  <span className="text-slate-800 font-medium truncate block">{currentCase.district || 'Cuttack'} • {patientPhone}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Allergy Status</span>
+                  <span className={`font-bold ${patientAllergies.includes('None') ? 'text-emerald-700' : 'text-rose-700'}`}>
+                    {patientAllergies}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Baseline Departure Physiological Vitals & Shock Indices */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-rose-300">SECTION 3-NO: BASELINE DEPARTURE VITALS, SHOCK INDEX &amp; GLASGOW COMA SCALE</span>
+                <span className="text-slate-300">INSTRUCTION: RE-EVALUATE EVERY 15 MINS DURING HIGHWAY TRANSIT</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 bg-rose-50/50 p-2.5 rounded-xl border border-rose-100 text-center text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold block">Blood Pressure</span>
+                  <strong className="text-rose-950 font-black text-sm">{vitals.bp}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold block">Pulse Rate</span>
+                  <strong className="text-rose-950 font-black text-sm">{vitals.pulse}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold block">SpO2 (Oxygen)</span>
+                  <strong className="text-rose-950 font-black text-sm">{vitals.spo2}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold block">Temperature</span>
+                  <strong className="text-rose-950 font-black text-sm">{vitals.temp}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold block">Respiration</span>
+                  <strong className="text-rose-950 font-black text-sm">{vitals.rr}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold block">GCS (E+V+M)</span>
+                  <strong className="text-indigo-950 font-black text-sm">{totalGcsScore}/15</strong>
+                </div>
+              </div>
+
+              {/* Physiological Critical Indices Strip */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-100/80 rounded-lg text-[11px] font-mono">
+                <div className="flex items-center gap-1.5">
+                  <HeartPulse className="w-3.5 h-3.5 text-rose-600" />
+                  <span>
+                    Shock Index: <strong>{vitalScores.shockIndex}</strong>{' '}
+                    <span
+                      className={`px-1.5 py-0.2 rounded font-bold text-[9px] ${
+                        vitalScores.isShock ? 'bg-rose-600 text-white' : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {vitalScores.isShock ? 'SHOCK HAZARD' : 'NORMAL RANGE'}
+                    </span>
+                  </span>
+                </div>
+                <div className="text-slate-600">
+                  Mean Arterial Pressure (MAP): <strong>{vitalScores.map} mmHg</strong> | MEWS Alert: <strong>{mewsScore.riskLevel}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Clinical Provisional Diagnosis & Mandatory Referral Justification */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between bg-teal-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-teal-300">SECTION 4-NO: CLINICAL DIAGNOSIS &amp; STATUTORY REFERRAL JUSTIFICATION</span>
+                <span className="text-slate-300">INSTRUCTION: MANDATORY WHO ICD-10 CODE &amp; HIGHER TERTIARY CARE JUSTIFICATION</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-500 block mb-1">
+                    Provisional Clinical Diagnosis (ICD-10)
+                  </span>
+                  <input
+                    type="text"
+                    value={diagnosis}
+                    onChange={(e) => setDiagnosis(e.target.value)}
+                    className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-extrabold text-slate-900 print:bg-transparent print:border-none print:p-0"
+                  />
+                </div>
+
+                <div>
+                  <span className="text-xs font-black uppercase tracking-wider text-rose-700 block mb-1">
+                    Clinical Justification for Higher Center Transfer
+                  </span>
+                  <textarea
+                    rows={2}
+                    value={referralReason}
+                    onChange={(e) => setReferralReason(e.target.value)}
+                    className="w-full text-xs text-rose-950 font-medium bg-rose-50/60 p-2.5 rounded-xl border border-rose-200 leading-relaxed print:bg-transparent print:border-none print:p-0 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Transit Life Support Parameters */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Transport Mode:</span>
+                  <strong className="text-slate-900">{transportMode}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px]">In-Transit Oxygen Delivery:</span>
+                  <strong className="text-emerald-900">{oxygenReq}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Highway Green Corridor:</span>
+                  <strong className="text-rose-900">{apexStatus.greenCorridor}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 5: NABH SBAR Clinical Handover Protocol */}
+            <div className="p-4 bg-gradient-to-r from-slate-50 via-indigo-50/40 to-slate-50 rounded-xl border border-indigo-200 space-y-3 text-xs">
+              <div className="flex items-center justify-between border-b border-indigo-200/60 pb-2">
+                <div className="flex items-center gap-2">
+                  <HeartPulse className="w-4 h-4 text-rose-600" />
+                  <strong className="text-slate-900 font-bold uppercase tracking-wide text-[11px]">
+                    NABH SBAR Clinical Handover Protocol (Inter-Facility 108 Standard)
+                  </strong>
+                </div>
+                <span className="text-[10px] font-mono text-indigo-800 font-bold bg-white px-2 py-0.5 rounded border border-indigo-200">
+                  MEWS Score: {mewsScore.score} ({mewsScore.riskLevel})
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-[11px]">
+                <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <span className="text-[10px] font-bold text-rose-700 uppercase block mb-1">
+                    [S] Situation
+                  </span>
+                  <p className="text-slate-800 leading-snug line-clamp-2">{diagnosis}</p>
+                  <span className="text-[9px] text-slate-500 block mt-1">Priority: {currentCase.acuity} Emergency</span>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <span className="text-[10px] font-bold text-indigo-700 uppercase block mb-1">
+                    [B] Background
+                  </span>
+                  <p className="text-slate-800 leading-snug line-clamp-2">{chiefComplaints}</p>
+                  <span className="text-[9px] text-amber-700 font-bold block mt-1">Allergy: {patientAllergies}</span>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <span className="text-[10px] font-bold text-emerald-700 uppercase block mb-1">
+                    [A] Assessment
+                  </span>
+                  <div className="space-y-0.5 text-[10px] text-slate-700 font-mono">
+                    <div>BP: <strong>{vitals.bp}</strong> | Pulse: <strong>{vitals.pulse}</strong></div>
+                    <div>SpO2: <strong>{vitals.spo2}</strong> | GCS: <strong>{totalGcsScore}/15</strong></div>
+                    <div className="text-emerald-800 font-bold">Shock Index: {vitalScores.shockIndex}</div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                  <span className="text-[10px] font-bold text-purple-700 uppercase block mb-1">
+                    [R] Recommendation
+                  </span>
+                  <p className="text-slate-800 leading-snug line-clamp-2">{referralReason}</p>
+                  <span className="text-[9px] text-indigo-700 font-bold block mt-1">Direct Admission: Apex ICU / HDU</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 6: En-Route Administered Medications & Life Support (NMC Standard) */}
+            <div className="p-4 bg-white rounded-xl border border-indigo-200 space-y-3 text-xs shadow-2xs">
+              <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-black text-indigo-900 font-serif">℞</span>
+                  <strong className="text-slate-900 font-bold uppercase tracking-wide text-[11px]">
+                    Administered &amp; En-Route Medications (NMC Generic Standard)
+                  </strong>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-black text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded">
+                    ODISHA NIRAMAYA FREE SUPPLY
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('prescription')}
+                    className="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 flex items-center gap-1 cursor-pointer print:hidden"
+                  >
+                    <Edit3 className="w-2.5 h-2.5" />
+                    <span>Edit Rx</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-600 border-b border-slate-200 text-[10px] uppercase font-bold">
+                      <th className="p-2">#</th>
+                      <th className="p-2">Generic Medicine (CAPITAL LETTERS)</th>
+                      <th className="p-2">Dose &amp; Form</th>
+                      <th className="p-2">Frequency / Route</th>
+                      <th className="p-2">Duration</th>
+                      <th className="p-2">Transit &amp; Administration Directive</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {medications.map((med, mIdx) => (
+                      <tr key={mIdx} className="hover:bg-slate-50/80">
+                        <td className="p-2 font-bold text-slate-400">{mIdx + 1}</td>
+                        <td className="p-2 font-black text-slate-900 font-mono tracking-wide">
+                          {med.name.toUpperCase()}
+                        </td>
+                        <td className="p-2 font-semibold text-slate-700">
+                          {med.dosage} ({med.form})
+                        </td>
+                        <td className="p-2 font-bold text-indigo-900">{med.freq}</td>
+                        <td className="p-2 text-slate-600">{med.duration}</td>
+                        <td className="p-2 text-slate-600 text-[11px] italic">{med.instruction}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Section 7: NHM 108 Inter-Facility Handover Verification Checklist */}
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
+              <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider block">
+                NHM 108 Inter-Facility Handover Verification Checklist:
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={handoverChecks.ivLine}
+                    onChange={(e) => setHandoverChecks({ ...handoverChecks, ivLine: e.target.checked })}
+                    className="rounded text-rose-600"
+                  />
+                  <span>IV Cannula (18G) Patent</span>
+                </label>
+
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={handoverChecks.pulseOx}
+                    onChange={(e) => setHandoverChecks({ ...handoverChecks, pulseOx: e.target.checked })}
+                    className="rounded text-rose-600"
+                  />
+                  <span>Pulse Oximeter Connected</span>
+                </label>
+
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={handoverChecks.o2Pressure}
+                    onChange={(e) => setHandoverChecks({ ...handoverChecks, o2Pressure: e.target.checked })}
+                    className="rounded text-rose-600"
+                  />
+                  <span>O2 Cylinder Pressure &gt;150 Bar</span>
+                </label>
+
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={handoverChecks.attendantConsent}
+                    onChange={(e) => setHandoverChecks({ ...handoverChecks, attendantConsent: e.target.checked })}
+                    className="rounded text-rose-600"
+                  />
+                  <span>Attendant Transfer Consent OK</span>
+                </label>
+
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={handoverChecks.casualtyNotified}
+                    onChange={(e) => setHandoverChecks({ ...handoverChecks, casualtyNotified: e.target.checked })}
+                    className="rounded text-rose-600"
+                  />
+                  <span>Casualty Desk Tele-Informed</span>
+                </label>
+
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={handoverChecks.emtEscort}
+                    onChange={(e) => setHandoverChecks({ ...handoverChecks, emtEscort: e.target.checked })}
+                    className="rounded text-rose-600"
+                  />
+                  <span>Staff Nurse / EMT Escort Named</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Section 8: Emergency Blood & Biological Specimen Transport Voucher (Form 27C) */}
+            <div
+              className={`p-4 rounded-xl border transition-all ${
+                bloodRequisitionEnabled
+                  ? 'bg-rose-50/80 border-rose-300 ring-1 ring-rose-300 shadow-2xs'
+                  : 'bg-slate-50 border-slate-200'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={bloodRequisitionEnabled}
+                    onChange={(e) => setBloodRequisitionEnabled(e.target.checked)}
+                    className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500"
+                  />
+                  <span className="font-extrabold text-xs sm:text-sm text-rose-950 flex items-center gap-1.5">
+                    <Droplet className="w-4 h-4 text-rose-600 fill-rose-600" />
+                    <span>Emergency Blood &amp; Component Requisition Voucher (Form 27C / National Blood Policy)</span>
+                  </span>
+                </label>
+                <span
+                  className={`text-[10px] font-black uppercase px-2 py-0.5 rounded shrink-0 ${
+                    bloodRequisitionEnabled
+                      ? 'bg-rose-600 text-white shadow-2xs animate-pulse'
+                      : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {bloodRequisitionEnabled ? 'VOUCHER ACTIVE (MANDATORY)' : 'STANDBY (OPTIONAL)'}
+                </span>
+              </div>
+
+              {bloodRequisitionEnabled && (
+                <div className="mt-3 pt-3 border-t border-rose-200 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        Recipient ABO/Rh:
+                      </label>
+                      <select
+                        value={bloodGroupReq}
+                        onChange={(e) => setBloodGroupReq(e.target.value)}
+                        className="w-full p-2 bg-white border border-rose-300 rounded-lg font-black text-rose-900 text-xs outline-none"
+                      >
+                        {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'Bombay Oh (Unconfirmed)'].map((bg) => (
+                          <option key={bg} value={bg}>{bg}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        Component Required:
+                      </label>
+                      <select
+                        value={bloodComponentReq}
+                        onChange={(e) => setBloodComponentReq(e.target.value)}
+                        className="w-full p-2 bg-white border border-rose-300 rounded-lg font-bold text-slate-800 text-xs outline-none"
+                      >
+                        <option value="Packed Red Blood Cells (PRBC)">Packed Red Cells (PRBC)</option>
+                        <option value="Platelet Concentrate (RDP / SDP)">Platelets (RDP / SDP)</option>
+                        <option value="Fresh Frozen Plasma (FFP)">Fresh Frozen Plasma (FFP)</option>
+                        <option value="Cryoprecipitate">Cryoprecipitate (Factor VIII)</option>
+                        <option value="Whole Blood">Whole Human Blood</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        Units Requisitioned:
+                      </label>
+                      <select
+                        value={bloodUnitsReq}
+                        onChange={(e) => setBloodUnitsReq(Number(e.target.value))}
+                        className="w-full p-2 bg-white border border-rose-300 rounded-lg font-black text-slate-800 text-xs outline-none"
+                      >
+                        <option value={1}>1 Unit (350/450 mL)</option>
+                        <option value={2}>2 Units (Standard Transfusion)</option>
+                        <option value={3}>3 Units (Acute Anemia / Shock)</option>
+                        <option value={4}>4 Units (MTP Protocol Tier 1)</option>
+                        <option value={6}>6 Units (Massive Transfusion Protocol)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                        Clinical Urgency:
+                      </label>
+                      <select
+                        value={bloodUrgency}
+                        onChange={(e) => setBloodUrgency(e.target.value)}
+                        className="w-full p-2 bg-white border border-rose-300 rounded-lg font-bold text-rose-700 text-xs outline-none"
+                      >
+                        <option value="STAT Emergency (Immediate O- Negative Release)">STAT Emergency (O- Release)</option>
+                        <option value="Urgent (Within 1 Hour / Crossmatched)">Urgent (Within 1 Hour)</option>
+                        <option value="Elective Pre-Op Crossmatch Reserve">Elective Reserve (Pre-Op)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-rose-100/70 border border-rose-300 rounded-lg text-[11px] text-rose-950 font-medium">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-rose-700 shrink-0" />
+                      <span><strong>Crossmatch Status:</strong> {bloodCrossmatchStatus}</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-rose-800 bg-white px-2 py-0.5 rounded border border-rose-200">
+                      Apex Bank Reserve: {apexStatus.bloodBankUnits || 'Stocks Active'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Section 9: Paramedic Serial En-Route Vitals Timeline (108 Ambulance Run Sheet) */}
+            <div className="p-4 bg-gradient-to-br from-white via-rose-50/40 to-slate-50 rounded-xl border border-rose-200 space-y-3 text-xs shadow-2xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rose-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                    <Activity className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <strong className="text-xs font-black text-rose-950 uppercase tracking-wide block">
+                      Section 9-No: Paramedic Serial En-Route Vitals &amp; Infusion Timeline Run Sheet
+                    </strong>
+                    <span className="text-[10px] text-rose-800 font-semibold">
+                      NHM Odisha 108 Emergency Medical Services • Statutory Golden Hour Transit Log
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 print:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddVitalModal(true)}
+                    className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>+ Log En-Route Vitals</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-rose-100/70 text-rose-950 border-b border-rose-200 text-[10px] uppercase font-bold">
+                      <th className="p-2">Milestone / Time</th>
+                      <th className="p-2">GPS Location</th>
+                      <th className="p-2">BP (mmHg)</th>
+                      <th className="p-2">HR (bpm)</th>
+                      <th className="p-2">SpO2 / O2 Flow</th>
+                      <th className="p-2">GCS Score</th>
+                      <th className="p-2">IV Infusion</th>
+                      <th className="p-2">En-Route Notes &amp; Paramedic</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-rose-100/80">
+                    {enRouteVitalsLog.map((log) => (
+                      <tr key={log.id} className="hover:bg-white/80">
+                        <td className="p-2 font-bold text-slate-900 whitespace-nowrap">
+                          <span className="block text-[11px]">{log.milestone}</span>
+                          <span className="text-[9px] font-mono text-slate-500">{log.time}</span>
+                        </td>
+                        <td className="p-2 text-slate-700 font-medium whitespace-nowrap">{log.location}</td>
+                        <td className="p-2 font-bold text-rose-950 font-mono">{log.bp}</td>
+                        <td className="p-2 font-bold text-slate-900 font-mono">{log.hr}</td>
+                        <td className="p-2 whitespace-nowrap">
+                          <span className="font-extrabold text-emerald-800">{log.spo2}</span>
+                          <span className="text-[9px] text-slate-500 block">({log.o2})</span>
+                        </td>
+                        <td className="p-2 font-mono font-bold text-indigo-900">{log.gcs}</td>
+                        <td className="p-2 text-slate-700 font-mono text-[10px]">{log.ivDrip}</td>
+                        <td className="p-2 text-[10px] text-slate-600">
+                          <span className="block font-medium">{log.notes}</span>
+                          <span className="text-[9px] font-mono text-rose-800 font-bold">{log.emt}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Highway Convoy, FASTag & Green Corridor Telemetry Strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-1 text-[10px] border-t border-rose-100">
+                <div className="p-2 bg-white rounded-lg border border-rose-100">
+                  <span className="text-slate-400 block font-semibold">108 ALS VEHICLE</span>
+                  <strong className="text-slate-900 font-mono text-xs">OD-02-AX-1081</strong>
+                  <span className="text-[9px] text-slate-500 block">Driver: Ramesh Sahoo</span>
+                </div>
+                <div className="p-2 bg-white rounded-lg border border-rose-100">
+                  <span className="text-slate-400 block font-semibold">FASTAG AUTO-TOLL PASS</span>
+                  <strong className="text-emerald-800 font-mono text-xs">FASTAG-EMERG-OD-891</strong>
+                  <span className="text-[9px] text-emerald-700 block">Zero-Stoppage Toll Clearance</span>
+                </div>
+                <div className="p-2 bg-white rounded-lg border border-rose-100">
+                  <span className="text-slate-400 block font-semibold">POLICE VHF CORRIDOR</span>
+                  <strong className="text-indigo-900 font-mono text-xs">VHF CH-04 GREEN</strong>
+                  <span className="text-[9px] text-indigo-700 block">Traffic Escort Coordinated</span>
+                </div>
+                <div className="p-2 bg-white rounded-lg border border-rose-100">
+                  <span className="text-slate-400 block font-semibold">COLD CHAIN BOX PROBE</span>
+                  <strong className="text-rose-900 font-mono text-xs">+3.8°C (2°C - 6°C)</strong>
+                  <span className="text-[9px] text-emerald-700 block">Datalogger Seal: OD-27C-88219</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 10: Official Tripartite Signatures & Legal Handover Block */}
+            <div className="border-t-2 border-rose-900 pt-4 mt-6 space-y-4">
+              <div className="flex items-center justify-between bg-rose-950 text-white px-3 py-1 rounded-lg text-[10px] font-mono tracking-wider">
+                <span className="font-black text-amber-300">SECTION 10-NO: TRIPARTITE CLINICAL &amp; TRANSIT HANDOVER SIGN-OFF</span>
+                <span className="text-slate-300">MANDATE: LEGAL TRANSIT CERTIFICATE SIGNED BY REFERRING RMP, EMT &amp; APEX CMO</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                {/* 1. Referring Doctor Sign */}
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">1. Referring Medical Officer</span>
+                  {signatureDataUrl ? (
+                    <img src={signatureDataUrl} alt="Signature" className="h-10 object-contain my-1" />
+                  ) : (
+                    <div className="h-10 flex items-center text-slate-400 italic text-[11px]">[Digital Signature Attached]</div>
+                  )}
+                  <strong className="text-slate-900 block leading-tight">{doctorName}</strong>
+                  <span className="text-[10px] text-slate-500 font-mono block">Reg: {doctorRegNo} (OMC)</span>
+                  <span className="text-[9px] text-slate-400 block">{facilityName.split(',')[0]}</span>
+                </div>
+
+                {/* 2. 108 EMT Paramedic Sign */}
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">2. Attending 108 Paramedic</span>
+                  <div className="h-10 flex items-center font-mono font-bold text-rose-800 text-[11px]">
+                    EMT-OD-7721 [VERIFIED BIOMETRIC]
+                  </div>
+                  <strong className="text-slate-900 block leading-tight">Paramedic Bikash Das</strong>
+                  <span className="text-[10px] text-slate-500 font-mono block">ALS Unit: OD-02-AX-1081</span>
+                  <span className="text-[9px] text-emerald-700 font-bold block">108 CAD Transit Acknowledged</span>
+                </div>
+
+                {/* 3. Receiving Apex Casualty CMO */}
+                <div className="p-3 bg-indigo-50/70 rounded-xl border border-indigo-200 text-xs space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-indigo-800 block">3. Receiving Apex Casualty CMO</span>
+                  <div className="h-10 flex items-center text-indigo-900 font-bold text-[11px]">
+                    {apexStatus.emergencyOfficer}
+                  </div>
+                  <strong className="text-indigo-950 block leading-tight">{referralTarget.split(',')[0]}</strong>
+                  <span className="text-[10px] text-slate-500 font-mono block">Casualty Room Desk</span>
+                  <span className="text-[9px] text-indigo-700 font-bold block">Bed Reserved (ICU/HDU)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Triplicate Copy Set Sheets (Sheet 2: Referring MRD & Sheet 3: 108 Ambulance Unit) */}
             {printCopyMode === 'triplicate' && (
               <div className="space-y-6 pt-6">
-                {/* ── SHEET 2: DUPLICATE (REFERRING HOSPITAL MEDICAL RECORDS MRD COPY) ── */}
+                {/* SHEET 2: DUPLICATE (REFERRING HOSPITAL MEDICAL RECORDS MRD COPY) */}
                 <div className="pt-6 border-t-4 border-dashed border-slate-400 break-before-page space-y-4">
                   <div className="bg-slate-800 text-white p-2 rounded-lg text-center text-xs font-black tracking-widest flex items-center justify-between px-4">
                     <span className="text-[10px] text-amber-400 font-mono">TRIPLICATE SET (SHEET 2 OF 3)</span>
@@ -5030,12 +5108,12 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                   </div>
                 </div>
 
-                {/* ── SHEET 3: TRIPLICATE (108 AMBULANCE EMT TRANSIT HANDOVER COPY) ── */}
-                <div className="pt-6 border-t-4 border-dashed border-slate-400 break-before-page space-y-4">
-                  <div className="bg-rose-900 text-white p-2 rounded-lg text-center text-xs font-black tracking-widest flex items-center justify-between px-4">
-                    <span className="text-[10px] text-rose-300 font-mono">TRIPLICATE SET (SHEET 3 OF 3)</span>
-                    <span>TRIPLICATE: 108 EMERGENCY AMBULANCE EMT TRANSIT HANDOVER COPY</span>
-                    <span className="text-[10px] text-rose-200 font-mono">PILOT ESCORT</span>
+                {/* SHEET 3: TRIPLICATE (108 AMBULANCE FLEET BASE LOG ARCHIVE) */}
+                <div className="pt-6 border-t-4 border-dashed border-rose-400 break-before-page space-y-4">
+                  <div className="bg-rose-950 text-white p-2 rounded-lg text-center text-xs font-black tracking-widest flex items-center justify-between px-4">
+                    <span className="text-[10px] text-amber-400 font-mono">TRIPLICATE SET (SHEET 3 OF 3)</span>
+                    <span>TRIPLICATE: 108 AMBULANCE FLEET BASE LOG &amp; CALL CENTER AUDIT</span>
+                    <span className="text-[10px] text-rose-300 font-mono">NHM ODISHA</span>
                   </div>
 
                   <div className="p-4 bg-rose-50/70 border border-rose-200 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
@@ -5083,7 +5161,6 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────── */}
       {/* 4. SUB-TAB 3: QR CODE VERIFIER & AUDIT SCANNER */}
       {/* ───────────────────────────────────────────────────────── */}
       {activeTab === 'verify' && (
