@@ -51,8 +51,8 @@ export async function fetchUnsplashDoctorPhotos(accessKey = getUnsplashAccessKey
   }
 
   const queries = {
-    male: 'indian male doctor hospital portrait',
-    female: 'indian female doctor clinic portrait'
+    male: ['indian doctor', 'male doctor', 'doctor portrait'],
+    female: ['female doctor', 'indian female doctor', 'woman doctor hospital']
   };
 
   const results = {
@@ -61,19 +61,29 @@ export async function fetchUnsplashDoctorPhotos(accessKey = getUnsplashAccessKey
   };
 
   try {
-    for (const [gender, query] of Object.entries(queries)) {
-      const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=30&orientation=squarish&client_id=${accessKey}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.results && data.results.length > 0) {
-          const fetchedUrls = data.results.map(
-            (item) => `${item.urls.small || item.urls.regular}&auto=format&fit=crop&w=320&h=320&crop=faces&q=80`
-          );
-          results[gender] = [...fetchedUrls, ...DOCTOR_PHOTOS[gender]];
+    for (const [gender, queryList] of Object.entries(queries)) {
+      const fetchedList = [];
+      for (const q of queryList) {
+        try {
+          const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=30&client_id=${accessKey}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.results && data.results.length > 0) {
+              for (const item of data.results) {
+                const u = item.urls.raw
+                  ? `${item.urls.raw}&auto=format&fit=crop&w=320&h=320&crop=faces&q=80`
+                  : `${item.urls.small || item.urls.regular}&auto=format&fit=crop&w=320&h=320&crop=faces&q=80`;
+                if (!fetchedList.includes(u)) fetchedList.push(u);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn(`Query failed: ${q}`, e);
         }
-      } else {
-        console.warn(`Unsplash API error (${res.status}) for ${gender}:`, await res.text());
+      }
+      if (fetchedList.length > 0) {
+        results[gender] = [...fetchedList, ...DOCTOR_PHOTOS[gender]];
       }
     }
 

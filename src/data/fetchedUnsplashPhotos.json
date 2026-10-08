@@ -1,80 +1,5 @@
-// Common Indian female first names and patterns in Odisha to accurately match doctor gender
-export const FEMALE_NAME_KEYWORDS = [
-  'rashmi', 'priti', 'archana', 'swarnalata', 'priyanka', 'sunita', 'anita', 'geeta',
-  'monalisa', 'deepa', 'sanghamitra', 'subhashree', 'lipsa', 'madhusmita', 'tanushree',
-  'namita', 'kavita', 'swati', 'rojalin', 'mamata', 'pooja', 'shradha', 'anjali',
-  'manaswini', 'tapashwini', 'tapaswini', 'meenakshi', 'smita', 'alaka', 'minati', 'sasmita',
-  'snehalata', 'padmaja', 'suchitra', 'sabita', 'pratima', 'runu', 'jharna', 'basanti',
-  'binodini', 'sukanti', 'manorama', 'arundhati', 'sudhanshubala', 'sanjukta',
-  'jyotsna', 'sharmistha', 'lopamudra', 'ananya', 'ishita', 'sneha', 'aditi', 'rituparna',
-  'gayatri', 'subhadra', 'jyotirmayee', 'chinmayee', 'tanmayee', 'kalyani', 'bharati',
-  'manisha', 'lipika', 'priyadarshini', 'priyambada', 'indira', 'sumitra', 'sushree',
-  'sucharita', 'suchismita', 'jayashree', 'gitanjali', 'geetanjali', 'sangita', 'sangeeta',
-  'mamina', 'vandana', 'bandana', 'shanti', 'prativa', 'pratibha', 'arpita', 'ankita',
-  'antara', 'sarita', 'sarojini', 'rupali', 'sonali', 'monali', 'seema', 'reema', 'rima',
-  'nilima', 'neelima', 'poonam', 'shilpa', 'tulasi', 'tulsi', 'shobha', 'sobha', 'sudha',
-  'renu', 'barsha', 'varsha', 'deepika', 'anupama', 'manasi', 'kamini', 'damayanti',
-  'kanak', 'chhabi', 'banya', 'shrabani', 'itasri', 'itishree'
-];
-
-export const FEMALE_NAME_SUFFIXES = [
-  'lata', 'rekha', 'bala', 'devi', 'shree', 'sri', 'sree', 'mati',
-  'kumari', 'mayee', 'rani', 'prabha', 'darshini', 'smita', 'mita', 'swini'
-];
-
-/**
- * Deterministically determines if a doctor is female based on their name.
- */
-export function getDoctorGender(doc) {
-  if (!doc) return 'male';
-  const rawGender = String(doc.gender || '').trim().toLowerCase();
-  if (rawGender === 'female' || rawGender === 'f') return 'female';
-  if (rawGender === 'male' || rawGender === 'm') return 'male';
-
-  // Prefer English name if available for keyword/suffix matching
-  const nameEn = (
-    doc.nameEn ||
-    (typeof doc.name === 'object' ? doc.name['en-IN'] : null) ||
-    (typeof doc.name === 'string' ? doc.name : '')
-  ).toLowerCase();
-
-  // Strip prefixes (Dr., Dr, ଡା., डॉ.)
-  const cleanName = nameEn
-    .replace(/^dr\.\s*/i, '')
-    .replace(/^dr\s*/i, '')
-    .replace(/^ଡା\.\s*/i, '')
-    .replace(/^डॉ\.\s*/i, '')
-    .trim();
-
-  const firstName = cleanName.split(/\s+/)[0] || '';
-
-  for (const kw of FEMALE_NAME_KEYWORDS) {
-    if (firstName.includes(kw) || cleanName.includes(kw)) {
-      return 'female';
-    }
-  }
-
-  for (const suf of FEMALE_NAME_SUFFIXES) {
-    if (firstName.endsWith(suf) || cleanName.includes(suf)) {
-      return 'female';
-    }
-  }
-
-  return 'male';
-}
-
-function hashString(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-// 100% verified, authentic Unsplash portraits & clinical photos of Indian doctors (HTTP 200, WebP/AVIF optimized)
-export const DOCTOR_PHOTOS = {
-  male: [
+{
+  "male": [
     "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8MXx8aW5kaWFuJTIwZG9jdG9yfGVufDB8fHx8MTc5MTQzMjUxOXww&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80",
     "https://images.unsplash.com/photo-1622253692010-333f2da6031d?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8Mnx8aW5kaWFuJTIwZG9jdG9yfGVufDB8fHx8MTc5MTQzMjUxOXww&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80",
     "https://images.unsplash.com/photo-1551601651-2a8555f1a136?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8M3x8aW5kaWFuJTIwZG9jdG9yfGVufDB8fHx8MTc5MTQzMjUxOXww&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80",
@@ -165,8 +90,8 @@ export const DOCTOR_PHOTOS = {
     "https://images.unsplash.com/photo-1612523138351-4643808db8f3?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8Mjh8fGRvY3RvciUyMHBvcnRyYWl0fGVufDB8fHx8MTc5MTQzMjUyMHww&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80",
     "https://images.unsplash.com/photo-1641723345378-a701b30b2d36?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8Mjl8fGRvY3RvciUyMHBvcnRyYWl0fGVufDB8fHx8MTc5MTQzMjUyMHww&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80",
     "https://images.unsplash.com/photo-1758691461516-7e716e0ca135?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8MzB8fGRvY3RvciUyMHBvcnRyYWl0fGVufDB8fHx8MTc5MTQzMjUyMHww&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80"
-],
-  female: [
+  ],
+  "female": [
     "https://images.unsplash.com/photo-1638202993928-7267aad84c31?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8MXx8ZmVtYWxlJTIwZG9jdG9yfGVufDB8fHx8MTc5MTQzMjUyMXww&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80",
     "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8Mnx8ZmVtYWxlJTIwZG9jdG9yfGVufDB8fHx8MTc5MTQzMjUyMXww&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80",
     "https://images.unsplash.com/photo-1659353888906-adb3e0041693?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8M3x8ZmVtYWxlJTIwZG9jdG9yfGVufDB8fHx8MTc5MTQzMjUyMXww&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80",
@@ -257,37 +182,5 @@ export const DOCTOR_PHOTOS = {
     "https://images.unsplash.com/photo-1755189118414-14c8dacdb082?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8Mjh8fHdvbWFuJTIwZG9jdG9yJTIwaG9zcGl0YWx8ZW58MHx8fHwxNzkxNDMyNTIyfDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80",
     "https://images.unsplash.com/photo-1676313027775-a5a3dca6f98b?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8Mjl8fHdvbWFuJTIwZG9jdG9yJTIwaG9zcGl0YWx8ZW58MHx8fHwxNzkxNDMyNTIyfDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80",
     "https://images.unsplash.com/photo-1585816805432-eb5bdeb346b1?ixid=M3wxMDk2MTQ4fDB8MXxzZWFyY2h8MzB8fHdvbWFuJTIwZG9jdG9yJTIwaG9zcGl0YWx8ZW58MHx8fHwxNzkxNDMyNTIyfDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=320&h=320&crop=faces&q=80"
-]
-};
-
-let customPhotos = null;
-
-// Initialize custom photos from local storage if previously fetched from Unsplash API
-if (typeof window !== 'undefined' && window.localStorage) {
-  try {
-    const raw = localStorage.getItem('swasthyamitra_unsplash_photos_v1');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed.photos?.male && parsed.photos?.female) {
-        customPhotos = parsed.photos;
-      }
-    }
-  } catch (e) {}
-}
-
-export function setCustomDoctorPhotos(photos) {
-  if (photos && photos.male && photos.female) {
-    customPhotos = photos;
-  }
-}
-
-export function getDoctorPhotoUrl(doc) {
-  if (!doc) return null;
-  const gender = getDoctorGender(doc);
-  const photoList = (customPhotos && customPhotos[gender]?.length)
-    ? customPhotos[gender]
-    : (DOCTOR_PHOTOS[gender] || DOCTOR_PHOTOS.male);
-  const idStr = doc.id || doc.nameEn || (typeof doc.name === 'string' ? doc.name : (doc.name?.['en-IN'] || 'DOC'));
-  const index = hashString(idStr) % photoList.length;
-  return photoList[index];
+  ]
 }
