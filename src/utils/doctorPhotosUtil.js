@@ -117,10 +117,33 @@ export const DOCTOR_PHOTOS = {
   ]
 };
 
+let customPhotos = null;
+
+// Initialize custom photos from local storage if previously fetched from Unsplash API
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    const raw = localStorage.getItem('swasthyamitra_unsplash_photos_v1');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.photos?.male && parsed.photos?.female) {
+        customPhotos = parsed.photos;
+      }
+    }
+  } catch (e) {}
+}
+
+export function setCustomDoctorPhotos(photos) {
+  if (photos && photos.male && photos.female) {
+    customPhotos = photos;
+  }
+}
+
 export function getDoctorPhotoUrl(doc) {
   if (!doc) return null;
   const gender = getDoctorGender(doc);
-  const photoList = DOCTOR_PHOTOS[gender] || DOCTOR_PHOTOS.male;
+  const photoList = (customPhotos && customPhotos[gender]?.length)
+    ? customPhotos[gender]
+    : (DOCTOR_PHOTOS[gender] || DOCTOR_PHOTOS.male);
   const idStr = doc.id || doc.nameEn || (typeof doc.name === 'string' ? doc.name : (doc.name?.['en-IN'] || 'DOC'));
   const index = hashString(idStr) % photoList.length;
   return photoList[index];

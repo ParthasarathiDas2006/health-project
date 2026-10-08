@@ -36,6 +36,8 @@ import {
 import { getBookedAppointments, saveAppointment, cancelAppointment } from '../utils/authStorage';
 import { getDoctorsList, ODISHA_DISTRICTS } from '../data/doctorsData';
 import { DoctorAvatar, getDoctorPhotoUrl } from '../utils/doctorPhotos';
+import { fetchUnsplashDoctorPhotos, getUnsplashAccessKey, setUnsplashAccessKey } from '../services/unsplashService';
+import { setCustomDoctorPhotos } from '../utils/doctorPhotosUtil';
 import TelemedicineVideoSuite from './TelemedicineVideoSuite';
 
 /**
@@ -70,6 +72,58 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
 
   // Debounced search query for fluid 60fps typing without UI stutters
   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Unsplash Live Photo API integration states
+  const [showUnsplashModal, setShowUnsplashModal] = useState(false);
+  const [unsplashKeyInput, setUnsplashKeyInput] = useState(() => getUnsplashAccessKey() || '');
+  const [unsplashLoading, setUnsplashLoading] = useState(false);
+  const [unsplashStatusMsg, setUnsplashStatusMsg] = useState('');
+  const [unsplashPhotoCount, setUnsplashPhotoCount] = useState(0);
+
+  // Auto-sync Unsplash photos on mount if an Access Key is present
+  useEffect(() => {
+    const key = getUnsplashAccessKey();
+    if (key) {
+      fetchUnsplashDoctorPhotos(key).then((photos) => {
+        if (photos) {
+          setCustomDoctorPhotos(photos);
+          setUnsplashPhotoCount((photos.male?.length || 0) + (photos.female?.length || 0));
+        }
+      });
+    }
+  }, []);
+
+  const handleSaveUnsplashKey = async (e) => {
+    e?.preventDefault();
+    const trimmed = unsplashKeyInput.trim();
+    if (!trimmed) {
+      setUnsplashAccessKey('');
+      setUnsplashStatusMsg('Access key cleared. Using curated Unsplash doctor photos.');
+      setUnsplashPhotoCount(0);
+      return;
+    }
+    setUnsplashLoading(true);
+    setUnsplashStatusMsg('Connecting to Unsplash API and querying Indian doctor portraits...');
+    try {
+      const photos = await fetchUnsplashDoctorPhotos(trimmed);
+      if (photos && ((photos.male?.length || 0) > 0 || (photos.female?.length || 0) > 0)) {
+        setUnsplashAccessKey(trimmed);
+        setCustomDoctorPhotos(photos);
+        const total = (photos.male?.length || 0) + (photos.female?.length || 0);
+        setUnsplashPhotoCount(total);
+        setUnsplashStatusMsg(`✓ Success! Synced ${total} authentic Indian doctor photos from Unsplash API.`);
+        setTimeout(() => {
+          setShowUnsplashModal(false);
+        }, 1200);
+      } else {
+        setUnsplashStatusMsg('⚠️ Could not fetch photos from Unsplash. Please verify your Access Key.');
+      }
+    } catch (err) {
+      setUnsplashStatusMsg(`Error connecting to Unsplash: ${err.message}`);
+    } finally {
+      setUnsplashLoading(false);
+    }
+  };
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -1028,6 +1082,19 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                   );
                 })}
               </select>
+
+              <button
+                type="button"
+                onClick={() => setShowUnsplashModal(true)}
+                className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-300 hover:bg-emerald-100 flex items-center gap-1.5 transition-all cursor-pointer"
+                title="Configure Unsplash Access Key for Live Doctor Photos"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Unsplash API</span>
+                {Boolean(unsplashPhotoCount > 0 || getUnsplashAccessKey()) && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                )}
+              </button>
 
               <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
                 {filteredDoctors.length} {txt.doctorsFound}
@@ -2484,6 +2551,82 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
               initialDoctor={activeVideoCallDoctor}
               onNavigateBack={() => setActiveVideoCallDoctor(null)}
             />
+          </div>
+        </div>
+      )}
+      {/* UNSPLASH API CONFIGURATION MODAL */}
+      {showUnsplashModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                  <Sparkles className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Unsplash API Integration</h3>
+                  <p className="text-[11px] text-slate-500">Live Indian Doctor Portraits & Headshots</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowUnsplashModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveUnsplashKey} className="mt-4 space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">
+                  Unsplash Access Key
+                </label>
+                <p className="text-[11px] text-slate-500 mb-2">
+                  Enter your Unsplash API Access Key to automatically query and enrich 2,500+ doctors with live, authentic clinician photos from Unsplash.
+                </p>
+                <input
+                  type="text"
+                  value={unsplashKeyInput}
+                  onChange={(e) => setUnsplashKeyInput(e.target.value)}
+                  placeholder="Paste your Unsplash Access Key here..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none text-slate-900 bg-slate-50 focus:bg-white"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  You can also paste it into your project's <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">.env</code> file under <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">VITE_UNSPLASH_ACCESS_KEY</code>.
+                </span>
+              </div>
+
+              {unsplashStatusMsg && (
+                <div className={`p-3 rounded-xl text-xs font-semibold ${
+                  unsplashStatusMsg.startsWith('✓')
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : unsplashStatusMsg.startsWith('⚠️')
+                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                    : 'bg-slate-100 text-slate-700 border border-slate-200'
+                }`}>
+                  {unsplashStatusMsg}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowUnsplashModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-300 font-bold text-slate-700 hover:bg-slate-50 cursor-pointer text-xs"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={unsplashLoading}
+                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer text-xs disabled:opacity-60"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{unsplashLoading ? 'Syncing...' : 'Sync Live Photos'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

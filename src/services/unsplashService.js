@@ -1,0 +1,98 @@
+/**
+ * Unsplash Medical Images Service
+ * Handles live photo fetching from Unsplash API using VITE_UNSPLASH_ACCESS_KEY
+ * Falls back seamlessly to curated high-res Indian doctor photos
+ */
+
+import { DOCTOR_PHOTOS } from '../utils/doctorPhotosUtil';
+
+const UNSPLASH_CACHE_KEY = 'swasthyamitra_unsplash_photos_v1';
+
+// Read access key from environment or localStorage
+export function getUnsplashAccessKey() {
+  return (
+    import.meta.env.VITE_UNSPLASH_ACCESS_KEY ||
+    (typeof window !== 'undefined' ? window.__UNSPLASH_ACCESS_KEY__ || localStorage.getItem('VITE_UNSPLASH_ACCESS_KEY') : null) ||
+    ''
+  ).trim();
+}
+
+export function setUnsplashAccessKey(key) {
+  if (typeof window !== 'undefined') {
+    if (key) {
+      localStorage.setItem('VITE_UNSPLASH_ACCESS_KEY', key.trim());
+      window.__UNSPLASH_ACCESS_KEY__ = key.trim();
+    } else {
+      localStorage.removeItem('VITE_UNSPLASH_ACCESS_KEY');
+      delete window.__UNSPLASH_ACCESS_KEY__;
+    }
+  }
+}
+
+/**
+ * Fetches real doctor portraits directly from Unsplash API using the Access Key
+ */
+export async function fetchUnsplashDoctorPhotos(accessKey = getUnsplashAccessKey()) {
+  if (!accessKey) {
+    return null;
+  }
+
+  // Check cached photos in localStorage (valid for 24 hours)
+  try {
+    const cached = localStorage.getItem(UNSPLASH_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000 && parsed.photos?.male?.length && parsed.photos?.female?.length) {
+        return parsed.photos;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to read unsplash cache:', e);
+  }
+
+  const queries = {
+    male: 'indian male doctor hospital portrait',
+    female: 'indian female doctor clinic portrait'
+  };
+
+  const results = {
+    male: [...DOCTOR_PHOTOS.male],
+    female: [...DOCTOR_PHOTOS.female]
+  };
+
+  try {
+    for (const [gender, query] of Object.entries(queries)) {
+      const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=30&orientation=squarish&client_id=${accessKey}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.results && data.results.length > 0) {
+          const fetchedUrls = data.results.map(
+            (item) => `${item.urls.small || item.urls.regular}&auto=format&fit=crop&w=320&h=320&crop=faces&q=80`
+          );
+          results[gender] = [...fetchedUrls, ...DOCTOR_PHOTOS[gender]];
+        }
+      } else {
+        console.warn(`Unsplash API error (${res.status}) for ${gender}:`, await res.text());
+      }
+    }
+
+    // Cache the retrieved photos
+    try {
+      localStorage.setItem(
+        UNSPLASH_CACHE_KEY,
+        JSON.stringify({
+          timestamp: Date.now(),
+          photos: results
+        })
+      );
+    } catch (e) {
+      // Storage full or private mode
+    }
+
+    return results;
+  } catch (err) {
+    console.error('Failed to fetch Unsplash photos:', err);
+    return null;
+  }
+}
