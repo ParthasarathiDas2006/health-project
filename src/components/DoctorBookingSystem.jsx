@@ -1040,37 +1040,41 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
             {paginatedDoctors.map((doc) => (
               <div
                 key={doc.id}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-slate-200 p-5 flex flex-col justify-between"
+                className="bg-white rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 border border-slate-200/90 hover:border-emerald-300 p-5 flex flex-col justify-between group"
               >
                 <div>
                   {/* Doctor Profile Header */}
                   <div className="flex items-start gap-3.5 mb-3">
-                    <DoctorAvatar doc={doc} size="md" />
+                    <DoctorAvatar doc={doc} size="md" className="shrink-0" />
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="font-bold text-slate-900 text-sm truncate">{doc.name}</h3>
-                        <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                      <div className="flex items-center justify-between gap-1.5">
+                        <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors" title={doc.name}>
+                          {doc.name}
+                        </h3>
+                        <span className="shrink-0 inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70" title="Verified Registered Medical Practitioner">
+                          <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
                           RMP
                         </span>
                       </div>
-                      <p className="text-[11px] font-semibold text-emerald-700 mt-0.5">
+                      <p className="text-xs font-semibold text-emerald-700 mt-0.5 truncate">
                         {doc.specialtyLabel}
                       </p>
-                      <p className="text-[10px] text-slate-400 font-mono">{doc.qualifications}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5 truncate" title={doc.qualifications}>
+                        {doc.qualifications}
+                      </p>
                     </div>
                   </div>
 
                   {/* Rating & Stats Strip */}
-                  <div className="flex items-center justify-between text-[11px] bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 mb-3">
-                    <div className="flex items-center gap-1 text-amber-600 font-bold">
+                  <div className="flex items-center justify-between text-xs py-2 px-3 bg-slate-50/80 rounded-xl mb-3 text-slate-600 border border-slate-100">
+                    <div className="flex items-center gap-1.5 font-semibold text-slate-800">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                       <span>{doc.rating}</span>
-                      <span className="text-slate-400 font-normal">({doc.reviewsCount} {txt.reviews})</span>
+                      <span className="text-[11px] text-slate-400 font-normal">({doc.reviewsCount} {txt.reviews})</span>
                     </div>
-                    <div className="text-slate-500 font-medium">
-                      <strong>{doc.experience}</strong> {txt.experience}
+                    <div className="text-[11px] font-medium text-slate-500">
+                      <strong className="text-slate-700">{doc.experience}</strong> {txt.experience}
                     </div>
                   </div>
 
@@ -1078,40 +1082,38 @@ export default function DoctorBookingSystem({ currentUser, appLang, onBookedCoun
                   <div className="space-y-1.5 text-xs text-slate-600 mb-4">
                     <div className="flex items-center gap-2">
                       <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="truncate font-medium text-slate-800">{doc.facility}</span>
+                      <span className="truncate font-medium text-slate-800" title={doc.facility}>
+                        {doc.facility}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-[11px]">
                       <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span className="inline-flex items-center gap-1 font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
+                      <span className="font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
                         {doc.districtLabel || doc.district}
                       </span>
                       <span className="text-slate-300">•</span>
-                      <span className="truncate">{doc.room}</span>
+                      <span className="truncate text-slate-600">{doc.room}</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="truncate text-slate-500">{doc.days}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span className="text-slate-600">{txt.availableDays} <strong>{doc.days}</strong></span>
-                    </div>
-                  </div>
-
-                  {/* Benefits Tag */}
-                  <div className="mb-4">
-                    <span className="inline-block text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md">
-                      ✓ {txt.bskyBeneficiary}
-                    </span>
                   </div>
                 </div>
 
-                {/* Book Action Button */}
-                <button
-                  type="button"
-                  onClick={() => handleStartBooking(doc)}
-                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2"
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  {txt.bookBtn}
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                {/* Footer Strip with BSKY status + Book Action Button */}
+                <div className="pt-2 border-t border-slate-100 flex items-center gap-2 mt-auto">
+                  <div className="shrink-0 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-2 rounded-xl flex items-center gap-1">
+                    ✓ BSKY
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleStartBooking(doc)}
+                    className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{txt.bookBtn}</span>
+                    <ChevronRight className="w-3.5 h-3.5 ml-auto" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

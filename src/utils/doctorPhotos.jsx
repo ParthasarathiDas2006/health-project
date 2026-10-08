@@ -1,44 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getDoctorPhotoUrl, getDoctorGender } from './doctorPhotosUtil';
 
-import { getDoctorPhotoUrl, getDoctorGender, DOCTOR_PHOTOS, FEMALE_NAME_KEYWORDS } from './doctorPhotosUtil';
-
-export { getDoctorPhotoUrl, getDoctorGender, DOCTOR_PHOTOS, FEMALE_NAME_KEYWORDS };
+export { getDoctorPhotoUrl, getDoctorGender };
 
 /**
  * Professional Medical Doctor Avatar
  * - Displays authentic high-res verified Indian doctor headshots matching gender
  * - Features clean SVG medical stethoscope & white-coat physician avatar as instant fallback
- * - 0ms layout shift, lazy loading, and verified RMP badge
+ * - Fast loading with referrerPolicy="no-referrer" to prevent CDN blocking
+ * - Synchronous state reset on doctor/photoUrl change
  */
 export function DoctorAvatar({ doc, doctor, size = 'md', sizeClass, className = '' }) {
   const doctorObj = doc || doctor;
+  const photoUrl = doctorObj?.image || getDoctorPhotoUrl(doctorObj);
+
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  // Reset image loading & error state when doctor/photo changes
+  useEffect(() => {
+    setImageLoaded(false);
+    setImageError(false);
+  }, [photoUrl]);
+
   const gender = getDoctorGender(doctorObj);
-  const photoUrl = doctorObj?.image || getDoctorPhotoUrl(doctorObj);
   const initials = doctorObj?.initials || 'DR';
   const color = doctorObj?.color || (gender === 'female' ? 'from-teal-600 to-emerald-700' : 'from-slate-700 to-emerald-900');
   const docName = typeof doctorObj?.name === 'string' ? doctorObj.name : (doctorObj?.nameEn || doctorObj?.name?.['en-IN'] || 'Doctor');
 
   const resolvedSizeClass = sizeClass || ({
     sm: 'w-10 h-10 text-xs rounded-xl',
-    md: 'w-13 h-13 text-base rounded-2xl',
-    lg: 'w-14 h-14 text-base rounded-2xl',
-    xl: 'w-16 h-16 text-lg rounded-2xl'
-  }[size] || 'w-13 h-13 text-base rounded-2xl');
+    md: 'w-14 h-14 text-sm rounded-2xl',
+    lg: 'w-16 h-16 text-base rounded-2xl',
+    xl: 'w-20 h-20 text-lg rounded-2xl'
+  }[size] || 'w-14 h-14 text-sm rounded-2xl');
 
   return (
     <div className={`relative shrink-0 select-none ${className}`}>
       <div
-        className={`${resolvedSizeClass} text-white font-bold flex items-center justify-center shadow-xs bg-gradient-to-br ${color} overflow-hidden relative`}
+        className={`${resolvedSizeClass} text-white font-bold flex items-center justify-center shadow-xs bg-gradient-to-br ${color} overflow-hidden relative ring-1 ring-black/5`}
       >
         {/* Instant Medical Doctor SVG Background / Fallback */}
-        {(!photoUrl || imageError || !imageLoaded) && (
-          <div className="absolute inset-0 flex flex-col items-center justify-between p-1 bg-slate-900/20">
+        {(!photoUrl || imageError) && (
+          <div className="absolute inset-0 flex flex-col items-center justify-between p-1 bg-slate-900/10">
             {/* Medical Stethoscope & Coat Silhouette */}
             <svg
-              className="w-full h-full opacity-70"
+              className="w-full h-full opacity-80"
               viewBox="0 0 48 48"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -78,18 +85,20 @@ export function DoctorAvatar({ doc, doctor, size = 'md', sizeClass, className = 
         )}
 
         {/* Real Verified High-Res Doctor Photo */}
-        {photoUrl && !imageError ? (
+        {photoUrl && !imageError && (
           <img
+            key={photoUrl}
             src={photoUrl}
             alt={docName}
-            className={`w-full h-full object-cover transition-opacity duration-300 relative z-10 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
+            referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
+            className={`w-full h-full object-cover relative z-10 transition-opacity duration-200 ${
+              imageLoaded ? 'opacity-100' : 'opacity-90'
             }`}
-            loading="lazy"
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
           />
-        ) : null}
+        )}
       </div>
 
       {/* Verified Medical Practitioner Badge */}
