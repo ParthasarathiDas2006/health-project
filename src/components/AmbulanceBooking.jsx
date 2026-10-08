@@ -55,7 +55,7 @@ import { ODISHA_MEDICAL_FACILITIES, ODISHA_LOCATIONS, calculateDistanceKm } from
 import TeleConsultationSuite from './TeleConsultationSuite';
 
 // Default Organization Field Worker & Control Room Hotline Config
-export const DEFAULT_WORKER_SOS_CONFIG = {
+const DEFAULT_WORKER_SOS_CONFIG = {
   phone: '9437010800', // Central Emergency Dispatcher / Worker Hotline
   displayName: 'SwasthyaMitra Rapid Response Unit & Control Room',
   formatted: '+91 94370 10800',
