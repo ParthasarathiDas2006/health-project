@@ -75,6 +75,9 @@ export default function MedicineMarketplace({
   const [inspectViewMode, setInspectViewMode] = useState('scissored'); // 'scissored' | 'full' | 'qr'
   const [cardImageModes, setCardImageModes] = useState({}); // { [medId]: 'scissored' | 'full' | 'qr' }
   const [qrCodeDataUrls, setQrCodeDataUrls] = useState({});
+  const [spotlightMedId, setSpotlightMedId] = useState('MED-MOX-500');
+  const [spotlightViewMode, setSpotlightViewMode] = useState('scissored'); // 'scissored' | 'full' | 'qr'
+  const [spotlightQty, setSpotlightQty] = useState(1);
 
   // ── Cart & Purchase State ──────────────────────────────────────────────────
   const [cartItems, setCartItems] = useState({}); // { [medId]: { medicine, quantity } }
@@ -710,6 +713,202 @@ export default function MedicineMarketplace({
           })}
         </div>
       </div>
+
+      {/* ── Featured Medicine Inspection & Cut Strip Showcase ── */}
+      {(() => {
+        const spotlightMed = MEDICINE_MARKET_DATABASE.find(m => m.id === spotlightMedId) || filteredMedicines[0] || MEDICINE_MARKET_DATABASE[0];
+        if (!spotlightMed) return null;
+        const spotlightSavings = Math.round(((spotlightMed.mrp - spotlightMed.janAushadhiPrice) / spotlightMed.mrp) * 100);
+        const spotlightScissored = spotlightMed.scissoredStripImage || generateScissoredStripSvg(spotlightMed);
+        const spotlightFull = spotlightMed.fullStripImage || generateFullStripSvg(spotlightMed);
+        const spotlightQr = qrCodeDataUrls[spotlightMed.id];
+
+        return (
+          <div className="bg-slate-900/90 text-white rounded-3xl p-5 sm:p-7 border border-teal-500/40 shadow-2xl relative overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              {/* Left Column: Featured Inspection Card (7 cols) */}
+              <div className="lg:col-span-7 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-2">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-teal-400 font-bold block">
+                        FEATURED MEDICINE INSPECTION CARD
+                      </span>
+                      <h2 className="text-lg sm:text-xl font-black text-white mt-0.5">
+                        {spotlightMed.name}
+                      </h2>
+                      <p className="text-xs text-slate-400 font-medium">{spotlightMed.generic}</p>
+                    </div>
+
+                    {/* 3-Tab Visual Packaging Switcher */}
+                    <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+                      <button
+                        type="button"
+                        onClick={() => setSpotlightViewMode('scissored')}
+                        className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                          spotlightViewMode === 'scissored'
+                            ? 'bg-rose-600 text-white font-black shadow-md'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        ✂️ Cut Strip View
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSpotlightViewMode('full')}
+                        className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                          spotlightViewMode === 'full'
+                            ? 'bg-teal-600 text-white font-black shadow-md'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        💊 Full Strip
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSpotlightViewMode('qr')}
+                        className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                          spotlightViewMode === 'qr'
+                            ? 'bg-indigo-600 text-white font-black shadow-md'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        📱 2D QR Code
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Packaging Visual Canvas */}
+                  <div className="my-4 aspect-16/9 rounded-2xl bg-slate-950/80 border border-slate-800 p-4 flex items-center justify-center relative overflow-hidden group">
+                    {spotlightViewMode === 'scissored' ? (
+                      <img
+                        src={spotlightScissored}
+                        alt={spotlightMed.name}
+                        className="w-full h-full object-contain filter drop-shadow-2xl"
+                      />
+                    ) : spotlightViewMode === 'full' ? (
+                      <img
+                        src={spotlightFull}
+                        alt={spotlightMed.name}
+                        className="w-full h-full object-contain filter drop-shadow-2xl"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center">
+                        {spotlightQr ? (
+                          <img src={spotlightQr} alt="QR" className="w-32 h-32 bg-white p-2 rounded-xl" />
+                        ) : (
+                          <div className="w-32 h-32 bg-slate-800 rounded-xl animate-pulse" />
+                        )}
+                        <span className="font-mono text-[10px] text-teal-300 mt-2 font-bold">
+                          GS1 Cryptographic 2D DataMatrix Seal
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Price & Savings Pill Bar */}
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs text-slate-400">Jan Aushadhi Price:</span>
+                    <span className="text-xl font-black text-emerald-400">₹{spotlightMed.janAushadhiPrice.toFixed(2)}/strip</span>
+                    <span className="text-xs text-slate-500 line-through">MRP ₹{spotlightMed.mrp.toFixed(2)}</span>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-black text-xs">
+                    {spotlightSavings}% CHEAPER than Branded {spotlightMed.brand}
+                  </span>
+                </div>
+              </div>
+
+              {/* Right Column: Quick Order & Automated Expiry Registration Drawer (5 cols) */}
+              <div className="lg:col-span-5 bg-slate-950/70 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                    <h3 className="font-black text-sm text-white flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4 text-emerald-400" />
+                      <span>Quick Order & Expiry Registration</span>
+                    </h3>
+                    <span className="text-[10px] font-mono bg-teal-500/20 text-teal-300 px-2 py-0.5 rounded-full">
+                      IN STOCK
+                    </span>
+                  </div>
+
+                  {/* Quantity Stepper */}
+                  <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-slate-800">
+                    <span className="text-xs font-bold text-slate-300">Quantity</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setSpotlightQty(Math.max(1, spotlightQty - 1))}
+                        className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center font-bold text-white cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <span className="font-mono font-bold text-sm text-white">{spotlightQty}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSpotlightQty(spotlightQty + 1)}
+                        className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center font-bold text-white cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Delivery Estimate */}
+                  <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs space-y-1">
+                    <span className="text-slate-400 block text-[11px]">Estimated Delivery:</span>
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      <Truck className="w-3.5 h-3.5 text-teal-400" />
+                      <span>Today, 4:00 PM (from Bhubaneswar Jan Aushadhi Kendra)</span>
+                    </span>
+                  </div>
+
+                  {/* Firebase Expiry Reminder Toggle */}
+                  <div className="p-3.5 bg-gradient-to-r from-teal-950/60 to-indigo-950/60 rounded-xl border border-teal-500/30 flex items-center justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <Bell className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold text-xs text-white block">Enable Firebase Expiry Alerts</span>
+                        <span className="text-[10px] text-slate-300">SMS & WhatsApp notification 30 days before batch expires</span>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={enableExpiryAlerts}
+                      onChange={(e) => setEnableExpiryAlerts(e.target.checked)}
+                      className="w-4 h-4 accent-emerald-500 cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAddToCart(spotlightMed, spotlightQty)}
+                    className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-950/50 cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart className="w-4 h-4 text-slate-950" />
+                    <span>Add to Cart & Save ₹{((spotlightMed.mrp - spotlightMed.janAushadhiPrice) * spotlightQty).toFixed(2)}</span>
+                  </button>
+
+                  {onTestCutStrip && (
+                    <button
+                      type="button"
+                      onClick={() => onTestCutStrip(spotlightMed)}
+                      className="w-full py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl border border-white/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Scissors className="w-3.5 h-3.5 text-rose-400" />
+                      <span>Test Cut Strip in AI Expiry Scanner</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── 3. Medicine Cards Grid with Scissored Pill & Full Strip Images ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

@@ -1786,6 +1786,101 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                 </div>
               </div>
 
+              {/* ── Patient In-Transit Care & Destination Readiness Card ── */}
+              <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white rounded-2xl p-5 border border-teal-500/30 shadow-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/10 gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                    <h4 className="font-black text-sm text-white uppercase tracking-wider flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-emerald-400" />
+                      <span>Patient In-Transit Telemetry &amp; Care Readiness</span>
+                    </h4>
+                  </div>
+                  <span className="text-[10px] bg-teal-500/20 text-teal-300 px-2.5 py-0.5 rounded-full font-mono font-bold">
+                    ETA: {Math.floor(etaSeconds / 60)} mins to District Hospital
+                  </span>
+                </div>
+
+                {/* 3 Floating Telemetry Pills */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Heart Rate */}
+                  <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-400 block">HEART RATE</span>
+                      <span className="text-xl font-black text-white font-mono">98 <span className="text-xs font-normal text-slate-400">bpm</span></span>
+                      <span className="text-[10px] text-emerald-400 block font-medium">Normal Sinus</span>
+                    </div>
+                    <Heart className="w-6 h-6 text-rose-500 animate-pulse" />
+                  </div>
+
+                  {/* Oxygen SpO2 */}
+                  <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-400 block">OXYGEN SpO2</span>
+                      <span className="text-xl font-black text-white font-mono">94%</span>
+                      <span className="text-[10px] text-teal-400 block font-medium">O2 Therapy Active</span>
+                    </div>
+                    <Activity className="w-6 h-6 text-teal-400" />
+                  </div>
+
+                  {/* Blood Pressure */}
+                  <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-400 block">BLOOD PRESSURE</span>
+                      <span className="text-xl font-black text-white font-mono">132/88 <span className="text-xs font-normal text-slate-400">mmHg</span></span>
+                      <span className="text-[10px] text-emerald-400 block font-medium">Hemodynamically Stable</span>
+                    </div>
+                    <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                  </div>
+                </div>
+
+                {/* Destination Hospital Readiness Checklist & Actions */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                    <span className="text-[11px] font-black uppercase text-slate-400 tracking-wider block">
+                      Hospital Trauma Bay Readiness:
+                    </span>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex items-center gap-2 text-emerald-300">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Trauma Bed 1 Reserved (Puri District Hospital)</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-emerald-300">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Oxygen Jumbo Cylinder &amp; Ventilator on Standby</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-emerald-300">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Emergency Medical Officer (EMO) Notified</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2 Big Action Buttons */}
+                  <div className="flex flex-col justify-between gap-2">
+                    <a
+                      href={`tel:${activeMission.paramedicPhone || '+91 94371 10801'}`}
+                      className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <Phone className="w-4 h-4" />
+                      <span>[ 📞 Connect to Paramedic Audio ]</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setToastMessage('🚨 Traffic Police Green Corridor Signal Broadcasted to Police Control Room!');
+                        setSosSentToast(true);
+                        setTimeout(() => setSosSentToast(false), 4000);
+                      }}
+                      className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <Zap className="w-4 h-4 text-amber-300" />
+                      <span>[ 🚨 Signal Green Corridor to Police ]</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Real Interactive Leaflet Live Tracking Map */}
               <div className="relative w-full h-[360px] sm:h-[420px] rounded-2xl overflow-hidden border border-slate-300 shadow-inner">
                 <div ref={trackMapRef} className="w-full h-full bg-slate-100 z-0" />

@@ -641,6 +641,50 @@ Verified by SwasthyaMitra Community Voice Assistant Engine.`;
               )}
             </div>
 
+            {/* 3 Essential Vitals Capsules & Medical Officer Action */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-1">
+              <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-mono block">PULSE</span>
+                  <span className="text-base font-black text-white font-mono">84 bpm</span>
+                  <span className="text-[10px] text-emerald-400 block font-medium">Normal</span>
+                </div>
+                <Activity className="w-5 h-5 text-emerald-400" />
+              </div>
+
+              <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-mono block">OXYGEN SpO2</span>
+                  <span className="text-base font-black text-white font-mono">98%</span>
+                  <span className="text-[10px] text-teal-400 block font-medium">Normal</span>
+                </div>
+                <Activity className="w-5 h-5 text-teal-400" />
+              </div>
+
+              <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-mono block">TEMPERATURE</span>
+                  <span className="text-base font-black text-white font-mono">100.2°F</span>
+                  <span className="text-[10px] text-amber-400 block font-medium">Mild Pyrexia</span>
+                </div>
+                <Sparkles className="w-5 h-5 text-amber-400" />
+              </div>
+
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleCopy();
+                    alert('Clinical note submitted to Primary Health Center Medical Officer queue!');
+                  }}
+                  className="w-full h-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Submit to Doctor Queue</span>
+                </button>
+              </div>
+            </div>
+
             {/* AI Triage & Extraction Output Card */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
               {/* Urgency Badge */}
