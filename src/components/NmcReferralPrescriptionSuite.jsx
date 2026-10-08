@@ -1793,6 +1793,13 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  // Trigger official print dialog
+  const handlePrint = () => {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
+  };
+
   // Save current slip to localStorage vault with full details
   const handleSaveToVault = () => {
     if (!verificationToken) return;
