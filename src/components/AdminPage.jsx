@@ -41,7 +41,8 @@ import {
   BarChart3,
   AlertOctagon,
   LogOut,
-  LogIn
+  LogIn,
+  ArrowRight
 } from 'lucide-react';
 import { getDoctorsList, ODISHA_DISTRICTS } from '../data/doctorsData';
 import { DoctorAvatar } from '../utils/doctorPhotos';
@@ -2508,9 +2509,20 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
                   : 'State 108 / 102 Emergency Ambulance GPS dispatch network, live transit & EMT monitoring'}
               </p>
             </div>
-            <span className="px-3 py-1 bg-rose-100 text-rose-800 font-extrabold text-xs rounded-full">
-              {ambulanceList.length} Active Dispatches
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onNavigateTab && onNavigateTab('ambulance_driver')}
+                className="px-3 py-1.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-xs rounded-xl shadow flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Truck className="w-3.5 h-3.5" />
+                <span>{appLang === 'or-IN' ? 'ପାଇଲଟ୍ MDT କମାଣ୍ଡ କନସୋଲ୍' : 'Ambulance Pilot & MDT Console'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <span className="px-3 py-1 bg-rose-100 text-rose-800 font-extrabold text-xs rounded-full">
+                {ambulanceList.length} Active Dispatches
+              </span>
+            </div>
           </div>
 
           {/* Fleet Telemetry Status Bar */}

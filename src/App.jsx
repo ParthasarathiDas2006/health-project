@@ -21,10 +21,12 @@ const OcrUploader = lazy(() => import('./components/OcrUploader'));
 const DoctorBookingSystem = lazy(() => import('./components/DoctorBookingSystem'));
 const BloodBankSystem = lazy(() => import('./components/BloodBankSystem'));
 const MedicineExpiryChecker = lazy(() => import('./components/MedicineExpiryChecker'));
+const MedicineMarketplace = lazy(() => import('./components/MedicineMarketplace'));
 const NearestMedicalGPS = lazy(() => import('./components/NearestMedicalGPS'));
 const BedBookingSystem = lazy(() => import('./components/BedBookingSystem'));
 const AmbulanceBooking = lazy(() => import('./components/AmbulanceBooking'));
 const AdminPage = lazy(() => import('./components/AdminPage'));
+const AmbulanceDriverAdmin = lazy(() => import('./components/AmbulanceDriverAdmin'));
 const DrugAllergySafetyGuard = lazy(() => import('./components/DrugAllergySafetyGuard'));
 import FirebaseConfigModal from './components/FirebaseConfigModal';
 import { isFirebaseConfigured } from './config/firebase';
@@ -80,12 +82,15 @@ import {
   Smartphone,
   Monitor,
   Video,
-  X
+  X,
+  Ambulance,
+  ShoppingBag
 } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setLoggedInUser] = useState(() => getCurrentUser());
   const [teleconsultSession, setTeleconsultSession] = useState(null);
+  const [selectedMarketMedForTest, setSelectedMarketMedForTest] = useState(null);
   const [appLang, setAppLang] = useState(() => currentUser?.preferredLanguage || 'or-IN');
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -94,14 +99,16 @@ export default function App() {
   // Role Category computation
   const userRole = currentUser?.roleCategory || 'patient';
   const isAdmin = userRole === 'admin';
+  const isDriver = userRole === 'driver' || userRole === 'ambulance';
   const isDoctor = userRole === 'doctor' || userRole === 'nurse';
   const isAsha = userRole === 'asha' || userRole === 'anm';
   const isPatient = userRole === 'patient';
 
-  // 4 Core Role-Based Hubs: 'citizen' | 'doctor' | 'phc' | 'admin'
+  // 5 Core Role-Based Hubs: 'citizen' | 'doctor' | 'phc' | 'admin' | 'driver'
   const [activeHub, setActiveHub] = useState(() => {
     const user = getCurrentUser();
     if (user?.roleCategory === 'admin') return 'admin';
+    if (user?.roleCategory === 'driver' || user?.roleCategory === 'ambulance') return 'driver';
     if (user?.roleCategory === 'doctor' || user?.roleCategory === 'nurse') return 'doctor';
     if (user?.roleCategory === 'asha' || user?.roleCategory === 'anm') return 'phc';
     return 'citizen';
@@ -111,6 +118,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(() => {
     const user = getCurrentUser();
     if (user?.roleCategory === 'admin') return 'admin';
+    if (user?.roleCategory === 'driver' || user?.roleCategory === 'ambulance') return 'ambulance_driver';
     if (user?.roleCategory === 'doctor' || user?.roleCategory === 'nurse') return 'dashboard';
     if (user?.roleCategory === 'asha' || user?.roleCategory === 'anm') return 'phc_offline';
     return 'intake';
@@ -244,6 +252,9 @@ export default function App() {
     if (user?.roleCategory === 'admin') {
       setActiveHub('admin');
       setActiveTab('admin');
+    } else if (user?.roleCategory === 'driver' || user?.roleCategory === 'ambulance') {
+      setActiveHub('driver');
+      setActiveTab('ambulance_driver');
     } else if (user?.roleCategory === 'doctor' || user?.roleCategory === 'nurse') {
       setActiveHub('doctor');
       setActiveTab('dashboard');
@@ -268,6 +279,8 @@ export default function App() {
     let targetUser = null;
     if (targetRoleCategory === 'admin') {
       targetUser = allUsers.find((u) => u.id === 'USR-ADM-001') || allUsers.find((u) => u.roleCategory === 'admin');
+    } else if (targetRoleCategory === 'driver') {
+      targetUser = allUsers.find((u) => u.id === 'USR-DRV-1081') || allUsers.find((u) => u.roleCategory === 'driver');
     } else if (targetRoleCategory === 'doctor') {
       targetUser = allUsers.find((u) => u.id === 'USR-DOC-505') || allUsers.find((u) => u.roleCategory === 'doctor');
     } else if (targetRoleCategory === 'asha') {
@@ -311,7 +324,7 @@ export default function App() {
   const switchHub = (hubId) => {
     setActiveHub(hubId);
     if (hubId === 'citizen') {
-      if (!['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry', 'beds', 'bloodbank', 'teleconsult'].includes(activeTab)) {
+      if (!['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry', 'market', 'beds', 'bloodbank', 'teleconsult'].includes(activeTab)) {
         setActiveTab('intake');
       }
     } else if (hubId === 'doctor') {
@@ -326,14 +339,18 @@ export default function App() {
       if (!['admin', 'beds', 'bloodbank', 'outbreak', 'inventory', 'compliance', 'abha_history'].includes(activeTab)) {
         setActiveTab('admin');
       }
+    } else if (hubId === 'driver') {
+      setActiveTab('ambulance_driver');
     }
   };
 
   // Cross-hub navigation router for child components
   const handleNavigateTab = (tab) => {
     setActiveTab(tab);
-    if (['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry'].includes(tab)) {
+    if (['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry', 'market'].includes(tab)) {
       setActiveHub('citizen');
+    } else if (tab === 'ambulance_driver' || tab === 'driver_admin') {
+      setActiveHub('driver');
     } else if (['dashboard', 'prescriptions', 'nmc_referral', 't29_nmc_referral', 't29_discharge', 'drugallergy', 't13_drugallergy', 'differential', 't12_differential', 'xray', 'riskscores', 't14_riskscores', 'hospitals'].includes(tab)) {
       setActiveHub('doctor');
     } else if (['phc_offline', 'asha_voice', 't17_asha_voice', 'family_triage', 't19_family_triage', 'maternal_anc', 't30_anc_maternal', 'pain_map', 't18_pain_map'].includes(tab)) {
@@ -730,12 +747,13 @@ export default function App() {
       safetyLabel: 'ସୁରକ୍ଷା ନିୟମ:',
       protocol: 'ଡାକ୍ତରୀ ନିଷ୍ପତ୍ତି ସହାୟକ (Non-Diagnostic) | BSKY & NHM ଅନ୍ତର୍ଭୁକ୍ତ',
       facilityLabel: 'କେନ୍ଦ୍ର:',
-      portalTag: isAdmin ? 'ରାଜ୍ୟ ସୁପର ଆଡମିନ୍' : isDoctor ? 'ଡାକ୍ତରୀ କକ୍‌ପିଟ୍' : isAsha ? 'ଆଶା ଫିଲ୍ଡ ଷ୍ଟେସନ୍' : 'ନାଗରିକ ପୋର୍ଟାଲ୍',
+      portalTag: isAdmin ? 'ରାଜ୍ୟ ସୁପର ଆଡମିନ୍' : isDriver ? '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ପାଇଲଟ୍ କକ୍‌ପିଟ୍' : isDoctor ? 'ଡାକ୍ତରୀ କକ୍‌ପିଟ୍' : isAsha ? 'ଆଶା ଫିଲ୍ଡ ଷ୍ଟେସନ୍' : 'ନାଗରିକ ପୋର୍ଟାଲ୍',
       // Hubs
       hubCitizen: isAdmin ? '୪. ନାଗରିକ ସ୍ୱାସ୍ଥ୍ୟ ଡେସ୍କ' : '୧. ନାଗରିକ ସ୍ୱାସ୍ଥ୍ୟ ଡେସ୍କ',
       hubDoctor: '୨. ଡାକ୍ତର କ୍ଲିନିକାଲ୍ କକ୍‌ପିଟ୍',
       hubPhc: '୩. ଗ୍ରାମୀଣ PHC ଓ ଆଶା',
       hubAdmin: isAdmin ? '୧. ରାଜ୍ୟ କମାଣ୍ଡ ଓ ପ୍ରଶାସନ' : '୪. ରାଜ୍ୟ କମାଣ୍ଡ ଓ ଲଜିଷ୍ଟିକ୍ସ',
+      hubDriver: '୫. ଆମ୍ବୁଲାନ୍ସ ପାଇଲଟ୍ (108 MDT)',
       // Citizen Subtabs
       sub_intake: 'ମୋର ଲକ୍ଷଣ ଦାଖଲ',
       sub_ocr: 'ଲ୍ୟାବ୍ ରିପୋର୍ଟ OCR',
@@ -743,6 +761,7 @@ export default function App() {
       sub_nearest: 'ନିକଟସ୍ଥ ହସ୍ପିଟାଲ୍ (GPS)',
       sub_ambulance: '୧୦୮ ଆମ୍ବୁଲାନ୍ସ',
       sub_expiry: 'ଔଷଧ ମିଆଦ ଯାଞ୍ଚ',
+      sub_market: 'ଔଷଧ ବଜାର (Medicine Market)',
       sub_teleconsult: 'ଭିଡିଓ ଟେଲି-ପରାମର୍ଶ (WebRTC)',
       // Doctor Subtabs
       sub_review: 'ଟ୍ରାଏଜ୍ ରିଭ୍ୟୁ ଡେସ୍କ',
@@ -769,6 +788,7 @@ export default function App() {
       verifiedDoctorBadge: 'RMP ପ୍ରମାଣିତ ଡାକ୍ତର',
       verifiedPatientBadge: 'ABHA ପ୍ରମାଣିତ ନାଗରିକ',
       verifiedAdminBadge: 'Super Admin',
+      verifiedDriverBadge: '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ପାଇଲଟ୍',
       switchUser: 'ଖାତା ବଦଳାନ୍ତୁ (Login)',
       signOut: 'ଲଗ୍ ଆଉଟ୍',
       years: 'ବର୍ଷ',
@@ -791,12 +811,13 @@ export default function App() {
       safetyLabel: 'सुरक्षा नियम:',
       protocol: 'क्लिनिकल निर्णय समर्थन (Non-Diagnostic) | आयुष्मान भारत एवं NHM',
       facilityLabel: 'केंद्र:',
-      portalTag: isAdmin ? 'राज्य सुपर एडमिन' : isDoctor ? 'डॉक्टर कॉकपिट' : isAsha ? 'आशा फील्ड स्टेशन' : 'नागरिक पोर्टल',
+      portalTag: isAdmin ? 'राज्य सुपर एडमिन' : isDriver ? '108 एम्बुलेंस पायलट कॉकपिट' : isDoctor ? 'डॉक्टर कॉकपिट' : isAsha ? 'आशा फील्ड स्टेशन' : 'नागरिक पोर्टल',
       // Hubs
       hubCitizen: isAdmin ? '4. नागरिक स्वास्थ्य डेस्क' : '1. नागरिक स्वास्थ्य डेस्क',
       hubDoctor: '2. डॉक्टर क्लिनिकल कॉकपिट',
       hubPhc: '3. ग्रामीण PHC एवं आशा',
       hubAdmin: isAdmin ? '1. राज्य कमान एवं प्रशासन' : '4. राज्य प्रशासन एवं लॉजिस्टिक्स',
+      hubDriver: '5. एम्बुलेंस पायलट (108 MDT)',
       // Citizen Subtabs
       sub_intake: 'लक्षण दर्ज करें',
       sub_ocr: 'लैब रिपोर्ट OCR',
@@ -804,6 +825,7 @@ export default function App() {
       sub_nearest: 'निकटतम अस्पताल (GPS Map)',
       sub_ambulance: '108 एम्बुलेंस बुकिंग',
       sub_expiry: 'दवा एक्सपायरी जांच',
+      sub_market: 'दवा बाज़ार (Medicine Market)',
       sub_teleconsult: 'वीडियो टेलीमेडिसिन (WebRTC)',
       // Doctor Subtabs
       sub_review: 'ट्रायज समीक्षा डेस्क',
@@ -830,6 +852,7 @@ export default function App() {
       verifiedDoctorBadge: 'RMP सत्यापित डॉक्टर',
       verifiedPatientBadge: 'ABHA सत्यापित नागरिक',
       verifiedAdminBadge: 'Super Admin',
+      verifiedDriverBadge: '108 एम्बुलेंस पायलट',
       switchUser: 'खाता बदलें (Login)',
       signOut: 'लॉग आउट',
       years: 'वर्ष',
@@ -852,12 +875,13 @@ export default function App() {
       safetyLabel: 'Safety Mandate:',
       protocol: 'Human-in-the-Loop Decision Support (Non-Diagnostic) | MoHFW Aligned',
       facilityLabel: 'Facility:',
-      portalTag: isAdmin ? 'State Super Admin' : isDoctor ? 'Doctor Cockpit' : isAsha ? 'ASHA Field Station' : 'Citizen Portal',
+      portalTag: isAdmin ? 'State Super Admin' : isDriver ? '108 Ambulance Pilot Cockpit' : isDoctor ? 'Doctor Cockpit' : isAsha ? 'ASHA Field Station' : 'Citizen Portal',
       // Hubs
       hubCitizen: isAdmin ? '4. Citizen Health Desk' : '1. Citizen Health Desk',
       hubDoctor: '2. Doctor Clinical Cockpit',
       hubPhc: '3. Rural PHC & ASHA Station',
       hubAdmin: isAdmin ? '1. State Health Command' : '4. State Health Command',
+      hubDriver: '5. Ambulance Pilot (108 MDT)',
       // Citizen Subtabs
       sub_intake: 'Symptom Intake',
       sub_ocr: 'Lab Report OCR',
@@ -865,6 +889,7 @@ export default function App() {
       sub_nearest: 'Nearest Medical (GPS)',
       sub_ambulance: '108 Ambulance',
       sub_expiry: 'Medicine Expiry Checker',
+      sub_market: 'Medicine Market & Jan Aushadhi',
       sub_teleconsult: 'Video Teleconsultation (WebRTC)',
       // Doctor Subtabs
       sub_review: 'Triage Review Desk',
@@ -891,6 +916,7 @@ export default function App() {
       verifiedDoctorBadge: 'Verified RMP Doctor',
       verifiedPatientBadge: 'ABHA Verified Citizen',
       verifiedAdminBadge: 'Super Admin',
+      verifiedDriverBadge: '108 EMS Pilot',
       switchUser: 'Switch User (Login)',
       signOut: 'Sign Out',
       years: 'yrs',
@@ -1116,6 +1142,23 @@ export default function App() {
               appLang={appLang}
               onNavigateToNearest={() => handleNavigateTab('nearest')}
               onRequireAuth={() => setShowAuthPage(true)}
+              onNavigateTab={handleNavigateTab}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {activeTab === 'market' && (
+        <div className="space-y-6">
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Medicine Market...</div>}>
+            <MedicineMarketplace
+              appLang={appLang}
+              currentUser={currentUser}
+              onTestCutStrip={(med) => {
+                setSelectedMarketMedForTest(med);
+                setActiveTab('expiry');
+              }}
+              onNavigateTab={handleNavigateTab}
             />
           </Suspense>
         </div>
@@ -1127,6 +1170,8 @@ export default function App() {
             <MedicineExpiryChecker
               appLang={appLang}
               currentUser={currentUser}
+              incomingMedicine={selectedMarketMedForTest}
+              onNavigateToMarket={() => handleNavigateTab('market')}
               onBookDoctor={() => handleNavigateTab('booking')}
             />
           </Suspense>
@@ -1315,6 +1360,20 @@ export default function App() {
               appLang={appLang}
               onNavigateTab={(tab) => handleNavigateTab(tab)}
               onLogout={handleLogout}
+              onSwitchUser={() => setShowAuthPage(true)}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {/* ─── 108 / 102 AMBULANCE DRIVER & MDT ADMIN CONSOLE ─── */}
+      {(activeTab === 'ambulance_driver' || activeTab === 'driver_admin') && (
+        <div className="space-y-6">
+          <Suspense fallback={<div className="p-8 text-center text-xs text-slate-400">Loading Ambulance Pilot Admin Portal...</div>}>
+            <AmbulanceDriverAdmin
+              currentUser={currentUser}
+              appLang={appLang}
+              onNavigateTab={handleNavigateTab}
               onSwitchUser={() => setShowAuthPage(true)}
             />
           </Suspense>
@@ -1619,6 +1678,22 @@ export default function App() {
                   <User className="w-4 h-4" />
                   <span>{uiText.hubCitizen}</span>
                 </button>
+
+                {/* HUB 5 (ADMIN): AMBULANCE DRIVER & MDT */}
+                <button
+                  onClick={() => switchHub('driver')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'driver'
+                      ? 'bg-rose-700 text-white shadow-md ring-2 ring-rose-400/40'
+                      : 'text-rose-950 dark:text-rose-300 hover:text-rose-800 hover:bg-rose-100/60 dark:hover:bg-rose-950/60'
+                  }`}
+                >
+                  <Truck className="w-4 h-4 text-amber-400" />
+                  <span>{uiText.hubDriver}</span>
+                  <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
+                    108
+                  </span>
+                </button>
               </>
             ) : (
               <>
@@ -1682,6 +1757,22 @@ export default function App() {
                   <span>{uiText.hubAdmin}</span>
                   <span className="bg-amber-400 text-purple-950 text-[9px] px-1.5 py-0.2 rounded-full font-black">
                     GOV
+                  </span>
+                </button>
+
+                {/* HUB 5: AMBULANCE DRIVER & MDT */}
+                <button
+                  onClick={() => switchHub('driver')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'driver'
+                      ? 'bg-rose-700 text-white shadow-md ring-2 ring-rose-400/40'
+                      : 'text-rose-950 dark:text-rose-300 hover:text-rose-800 hover:bg-rose-100/60 dark:hover:bg-rose-950/60'
+                  }`}
+                >
+                  <Truck className="w-4 h-4 text-amber-400" />
+                  <span>{uiText.hubDriver}</span>
+                  <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
+                    108
                   </span>
                 </button>
               </>
@@ -1815,6 +1906,8 @@ export default function App() {
                         <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
                           isAdmin
                             ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                            : isDriver
+                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
                             : isDoctor
                             ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                             : isAsha
@@ -1823,6 +1916,8 @@ export default function App() {
                         }`}>
                           {isAdmin
                             ? uiText.verifiedAdminBadge
+                            : isDriver
+                            ? uiText.verifiedDriverBadge
                             : isDoctor
                             ? uiText.verifiedDoctorBadge
                             : isAsha
@@ -1903,7 +1998,24 @@ export default function App() {
                             <ShieldCheck className="w-3.5 h-3.5" />
                             <span>Super Admin</span>
                           </div>
-                          <div className="text-[10px] text-slate-500 truncate">Sunil Biswal (State Admin)</div>
+                          <div className="text-[10px] text-slate-500 truncate">Sunil Biswal (Admin)</div>
+                        </button>
+
+                        {/* 5th 1-Click Persona: Ambulance Pilot */}
+                        <button
+                          type="button"
+                          onClick={() => handleQuickPersonaSwitch('driver')}
+                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer col-span-2 ${
+                            isDriver
+                              ? 'bg-rose-100 border-rose-400 text-rose-950 font-bold shadow-xs'
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-rose-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-rose-800 dark:text-rose-400">
+                            <Truck className="w-3.5 h-3.5" />
+                            <span>108 Ambulance Pilot (ପାଇଲଟ୍)</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate">Sanjay Barik (108 ALS • OD-02-AB-1081)</div>
                         </button>
                       </div>
                     </div>
@@ -2021,6 +2133,21 @@ export default function App() {
                 >
                   <Pill className="w-3.5 h-3.5 text-indigo-300" />
                   <span>{uiText.sub_expiry}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('market')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'market'
+                      ? 'bg-teal-700 text-white shadow-sm ring-2 ring-teal-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <ShoppingBag className="w-3.5 h-3.5 text-teal-300" />
+                  <span>{uiText.sub_market}</span>
+                  <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                    28+
+                  </span>
                 </button>
 
                 <button
@@ -2329,6 +2456,71 @@ export default function App() {
                     <span>Cloud API Infrastructure</span>
                   </button>
                 )}
+              </>
+            )}
+
+            {/* ─── HUB 5: AMBULANCE DRIVER & MDT DISPATCH ─── */}
+            {activeHub === 'driver' && (
+              <>
+                <button
+                  onClick={() => setActiveTab('ambulance_driver')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'ambulance_driver' || activeTab === 'driver_admin'
+                      ? 'bg-rose-700 text-white shadow-sm ring-2 ring-rose-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <Truck className="w-3.5 h-3.5 text-amber-300" />
+                  <span>{appLang === 'or-IN' ? 'ପାଇଲଟ୍ MDT କନ୍‌ସୋଲ୍' : appLang === 'hi-IN' ? 'पायलट MDT कंसोल' : 'Pilot MDT Console'}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('ambulance')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'ambulance'
+                      ? 'bg-rose-700 text-white shadow-sm ring-2 ring-rose-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <Ambulance className="w-3.5 h-3.5 text-rose-300" />
+                  <span>{uiText.sub_ambulance}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('nearest')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'nearest'
+                      ? 'bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <Navigation className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>{uiText.sub_nearest}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('beds')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'beds'
+                      ? 'bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <Bed className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>{uiText.sub_beds}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('bloodbank')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'bloodbank'
+                      ? 'bg-rose-700 text-white shadow-sm ring-2 ring-rose-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xs'
+                  }`}
+                >
+                  <Droplet className="w-3.5 h-3.5 text-rose-300" />
+                  <span>{uiText.sub_blood}</span>
+                </button>
               </>
             )}
           </div>

@@ -523,6 +523,49 @@ const DEFAULT_USERS = [
     qualifications: 'Chief Technology Director, State e-Health Grid',
     preferredLanguage: 'or-IN',
     createdAt: '2026-01-05T00:00:00.000Z'
+  },
+  // AMBULANCE PILOTS / DRIVERS (108 & 102 EMS)
+  {
+    id: 'USR-DRV-1081',
+    name: 'Sanjay Kumar Barik (ସଞ୍ଜୟ କୁମାର ବାରିକ)',
+    role: '108 ALS Emergency Ambulance Pilot',
+    roleCategory: 'driver',
+    staffId: 'PILOT-108-OD-1081',
+    facility: 'Master Canteen Emergency Stand, Bhubaneswar',
+    state: 'Odisha (ଓଡ଼ିଶା)',
+    district: 'Khurda',
+    vehicleNo: 'OD-02-AB-1081',
+    ambulanceType: '108 ALS — Advanced Life Support',
+    ambulanceTypeId: 'ALS',
+    email: 'sanjay.pilot108@health.odisha.gov.in',
+    phone: '+91 94371 10801',
+    password: 'password123',
+    department: 'State Emergency Ambulance Service (108 EMAS)',
+    shift: 'Apex Emergency Response (07:00 - 19:00)',
+    qualifications: 'Certified EMS Heavy Vehicle Emergency Pilot, First-Aid & BLS Certified',
+    preferredLanguage: 'or-IN',
+    createdAt: '2026-01-10T00:00:00.000Z'
+  },
+  {
+    id: 'USR-DRV-1021',
+    name: 'Kailash Behera (କୈଳାଶ ବେହେରା)',
+    role: '102 Janani Shishu Express Ambulance Pilot',
+    roleCategory: 'driver',
+    staffId: 'PILOT-102-OD-1021',
+    facility: 'Puri District Maternity Base Depot, Puri',
+    state: 'Odisha (ଓଡ଼ିଶା)',
+    district: 'Puri',
+    vehicleNo: 'OD-13-JAN-1021',
+    ambulanceType: '102 Janani Shishu Express (Maternal Care)',
+    ambulanceTypeId: '102_JANANI',
+    email: 'kailash.pilot102@health.odisha.gov.in',
+    phone: '+91 94374 10201',
+    password: 'password123',
+    department: 'Maternal & Child Health Emergency Transit (102 Janani)',
+    shift: '24x7 Maternity Call Shift',
+    qualifications: 'Certified 102 Janani Pilot, Safe Emergency Transport Certified',
+    preferredLanguage: 'or-IN',
+    createdAt: '2026-01-12T00:00:00.000Z'
   }
 ];
 
@@ -1594,6 +1637,21 @@ export const updateAmbulanceStatus = (requestId, newStatus) => {
   if (target) {
     saveFirestoreDoc(FIRESTORE_COLLECTIONS.AMBULANCE_REQUESTS, requestId, target).catch((err) => {
       console.warn('Firestore ambulance update note:', err);
+    });
+  }
+
+  return updated;
+};
+
+export const updateAmbulanceDetails = (requestId, updatedFields) => {
+  const current = getAmbulanceRequests();
+  const updated = current.map((r) => (r.id === requestId ? { ...r, ...updatedFields } : r));
+  localStorage.setItem(AMBULANCE_STORAGE_KEY, JSON.stringify(updated));
+
+  const target = updated.find((r) => r.id === requestId);
+  if (target) {
+    saveFirestoreDoc(FIRESTORE_COLLECTIONS.AMBULANCE_REQUESTS, requestId, target).catch((err) => {
+      console.warn('Firestore ambulance details update note:', err);
     });
   }
 

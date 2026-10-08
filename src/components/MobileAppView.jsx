@@ -37,7 +37,8 @@ import {
   ExternalLink,
   Monitor,
   Smartphone,
-  Video
+  Video,
+  ShoppingBag
 } from 'lucide-react';
 import TeleConsultationSuite from './TeleConsultationSuite';
 
@@ -104,6 +105,8 @@ export default function MobileAppView({
         bloodSub: '8,420 OSBTC Blood Units',
         medTitle: 'Medicine Expiry & Safety',
         medSub: 'OCR & Drug Interaction Guard',
+        marketTitle: 'ଔଷଧ ବଜାର ଓ ଜନଔଷଧି',
+        marketSub: '୨୮+ ଔଷଧ ଓ କଟା ଷ୍ଟ୍ରିପ୍ QR',
         phcTitle: 'PHC Offline Sync Engine',
         phcSub: 'Zero-Internet Rural Clinic DB',
         ashaTitle: 'ASHA Field Worker Portal',
@@ -145,6 +148,8 @@ export default function MobileAppView({
         bloodSub: 'OSBTC रियल-टाइम रक्त भंडार',
         medTitle: 'Medicine Expiry & Safety',
         medSub: 'दवा सुरक्षा व एक्सपायरी स्कैनर',
+        marketTitle: 'दवा बाज़ार एवं जन औषधि',
+        marketSub: '28+ दवाएं व कटी स्ट्रिप QR',
         phcTitle: 'PHC Offline Sync Engine',
         phcSub: 'जीरो इंटरनेट ग्रामीण डाटा सिंक',
         ashaTitle: 'ASHA Field Worker Portal',
@@ -186,6 +191,8 @@ export default function MobileAppView({
         bloodSub: '8,420 OSBTC Blood Units',
         medTitle: 'Medicine Expiry & Safety',
         medSub: 'OCR & Drug Interaction Guard',
+        marketTitle: 'Medicine Market & Jan Aushadhi',
+        marketSub: '28+ Medicines & Cut Strip QR',
         phcTitle: 'PHC Offline Sync Engine',
         phcSub: 'Zero-Internet Rural Clinic DB',
         ashaTitle: 'ASHA Field Worker Portal',
@@ -285,6 +292,14 @@ export default function MobileAppView({
       icon: Pill,
       iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-200',
       tag: 'OCR Safe'
+    },
+    {
+      id: 'market',
+      hub: 'citizen',
+      title: t.marketTitle,
+      icon: ShoppingBag,
+      iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
+      tag: '28+ Meds'
     },
     {
       id: 'phc_offline',

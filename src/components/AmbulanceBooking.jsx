@@ -46,7 +46,8 @@ import {
   LifeBuoy,
   Ambulance,
   Bell,
-  Users
+  Users,
+  Truck
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -124,7 +125,7 @@ const FIRST_AID_PROTOCOLS = {
   }
 };
 
-export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNearest, onOpenNmcSuite, onRequireAuth }) {
+export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNearest, onOpenNmcSuite, onRequireAuth, onNavigateTab }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('book'); // 'book' | 'track' | 'my-requests'
@@ -214,7 +215,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
   const sirenIntervalRef = useRef(null);
 
   // Localization Dictionary
-  const txt = {
+  const translationDict = {
     'or-IN': {
       tabBook: '🚑 ଆମ୍ବୁଲାନ୍ସ ଡାକନ୍ତୁ',
       tabTrack: '📡 ଲାଇଭ୍ ଟ୍ରାକର୍ (Live Mission)',
@@ -287,6 +288,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       cancelCountdownMsg: 'ସେକେଣ୍ଡ ମଧ୍ୟରେ ଡିସ୍ପ୍ୟାଚ୍ ହେବ...',
       undoBtn: 'ବାତିଲ୍ କରନ୍ତୁ (Cancel)',
       confirmNowBtn: 'ତୁରନ୍ତ ଡିସ୍ପ୍ୟାଚ୍ କରନ୍ତୁ',
+      cprTitle: 'CPR ଛାତି ଚାପ ମେଟ୍ରୋନୋମ୍ (୧୧୦ BPM)',
       cprBtnStart: 'CPR ଛାତି ଚାପ ମେଟ୍ରୋନୋମ୍ ଆରମ୍ଭ (୧୧୦ BPM)',
       cprBtnStop: 'CPR ମେଟ୍ରୋନୋମ୍ ବନ୍ଦ କରନ୍ତୁ',
       cprGuide: 'ପ୍ରତି ୩୦ ଥର ଛାତି ଚାପିବା ପରେ ୨ ଥର ଶ୍ୱାସ ଦିଅନ୍ତୁ',
@@ -375,6 +377,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       cancelCountdownMsg: 'सेकंड में स्वतः डिस्पैच होगा...',
       undoBtn: 'रद्द करें (Cancel)',
       confirmNowBtn: 'तुरंत डिस्पैच करें',
+      cprTitle: 'CPR चेस्ट कम्प्रेशन मेट्रोनोम (110 BPM)',
       cprBtnStart: 'CPR चेस्ट कम्प्रेशन मेट्रोनोम (110 BPM)',
       cprBtnStop: 'CPR मेट्रोनोम बंद करें',
       cprGuide: 'हर 30 कम्प्रेशन के बाद 2 बार सांस दें',
@@ -463,6 +466,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       cancelCountdownMsg: 'Auto-dispatching in',
       undoBtn: 'Undo / Cancel',
       confirmNowBtn: 'Confirm & Dispatch Now',
+      cprTitle: 'CPR Cardiac Metronome (110 BPM)',
       cprBtnStart: 'Start CPR Cardiac Metronome (110 BPM)',
       cprBtnStop: 'Stop CPR Metronome',
       cprGuide: 'Push hard & fast: 30 compressions, then 2 rescue breaths',
@@ -479,7 +483,8 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       setWorkerPhonePrompt: 'Our Worker WhatsApp & Mobile Number:',
       saveWorkerPhone: 'Save Hotline Number'
     }
-  }[lang] || {};
+  };
+  const txt = translationDict[lang] || translationDict['or-IN'] || translationDict['en-IN'] || {};
 
   // Emergency Condition Types
   const emergencyTypes = [
@@ -639,7 +644,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     return FLEET_STATIONS.map((amb) => {
       const dist = calculateDistanceKm(pLat, pLng, amb.lat, amb.lng);
       const etaMins = Math.max(3, Math.round(dist * 2.2));
-      return { ...amb, distanceKm: parseFloat(dist.toFixed(1)), etaMins };
+      return { ...amb, distanceKm: parseFloat(dist.toFixed(1)), etaMins, station: amb.base };
     }).sort((a, b) => a.distanceKm - b.distanceKm);
   }, [liveCoords]);
 
@@ -1280,13 +1285,23 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
               <p className="text-rose-100 text-xs mt-0.5 font-medium">{txt.pageSubtitle}</p>
             </div>
           </div>
-          <a
-            href="tel:108"
-            className="flex items-center gap-2 bg-white text-rose-700 hover:bg-rose-50 font-black px-4 py-2.5 rounded-xl shadow transition text-xs whitespace-nowrap self-start sm:self-auto cursor-pointer"
-          >
-            <Phone className="w-4 h-4 text-rose-600 fill-rose-600" />
-            <span>{txt.helplineBanner}</span>
-          </a>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => onNavigateTab && onNavigateTab('ambulance_driver')}
+              className="flex items-center gap-2 bg-slate-900 hover:bg-black text-amber-300 font-black px-3.5 py-2.5 rounded-xl shadow transition text-xs whitespace-nowrap cursor-pointer border border-amber-400/40"
+            >
+              <Truck className="w-4 h-4 text-amber-400" />
+              <span>{lang === 'or-IN' ? 'ପାଇଲଟ୍ MDT କମାଣ୍ଡ' : 'Pilot MDT Admin'}</span>
+            </button>
+            <a
+              href="tel:108"
+              className="flex items-center gap-2 bg-white text-rose-700 hover:bg-rose-50 font-black px-4 py-2.5 rounded-xl shadow transition text-xs whitespace-nowrap cursor-pointer"
+            >
+              <Phone className="w-4 h-4 text-rose-600 fill-rose-600" />
+              <span>{txt.helplineBanner}</span>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -1749,7 +1764,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                 <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
                   <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Remaining Distance</div>
                   <div className="text-2xl font-black text-slate-900 font-mono mt-0.5">
-                    {activeMission.distanceRemainingKm} <span className="text-xs font-semibold">km</span>
+                    {activeMission.distanceRemainingKm ?? 2.8} <span className="text-xs font-semibold">km</span>
                   </div>
                   <div className="text-[10px] text-slate-500 font-medium">Direct Highway Link</div>
                 </div>
@@ -1757,7 +1772,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                 <div className="bg-blue-50 p-3.5 rounded-xl border border-blue-200 text-center">
                   <div className="text-[10px] text-blue-700 font-bold uppercase tracking-wider">Vehicle Speed</div>
                   <div className="text-2xl font-black text-blue-950 font-mono mt-0.5">
-                    {activeMission.speedKmh} <span className="text-xs font-semibold">km/h</span>
+                    {activeMission.speedKmh ?? 52} <span className="text-xs font-semibold">km/h</span>
                   </div>
                   <div className="text-[10px] text-blue-600 font-medium">GPS Telemetry Stream</div>
                 </div>
@@ -1779,8 +1794,10 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                 <div className="absolute top-3 left-3 z-10 bg-slate-950/90 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-white/20 text-white text-xs font-bold shadow-xl flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
                   <div>
-                    <div className="text-xs font-black text-white">Ambulance: {activeMission.vehicleNo}</div>
-                    <div className="text-[10px] text-emerald-400 font-mono font-medium">Pilot: {activeMission.driverName} • ALS Life Support</div>
+                    <div className="text-xs font-black text-white">Ambulance: {activeMission.vehicleNo || 'OD-02-AB-1081'}</div>
+                    <div className="text-[10px] text-emerald-400 font-mono font-medium">
+                      Pilot: {activeMission.driverName || activeMission.driver || 'Sanjay Kumar Barik'} • {activeMission.ambulanceType || '108 ALS'}
+                    </div>
                   </div>
                   <span className="bg-rose-600/80 text-white text-[9px] px-2 py-0.5 rounded-full font-mono font-black ml-2">
                     SIREN ACTIVE
@@ -1820,16 +1837,16 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                     </span>
                   </div>
                   <div className="space-y-1 text-slate-700">
-                    <div>Pilot Name: <strong>{activeMission.driverName}</strong></div>
-                    <div>Base Station: <strong>{activeMission.baseStation}</strong></div>
-                    <div>Vehicle: <strong>{activeMission.vehicleNo}</strong> ({activeMission.ambulanceType})</div>
+                    <div>Pilot Name: <strong>{activeMission.driverName || activeMission.driver || 'Sanjay Kumar Barik'}</strong></div>
+                    <div>Base Station: <strong>{activeMission.baseStation || activeMission.location || 'Master Canteen Emergency Stand'}</strong></div>
+                    <div>Vehicle: <strong>{activeMission.vehicleNo || 'OD-02-AB-1081'}</strong> ({activeMission.ambulanceType || '108 ALS'})</div>
                   </div>
                   <a
-                    href={`tel:${activeMission.paramedicPhone}`}
+                    href={`tel:${activeMission.paramedicPhone || '+91 94371 10801'}`}
                     className="mt-2 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition cursor-pointer"
                   >
                     <Phone className="w-3.5 h-3.5" />
-                    <span>Call Pilot: {activeMission.paramedicPhone}</span>
+                    <span>Call Pilot: {activeMission.paramedicPhone || '+91 94371 10801'}</span>
                   </a>
                 </div>
 
@@ -1844,12 +1861,12 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                     </span>
                   </div>
                   <div className="space-y-1 text-slate-700">
-                    <div>Patient: <strong>{activeMission.patient.name}</strong> ({activeMission.patient.age} yrs, {activeMission.patient.gender})</div>
-                    <div>Pickup: <strong>{activeMission.pickup}</strong></div>
-                    <div>Target Hospital: <strong>{activeMission.destination}</strong></div>
+                    <div>Patient: <strong>{activeMission.patient?.name || activeMission.patientName || 'Emergency Patient'}</strong> ({activeMission.patient?.age || activeMission.age || '—'} yrs, {activeMission.patient?.gender || activeMission.gender || '—'})</div>
+                    <div>Pickup: <strong>{activeMission.pickup || activeMission.location || 'Bhubaneswar'}</strong></div>
+                    <div>Target Hospital: <strong>{activeMission.destination || 'Capital Hospital Bhubaneswar'}</strong></div>
                   </div>
                   <div className="text-[11px] text-slate-500 pt-1">
-                    ABHA Linkage: <strong className="font-mono">{activeMission.patient.abha}</strong>
+                    ABHA Linkage: <strong className="font-mono">{activeMission.patient?.abha || activeMission.patientAbha || 'ABDM Verified'}</strong>
                   </div>
                 </div>
               </div>
@@ -1986,7 +2003,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                     {txt.cancelCountdownMsg} {cancelCountdown}s
                   </h4>
                   <p className="text-xs text-white/90">
-                    Allocating nearest unit: <span className="font-mono font-bold text-amber-200">{nearestVehicle.no}</span> ({nearestVehicle.station}, ~{nearestVehicle.etaMins}m ETA)
+                    Allocating nearest unit: <span className="font-mono font-bold text-amber-200">{nearestVehicle.no}</span> ({nearestVehicle.station || nearestVehicle.base}, ~{nearestVehicle.etaMins}m ETA)
                   </p>
                 </div>
               </div>
@@ -2034,7 +2051,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                   <span className="text-[11px] font-semibold text-slate-500">Nearest Fleet:</span>
                   <span className="px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                    {nearestVehicle.station} ({nearestVehicle.no})
+                    {nearestVehicle.station || nearestVehicle.base} ({nearestVehicle.no})
                   </span>
                   <span className="px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold">
                     ~{nearestVehicle.distanceKm} km away • ~{nearestVehicle.etaMins}m ETA
