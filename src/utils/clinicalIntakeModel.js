@@ -185,14 +185,35 @@ export const CONDITION_PROTOCOLS = {
         ]
       }
     ]
+  },
+  trauma_emergency: {
+    id: 'trauma_emergency',
+    name: { en: 'Emergency / Trauma', hi: 'आघात / आपातकाल', or: 'ଆଘାତ / ଜରୁରୀକାଳୀନ' },
+    color: 'rose',
+    primaryVitals: ['pulse', 'systolic', 'diastolic', 'durationDays'],
+    questions: [
+      {
+        id: 'active_bleeding',
+        text: {
+          en: 'Is there heavy active bleeding, suspected fracture, or loss of consciousness?',
+          hi: 'क्या भारी रक्तस्राव, फ्रैक्चर या बेहोशी है?',
+          or: 'ପ୍ରଚୁର ରକ୍ତସ୍ରାବ, ହାଡ଼ ଭାଙ୍ଗିବା କିମ୍ବା ଅଚେତ ଅବସ୍ଥା ଅଛି କି?'
+        },
+        options: [
+          { val: 'no', en: 'No heavy bleeding', hi: 'भारी रक्तस्राव नहीं', or: 'ରକ୍ତସ୍ରାବ ନାହିଁ' },
+          { val: 'severe_trauma', en: 'Yes, heavy bleeding / fracture / unconscious (CRITICAL)', hi: 'हाँ, भारी खून / फ्रैक्चर / बेहोशी (अति गंभीर)', or: 'ହଁ, ପ୍ରଚୁର ରକ୍ତସ୍ରାବ / ଭଙ୍ଗା / ଅଚେତ (ଅତି ଜରୁରୀ)' }
+        ]
+      }
+    ]
   }
 };
 
 /**
  * Multi-lingual symptom knowledge database with clinical mappings
+ * Accurately categorizes symptoms into critical, severe, moderate, and mild tiers.
  */
 const CLINICAL_LEXICON = [
-  // Cardiac & Chest
+  // ─── Cardiac & Chest (High acuity / Emergency) ───
   {
     id: 'chest_pain_radiating',
     category: 'cardiac',
@@ -203,22 +224,22 @@ const CLINICAL_LEXICON = [
     labelHi: 'बाएं हाथ में फैलता सीने का दर्द',
     labelOr: 'ବାମ ହାତକୁ ବ୍ୟାପୁଥିବା ଛାତି କଷ୍ଟ',
     patterns: [
-      /ବାମ ହାତ|ବାମ ହାତକୁ ଯନ୍ତ୍ରଣା|ବାମ ହାତ ବିନ୍ଧା/gi,
-      /बाएं हाथ|बाएं बाजू|गर्दन में फैलता दर्द|सीने से हाथ में/gi,
-      /radiating to left arm|left arm pain|chest to neck/gi
+      /ବାମ ହାତ|ବାମ ହାତକୁ ଯନ୍ତ୍ରଣା|ବାମ ହାତ ବିନ୍ଧା|ମାଢ଼ି ଆଡ଼କୁ|ବେକ ଆଡ଼କୁ/gi,
+      /बाएं हाथ|बाएं बाजू|गर्दन में फैलता दर्द|सीने से हाथ में|जबड़े में दर्द/gi,
+      /radiating to left arm|left arm pain|chest to neck|chest to jaw|radiating chest pain/gi
     ]
   },
   {
     id: 'chest_pain',
     category: 'cardiac',
     severity: 'severe',
-    labelEn: 'Chest Pain / Angina',
+    labelEn: 'Chest Pain / Angina / Pressure',
     labelHi: 'सीने में दर्द / भारीपन',
     labelOr: 'ଛାତି ଯନ୍ତ୍ରଣା / ଭାରୀପଣ',
     patterns: [
-      /ଛାତିରେ ବହୁତ କଷ୍ଟ|ଛାତି କଷ୍ଟ|ଛାତି ଯନ୍ତ୍ରଣା|ଛାତି ଭାରୀ|ଛାତି ବିନ୍ଧା|ଛାତି ଧଡ଼ଧଡ଼/gi,
+      /ଛାତିରେ ବହୁତ କଷ୍ଟ|ଛାତି କଷ୍ଟ|ଛାତି ଯନ୍ତ୍ରଣା|ଛାତି ଭାରୀ|ଛାତି ବିନ୍ଧା|ଛାତି ଧଡ଼ଧଡ଼|ଛାତିରେ ଚାପ/gi,
       /सीने में दर्द|छाती में दर्द|सीने में भारीपन|छाती में दबाव|दिल में दर्द|घबराहट/gi,
-      /chest pain|chest heaviness|chest pressure|angina|palpitations/gi
+      /chest pain|chest heaviness|chest pressure|angina|palpitations|heart pain/gi
     ]
   },
   {
@@ -229,65 +250,26 @@ const CLINICAL_LEXICON = [
     labelHi: 'ठंडा पसीना',
     labelOr: 'ପ୍ରଚୁର ଥଣ୍ଡା ଝାଳ',
     patterns: [
-      /ଥଣ୍ଡା ଝାଳ|ପ୍ରଚୁର ଝାଳ|ଝାଳ ବାହାରୁଛି|ଝାଳରେ ଭିଜି/gi,
-      /ठंडा पसीना|पसीना छूट रहा|भीषण पसीना|अचानक पसीना/gi,
-      /cold sweat|profuse sweating|diaphoresis|drenched in sweat/gi
+      /ଥଣ୍ଡା ଝାଳ|ପ୍ରଚୁର ଝାଳ|ଝାଳ ବାହାରୁଛି|ଝାଳରେ ଭିଜି|ଝାଳ ବୋହୁଛି/gi,
+      /ठंडा पसीना|पसीना छूट रहा|भीषण पसीना|अचानक पसीना|पसीने से लथपथ/gi,
+      /cold sweat|profuse sweating|diaphoresis|drenched in sweat|sweating profusely/gi
     ]
   },
 
-  // Respiratory
+  // ─── Respiratory (Airway & Breathing) ───
   {
     id: 'severe_dyspnea',
     category: 'respiratory',
     severity: 'critical',
     isRedFlag: true,
     redFlagNote: 'Acute Respiratory Distress: Severe shortness of breath or cyanosis signal',
-    labelEn: 'Severe Breathlessness',
+    labelEn: 'Severe Breathlessness (Gasping)',
     labelHi: 'तीव्र सांस संकट (दम फूलना)',
     labelOr: 'ତୀବ୍ର ନିଶ୍ୱାସ କଷ୍ଟ (ଅଣନିଶ୍ୱାସୀ)',
     patterns: [
-      /ଅଣନିଶ୍ୱାସୀ|ନିଶ୍ୱାସ ନେବାରେ ଭୀଷଣ କଷ୍ଟ|ନିଶ୍ୱାସ ନେଇପାରୁନି|ଦମ ଲାଗୁଛି|ଦମ ବନ୍ଦ/gi,
-      /सांस लेने में बहुत ज्यादा तकलीफ|दम फूल रहा|सांस अटक रही|सांस नहीं आ रही|होंठ नीले/gi,
-      /severe shortness of breath|cannot breathe|gasping|severe dyspnea|respiratory distress/gi
-    ]
-  },
-  {
-    id: 'dyspnea',
-    category: 'respiratory',
-    severity: 'moderate',
-    labelEn: 'Shortness of Breath',
-    labelHi: 'सांस लेने में कठिनाई',
-    labelOr: 'ନିଶ୍ୱାସ କଷ୍ଟ',
-    patterns: [
-      /ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ|ନିଶ୍ୱାସ କଷ୍ଟ|ନିଶ୍ୱାସ ଫୁଲୁଛି/gi,
-      /सांस लेने में तकलीफ|सांस फूलना|दम घुटना/gi,
-      /shortness of breath|breathless|dyspnea|wheezing/gi
-    ]
-  },
-  {
-    id: 'productive_cough',
-    category: 'respiratory',
-    severity: 'moderate',
-    labelEn: 'Cough with Phlegm',
-    labelHi: 'बलगम वाली खांसी',
-    labelOr: 'କଫ ସହ କାଶ',
-    patterns: [
-      /କଫ ସହ କାଶ|କଫ ପଡୁଛି|ଘଡ଼ଘଡ଼ କାଶ|କାଶରେ କଫ/gi,
-      /बलगम वाली खांसी|खांसी में बलगम|कफ आ रहा/gi,
-      /cough with phlegm|productive cough|wet cough|expectoration/gi
-    ]
-  },
-  {
-    id: 'cough',
-    category: 'respiratory',
-    severity: 'mild',
-    labelEn: 'Cough',
-    labelHi: 'खांसी',
-    labelOr: 'କାଶ',
-    patterns: [
-      /ଶୁଖିଲା କାଶ|କାଶ ହେଉଛି|କାଶ/gi,
-      /सूखी खांसी|खांसी हो रही|खांसी/gi,
-      /dry cough|coughing|cough/gi
+      /ଅଣନିଶ୍ୱାସୀ|ନିଶ୍ୱାସ ନେବାରେ ଭୀଷଣ କଷ୍ଟ|ନିଶ୍ୱାସ ନେଇପାରୁନି|ଦମ ଲାଗୁଛି|ଦମ ବନ୍ଦ|ନିଶ୍ୱାସ ଅଟକି/gi,
+      /सांस लेने में बहुत ज्यादा तकलीफ|दम फूल रहा|सांस अटक रही|सांस नहीं आ रही|होंठ नीले|सांस बंद/gi,
+      /severe shortness of breath|cannot breathe|gasping|severe dyspnea|respiratory distress|choking/gi
     ]
   },
   {
@@ -300,13 +282,80 @@ const CLINICAL_LEXICON = [
     labelHi: 'खांसी में खून (हेमोप्टाइसिस)',
     labelOr: 'କାଶରେ ରକ୍ତ ପଡ଼ିବା',
     patterns: [
-      /କଫରେ ରକ୍ତ|କାଶରେ ରକ୍ତ|ରକ୍ତ କାଶ/gi,
-      /खांसी में खून|बलगम में खून|खून की उल्टी जैसी खांसी/gi,
-      /blood in cough|blood in sputum|coughing blood|hemoptysis/gi
+      /କଫରେ ରକ୍ତ|କାଶରେ ରକ୍ତ|ରକ୍ତ କାଶ|ରକ୍ତ ପଡୁଛି/gi,
+      /खांसी में खून|बलगम में खून|खून की उल्टी जैसी खांसी|खांसी के साथ खून/gi,
+      /blood in cough|blood in sputum|coughing blood|hemoptysis|blood tinged sputum/gi
+    ]
+  },
+  {
+    id: 'dyspnea',
+    category: 'respiratory',
+    severity: 'severe',
+    labelEn: 'Shortness of Breath / Wheezing',
+    labelHi: 'सांस लेने में कठिनाई / घबराहट',
+    labelOr: 'ନିଶ୍ୱାସ କଷ୍ଟ / ଶଁ ଶଁ ଶବ୍ଦ',
+    patterns: [
+      /ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ|ନିଶ୍ୱାସ କଷ୍ଟ|ନିଶ୍ୱାସ ଫୁଲୁଛି|ଶଁ ଶଁ ଶବ୍ଦ|ଛାତି ଘଡ଼ଘଡ଼/gi,
+      /सांस लेने में तकलीफ|सांस फूलना|दम घुटना|सांस में सीटी|घरघराहट/gi,
+      /shortness of breath|breathless|dyspnea|wheezing|asthma|bronchospasm/gi
+    ]
+  },
+  {
+    id: 'productive_cough',
+    category: 'respiratory',
+    severity: 'moderate',
+    labelEn: 'Productive Cough with Phlegm',
+    labelHi: 'बलगम वाली खांसी',
+    labelOr: 'କଫ ସହ କାଶ',
+    patterns: [
+      /କଫ ସହ କାଶ|କଫ ପଡୁଛି|ଘଡ଼ଘଡ଼ କାଶ|କାଶରେ କଫ|ପାଚିଲା କଫ/gi,
+      /बलगम वाली खांसी|खांसी में बलगम|कफ आ रहा|पीला बलगम/gi,
+      /cough with phlegm|productive cough|wet cough|expectoration|yellow phlegm/gi
+    ]
+  },
+  {
+    id: 'cough',
+    category: 'respiratory',
+    severity: 'mild',
+    labelEn: 'Dry Cough',
+    labelHi: 'सूखी खांसी',
+    labelOr: 'ଶୁଖିଲା କାଶ',
+    patterns: [
+      /ଶୁଖିଲା କାଶ|କାଶ ହେଉଛି|ସାମାନ୍ୟ କାଶ|ଟିକେ କାଶ/gi,
+      /सूखी खांसी|हल्की खांसी|खांसी हो रही|खांसी/gi,
+      /dry cough|mild cough|coughing|irritating cough/gi
+    ]
+  },
+  {
+    id: 'rhinitis_cold',
+    category: 'respiratory',
+    severity: 'mild',
+    labelEn: 'Common Cold / Runny Nose',
+    labelHi: 'जुकाम / छींकें / बहती नाक',
+    labelOr: 'ଥଣ୍ଡା ସର୍ଦ୍ଦି / ଛିଙ୍କ / ନାକରୁ ପାଣି',
+    patterns: [
+      /ଛିଙ୍କ|ସର୍ଦ୍ଦି|ନାକରୁ ପାଣି|ନାକ ବନ୍ଦ|ସାମାନ୍ୟ ଥଣ୍ଡା|ଗଳା ଖସଖସ/gi,
+      /जुकाम|छींक|छींकें|बहती नाक|नाक बंद|गले में खराश/gi,
+      /runny nose|sneezing|common cold|coryza|nasal congestion|sore throat/gi
     ]
   },
 
-  // Fever & Systemic
+  // ─── Fever & Systemic Infections ───
+  {
+    id: 'bleeding_rash',
+    category: 'fever',
+    severity: 'critical',
+    isRedFlag: true,
+    redFlagNote: 'Hemorrhagic / Dengue Alert: Bleeding gums, epistaxis, or petechial rash observed',
+    labelEn: 'Bleeding Gums / Petechial Rash',
+    labelHi: 'मसूड़ों से खून / लाल चकत्ते',
+    labelOr: 'ମାଢ଼ିରୁ ରକ୍ତ / ନାଲି ଦାଗ',
+    patterns: [
+      /ମାଢ଼ିରୁ ରକ୍ତ|ନାକରୁ ରକ୍ତ|ଚର୍ମରେ ନାଲି ଦାଗ|ନାଲି ଚିହ୍ନ|ରକ୍ତ ଦାଗ/gi,
+      /मसूड़ों से खून|नाक से खून|लाल चकत्ते|शरीर पर लाल दाने|रक्तस्राव/gi,
+      /gum bleeding|nose bleeding|red spots|petechiae|bleeding rash|purpura/gi
+    ]
+  },
   {
     id: 'high_fever_rigors',
     category: 'fever',
@@ -315,41 +364,52 @@ const CLINICAL_LEXICON = [
     labelHi: 'कंपकंपी के साथ तेज बुखार',
     labelOr: 'କମ୍ପ ଜ୍ୱର (ଥଣ୍ଡା ଲାଗି ଜ୍ୱର)',
     patterns: [
-      /ଥଣ୍ଡା ଲାଗି କମ୍ପ|କମ୍ପ ସହିତ ଜ୍ୱର|ଥଣ୍ଡା ଲାଗି ଜ୍ୱର|କମ୍ପି କମ୍ପି ଜ୍ୱର/gi,
-      /कंपकंपी के साथ बुखार|ठंड लगकर बुखार|थरथराहट के साथ बुखार/gi,
-      /fever with chills|shivering fever|rigors|chills and high temp/gi
+      /ଥଣ୍ଡା ଲାଗି କମ୍ପ|କମ୍ପ ସହିତ ଜ୍ୱର|ଥଣ୍ଡା ଲାଗି ଜ୍ୱର|କମ୍ପି କମ୍ପି ଜ୍ୱର|କମ୍ପ ହେଉଛି/gi,
+      /कंपकंपी के साथ बुखार|ठंड लगकर बुखार|थरथराहट के साथ बुखार|कंपकंपी/gi,
+      /fever with chills|shivering fever|rigors|chills and high temp|shaking chills/gi
     ]
   },
   {
     id: 'high_fever',
     category: 'fever',
-    severity: 'moderate',
+    severity: 'severe',
     labelEn: 'High Grade Fever',
     labelHi: 'तेज बुखार',
     labelOr: 'ପ୍ରବଳ ଜ୍ୱର',
     patterns: [
-      /ପ୍ରବଳ ଜ୍ୱର|ଭୀଷଣ ଜ୍ୱର|ପ୍ରବଳ ତାତି|ଜ୍ୱର ଛାଡୁନି|ଜ୍ୱର/gi,
-      /तेज़ बुखार|तेज बुखार|बहुत तेज बुखार|बुखार नहीं उतर रहा|बुखार/gi,
-      /high fever|high temperature|burning fever|fever/gi
+      /ପ୍ରବଳ ଜ୍ୱର|ଭୀଷଣ ଜ୍ୱର|ପ୍ରବଳ ତାତି|ଜ୍ୱର ଛାଡୁନି|ଉଚ୍ଚ ଜ୍ୱର/gi,
+      /तेज़ बुखार|तेज बुखार|बहुत तेज बुखार|बुखार नहीं उतर रहा|तेज ताप/gi,
+      /high fever|high grade fever|high temperature|burning fever|fever not subsiding/gi
     ]
   },
   {
-    id: 'bleeding_rash',
+    id: 'mild_fever',
     category: 'fever',
-    severity: 'critical',
-    isRedFlag: true,
-    redFlagNote: 'Hemorrhagic / Dengue Alert: Bleeding gums, epistaxis, or petechial rash observed',
-    labelEn: 'Bleeding Gums / Red Spots',
-    labelHi: 'मसूड़ों से खून / लाल चकत्ते',
-    labelOr: 'ମାଢ଼ିରୁ ରକ୍ତ / ନାଲି ଦାଗ',
+    severity: 'mild',
+    labelEn: 'Mild / Low Grade Fever',
+    labelHi: 'हल्का बुखार',
+    labelOr: 'ସାମାନ୍ୟ ଜ୍ୱର',
     patterns: [
-      /ମାଢ଼ିରୁ ରକ୍ତ|ନାକରୁ ରକ୍ତ|ଚର୍ମରେ ନାଲି ଦାଗ|ନାଲି ଚିହ୍ନ/gi,
-      /मसूड़ों से खून|नाक से खून|लाल चकत्ते|शरीर पर लाल दाने/gi,
-      /gum bleeding|nose bleeding|red spots|petechiae|bleeding rash/gi
+      /ସାମାନ୍ୟ ଜ୍ୱର|ହାଲୁକା ଜ୍ୱର|ଟିକେ ତାତି|ଜ୍ୱର ଜ୍ୱର ଲାଗୁଛି/gi,
+      /हल्का बुखार|धीमा बुखार|हल्का गरम बदन/gi,
+      /mild fever|low grade fever|slight fever|feeling warm/gi
+    ]
+  },
+  {
+    id: 'mild_bodyache',
+    category: 'fever',
+    severity: 'mild',
+    labelEn: 'Body Ache / Fatigue',
+    labelHi: 'बदन दर्द / थकावट',
+    labelOr: 'ଦେହ ଘୋଳାବିନ୍ଧା / ଦୁର୍ବଳତା',
+    patterns: [
+      /ଦେହ ଘୋଳାବିନ୍ଧା|ହାତ ଗୋଡ଼ ବିନ୍ଧା|ଅଣ୍ଟା ବିନ୍ଧା|ଦୁର୍ବଳ ଲାଗୁଛି/gi,
+      /बदन दर्द|हाथ पैर दर्द|थकावट|कमजोरी|कमर दर्द/gi,
+      /body ache|body pain|myalgia|mild fatigue|tiredness/gi
     ]
   },
 
-  // Gastrointestinal
+  // ─── Gastrointestinal ───
   {
     id: 'severe_diarrhea_vomiting',
     category: 'gastro',
@@ -358,16 +418,29 @@ const CLINICAL_LEXICON = [
     labelHi: 'तीव्र दस्त एवं उल्टी',
     labelOr: 'ପ୍ରବଳ ଝାଡ଼ା ଓ ବାନ୍ତି (ଜଳକ୍ଷୟ)',
     patterns: [
-      /ଝାଡ଼ା ବାନ୍ତି|ଝାଡା ବାନ୍ତି|ପାଣି ଭଳି ଝାଡ଼ା|ପ୍ରବଳ ଝାଡ଼ା/gi,
-      /दस्त और उल्टी|पानी जैसा दस्त|लगातार उल्टी दस्त/gi,
-      /diarrhea and vomiting|watery loose stools|frequent loose motions/gi
+      /ଝାଡ଼ା ବାନ୍ତି|ଝାଡା ବାନ୍ତି|ପାଣି ଭଳି ଝାଡ଼ା|ପ୍ରବଳ ଝାଡ଼ା|ବାରମ୍ବାର ଝାଡ଼ା/gi,
+      /दस्त और उल्टी|पानी जैसा दस्त|लगातार उल्टी दस्त|बार-बार दस्त/gi,
+      /diarrhea and vomiting|watery loose stools|frequent loose motions|acute gastroenteritis/gi
+    ]
+  },
+  {
+    id: 'severe_abdominal_pain',
+    category: 'gastro',
+    severity: 'severe',
+    labelEn: 'Severe Abdominal Pain / Colic',
+    labelHi: 'तीव्र असहनीय पेट दर्द',
+    labelOr: 'ଅସହ୍ୟ ତୀବ୍ର ପେଟ ଯନ୍ତ୍ରଣା',
+    patterns: [
+      /ପେଟରେ ଭୀଷଣ ଯନ୍ତ୍ରଣା|ପେଟ କାଟି ପକାଉଛି|ଅସହ୍ୟ ପେଟ କଷ୍ଟ|ପେଟ ଫାଟିଯାଉଛି/gi,
+      /पेट में बहुत तेज दर्द|असहनीय पेट दर्द|पेट फटा जा रहा|भयंकर पेट दर्द/gi,
+      /severe abdominal pain|acute stomach pain|severe stomach cramps|intense belly pain/gi
     ]
   },
   {
     id: 'abdominal_pain',
     category: 'gastro',
     severity: 'moderate',
-    labelEn: 'Abdominal Pain / Cramps',
+    labelEn: 'Abdominal Cramps / Pain',
     labelHi: 'पेट में दर्द / मरोड़',
     labelOr: 'ପେଟ ଯନ୍ତ୍ରଣା / ମୋଡ଼ିବା',
     patterns: [
@@ -389,8 +462,21 @@ const CLINICAL_LEXICON = [
       /vomiting|nausea|throwing up|emesis/gi
     ]
   },
+  {
+    id: 'indigestion_acidity',
+    category: 'gastro',
+    severity: 'mild',
+    labelEn: 'Indigestion / Acidity',
+    labelHi: 'गैस / अपच / एसिडिटी',
+    labelOr: 'ଗ୍ୟାସ୍ / ଅଜୀର୍ଣ୍ଣ / ଖଟା ଢେକୁର',
+    patterns: [
+      /ଗ୍ୟାସ୍|ଖଟା ଢେକୁର|ପେଟ ଫୁଲା|ଅଜୀର୍ଣ୍ଣ/gi,
+      /गैस बन रही|खट्टी डकार|पेट भारी|एसिडिटी|अपच/gi,
+      /acidity|gas|indigestion|heartburn|bloating|dyspepsia/gi
+    ]
+  },
 
-  // Neurological
+  // ─── Neurological ───
   {
     id: 'thunderclap_headache',
     category: 'neuro',
@@ -401,35 +487,9 @@ const CLINICAL_LEXICON = [
     labelHi: 'अचानक असहनीय भीषण सिरदर्द',
     labelOr: 'ହଠାତ୍ ଅସହ୍ୟ ପ୍ରଚଣ୍ଡ ମୁଣ୍ଡବିନ୍ଧା',
     patterns: [
-      /ହଠାତ୍ ଅସହ୍ୟ ମୁଣ୍ଡବିନ୍ଧା|ମୁଣ୍ଡ ଫାଟିଯାଉଛି|ଭୀଷଣ ମୁଣ୍ଡ ଯନ୍ତ୍ରଣା/gi,
-      /अचानक भयंकर सिरदर्द|सिर फटा जा रहा|जीवन का सबसे भयानक सिरदर्द/gi,
-      /worst headache of life|thunderclap headache|sudden explosive headache/gi
-    ]
-  },
-  {
-    id: 'severe_headache',
-    category: 'neuro',
-    severity: 'moderate',
-    labelEn: 'Severe Headache',
-    labelHi: 'तेज सिरदर्द',
-    labelOr: 'ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା',
-    patterns: [
-      /ମୁଣ୍ଡ ବିନ୍ଧା|ମୁଣ୍ଡ ଯନ୍ତ୍ରଣା|ମୁଣ୍ଡ କଷ୍ଟ/gi,
-      /सिर में तेज़ दर्द|सिर दर्द|सिरदर्द|माथा दर्द/gi,
-      /severe headache|throbbing headache|headache|migraine/gi
-    ]
-  },
-  {
-    id: 'dizziness_vertigo',
-    category: 'neuro',
-    severity: 'moderate',
-    labelEn: 'Dizziness / Vertigo',
-    labelHi: 'चक्कर आना / बेहोशी जैसा',
-    labelOr: 'ମୁଣ୍ଡ ବୁଲାଇବା / ଅଚେତ ଭାବ',
-    patterns: [
-      /ମୁଣ୍ଡ ବୁଲାଉଛି|ମୁଣ୍ଡ ବୁଲାଇବା|ଆଖି ଆଗରେ ଅନ୍ଧାର/gi,
-      /चक्कर आ रहा|चक्कर आना|सिर घूम रहा|आंखों के आगे अंधेरा/gi,
-      /dizziness|vertigo|feeling faint|lightheadedness/gi
+      /ହଠାତ୍ ଅସହ୍ୟ ମୁଣ୍ଡବିନ୍ଧା|ମୁଣ୍ଡ ଫାଟିଯାଉଛି|ଭୀଷଣ ମୁଣ୍ଡ ଯନ୍ତ୍ରଣା|ଅସହ୍ୟ ମୁଣ୍ଡବିନ୍ଧା/gi,
+      /अचानक भयंकर सिरदर्द|सिर फटा जा रहा|जीवन का सबसे भयानक सिरदर्द|असहनीय सिरदर्द/gi,
+      /worst headache of life|thunderclap headache|sudden explosive headache|unbearable headache/gi
     ]
   },
   {
@@ -442,13 +502,82 @@ const CLINICAL_LEXICON = [
     labelHi: 'एक तरफ कमजोरी / लड़खड़ाती बोली',
     labelOr: 'ଏକପାଖିଆ ଦୁର୍ବଳତା / ଅସ୍ପଷ୍ଟ କଥା',
     patterns: [
-      /ହାତ ଗୋଡ଼ ଅବଶ|ମୁହଁ ବଙ୍କା|କଥା ଅସ୍ପଷ୍ଟ|ଏକପାଖିଆ ଦୁର୍ବଳ/gi,
+      /ହାତ ଗୋଡ଼ ଅବଶ|ମୁହଁ ବଙ୍କା|କଥା ଅସ୍ପଷ୍ଟ|ଏକପାଖିଆ ଦୁର୍ବଳ|ଗୋଟିଏ ପାଖ କାମ କରୁନି/gi,
       /हाथ पैर सुन्न|लकवा जैसा|मुंह टेढ़ा|बोली लड़खड़ा रही|एक तरफ कमजोरी/gi,
-      /facial droop|slurred speech|arm weakness|unilateral numbness|stroke signs/gi
+      /facial droop|slurred speech|arm weakness|unilateral numbness|stroke signs|paralysis/gi
+    ]
+  },
+  {
+    id: 'unconscious_syncope',
+    category: 'neuro',
+    severity: 'critical',
+    isRedFlag: true,
+    redFlagNote: 'Altered Sensorium / Syncope: Unconscious or acute collapse',
+    labelEn: 'Loss of Consciousness / Fainting',
+    labelHi: 'बेहोशी / चक्कर खाकर गिरना',
+    labelOr: 'ଅଚେତ / ଚେତା ବୁଲିଯିବା',
+    patterns: [
+      /ଅଚେତ|ଚେତା ବୁଲିଗଲା|ହୋସ୍ ନାହିଁ|ପଡ଼ିଗଲେ|ଚେତା ହରାଇ/gi,
+      /बेहोश|बेहोशी|चक्कर खाकर गिर पड़े|होश नहीं|अचेत/gi,
+      /unconscious|fainted|syncope|passed out|blackout|collapsed/gi
+    ]
+  },
+  {
+    id: 'seizures_convulsions',
+    category: 'neuro',
+    severity: 'critical',
+    isRedFlag: true,
+    redFlagNote: 'Active Convulsions / Seizures: High emergency risk',
+    labelEn: 'Convulsions / Fits / Seizures',
+    labelHi: 'दौरे / झटके / मिर्गी',
+    labelOr: 'ବାତ ମାରିବା / କମ୍ପନ',
+    patterns: [
+      /ବାତ ମାରୁଛି|ବାତ ଆସିଲା|ଶରୀର ଟାଣି ହୋଇଗଲା|ଖିଞ୍ଚଣି/gi,
+      /दौरे पड़ रहे|झटके आ रहे|मिर्गी|ऐंठन/gi,
+      /seizure|convulsions|fits|epileptic attack/gi
+    ]
+  },
+  {
+    id: 'severe_headache',
+    category: 'neuro',
+    severity: 'severe',
+    labelEn: 'Severe Headache / Migraine',
+    labelHi: 'तेज सिरदर्द / माइग्रेन',
+    labelOr: 'ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା / ମାଇଗ୍ରେନ୍',
+    patterns: [
+      /ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା|ମୁଣ୍ଡ ଯନ୍ତ୍ରଣା|ପ୍ରବଳ ମୁଣ୍ଡ ବିନ୍ଧା|ମାଇଗ୍ରେନ୍/gi,
+      /सिर में तेज़ दर्द|भयंकर सिरदर्द|माइग्रेन|माथा फटा जा रहा/gi,
+      /severe headache|throbbing headache|migraine|intense headache/gi
+    ]
+  },
+  {
+    id: 'dizziness_vertigo',
+    category: 'neuro',
+    severity: 'moderate',
+    labelEn: 'Dizziness / Vertigo',
+    labelHi: 'चक्कर आना / सिर घूमना',
+    labelOr: 'ମୁଣ୍ଡ ବୁଲାଇବା / ଅଚେତ ଭାବ',
+    patterns: [
+      /ମୁଣ୍ଡ ବୁଲାଉଛି|ମୁଣ୍ଡ ବୁଲାଇବା|ଆଖି ଆଗରେ ଅନ୍ଧାର|ଘୂର୍ଣ୍ଣି/gi,
+      /चक्कर आ रहा|चक्कर आना|सिर घूम रहा|आंखों के आगे अंधेरा/gi,
+      /dizziness|vertigo|feeling faint|lightheadedness|giddiness/gi
+    ]
+  },
+  {
+    id: 'mild_headache',
+    category: 'neuro',
+    severity: 'mild',
+    labelEn: 'Mild Tension Headache',
+    labelHi: 'हल्का सिरदर्द',
+    labelOr: 'ସାମାନ୍ୟ ମୁଣ୍ଡବିନ୍ଧା',
+    patterns: [
+      /ସାମାନ୍ୟ ମୁଣ୍ଡବିନ୍ଧା|ହାଲୁକା ମୁଣ୍ଡ ବିନ୍ଧା|ଟିକେ ମୁଣ୍ଡ ଭାରୀ/gi,
+      /हल्का सिरदर्द|माथा भारी/gi,
+      /mild headache|slight headache|tension headache/gi
     ]
   },
 
-  // Maternal & Pediatric
+  // ─── Maternal & Pediatric ───
   {
     id: 'preeclampsia_triad',
     category: 'maternal_pediatric',
@@ -474,9 +603,56 @@ const CLINICAL_LEXICON = [
     labelHi: 'शिशु में गंभीर निर्जलीकरण (धंसी आंखें / पेशाब बंद)',
     labelOr: 'ଶିଶୁ ଗୁରୁତର ଜଳକ୍ଷୟ (ଆଖି ଗାତ / ପରିସ୍ରା ବନ୍ଦ)',
     patterns: [
-      /ଛୁଆକୁ|ପିଲାଟି|ଆଖି ଗାତ|ପରିସ୍ରା ହେଉନି|ଶିଶୁ/gi,
+      /ଛୁଆକୁ|ପିଲାଟି|ଆଖି ଗାତ|ପରିସ୍ରା ହେଉନି|ଶିଶୁ କାନ୍ଦୁନି/gi,
       /बच्चे को|शिशु|आंखें धंसी|पेशाब नहीं आ रहा|दूध नहीं पी रहा/gi,
-      /child|infant|sunken eyes child|no urine child|not feeding/gi
+      /child sunken eyes|infant dehydration|no urine child|not feeding child/gi
+    ]
+  },
+
+  // ─── Trauma, Injuries & Toxicological Emergencies ───
+  {
+    id: 'severe_trauma_fracture',
+    category: 'trauma_emergency',
+    severity: 'critical',
+    isRedFlag: true,
+    redFlagNote: 'Severe Trauma / Fracture / Active Hemorrhage',
+    labelEn: 'Trauma / Fracture / Bleeding',
+    labelHi: 'गंभीर चोट / फ्रैक्चर / भारी रक्तस्राव',
+    labelOr: 'ଗୁରୁତର ଆଘାତ / ହାଡ଼ ଭାଙ୍ଗିବା / ରକ୍ତସ୍ରାବ',
+    patterns: [
+      /ଆକ୍ସିଡେଣ୍ଟ|ଦୁର୍ଘଟଣା|ହାଡ଼ ଭାଙ୍ଗି|ପ୍ରଚୁର ରକ୍ତ|ଗଭୀର କ୍ଷତ/gi,
+      /एक्सीडेंट|दुर्घटना|हड्डी टूट|भारी खून|गहरा घाव|फ्रैक्चर/gi,
+      /accident|fracture|broken bone|heavy bleeding|open fracture|deep wound/gi
+    ]
+  },
+  {
+    id: 'poisoning_snakebite',
+    category: 'trauma_emergency',
+    severity: 'critical',
+    isRedFlag: true,
+    redFlagNote: 'Snakebite / Poisoning: Requires Immediate Anti-Venom or Resuscitation',
+    labelEn: 'Snakebite / Poison Ingestion',
+    labelHi: 'सर्पदंश / विषैला पदार्थ निगलना',
+    labelOr: 'ସାପ କାମୁଡ଼ା / ବିଷପାନ',
+    patterns: [
+      /ସାପ କାମୁଡ଼ି|ବିଷ ପିଇ|କୀଟନାଶକ/gi,
+      /सांप ने काटा|जहर खा लिया|कीटनाशक/gi,
+      /snake bite|snakebite|poisoning|ingested poison|pesticide/gi
+    ]
+  },
+  {
+    id: 'severe_burns',
+    category: 'trauma_emergency',
+    severity: 'critical',
+    isRedFlag: true,
+    redFlagNote: 'Severe Thermal Burn Injury: Immediate emergency fluid and burn care',
+    labelEn: 'Severe Burn Injury',
+    labelHi: 'गंभीर रूप से जलना',
+    labelOr: 'ଗୁରୁତର ପୋଡ଼ିଯିବା',
+    patterns: [
+      /ପୋଡ଼ିଯାଇଛି|ନିଆଁ ଲାଗି/gi,
+      /जल गया|आग से जलना|गंभीर जलन/gi,
+      /severe burn|fire burn|chemical burn/gi
     ]
   }
 ];
@@ -489,14 +665,22 @@ const TRANSLATION_PATTERNS = [
   { regex: /ମୋ ଛାତିରେ ବହୁତ କଷ୍ଟ ହେଉଛି/gi, rep: 'Severe retrosternal chest pain' },
   { regex: /ବାମ ହାତକୁ ଯନ୍ତ୍ରଣା ଯାଉଛି/gi, rep: 'radiating to left arm' },
   { regex: /ପ୍ରଚୁର ଝାଳ ବାହାରୁଛି|ଥଣ୍ଡା ଝାଳ/gi, rep: 'with profuse cold diaphoresis' },
-  { regex: /ପ୍ରବଳ ଜ୍ୱର|ଭୀଷଣ ଜ୍ୱର|ଜ୍ୱର/gi, rep: 'high-grade fever' },
-  { regex: /ଥଣ୍ଡା ଲାଗି କମ୍ପ|କମ୍ପ ସହିତ/gi, rep: 'with shaking chills and rigors' },
-  { regex: /କଫ ସହ କାଶ|କାଶ/gi, rep: 'cough with productive sputum' },
-  { regex: /ନିଶ୍ୱାସ ନେବାରେ କଷ୍ଟ|ଅଣନିଶ୍ୱାସୀ/gi, rep: 'severe shortness of breath / dyspnea' },
-  { regex: /ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା|ମୁଣ୍ଡ ବିନ୍ଧା/gi, rep: 'severe cephalea / headache' },
-  { regex: /ଝାଡ଼ା ଓ ବାନ୍ତି|ଝାଡ଼ା ବାନ୍ତି|ଝାଡ଼ା/gi, rep: 'acute watery diarrhea and vomiting' },
-  { regex: /ପେଟ ଯନ୍ତ୍ରଣା|ପେଟ ବିନ୍ଧା/gi, rep: 'abdominal colic / pain' },
-  { regex: /ମାଢ଼ିରୁ ରକ୍ତ|ନାଲି ଦାଗ/gi, rep: 'bleeding gums / petechial rash' },
+  { regex: /ପ୍ରବଳ ଜ୍ୱର|ଭୀଷଣ ଜ୍ୱର/gi, rep: 'high-grade fever' },
+  { regex: /ସାମାନ୍ୟ ଜ୍ୱର|ହାଲୁକା ଜ୍ୱର/gi, rep: 'low-grade mild fever' },
+  { regex: /ଥଣ୍ଡା ଲାଗି କମ୍ପ|କମ୍ପ ସହିତ ଜ୍ୱର/gi, rep: 'with shaking chills and rigors' },
+  { regex: /କଫ ସହ କାଶ/gi, rep: 'cough with productive sputum' },
+  { regex: /ଶୁଖିଲା କାଶ/gi, rep: 'dry non-productive cough' },
+  { regex: /ସାମାନ୍ୟ କାଶ ଓ ଛିଙ୍କ|ଛିଙ୍କ/gi, rep: 'mild coryza and sneezing' },
+  { regex: /ନାକରୁ ପାଣି ବୋହୁଛି|ନାକ ବନ୍ଦ/gi, rep: 'rhinorrhea and nasal congestion' },
+  { regex: /ନିଶ୍ୱାସ ନେବାରେ ଭୀଷଣ କଷ୍ଟ|ଅଣନିଶ୍ୱାସୀ/gi, rep: 'severe dyspnea / respiratory distress' },
+  { regex: /ନିଶ୍ୱାସ କଷ୍ଟ/gi, rep: 'shortness of breath' },
+  { regex: /କାଶରେ ରକ୍ତ/gi, rep: 'hemoptysis (blood in sputum)' },
+  { regex: /ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧା|ଅସହ୍ୟ ମୁଣ୍ଡବିନ୍ଧା/gi, rep: 'severe intractable cephalea' },
+  { regex: /ସାମାନ୍ୟ ମୁଣ୍ଡବିନ୍ଧା/gi, rep: 'mild tension headache' },
+  { regex: /ପ୍ରବଳ ଝାଡ଼ା ଓ ବାନ୍ତି|ଝାଡ଼ା ବାନ୍ତି/gi, rep: 'acute watery diarrhea and vomiting' },
+  { regex: /ପେଟରେ ଭୀଷଣ ଯନ୍ତ୍ରଣା/gi, rep: 'acute severe abdominal colic' },
+  { regex: /ପେଟ ଯନ୍ତ୍ରଣା|ପେଟ ବିନ୍ଧା/gi, rep: 'abdominal pain / cramps' },
+  { regex: /ମାଢ଼ିରୁ ରକ୍ତ|ଚର୍ମରେ ନାଲି ଦାଗ/gi, rep: 'bleeding gums / petechial rash' },
   { regex: /ମୁଣ୍ଡ ବୁଲାଉଛି|ମୁଣ୍ଡ ବୁଲାଇବା/gi, rep: 'vertigo and dizziness' },
   { regex: /ପରିସ୍ରା ହେଉନି/gi, rep: 'anuria / absent urine output' },
 
@@ -504,46 +688,64 @@ const TRANSLATION_PATTERNS = [
   { regex: /सीने में दर्द|छाती में दर्द|सीने में भारीपन/gi, rep: 'severe chest pressure and discomfort' },
   { regex: /बाएं हाथ में फैलता|बाएं हाथ में खिंचाव/gi, rep: 'radiating to left upper limb' },
   { regex: /ठंडा पसीना छूट रहा|पसीना आ रहा/gi, rep: 'associated with cold sweating' },
-  { regex: /तेज़ बुखार|तेज बुखार|बुखार/gi, rep: 'high pyrexia / fever' },
+  { regex: /तेज़ बुखार|तेज बुखार/gi, rep: 'high pyrexia / fever' },
+  { regex: /हल्का बुखार/gi, rep: 'low-grade mild fever' },
   { regex: /कंपकंपी के साथ|ठंड लगकर/gi, rep: 'with chills and rigors' },
   { regex: /सांस लेने में बहुत ज्यादा तकलीफ|दम फूल रहा/gi, rep: 'acute respiratory distress / severe breathlessness' },
-  { regex: /बलगम वाली खांसी|खांसी/gi, rep: 'cough with phlegm' },
-  { regex: /सिर में तेज़ दर्द|सिर दर्द/gi, rep: 'severe throbbing headache' },
+  { regex: /बलगम वाली खांसी/gi, rep: 'cough with phlegm' },
+  { regex: /हल्की खांसी और छींकें|छींकें आ रही हैं/gi, rep: 'mild cough, coryza and sneezing' },
+  { regex: /सिर में तेज़ दर्द/gi, rep: 'severe throbbing headache' },
   { regex: /दस्त और उल्टी|उल्टी दस्त/gi, rep: 'gastroenteritis with loose watery stools and emesis' },
-  { regex: /पेट में असहनीय दर्द|पेट में दर्द/gi, rep: 'acute abdominal pain' },
+  { regex: /पेट में असहनीय दर्द|पेट में तेज दर्द/gi, rep: 'acute abdominal pain' },
   { regex: /मसूड़ों से खून|लाल चकत्ते/gi, rep: 'gum bleeding and hemorrhagic petechial spots' },
   { regex: /चक्कर आ रहे हैं|चक्कर आना/gi, rep: 'lightheadedness and vertigo' }
 ];
 
 /**
- * Duration parsing regex across languages
+ * Normalizes Odia and Hindi digits into standard Arabic digits
+ */
+export function normalizeIndicDigits(text = '') {
+  if (!text) return '';
+  const indicMap = {
+    '୦': '0', '୧': '1', '୨': '2', '୩': '3', '୪': '4',
+    '୫': '5', '୬': '6', '୭': '7', '୮': '8', '୯': '9',
+    '०': '0', '१': '1', '२': '2', '३': '3', '४': '4',
+    '५': '5', '६': '6', '७': '7', '८': '8', '९': '9'
+  };
+  return text.replace(/[୦-୯०-९]/g, (char) => indicMap[char] || char);
+}
+
+/**
+ * Duration parsing regex across languages (Odia, Hindi, English)
  */
 export function parseDurationDays(text = '') {
   if (!text) return null;
+  const normalized = normalizeIndicDigits(text);
 
   // Odia numbers or words
-  if (/(\d+)\s*ଦିନ/i.test(text)) {
-    const match = text.match(/(\d+)\s*ଦିନ/i);
+  if (/(\d+)\s*ଦିନ/i.test(normalized)) {
+    const match = normalized.match(/(\d+)\s*ଦିନ/i);
     return match ? match[1] : null;
   }
-  if (/ଦୁଇ\s*ଦିନ|୨\s*ଦିନ/i.test(text)) return '2';
-  if (/ତିନି\s*ଦିନ|୩\s*ଦିନ/i.test(text)) return '3';
-  if (/ଚାରି\s*ଦିନ|୪\s*ଦିନ/i.test(text)) return '4';
-  if (/ଗୋଟିଏ\s*ଦିନ|୧\s*ଦିନ/i.test(text)) return '1';
+  if (/ଦୁଇ\s*ଦିନ/i.test(text)) return '2';
+  if (/ତିନି\s*ଦିନ/i.test(text)) return '3';
+  if (/ଚାରି\s*ଦିନ/i.test(text)) return '4';
+  if (/ଗୋଟିଏ\s*ଦିନ/i.test(text)) return '1';
+  if (/ଗତକାଲିଠାରୁ/i.test(text)) return '1';
 
   // Hindi numbers or words
-  if (/(\d+)\s*दिन/i.test(text)) {
-    const match = text.match(/(\d+)\s*दिन/i);
+  if (/(\d+)\s*दिन/i.test(normalized)) {
+    const match = normalized.match(/(\d+)\s*दिन/i);
     return match ? match[1] : null;
   }
   if (/दो\s*दिन/i.test(text)) return '2';
   if (/तीन\s*दिन/i.test(text)) return '3';
   if (/चार\s*दिन/i.test(text)) return '4';
   if (/एक\s*दिन|कल\s*से/i.test(text)) return '1';
-  if (/एक\s*हफ्ते|1\s*हफ्ते/i.test(text)) return '7';
+  if (/एक\s*हफ्ते|1\s*हफ्ते/i.test(normalized)) return '7';
 
   // English numbers or words
-  const engMatch = text.match(/(\d+)\s*(day|days|d)/i);
+  const engMatch = normalized.match(/(\d+)\s*(day|days|d)\b/i);
   if (engMatch) return engMatch[1];
   if (/two days/i.test(text)) return '2';
   if (/three days/i.test(text)) return '3';
@@ -555,11 +757,12 @@ export function parseDurationDays(text = '') {
 }
 
 /**
- * Temperature parsing from spoken text (e.g. 102 fever, 101.5 degree, 103 bukhar)
+ * Temperature parsing from spoken text across languages (e.g. 102 fever, 101.5 degree, 103 bukhar, ୧୦୨ ଜ୍ୱର)
  */
 export function parseSpokenTemperature(text = '') {
   if (!text) return null;
-  const match = text.match(/\b(9[7-9]|10[0-6])(?:\.[0-9])?\s*(?:degree|f|fahrenheit|डिग्री|ଡିଗ୍ରୀ)?/i);
+  const normalized = normalizeIndicDigits(text);
+  const match = normalized.match(/\b(9[7-9]|10[0-6])(?:\.[0-9])?\s*(?:degree|deg|f|fahrenheit|डिग्री|ଡିଗ୍ରୀ)?/i);
   if (match) {
     const num = parseFloat(match[0].replace(/[^\d.]/g, ''));
     if (num >= 96 && num <= 107) {
@@ -570,16 +773,37 @@ export function parseSpokenTemperature(text = '') {
 }
 
 /**
- * Main AI / NLP Clinical Entity Extraction Function
+ * Spoken pain level parsing (1-10 scale or verbal descriptors)
+ */
+export function parseSpokenPainLevel(text = '') {
+  if (!text) return null;
+  const normalized = normalizeIndicDigits(text);
+
+  // Look for numeric pain scale (e.g. pain 8/10, dard 7 out of 10)
+  const numMatch = normalized.match(/(?:pain|dard|jantrana|ଯନ୍ତ୍ରଣା|दर्द)\s*(?:is|level|score|ମାତ୍ରା)?\s*([1-9]|10)(?:\s*(?:\/|out of|ମଧ୍ୟରୁ|में से)\s*10)?/i);
+  if (numMatch) return parseInt(numMatch[1], 10);
+
+  // Verbal pain descriptors
+  if (/ଅସହ୍ୟ ଯନ୍ତ୍ରଣା|ଭୀଷଣ କଷ୍ଟ|ଅସହ୍ୟ କଷ୍ଟ|ପ୍ରଚଣ୍ଡ ଯନ୍ତ୍ରଣା|ଫାଟିଯାଉଛି/i.test(text)) return 9;
+  if (/असहनीय दर्द|भयंकर दर्द|बहुत ज्यादा दर्द|सिर फटा जा रहा/i.test(text)) return 9;
+  if (/unbearable pain|severe pain|excruciating|worst pain|agony/i.test(text)) return 9;
+  if (/ମଧ୍ୟମ ଯନ୍ତ୍ରଣା|ଟିକେ କଷ୍ଟ|मध्यम दर्द|moderate pain/i.test(text)) return 5;
+  if (/ସାମାନ୍ୟ କଷ୍ଟ|ହଲକା|हल्का दर्द|mild pain/i.test(text)) return 2;
+
+  return null;
+}
+
+/**
+ * Main AI / NLP Clinical Entity Extraction & Urgency Stratification Function
  * Analyzes unstructured raw speech across languages and extracts:
- * - Detected symptoms with severity
+ * - Detected symptoms with severity (critical, severe, moderate, mild)
  * - Red flag emergency warnings
- * - Urgency tier (RED / YELLOW / GREEN) and score (0-100)
+ * - Multi-tier Urgency ranking (RED / YELLOW / GREEN) and realistic clinical score (0-100)
  * - Auto-detected primary category
- * - Extracted vitals (duration, temperature)
+ * - Extracted vitals (duration, temperature, pain level)
  * - Professional clinical English translation
  */
-export function processIntakeSpeech(rawText = '', currentLanguage = 'or-IN') {
+export function processIntakeSpeech(rawText = '', currentLanguage = 'or-IN', context = {}) {
   if (!rawText || !rawText.trim()) {
     return {
       rawSpeech: '',
@@ -588,7 +812,7 @@ export function processIntakeSpeech(rawText = '', currentLanguage = 'or-IN') {
       redFlags: [],
       urgencyTier: 'GREEN',
       urgencyScore: 20,
-      urgencyLabel: 'Stable / Routine Care',
+      urgencyLabel: 'Stable / Routine Care (PHC OPD)',
       primaryCategory: 'fever',
       durationDays: null,
       extractedTemp: null,
@@ -645,14 +869,15 @@ export function processIntakeSpeech(rawText = '', currentLanguage = 'or-IN') {
     }
   }
 
-  // If no symptoms matched via dictionary, try protocol keywords
+  // Fallback category detection via keywords
   if (detectedSymptoms.length === 0) {
     const kwMap = {
-      fever: ['fever', 'temp', 'chills', 'बुखार', 'तापमान', 'ଜ୍ୱର', 'ଥଣ୍ଡା'],
-      respiratory: ['cough', 'breath', 'phlegm', 'wheezing', 'खांसी', 'सांस', 'କାଶ', 'କଫ'],
       cardiac: ['chest', 'heart', 'sweat', 'छाती', 'सीने', 'दिल', 'ଛାତି', 'ହୃଦୟ'],
-      gastro: ['stomach', 'diarrhea', 'vomit', 'motions', 'पेट', 'दस्त', 'उल्टी', 'ପେଟ', 'ବାନ୍ତି', 'ଝାଡ଼ା'],
-      neuro: ['headache', 'dizzy', 'vertigo', 'सिरदर्द', 'चक्कर', 'ମୁଣ୍ଡ', 'ବିନ୍ଧା']
+      respiratory: ['cough', 'breath', 'phlegm', 'wheezing', 'cold', 'sneeze', 'खांसी', 'सांस', 'जुकाम', 'छींक', 'କାଶ', 'କଫ', 'ଛିଙ୍କ', 'ସର୍ଦ୍ଦି'],
+      gastro: ['stomach', 'diarrhea', 'vomit', 'motions', 'cramp', 'पेट', 'दस्त', 'उल्टी', 'ପେଟ', 'ବାନ୍ତି', 'ଝାଡ଼ା'],
+      neuro: ['headache', 'dizzy', 'vertigo', 'सिरदर्द', 'चक्कर', 'ମୁଣ୍ଡ', 'ବିନ୍ଧା'],
+      trauma_emergency: ['accident', 'bleeding', 'fracture', 'burn', 'snake', 'चोट', 'खून', 'एक्सीडेंट', 'ଆଘାତ', 'ରକ୍ତ', 'ଦୁର୍ଘଟଣା'],
+      maternal_pediatric: ['pregnant', 'baby', 'child', 'infant', 'गर्भवती', 'बच्चा', 'ଗର୍ଭବତୀ', 'ଶିଶୁ']
     };
     for (const [cat, kws] of Object.entries(kwMap)) {
       if (kws.some((k) => lower.includes(k))) {
@@ -662,30 +887,97 @@ export function processIntakeSpeech(rawText = '', currentLanguage = 'or-IN') {
     }
   }
 
-  // 3. Extract Duration & Temperature
-  const durationDays = parseDurationDays(clean);
-  const extractedTemp = parseSpokenTemperature(clean);
+  // 3. Extract Duration, Temperature, and Pain Level
+  const durationDays = parseDurationDays(clean) || (context?.vitals?.durationDays ? String(context.vitals.durationDays) : null);
+  const extractedTemp = parseSpokenTemperature(clean) || (context?.vitals?.temperature ? String(context.vitals.temperature) : null);
+  const painScore = context?.painLevel ? parseInt(context.painLevel, 10) : (parseSpokenPainLevel(clean) || 3);
 
-  // 4. Calculate Urgency Tier & Score
+  const parsedTempNum = extractedTemp ? parseFloat(extractedTemp) : (context?.vitals?.temperature ? parseFloat(context.vitals.temperature) : null);
+  const parsedDurationNum = durationDays ? parseInt(durationDays, 10) : 1;
+  const spo2Val = context?.vitals?.spo2 ? parseInt(context.vitals.spo2, 10) : null;
+  const sbpVal = context?.vitals?.systolic ? parseInt(context.vitals.systolic, 10) : null;
+
+  // 4. Clinical Evidence Counting
+  const criticalSymptoms = detectedSymptoms.filter((s) => s.severity === 'critical');
+  const severeSymptoms = detectedSymptoms.filter((s) => s.severity === 'severe');
+  const moderateSymptoms = detectedSymptoms.filter((s) => s.severity === 'moderate');
+  const mildSymptoms = detectedSymptoms.filter((s) => s.severity === 'mild');
+
+  // Specific high-risk clinical presentations
+  const hasRadiatingChest = detectedSymptoms.some((s) => s.id === 'chest_pain_radiating');
+  const hasChestWithColdSweat = detectedSymptoms.some((s) => s.id === 'chest_pain') && detectedSymptoms.some((s) => s.id === 'cold_sweating');
+  const hasSevereDyspnea = detectedSymptoms.some((s) => s.id === 'severe_dyspnea') || (spo2Val && spo2Val < 92);
+  const hasHemoptysis = detectedSymptoms.some((s) => s.id === 'hemoptysis');
+  const hasStrokeSigns = detectedSymptoms.some((s) => s.id === 'stroke_weakness');
+  const hasThunderclap = detectedSymptoms.some((s) => s.id === 'thunderclap_headache');
+  const hasUnconscious = detectedSymptoms.some((s) => s.id === 'unconscious_syncope' || s.id === 'seizures_convulsions');
+  const hasTraumaEmergency = detectedSymptoms.some((s) => s.category === 'trauma_emergency' && s.severity === 'critical');
+  const hasSevereHemorrhage = detectedSymptoms.some((s) => s.id === 'bleeding_rash' || s.id === 'severe_trauma_fracture');
+  const hasPreeclampsia = detectedSymptoms.some((s) => s.id === 'preeclampsia_triad');
+  const hasPediatricDehydration = detectedSymptoms.some((s) => s.id === 'pediatric_dehydration');
+  const hasBPCrisis = sbpVal && (sbpVal >= 175 || (sbpVal > 0 && sbpVal < 90));
+
+  // 5. Dynamic Urgency Tier & Score Stratification
   let urgencyTier = 'GREEN';
-  let urgencyScore = 25;
-  let urgencyLabel = 'Routine Assessment (PHC / Home Care)';
+  let urgencyScore = 20;
+  let urgencyLabel = 'Routine Assessment (PHC OPD / Home Care)';
 
-  if (redFlags.length > 0) {
+  // RED TIER (Immediate Emergency, score 85-98)
+  if (
+    redFlags.length > 0 ||
+    criticalSymptoms.length > 0 ||
+    hasRadiatingChest ||
+    hasChestWithColdSweat ||
+    hasSevereDyspnea ||
+    hasHemoptysis ||
+    hasStrokeSigns ||
+    hasThunderclap ||
+    hasUnconscious ||
+    hasTraumaEmergency ||
+    hasSevereHemorrhage ||
+    hasPreeclampsia ||
+    hasPediatricDehydration ||
+    hasBPCrisis
+  ) {
     urgencyTier = 'RED';
-    urgencyScore = Math.min(98, 85 + redFlags.length * 5);
+    const baseRed = 88;
+    const additionalRed = Math.min(10, redFlags.length * 3 + criticalSymptoms.length * 2);
+    urgencyScore = Math.min(98, baseRed + additionalRed);
     urgencyLabel = 'Emergency Immediate Referral (108 / DHH / CHC)';
-  } else if (
-    detectedSymptoms.some((s) => s.severity === 'severe') ||
-    detectedSymptoms.length >= 3 ||
-    (extractedTemp && parseFloat(extractedTemp) >= 102)
+  }
+  // YELLOW TIER (Priority Consultation < 2 Hours, score 55-84)
+  else if (
+    severeSymptoms.length > 0 ||
+    moderateSymptoms.length >= 2 ||
+    (parsedTempNum && parsedTempNum >= 101.0) ||
+    (parsedDurationNum >= 3 && (parsedTempNum >= 100.0 || moderateSymptoms.length >= 1)) ||
+    (painScore >= 6) ||
+    (spo2Val && spo2Val <= 94) ||
+    detectedSymptoms.some((s) => s.id === 'high_fever_rigors' || s.id === 'severe_diarrhea_vomiting' || s.id === 'severe_abdominal_pain' || s.id === 'severe_headache' || s.id === 'dyspnea')
   ) {
     urgencyTier = 'YELLOW';
-    urgencyScore = 65;
+    let yellowCalc = 58;
+    yellowCalc += severeSymptoms.length * 7;
+    yellowCalc += moderateSymptoms.length * 4;
+    if (parsedTempNum && parsedTempNum >= 102.0) yellowCalc += 8;
+    else if (parsedTempNum && parsedTempNum >= 101.0) yellowCalc += 4;
+    if (painScore >= 8) yellowCalc += 8;
+    else if (painScore >= 6) yellowCalc += 4;
+    if (parsedDurationNum >= 3) yellowCalc += 5;
+    urgencyScore = Math.min(84, Math.max(55, yellowCalc));
     urgencyLabel = 'Priority Clinical Consultation (< 2 Hours)';
   }
+  // GREEN TIER (Routine / Mild Illness, score 15-45)
+  else {
+    urgencyTier = 'GREEN';
+    let greenCalc = 18;
+    greenCalc += mildSymptoms.length * 4;
+    if (painScore >= 4) greenCalc += 6;
+    urgencyScore = Math.min(45, Math.max(15, greenCalc));
+    urgencyLabel = 'Routine Assessment (PHC OPD / Home Care)';
+  }
 
-  // 5. Build Standardized Clinical English Translation
+  // 6. Build Standardized Clinical English Translation
   let clinicalTranslation = '';
   if (currentLanguage === 'en-IN' || currentLanguage === 'en-US') {
     clinicalTranslation = clean;
@@ -693,7 +985,8 @@ export function processIntakeSpeech(rawText = '', currentLanguage = 'or-IN') {
     const symptomList = [...new Set(detectedSymptoms.map((s) => s.labelEn))].join(', ');
     const tempClause = extractedTemp ? ` (measured temperature: ${extractedTemp}°F)` : '';
     const durationClause = durationDays ? ` lasting for ${durationDays} days` : '';
-    clinicalTranslation = `Patient presents with ${symptomList}${tempClause}${durationClause}.`;
+    const painClause = painScore >= 6 ? ` with severity ${painScore}/10` : '';
+    clinicalTranslation = `Patient presents with ${symptomList}${tempClause}${durationClause}${painClause}.`;
   } else {
     let trans = clean;
     for (const p of TRANSLATION_PATTERNS) {
@@ -702,12 +995,12 @@ export function processIntakeSpeech(rawText = '', currentLanguage = 'or-IN') {
     clinicalTranslation = trans !== clean ? `Reported: ${trans}` : `Reported: "${clean}"`;
   }
 
-  // 6. Build Medical Chief Complaint
+  // 7. Build Medical Chief Complaint
   let chiefComplaint = '';
   if (detectedSymptoms.length > 0) {
-    chiefComplaint = `${detectedSymptoms.map((s) => s.labelEn).join(', ')}${
-      durationDays ? ` x ${durationDays} days` : ''
-    }`;
+    const primaryNames = detectedSymptoms.map((s) => s.labelEn).join(', ');
+    const durClause = durationDays ? ` x ${durationDays} days` : '';
+    chiefComplaint = `${primaryNames}${durClause}`;
   } else {
     chiefComplaint = clinicalTranslation;
   }
@@ -723,14 +1016,16 @@ export function processIntakeSpeech(rawText = '', currentLanguage = 'or-IN') {
     primaryCategory,
     durationDays,
     extractedTemp,
+    painScore,
     chiefComplaint
   };
 }
 
 /**
- * 12 Pre-configured Realistic Rural Case Scenarios for Quick Testing & Simulation
+ * Balanced, Realistic Rural Case Scenarios covering RED, YELLOW, and GREEN across Odia, Hindi, and English
  */
 export const SAMPLE_VOICE_CASES = [
+  // ─── ODIA SCENARIOS ───
   {
     id: 'case_or_cardiac',
     lang: 'or-IN',
@@ -750,14 +1045,25 @@ export const SAMPLE_VOICE_CASES = [
     speech: '୩ ଦିନ ହେଲା ପ୍ରବଳ ଜ୍ୱର ସହିତ ଥଣ୍ଡା ଲାଗି କମ୍ପ ହେଉଛି ଏବଂ ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧୁଛି।'
   },
   {
-    id: 'case_or_resp',
+    id: 'case_or_gastro',
     lang: 'or-IN',
     langLabel: 'ଓଡ଼ିଆ (Odia)',
-    badge: 'Acute Dyspnea (RED)',
-    category: 'respiratory',
-    preview: 'କଫ ସହ କାଶ ଓ ଅଣନିଶ୍ୱାସୀ',
-    speech: '୨ ଦିନ ହେଲା କଫ ସହ କାଶ ଏବଂ ନିଶ୍ୱାସ ନେବାରେ ଭୀଷଣ କଷ୍ଟ ହେଉଛି, ଅଣନିଶ୍ୱାସୀ ଲାଗୁଛି।'
+    badge: 'Gastroenteritis (YELLOW)',
+    category: 'gastro',
+    preview: 'ଝାଡ଼ା ଓ ବାନ୍ତି + ପେଟ କାଟୁଛି',
+    speech: 'ଗତକାଲିଠାରୁ ପାଣି ଭଳି ଝାଡ଼ା ଓ ବାନ୍ତି ବାରମ୍ବାର ହେଉଛି ଏବଂ ପେଟ କାଟି ପକାଉଛି।'
   },
+  {
+    id: 'case_or_mild',
+    lang: 'or-IN',
+    langLabel: 'ଓଡ଼ିଆ (Odia)',
+    badge: 'Mild Cold & Rhinitis (GREEN)',
+    category: 'respiratory',
+    preview: 'ସାମାନ୍ୟ କାଶ, ଛିଙ୍କ ଓ ନାକରୁ ପାଣି',
+    speech: 'ଗତକାଲିଠାରୁ ସାମାନ୍ୟ କାଶ, ଛିଙ୍କ ଏବଂ ନାକରୁ ପାଣି ବୋହୁଛି, ଦେହରେ କୌଣସି ଜ୍ୱର ନାହିଁ।'
+  },
+
+  // ─── HINDI SCENARIOS ───
   {
     id: 'case_hi_cardiac',
     lang: 'hi-IN',
@@ -771,7 +1077,7 @@ export const SAMPLE_VOICE_CASES = [
     id: 'case_hi_fever',
     lang: 'hi-IN',
     langLabel: 'हिंदी (Hindi)',
-    badge: '102°F Malaria / Fever (YELLOW)',
+    badge: '102°F Malaria / Rigors (YELLOW)',
     category: 'fever',
     preview: '3 दिन से 102 बुखार और कंपकंपी',
     speech: '3 दिन से ठंड लगकर 102 बुखार आ रहा है, बदन और सिर में भयंकर दर्द है।'
@@ -780,11 +1086,22 @@ export const SAMPLE_VOICE_CASES = [
     id: 'case_hi_resp',
     lang: 'hi-IN',
     langLabel: 'हिंदी (Hindi)',
-    badge: 'Severe Wheezing / Dyspnea (RED)',
+    badge: 'Severe Dyspnea (RED)',
     category: 'respiratory',
-    preview: 'सांस लेने में भयंकर तकलीफ + बलगम',
-    speech: 'सांस लेने में बहुत ज्यादा तकलीफ हो रही है, दम फूल रहा है और बलगम वाली खांसी है।'
+    preview: 'सांस लेने में भयंकर तकलीफ + दम फूलना',
+    speech: 'सांस लेने में बहुत ज्यादा तकलीफ हो रही है, दम फूल रहा है और बोलने पर सांस अटक रही है।'
   },
+  {
+    id: 'case_hi_mild',
+    lang: 'hi-IN',
+    langLabel: 'हिंदी (Hindi)',
+    badge: 'Mild Cold & Coryza (GREEN)',
+    category: 'respiratory',
+    preview: 'हल्की खांसी और जुकाम',
+    speech: 'कल से हल्की खांसी और छींकें आ रही हैं, नाक बह रही है और कोई तेज बुखार नहीं है।'
+  },
+
+  // ─── ENGLISH SCENARIOS ───
   {
     id: 'case_en_cardiac',
     lang: 'en-IN',
@@ -811,6 +1128,15 @@ export const SAMPLE_VOICE_CASES = [
     category: 'gastro',
     preview: 'Watery loose motions and vomiting',
     speech: 'Watery diarrhea more than 6 times and severe vomiting since yesterday with abdominal cramps.'
+  },
+  {
+    id: 'case_en_mild',
+    lang: 'en-IN',
+    langLabel: 'English (India)',
+    badge: 'Mild Cold & Runny Nose (GREEN)',
+    category: 'respiratory',
+    preview: 'Mild cold, sneezing and slight throat irritation',
+    speech: 'Mild runny nose, sneezing and slight dry throat since yesterday without any fever.'
   }
 ];
 
@@ -1298,6 +1624,76 @@ export const CLINICAL_MEDICINE_PROTOCOLS = {
       en: ['Continue active breastfeeding / feeding.', 'Offer ORS frequently in small sips.', 'Immediately consult PHC or ANM/ASHA worker.'],
       hi: ['मां का दूध लगातार पिलाते रहें।', 'ओआरएस थोड़ा-थोड़ा करके बार-बार दें।', 'तुरंत निकटतम आशा या प्राथमिक स्वास्थ्य केंद्र से संपर्क करें।'],
       or: ['ମାଆ କ୍ଷୀର ଲଗାତାର ଦିଅନ୍ତୁ।', 'ଓଆରଏସ୍ ଚାମଚ ଚାମଚ କରି ବାରମ୍ବାର ଦିଅନ୍ତୁ।', 'ତୁରନ୍ତ ଆଶା କର୍ମୀ ବା ଡାକ୍ତରଖାନା ଯାଆନ୍ତୁ।']
+    }
+  },
+
+  trauma_emergency: {
+    healthIssue: {
+      en: 'Acute Trauma / Fracture / Heavy Hemorrhage (CRITICAL EMERGENCY)',
+      hi: 'गंभीर आघात / फ्रैक्चर / अत्यधिक रक्तस्राव (अति गंभीर आपातकाल)',
+      or: 'ଗୁରୁତର ଆଘାତ / ହାଡ଼ ଭାଙ୍ଗିବା / ପ୍ରଚୁର ରକ୍ତସ୍ରାବ (ଅତ୍ୟନ୍ତ ଜରୁରୀ)'
+    },
+    summary: {
+      en: 'Severe injury with active bleeding, suspected fracture, or collapse. Direct 108 ambulance transfer and emergency surgical care required.',
+      hi: 'गंभीर चोट, भारी खून बहना या हड्डी टूटना। तुरंत 108 एम्बुलेंस और अस्पताल में भर्ती की आवश्यकता है।',
+      or: 'ପ୍ରଚୁର ରକ୍ତସ୍ରାବ, ହାଡ଼ ଭାଙ୍ଗିବା କିମ୍ବା ଆଘାତ। ତୁରନ୍ତ ୧୦୮ ଆମ୍ବୁଲାନ୍ସ ଡାକି ଡାକ୍ତରଖାନା ଯିବା ଆବଶ୍ୟକ।'
+    },
+    medicines: [
+      {
+        id: 'pressure_bandage',
+        name: 'Sterile Compression Dressing & Tourniquet Bandage',
+        generic: 'Sterile Hemostatic Cotton Gauge Dressing',
+        category: 'First-Aid Hemostatic Care',
+        dosage: {
+          en: 'Apply firm direct pressure with clean sterile cloth/gauze directly over bleeding site continuously.',
+          hi: 'खून बहने वाली जगह पर साफ कपड़े या पट्टी से लगातार सीधा दबाव बनाकर रखें।',
+          or: 'ରକ୍ତ ବାହାରୁଥିବା ସ୍ଥାନରେ ସଫା କପଡ଼ା ବା ଗଜ୍ ବ୍ୟାଣ୍ଡେଜ୍ ଦ୍ୱାରା ଲଗାତାର ଚାପ ଦେଇ ବାନ୍ଧନ୍ତୁ।'
+        },
+        purpose: {
+          en: 'Stops rapid arterial/venous blood loss and prevents hypovolemic shock.',
+          hi: 'खून का बहना रोककर बेहोशी और जानलेवा स्थिति से बचाता है।',
+          or: 'ରକ୍ତସ୍ରାବ ବନ୍ଦ କରି ରୋଗୀଙ୍କ ଜୀବନ ରକ୍ଷା କରେ।'
+        },
+        precautions: {
+          en: 'Do not remove pressure bandage once applied. Call 108 immediately.',
+          hi: 'पट्टी बांधने के बाद बार-बार न खोलें। 108 तुरंत बुलाएं।',
+          or: 'ଥରେ ବାନ୍ଧିବା ପରେ ବାରମ୍ବାର ଖୋଲନ୍ତୁ ନାହିଁ। ତୁରନ୍ତ ୧୦୮ ଡାକନ୍ତୁ।'
+        },
+        priceJanAushadhi: 'Free at PHC / Subcenter',
+        inStockPHC: true,
+        isOtc: true,
+        isEmergency: true
+      },
+      {
+        id: 'tt_injection',
+        name: 'Tetanus Toxoid Vaccine (TT 0.5ml IM)',
+        generic: 'Adsorbed Tetanus Vaccine 0.5ml',
+        category: 'Prophylactic Antitoxin',
+        dosage: {
+          en: '0.5 ml Intramuscular (IM) in deltoid arm muscle at PHC within 24 hours of injury.',
+          hi: '0.5 मिली कंधे की मांसपेशी में 24 घंटे के अंदर अस्पताल/पीएचसी में।',
+          or: '୦.୫ ମିଲି ବାହୁରେ ୨୪ ଘଣ୍ଟା ମଧ୍ୟରେ PHC ଡାକ୍ତରଖାନାରେ ଦିଅନ୍ତୁ।'
+        },
+        purpose: {
+          en: 'Prevents life-threatening Clostridium tetani wound infection and lockjaw.',
+          hi: 'घाव में टेटनस संक्रमण और धनुर्वात होने से बचाता है।',
+          or: 'କ୍ଷତରେ ଧନୁଷ୍ଟଙ୍କାର ସଂକ୍ରମଣ ହେବାରୁ ରକ୍ଷା କରେ।'
+        },
+        precautions: {
+          en: 'Must be administered by qualified nurse/pharmacist/doctor with sterile syringe.',
+          hi: 'योग्य स्वास्थ्य कर्मी द्वारा ही लगवाया जाए।',
+          or: 'କେବଳ ପ୍ରଶିକ୍ଷିତ ସ୍ୱାସ୍ଥ୍ୟକର୍ମୀ ବା ଡାକ୍ତରଙ୍କ ଦ୍ୱାରା ଦିଅନ୍ତୁ।'
+        },
+        priceJanAushadhi: '₹10 (Free at all Odisha PHCs)',
+        inStockPHC: true,
+        isOtc: false,
+        isEmergency: true
+      }
+    ],
+    homeCare: {
+      en: ['CALL 108 AMBULANCE IMMEDIATELY.', 'Do NOT move or bend suspected broken limb or bone; keep immobilized.', 'Keep patient warm and elevated to maintain blood pressure.'],
+      hi: ['तुरंत 108 एम्बुलेंस को बुलाएं।', 'टूटी हुई हड्डी को हिलाएं-डुलाएं नहीं; बिल्कुल स्थिर रखें।', 'मरीज को शांत और गर्म रखें।'],
+      or: ['ତୁରନ୍ତ ୧୦୮ ଆମ୍ବୁଲାନ୍ସ ଡାକନ୍ତୁ।', 'ଭଙ୍ଗା ହାଡ଼କୁ ବିଲକୁଲ ହଲାନ୍ତୁ ନାହିଁ, ସ୍ଥିର ରଖନ୍ତୁ।', 'ରୋଗୀଙ୍କୁ ଶୁଆଇ ରଖନ୍ତୁ ଓ ଶାନ୍ତ ରଖନ୍ତୁ।']
     }
   }
 };

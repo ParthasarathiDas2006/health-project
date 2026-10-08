@@ -27,7 +27,7 @@ import { getHospitalPartners } from '../data/hospitalPartners';
  * 100% pure localization for Odia ('or-IN'), Hindi ('hi-IN'), and English ('en-IN').
  * Displays human-in-the-loop clinical prioritization, triage tickets, and official referral generation.
  */
-export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLang, onOpenNmcSuite, onOpenTeleconsult }) {
+export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLang, onOpenNmcSuite, onOpenTeleconsult, newGeneratedTicket }) {
   const activeLang = appLang || currentUser?.preferredLanguage || 'or-IN';
   const [filterUrgency, setFilterUrgency] = useState('ALL');
   const [showReferralModal, setShowReferralModal] = useState(false);
@@ -278,17 +278,55 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
     ]
   };
 
-  const activeTickets = ticketsByLang[activeLang] || ticketsByLang['or-IN'];
+  const baseTickets = ticketsByLang[activeLang] || ticketsByLang['or-IN'];
+  const activeTickets = React.useMemo(() => {
+    if (!newGeneratedTicket) return baseTickets;
+    const formatted = {
+      id: newGeneratedTicket.ticketId || `TRG-${newGeneratedTicket.id}`,
+      patientName: `${newGeneratedTicket.patientName} (${newGeneratedTicket.gender}, ${newGeneratedTicket.age} yrs)`,
+      facility: newGeneratedTicket.village || 'Primary Health Center',
+      waitTime: 'Just now',
+      urgency: newGeneratedTicket.urgency || 'GREEN',
+      urgencyReason: newGeneratedTicket.urgencyReason || 'Clinical NLP Evaluation',
+      chiefComplaint: newGeneratedTicket.chiefComplaint || 'Reported symptoms',
+      vitals: {
+        temp: `${newGeneratedTicket.vitals?.temperature || '98.6'}°F`,
+        pulse: `${newGeneratedTicket.vitals?.pulse || '72'} bpm`,
+        spo2: `${newGeneratedTicket.vitals?.spo2 || '98'}%`,
+        bp: `${newGeneratedTicket.vitals?.systolic || '120'}/${newGeneratedTicket.vitals?.diastolic || '80'}`
+      },
+      labFindings: (newGeneratedTicket.ocrMetrics || []).map((m) => ({
+        test: m.name,
+        val: `${m.value} ${m.unit || ''}`,
+        status: m.alert || m.status || 'Reported'
+      })),
+      missingInfo: [
+        'ABHA health records linked',
+        'Clinical triage verification pending'
+      ],
+      suggestedQuestions: (newGeneratedTicket.flags || []).slice(0, 3),
+      referralRecommendation: newGeneratedTicket.urgency === 'RED' ? 'SCB Medical College / Apex DHH' : 'PHC / CHC Outpatient Review'
+    };
+    return [formatted, ...baseTickets.filter((t) => t.id !== formatted.id)];
+  }, [baseTickets, newGeneratedTicket]);
+
   const [selectedTicket, setSelectedTicket] = useState(activeTickets[0]);
 
-  // Update selected ticket when language changes
+  // Update selected ticket when language changes or new ticket arrives
   React.useEffect(() => {
+    if (newGeneratedTicket) {
+      const match = activeTickets.find((t) => t.id === (newGeneratedTicket.ticketId || `TRG-${newGeneratedTicket.id}`));
+      if (match) {
+        setSelectedTicket(match);
+        return;
+      }
+    }
     setSelectedTicket((prev) => {
       if (!prev) return activeTickets[0];
       const match = activeTickets.find((t) => t.id === prev.id);
       return match || activeTickets[0];
     });
-  }, [activeLang]);
+  }, [activeLang, newGeneratedTicket, activeTickets]);
 
   // Generate verifiable QR code for quick referral slip modal
   useEffect(() => {

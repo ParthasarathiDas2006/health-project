@@ -79,7 +79,8 @@ import {
   TrendingUp,
   Smartphone,
   Monitor,
-  Video
+  Video,
+  X
 } from 'lucide-react';
 
 export default function App() {
@@ -378,79 +379,185 @@ export default function App() {
   const handleGenerateTriage = () => {
     setIsGeneratingNote(true);
     setTimeout(() => {
-      let urgency = 'GREEN';
-      let score = 25;
+      // 1. Initialize from NLP intake model's clinical evaluation
+      let urgency = currentIntake?.urgencyTier || 'GREEN';
+      let score = currentIntake?.urgencyScore || 25;
       const flags = [];
 
-      const vitals = currentIntake?.vitals || {};
-      const temp = parseFloat(vitals.temperature || '98.6');
-      const pulse = parseInt(vitals.pulse || '72', 10);
-      const spo2 = parseInt(vitals.spo2 || '98', 10);
-      const sbp = parseInt(vitals.systolic || '120', 10);
-
-      if (spo2 < 92) {
+      // 2. Evaluate Red Flags from speech NLP
+      if (currentIntake?.redFlags && currentIntake.redFlags.length > 0) {
         urgency = 'RED';
-        score = 95;
-        flags.push(
-          appLang === 'or-IN'
-            ? `ଅମ୍ଳଜାନ ସ୍ତର ଚିନ୍ତାଜନକ: SpO2 ${spo2}% (<୯୨% ଜରୁରୀ ସୀମା)`
-            : (appLang === 'hi-IN'
-            ? `हाइपोक्सिया अलर्ट: कमरे की हवा पर SpO2 ${spo2}% (<92% क्रिटिकल)`
-            : `Hypoxia Alert: SpO2 ${spo2}% on room air (<92% critical threshold)`)
-        );
-      } else if (spo2 <= 94) {
-        urgency = 'YELLOW';
-        score = 60;
-        flags.push(
-          appLang === 'or-IN'
-            ? `ସାମାନ୍ୟ ଅମ୍ଳଜାନ ହ୍ରାସ: SpO2 ${spo2}%`
-            : (appLang === 'hi-IN'
-            ? `हल्की ऑक्सीजन कमी: SpO2 ${spo2}%`
-            : `Mild Desaturation: SpO2 ${spo2}%`)
-        );
-      }
-
-      if (sbp >= 170) {
-        urgency = 'RED';
-        score = 90;
-        flags.push(
-          appLang === 'or-IN'
-            ? `ଅତ୍ୟଧିକ ରକ୍ତଚାପ ସଙ୍କଟ: ସିଷ୍ଟୋଲିକ୍ BP ${sbp} mmHg`
-            : (appLang === 'hi-IN'
-            ? `अत्यधिक उच्च रक्तचाप संकट: सिस्टोलिक BP ${sbp} mmHg`
-            : `Hypertensive Crisis Range: Systolic BP ${sbp} mmHg`)
-        );
-      }
-
-      if (temp >= 102.5 && pulse > 105) {
-        flags.push(
-          appLang === 'or-IN'
-            ? `ପ୍ରବଳ ଜ୍ୱର (${temp}°F) ସହିତ ଦ୍ରୁତ ନାଡ଼ି ସ୍ପନ୍ଦନ (${pulse} bpm)`
-            : (appLang === 'hi-IN'
-            ? `तेज बुखार (${temp}°F) के साथ तेज नाड़ी दर (${pulse} bpm)`
-            : `High Grade Fever (${temp}°F) with systemic Tachycardia (${pulse} bpm)`)
-        );
-        if (urgency !== 'RED') urgency = 'YELLOW';
-      }
-
-      // Check OCR lab metrics
-      if (currentOcr?.metrics) {
-        currentOcr.metrics.forEach((m) => {
-          if (m.status.includes('CRITICAL')) {
-            urgency = 'RED';
-            score = 92;
+        score = Math.max(score, currentIntake.urgencyScore || 90);
+        currentIntake.redFlags.forEach((rf) => {
+          if (!flags.some(f => f.includes(rf.symptom))) {
             flags.push(
               appLang === 'or-IN'
-                ? `ଲ୍ୟାବ୍ ବିପଦ ସଙ୍କେତ: ${m.name} ହେଉଛି ${m.value} (${m.alert})`
-                : (appLang === 'hi-IN'
-                ? `लैब क्रिटिकल: ${m.name} मान ${m.value} (${m.alert})`
-                : `Lab Critical: ${m.name} is ${m.value} (${m.alert})`)
+                ? `ଜରୁରୀ ସତର୍କତା: ${rf.symptom} (${rf.note})`
+                : appLang === 'hi-IN'
+                ? `आपातकालीन चेतावनी: ${rf.symptom} (${rf.note})`
+                : `Clinical Red Flag: ${rf.symptom} (${rf.note})`
             );
           }
         });
       }
 
-      // Check targeted clinical inquiries from adaptive intake
+      // 3. Evaluate Detected Symptoms and Severity
+      if (currentIntake?.detectedSymptoms && currentIntake.detectedSymptoms.length > 0) {
+        const criticals = currentIntake.detectedSymptoms.filter(s => s.severity === 'critical');
+        const severes = currentIntake.detectedSymptoms.filter(s => s.severity === 'severe');
+        const moderates = currentIntake.detectedSymptoms.filter(s => s.severity === 'moderate');
+
+        if (criticals.length > 0) {
+          urgency = 'RED';
+          score = Math.max(score, 92);
+        } else if ((severes.length > 0 || moderates.length >= 2) && urgency === 'GREEN') {
+          urgency = 'YELLOW';
+          score = Math.max(score, 65);
+        }
+
+        const symList = currentIntake.detectedSymptoms.map((s) => {
+          const lbl = appLang === 'or-IN' ? s.labelOr : (appLang === 'hi-IN' ? s.labelHi : s.labelEn);
+          return `${lbl} [${s.severity.toUpperCase()}]`;
+        }).join(', ');
+
+        flags.push(
+          appLang === 'or-IN'
+            ? `NLP ଲକ୍ଷଣ ଚିହ୍ନଟ: ${symList}`
+            : appLang === 'hi-IN'
+            ? `NLP लक्षण पहचान: ${symList}`
+            : `NLP Extracted Symptoms: ${symList}`
+        );
+      }
+
+      // 4. Evaluate Pain Scale
+      const pain = parseInt(currentIntake?.painSeverity || '3', 10);
+      if (pain >= 8) {
+        if (urgency === 'GREEN') urgency = 'YELLOW';
+        score = Math.max(score, 72);
+        flags.push(
+          appLang === 'or-IN'
+            ? `ତୀବ୍ର ଯନ୍ତ୍ରଣା: ${pain}/୧୦ (ଗୁରୁତର କଷ୍ଟ)`
+            : appLang === 'hi-IN'
+            ? `तीव्र असहनीय दर्द: ${pain}/10 (उच्च कष्ट)`
+            : `Severe Pain Score: ${pain}/10 (High Distress)`
+        );
+      } else if (pain >= 6) {
+        if (urgency === 'GREEN') urgency = 'YELLOW';
+        score = Math.max(score, 58);
+        flags.push(
+          appLang === 'or-IN'
+            ? `ମଧ୍ୟମ ଯନ୍ତ୍ରଣା: ${pain}/୧୦`
+            : appLang === 'hi-IN'
+            ? `मध्यम दर्द: ${pain}/10`
+            : `Moderate Pain Score: ${pain}/10`
+        );
+      }
+
+      // 5. Evaluate Quantitative Vitals
+      const vitals = currentIntake?.vitals || {};
+      const temp = parseFloat(vitals.temperature || '98.6');
+      const pulse = parseInt(vitals.pulse || '72', 10);
+      const spo2 = parseInt(vitals.spo2 || '98', 10);
+      const sbp = parseInt(vitals.systolic || '120', 10);
+      const durationDays = parseInt(vitals.durationDays || '1', 10);
+
+      // Duration factor (> 3 days with fever or symptoms)
+      if (durationDays >= 3 && (temp >= 100 || pain >= 5)) {
+        if (urgency === 'GREEN') urgency = 'YELLOW';
+        score = Math.max(score, 62);
+        flags.push(
+          appLang === 'or-IN'
+            ? `ଦୀର୍ଘସ୍ଥାୟୀ ଲକ୍ଷଣ: ${durationDays} ଦିନ ଧରି ଅସୁସ୍ଥତା ଜାରି ରହିଛି (>୩ ଦିନ ସତର୍କତା)`
+            : appLang === 'hi-IN'
+            ? `लंबे समय से लक्षण: ${durationDays} दिनों से अस्वस्थता जारी (>3 दिन चेतावनी)`
+            : `Prolonged Symptoms: Ongoing for ${durationDays} days (>3 days threshold)`
+        );
+      }
+
+      if (spo2 < 92) {
+        urgency = 'RED';
+        score = Math.max(score, 95);
+        flags.push(
+          appLang === 'or-IN'
+            ? `ଅମ୍ଳଜାନ ସ୍ତର ଚିନ୍ତାଜନକ: SpO2 ${spo2}% (<୯୨% ଜରୁରୀ ସୀମା)`
+            : appLang === 'hi-IN'
+            ? `हाइपोक्सिया अलर्ट: कमरे की हवा पर SpO2 ${spo2}% (<92% क्रिटिकल)`
+            : `Hypoxia Alert: SpO2 ${spo2}% on room air (<92% critical threshold)`
+        );
+      } else if (spo2 <= 94) {
+        if (urgency !== 'RED') urgency = 'YELLOW';
+        score = Math.max(score, 65);
+        flags.push(
+          appLang === 'or-IN'
+            ? `ସାମାନ୍ୟ ଅମ୍ଳଜାନ ହ୍ରାସ: SpO2 ${spo2}%`
+            : appLang === 'hi-IN'
+            ? `हल्की ऑक्सीजन कमी: SpO2 ${spo2}%`
+            : `Mild Desaturation: SpO2 ${spo2}%`
+        );
+      }
+
+      if (sbp >= 170) {
+        urgency = 'RED';
+        score = Math.max(score, 92);
+        flags.push(
+          appLang === 'or-IN'
+            ? `ଅତ୍ୟଧିକ ରକ୍ତଚାପ ସଙ୍କଟ: ସିଷ୍ଟୋଲିକ୍ BP ${sbp} mmHg`
+            : appLang === 'hi-IN'
+            ? `अत्यधिक उच्च रक्तचाप संकट: सिस्टोलिक BP ${sbp} mmHg`
+            : `Hypertensive Crisis Range: Systolic BP ${sbp} mmHg`
+        );
+      } else if (sbp > 0 && sbp < 90) {
+        urgency = 'RED';
+        score = Math.max(score, 94);
+        flags.push(
+          appLang === 'or-IN'
+            ? `ହାଇପୋଟେନସନ୍ ସଙ୍କଟ: ସିଷ୍ଟୋଲିକ୍ BP ${sbp} mmHg (<୯୦ mmHg ସକ୍ ଆଶଙ୍କା)`
+            : appLang === 'hi-IN'
+            ? `हाइपोटेंशन / शॉक संकेत: सिस्टोलिक BP ${sbp} mmHg (<90 mmHg)`
+            : `Hypotension / Shock Warning: Systolic BP ${sbp} mmHg (<90 mmHg)`
+        );
+      }
+
+      if (temp >= 102.5 && pulse > 105) {
+        if (urgency !== 'RED') urgency = 'YELLOW';
+        score = Math.max(score, 75);
+        flags.push(
+          appLang === 'or-IN'
+            ? `ପ୍ରବଳ ଜ୍ୱର (${temp}°F) ସହିତ ଦ୍ରୁତ ନାଡ଼ି ସ୍ପନ୍ଦନ (${pulse} bpm)`
+            : appLang === 'hi-IN'
+            ? `तेज बुखार (${temp}°F) के साथ तेज नाड़ी दर (${pulse} bpm)`
+            : `High Grade Fever (${temp}°F) with systemic Tachycardia (${pulse} bpm)`
+        );
+      } else if (temp >= 101.0) {
+        if (urgency !== 'RED') urgency = 'YELLOW';
+        score = Math.max(score, 60);
+        flags.push(
+          appLang === 'or-IN'
+            ? `ପ୍ରବଳ ଜ୍ୱର ତାପମାତ୍ରା: ${temp}°F`
+            : appLang === 'hi-IN'
+            ? `तेज बुखार तापमान: ${temp}°F`
+            : `Elevated Body Temperature: ${temp}°F`
+        );
+      }
+
+      // 6. Check OCR lab metrics
+      if (currentOcr?.metrics) {
+        currentOcr.metrics.forEach((m) => {
+          if (m.status && m.status.includes('CRITICAL')) {
+            urgency = 'RED';
+            score = Math.max(score, 92);
+            flags.push(
+              appLang === 'or-IN'
+                ? `ଲ୍ୟାବ୍ ବିପଦ ସଙ୍କେତ: ${m.name} ହେଉଛି ${m.value} (${m.alert || m.status})`
+                : appLang === 'hi-IN'
+                ? `लैब क्रिटिकल: ${m.name} मान ${m.value} (${m.alert || m.status})`
+                : `Lab Critical: ${m.name} is ${m.value} (${m.alert || m.status})`
+            );
+          }
+        });
+      }
+
+      // 7. Check targeted clinical inquiries from adaptive intake
       const answers = currentIntake?.targetedAnswers || {};
       if (answers.bleeding === 'gum_bleed') {
         urgency = 'RED';
@@ -458,31 +565,31 @@ export default function App() {
         flags.push(
           appLang === 'or-IN'
             ? 'ଜରୁରୀ ରକ୍ତସ୍ରାବ ସତର୍କତା: ଚର୍ମରେ ନାଲି ଦାଗ କିମ୍ବା ମାଢ଼ିରୁ ରକ୍ତସ୍ରାବ (ହେମୋରେଜିକ୍ ବିପଦ)'
-            : (appLang === 'hi-IN'
+            : appLang === 'hi-IN'
             ? 'गंभीर रक्तस्राव चेतावनी: मसूड़ों से खून अथवा त्वचा पर चकत्ते (हेमरेजिक लक्षण)'
-            : 'Hemorrhagic Alert: Active gum bleeding / petechial spots reported')
+            : 'Hemorrhagic Alert: Active gum bleeding / petechial spots reported'
         );
       }
       if (answers.rigors === 'yes') {
         if (urgency !== 'RED') urgency = 'YELLOW';
-        score = Math.max(score, 65);
+        score = Math.max(score, 68);
         flags.push(
           appLang === 'or-IN'
             ? 'କମ୍ପ ଜ୍ୱର ସୂଚନା: ଥଣ୍ଡା ଲାଗି କମ୍ପ ସହିତ ଜ୍ୱର (ପାରାସାଇଟ୍/ବ୍ୟାକ୍ଟେରିଆଲ୍ ସଂକ୍ରମଣ ଆଶଙ୍କା)'
-            : (appLang === 'hi-IN'
+            : appLang === 'hi-IN'
             ? 'कंपकंपी के साथ बुखार: तेज ठंड लगकर बुखार (मलेरिया/गंभीर संक्रमण संभावना)'
-            : 'Febrile Rigors: High fever with shaking chills reported')
+            : 'Febrile Rigors: High fever with shaking chills reported'
         );
       }
-      if (answers.hydration === 'poor') {
+      if (answers.hydration === 'poor' || answers.urine_output === 'no_urine') {
         if (urgency !== 'RED') urgency = 'YELLOW';
-        score = Math.max(score, 60);
+        score = Math.max(score, 68);
         flags.push(
           appLang === 'or-IN'
-            ? 'ଶରୀରରେ ଜଳୀୟ ଅଂଶ ହ୍ରାସ: କମ୍ ପାଣି ପିଇବା ଓ କମ ପରିସ୍ରା'
-            : (appLang === 'hi-IN'
-            ? 'निर्जलीकरण चेतावनी: तरल पदार्थ का कम सेवन एवं गहरा पेशाब'
-            : 'Dehydration Risk: Inadequate fluid intake with reduced urine output')
+            ? 'ଶରୀରରେ ଜଳୀୟ ଅଂଶ ହ୍ରାସ / ପରିସ୍ରା କମିବା (ଜଳକ୍ଷୟ ଆଶଙ୍କା)'
+            : appLang === 'hi-IN'
+            ? 'निर्जलीकरण चेतावनी: तरल पदार्थ का कम सेवन अथवा पेशाब में भारी कमी'
+            : 'Dehydration Risk: Low fluid intake or decreased urine output'
         );
       }
       if (answers.breath_speech === 'broken_words') {
@@ -491,9 +598,9 @@ export default function App() {
         flags.push(
           appLang === 'or-IN'
             ? 'ତୀବ୍ର ନିଶ୍ୱାସ କଷ୍ଟ: ରୋଗୀ ଗୋଟିଏ ଶବ୍ଦ କହିଲା ବେଳେ ଅଣନିଶ୍ୱାସୀ ହେଉଛନ୍ତି'
-            : (appLang === 'hi-IN'
+            : appLang === 'hi-IN'
             ? 'तीव्र श्वसन संकट: बोलने पर सांस फूल रही है (रेस्पिरेटरी डिस्ट्रेस)'
-            : 'Severe Respiratory Distress: Inability to speak in full sentences')
+            : 'Severe Respiratory Distress: Inability to speak in full sentences'
         );
       }
       if (answers.chest_spread === 'yes_arm') {
@@ -502,45 +609,77 @@ export default function App() {
         flags.push(
           appLang === 'or-IN'
             ? 'ହୃଦରୋଗ ସତର୍କତା: ଛାତି କଷ୍ଟ ବାମ ହାତକୁ ବ୍ୟାପୁଛି (ସନ୍ଦିଗ୍ଧ ହାର୍ଟ ଆଟାକ୍)'
-            : (appLang === 'hi-IN'
+            : appLang === 'hi-IN'
             ? 'हृदय आपातकाल: सीने का दर्द बाएं हाथ में फैल रहा है (हार्ट अटैक जोखिम)'
-            : 'Cardiac Emergency: Precordial chest pain radiating to left arm')
+            : 'Cardiac Emergency: Precordial chest pain radiating to left arm'
         );
       }
-      if (currentIntake?.redFlags && currentIntake.redFlags.length > 0) {
-        currentIntake.redFlags.forEach((rf) => {
-          if (!flags.some(f => f.includes(rf.symptom))) {
-            flags.push(`Clinical Red Flag: ${rf.symptom} (${rf.note})`);
-          }
-        });
-        if (currentIntake.urgencyTier === 'RED') {
-          urgency = 'RED';
-          score = Math.max(score, currentIntake.urgencyScore || 90);
-        }
+      if (answers.headache_type === 'thunderclap' || answers.neuro_deficit === 'stroke_sign') {
+        urgency = 'RED';
+        score = Math.max(score, 96);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'ସ୍ନାୟୁ ସଙ୍କଟ: ହଠାତ୍ ଅସହ୍ୟ ମୁଣ୍ଡବିନ୍ଧା କିମ୍ବା ଏକପାଖିଆ ଦୁର୍ବଳତା (ଷ୍ଟ୍ରୋକ୍ ଆଲର୍ଟ)'
+            : appLang === 'hi-IN'
+            ? 'न्यूरो संकट: अचानक भयंकर सिरदर्द अथवा एक तरफ कमजोरी (स्ट्रोक अलर्ट)'
+            : 'Neurological Alert: Thunderclap cephalea or focal deficit (Stroke signal)'
+        );
+      }
+      if (answers.pregnancy_risk === 'preeclampsia') {
+        urgency = 'RED';
+        score = Math.max(score, 95);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'ମାତୃ ବିପଦ: ଗର୍ଭାବସ୍ଥାରେ ପ୍ରବଳ ମୁଣ୍ଡବିନ୍ଧା ଓ ଝାପ୍‌ସା ଦୃଷ୍ଟି (ପ୍ରି-ଏକ୍ଲାମ୍ପସିଆ)'
+            : appLang === 'hi-IN'
+            ? 'मातृ जोखिम: गर्भावस्था में तेज सिरदर्द और धुंधला दिखना (प्री-एक्लेमप्सिया)'
+            : 'High Risk Obstetric: Pre-eclampsia triad identified'
+        );
+      }
+      if (answers.active_bleeding === 'severe_trauma') {
+        urgency = 'RED';
+        score = Math.max(score, 96);
+        flags.push(
+          appLang === 'or-IN'
+            ? 'ଜରୁରୀ ଆଘାତ ସଙ୍କଟ: ପ୍ରଚୁର ରକ୍ତସ୍ରାବ କିମ୍ବା ଅସ୍ଥି ଭଗ୍ନ (୧୦୮ ଆମ୍ବୁଲାନ୍ସ)'
+            : appLang === 'hi-IN'
+            ? 'आपातकालीन आघात: भारी रक्तस्राव अथवा फ्रैक्चर (108 एम्बुलेंस)'
+            : 'Trauma Emergency: Heavy active hemorrhage / suspected fracture'
+        );
+      }
+
+      // If intake model flagged YELLOW and nothing triggered RED, ensure YELLOW persists!
+      if (currentIntake?.urgencyTier === 'YELLOW' && urgency === 'GREEN') {
+        urgency = 'YELLOW';
+        score = Math.max(score, currentIntake.urgencyScore || 65);
+      } else if (currentIntake?.urgencyTier === 'RED') {
+        urgency = 'RED';
+        score = Math.max(score, currentIntake.urgencyScore || 90);
       }
 
       const note = {
         id: Math.floor(1000 + Math.random() * 9000),
         ticketId: `OD-${Math.floor(100000 + Math.random() * 900000)}`,
-        patientName: currentIntake?.patientName || 'Rajendra Naik',
-        age: currentIntake?.age || 42,
-        gender: currentIntake?.gender || 'Male',
-        village: currentIntake?.village || 'Borigumma, Koraput',
-        abhaId: currentIntake?.abhaId || '91-4829-1049-2819',
+        patientName: currentIntake?.patientName || currentUser?.name || 'Rajendra Naik',
+        age: currentIntake?.age || currentUser?.age || 42,
+        gender: currentIntake?.gender || currentUser?.gender || 'Male',
+        village: currentIntake?.village || currentUser?.village || 'Borigumma, Koraput',
+        abhaId: currentIntake?.abhaId || currentUser?.abhaId || '91-4829-1049-2819',
         urgency,
         urgencyScore: score,
         urgencyReason:
           urgency === 'RED'
-            ? (appLang === 'or-IN' ? 'ତତକ୍ଷଣାତ୍ ଡାକ୍ତରୀ ଚିକିତ୍ସା ଆବଶ୍ୟକ' : (appLang === 'hi-IN' ? 'तत्काल डॉक्टर समीक्षा आवश्यक' : 'Immediate Resuscitation / Senior Doctor Review Required'))
+            ? (appLang === 'or-IN' ? 'ତତକ୍ଷଣାତ୍ ଡାକ୍ତରୀ ଚିକିତ୍ସା ଆବଶ୍ୟକ (୧୦୮ ଜରୁରୀକାଳୀନ)' : (appLang === 'hi-IN' ? 'तत्काल डॉक्टर समीक्षा आवश्यक (108 आपातकालीन)' : 'Immediate Resuscitation / Senior Doctor Review Required (108 Emergency)'))
             : urgency === 'YELLOW'
-            ? (appLang === 'or-IN' ? 'ପ୍ରାଥମିକତା ଡାକ୍ତରୀ ଯାଞ୍ଚ' : (appLang === 'hi-IN' ? 'प्राथमिकता डॉक्टर जांच' : 'Priority Care / Urgent Medical Attention'))
-            : (appLang === 'or-IN' ? 'ସ୍ଥିର / ସାଧାରଣ OPD' : (appLang === 'hi-IN' ? 'स्थिर / सामान्य ओपीडी' : 'Routine OPD Care')),
+            ? (appLang === 'or-IN' ? 'ପ୍ରାଥମିକତା ଡାକ୍ତରୀ ଯାଞ୍ଚ (<୨ ଘଣ୍ଟା)' : (appLang === 'hi-IN' ? 'प्राथमिकता डॉक्टर जांच (<2 घंटे)' : 'Priority Care / Urgent Medical Attention (< 2 Hours)'))
+            : (appLang === 'or-IN' ? 'ସ୍ଥିର / ସାଧାରଣ OPD ଚିକିତ୍ସା' : (appLang === 'hi-IN' ? 'स्थिर / सामान्य ओपीडी देखभाल' : 'Routine OPD Care / Stable Assessment')),
         flags,
-        chiefComplaint: currentIntake?.chiefComplaint || currentIntake?.translatedSummary || 'High fever with productive cough',
-        vitals: currentIntake?.vitals || { temperature: '101.4', pulse: '98', systolic: '138', diastolic: '88', spo2: '94' },
+        chiefComplaint: currentIntake?.chiefComplaint || currentIntake?.translatedSummary || currentIntake?.rawSpeech || 'Routine medical evaluation',
+        vitals: currentIntake?.vitals || { temperature: '98.6', pulse: '72', systolic: '120', diastolic: '80', spo2: '98' },
         ocrMetrics: currentOcr?.metrics || [],
-        sourceAudioSummary: currentIntake?.originalSpeech || null,
-        englishTranslation: currentIntake?.translatedSummary || null,
+        sourceAudioSummary: currentIntake?.rawSpeech || currentIntake?.originalSpeech || null,
+        englishTranslation: currentIntake?.translatedSummary || currentIntake?.clinicalTranslation || null,
+        healthIssue: currentIntake?.healthIssue || null,
         status: 'PENDING_VALIDATION',
         timestamp: new Date().toISOString()
       };
@@ -775,7 +914,126 @@ export default function App() {
     <>
       {/* ─── CITIZEN MODULES ─── */}
       {activeTab === 'intake' && (
-        <div>
+        <div className="space-y-4">
+          {generatedTriageNote && (
+            <div
+              className={`max-w-4xl mx-auto p-4 md:p-5 rounded-2xl border shadow-lg transition-all ${
+                generatedTriageNote.urgency === 'RED'
+                  ? 'bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800 text-rose-950 dark:text-rose-100'
+                  : generatedTriageNote.urgency === 'YELLOW'
+                  ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-100'
+                  : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 border-b pb-3 mb-3 border-current/15">
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white shadow-sm flex items-center gap-1.5 ${
+                      generatedTriageNote.urgency === 'RED'
+                        ? 'bg-rose-600 animate-pulse'
+                        : generatedTriageNote.urgency === 'YELLOW'
+                        ? 'bg-amber-600'
+                        : 'bg-emerald-600'
+                    }`}
+                  >
+                    <Activity className="w-3.5 h-3.5" />
+                    {generatedTriageNote.urgency} URGENCY
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-sm md:text-base leading-tight">
+                      {generatedTriageNote.urgency === 'RED'
+                        ? (appLang === 'or-IN' ? 'ଜରୁରୀକାଳୀନ ସତର୍କତା (Red Tier)' : appLang === 'hi-IN' ? 'आपातकालीन चेतावनी (Red Tier)' : 'Critical Emergency Escalation')
+                        : generatedTriageNote.urgency === 'YELLOW'
+                        ? (appLang === 'or-IN' ? 'ପ୍ରାଥମିକତା ଯାଞ୍ଚ ଆବଶ୍ୟକ (Yellow Tier)' : appLang === 'hi-IN' ? 'प्राथमिकता जांच आवश्यक (Yellow Tier)' : 'Priority Care Required (< 2 Hours)')
+                        : (appLang === 'or-IN' ? 'ସ୍ଥିର ଓ ନିରାପଦ (Green Tier)' : appLang === 'hi-IN' ? 'स्थिर व सुरक्षित (Green Tier)' : 'Stable OPD Care (Green Tier)')}
+                    </h4>
+                    <span className="text-[11px] opacity-75 font-mono">
+                      Ticket #{generatedTriageNote.ticketId || generatedTriageNote.id} • Clinical Score: {generatedTriageNote.urgencyScore}/100
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setGeneratedTriageNote(null)}
+                  className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 text-current transition-colors cursor-pointer"
+                  title="Close Card"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs mb-3">
+                <div className="p-2.5 rounded-xl bg-white/60 dark:bg-black/25 border border-current/10">
+                  <div className="font-semibold text-[11px] opacity-70 uppercase tracking-wide mb-1">
+                    {appLang === 'or-IN' ? 'ମୁଖ୍ୟ କାରଣ / ସମସ୍ୟା' : appLang === 'hi-IN' ? 'मुख्य समस्या' : 'Chief Complaint'}
+                  </div>
+                  <p className="font-medium line-clamp-2">{generatedTriageNote.chiefComplaint}</p>
+                  {generatedTriageNote.urgencyReason && (
+                    <p className="mt-1.5 text-[11px] font-semibold text-rose-700 dark:text-rose-300">
+                      • {generatedTriageNote.urgencyReason}
+                    </p>
+                  )}
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-white/60 dark:bg-black/25 border border-current/10">
+                  <div className="font-semibold text-[11px] opacity-70 uppercase tracking-wide mb-1">
+                    {appLang === 'or-IN' ? 'ଭାଇଟାଲ୍ସ ସାରାଂଶ' : appLang === 'hi-IN' ? 'वाइटल्स सारांश' : 'Vitals Summary'}
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-[11px]">
+                    <span className="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">
+                      SpO₂: <strong>{generatedTriageNote.vitals?.spo2 || '98'}%</strong>
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">
+                      Pulse: <strong>{generatedTriageNote.vitals?.pulse || '72'} bpm</strong>
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">
+                      BP: <strong>{generatedTriageNote.vitals?.systolic || '120'}/{generatedTriageNote.vitals?.diastolic || '80'}</strong>
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">
+                      Temp: <strong>{generatedTriageNote.vitals?.temperature || '98.6'}°F</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {generatedTriageNote.flags && generatedTriageNote.flags.length > 0 && (
+                <div className="mb-3 p-2.5 rounded-xl bg-white/60 dark:bg-black/25 border border-current/10 text-xs">
+                  <div className="font-semibold text-[11px] opacity-70 uppercase tracking-wide mb-1">
+                    {appLang === 'or-IN' ? 'ଡାକ୍ତରୀ ନିରୀକ୍ଷଣ ଓ ରେଡ୍ ଫ୍ଲାଗ୍ସ' : appLang === 'hi-IN' ? 'चिकित्सीय अवलोकन व रेड फ्लैग्स' : 'Clinical Indicators & Red Flags'}
+                  </div>
+                  <ul className="list-disc list-inside space-y-0.5 text-[11px]">
+                    {generatedTriageNote.flags.slice(0, 3).map((fl, idx) => (
+                      <li key={idx} className="font-medium">{fl}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-current/10">
+                <div className="text-[11px] opacity-75">
+                  {appLang === 'or-IN' ? 'ଏହି ଟିକେଟ୍ ଡାକ୍ତର ଡ୍ୟାସବୋର୍ଡ ସହିତ ସଂଲଗ୍ନ ହୋଇଛି।' : appLang === 'hi-IN' ? 'यह टिकट डॉक्टर डैशबोर्ड से लिंक हो चुका है।' : 'Dispatched to on-duty medical officer queue.'}
+                </div>
+                <div className="flex items-center gap-2">
+                  {generatedTriageNote.urgency === 'RED' && (
+                    <button
+                      onClick={() => handleNavigateTab('ambulance')}
+                      className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shadow transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      108 Ambulance
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleOpenTeleconsult({ patientName: generatedTriageNote.patientName, abhaId: generatedTriageNote.abhaId })}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    Teleconsult
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <MultimodalIntakeForm
             currentUser={{ ...currentUser, preferredLanguage: appLang }}
             appLang={appLang}
@@ -899,6 +1157,7 @@ export default function App() {
               onSwitchUser={() => setShowAuthPage(true)}
               onNavigateToNmc={() => handleNavigateTab('nmc_referral')}
               onOpenTeleconsult={handleOpenTeleconsult}
+              newGeneratedTicket={generatedTriageNote}
             />
           </Suspense>
         </div>

@@ -411,6 +411,51 @@ export default function MultimodalIntakeForm({
     setAudioLevel(0);
   };
 
+  // ─── REACTION ENGINE: RE-EVALUATE CLINICAL TRIAGE NLP DYNAMICALLY ───
+  const updateClinicalAssessment = useCallback(
+    (speechText, currentPain, currentVitals, currentAnswers) => {
+      const textToAssess = (speechText || '').trim();
+      const clinicalResult = processIntakeSpeech(textToAssess, selectedVoiceLang, {
+        painLevel: currentPain,
+        vitals: currentVitals,
+        targetedAnswers: currentAnswers
+      });
+      setClinicalState(clinicalResult);
+
+      if (clinicalResult.primaryCategory && clinicalResult.detectedSymptoms.length > 0) {
+        setActiveCategory(clinicalResult.primaryCategory);
+      }
+      if (clinicalResult.durationDays && !currentVitals.durationDays) {
+        setVitals((prev) => ({ ...prev, durationDays: clinicalResult.durationDays }));
+      }
+      if (clinicalResult.extractedTemp && (!currentVitals.temperature || currentVitals.temperature === '98.6')) {
+        setVitals((prev) => ({ ...prev, temperature: clinicalResult.extractedTemp }));
+      }
+
+      const medRecs = getClinicalMedicineRecommendations(clinicalResult, selectedVoiceLang);
+      setMedicineRecommendations(medRecs);
+      return clinicalResult;
+    },
+    [selectedVoiceLang]
+  );
+
+  // Live update whenever pain level, vitals, or targeted answers change
+  useEffect(() => {
+    const textToAssess = (cumulativePatientSpeech || transcript || '').trim();
+    if (textToAssess) {
+      updateClinicalAssessment(textToAssess, painSeverity, vitals, targetedAnswers);
+    }
+  }, [painSeverity, vitals.temperature, vitals.spo2, vitals.systolic, vitals.durationDays, targetedAnswers, updateClinicalAssessment]);
+
+  // Direct manual text change handler (allows typing or editing symptoms)
+  const handleTextChange = (newText) => {
+    setTranscript(newText);
+    setCumulativePatientSpeech(newText);
+    baseTextRef.current = newText;
+    fullTextRef.current = newText;
+    updateClinicalAssessment(newText, painSeverity, vitals, targetedAnswers);
+  };
+
   // ─── ADVANCE TO NEXT DOCTOR TURN AFTER PATIENT SPEAKS ─────────────────
   const processPatientSpeechTurn = useCallback(
     (patientUtterance) => {
@@ -439,24 +484,17 @@ export default function MultimodalIntakeForm({
       setCumulativePatientSpeech(newCumulative);
       setTranscript(newCumulative);
 
-      // 3. Run clinical NLP model on cumulative speech
-      const clinicalResult = processIntakeSpeech(newCumulative, selectedVoiceLang);
-      setClinicalState(clinicalResult);
+      // 3. Run clinical NLP model on cumulative speech with vitals and pain context
+      const clinicalResult = updateClinicalAssessment(newCumulative, painSeverity, vitals, targetedAnswers);
 
-      if (clinicalResult.primaryCategory && clinicalResult.detectedSymptoms.length > 0) {
-        setActiveCategory(clinicalResult.primaryCategory);
-      }
       if (clinicalResult.durationDays) {
-        setVitals((prev) => ({ ...prev, durationDays: clinicalResult.durationDays }));
         setHasVoiceExtractedVitals(true);
       }
       if (clinicalResult.extractedTemp) {
-        setVitals((prev) => ({ ...prev, temperature: clinicalResult.extractedTemp }));
         setHasVoiceExtractedVitals(true);
       }
 
       const medRecs = getClinicalMedicineRecommendations(clinicalResult, selectedVoiceLang);
-      setMedicineRecommendations(medRecs);
 
       // 4. Progress Doctor turns: turn1 -> turn2 -> turn3 -> turn4
       const nextTurn =
@@ -516,7 +554,11 @@ export default function MultimodalIntakeForm({
       cumulativePatientSpeech,
       selectedVoiceLang,
       activeCategory,
-      speakDoctorUtterance
+      speakDoctorUtterance,
+      updateClinicalAssessment,
+      painSeverity,
+      vitals,
+      targetedAnswers
     ]
   );
 
@@ -813,6 +855,7 @@ export default function MultimodalIntakeForm({
       redFlags: clinicalState.redFlags,
       urgencyTier: clinicalState.urgencyTier,
       urgencyScore: clinicalState.urgencyScore,
+      urgencyLabel: clinicalState.urgencyLabel,
       healthIssue: medicineRecommendations.healthIssueTitle,
       suggestedMedicines: medicineRecommendations.medicines,
       conversationHistory,
@@ -1204,6 +1247,70 @@ export default function MultimodalIntakeForm({
             Hearing: "{interimTranscript}..."
           </p>
         )}
+
+        {/* Real-time editable symptom textarea */}
+        <div className="w-full text-left space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-700">
+          <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300">
+            <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>
+                {selectedVoiceLang === 'or-IN'
+                  ? 'ଲକ୍ଷଣ ବର୍ଣ୍ଣନା (କହନ୍ତୁ କିମ୍ବା ଲେଖନ୍ତୁ):'
+                  : selectedVoiceLang === 'hi-IN'
+                  ? 'लक्षण विवरण (बोलें या टाइप करें):'
+                  : 'Symptom Description (Speak or Type):'}
+              </span>
+            </span>
+            <span className="text-[10px] text-slate-400 font-medium">
+              {clinicalState.detectedSymptoms.length > 0
+                ? `${clinicalState.detectedSymptoms.length} symptoms detected`
+                : 'Live NLP active'}
+            </span>
+          </div>
+
+          <textarea
+            rows={3}
+            value={transcript || cumulativePatientSpeech || ''}
+            onChange={(e) => handleTextChange(e.target.value)}
+            placeholder={
+              selectedVoiceLang === 'or-IN'
+                ? 'ଆପଣଙ୍କ ସ୍ୱାସ୍ଥ୍ୟ ସମସ୍ୟା ବା ଲକ୍ଷଣ ଏଠାରେ ଲେଖନ୍ତୁ ବା ମାଇକ୍ ଦବାଇ କୁହନ୍ତୁ (ଉଦାହରଣ: ୩ ଦିନ ହେଲା ପ୍ରବଳ ଜ୍ୱର, ଛାତି କଷ୍ଟ, କାଶ)...'
+                : selectedVoiceLang === 'hi-IN'
+                ? 'अपनी बीमारी या लक्षण यहां लिखें या ऊपर माइक दबाकर बोलें (उदा: 3 दिन से तेज बुखार, सीने में दर्द, दस्त)...'
+                : 'Type your symptoms here or use the microphone above (e.g., high fever 102F for 3 days, severe chest pain, coughing)...'
+            }
+            className="w-full text-xs sm:text-sm p-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 outline-none resize-none transition-all shadow-inner"
+          />
+
+          {/* Quick detected symptoms pills tag cloud */}
+          {clinicalState.detectedSymptoms.length > 0 && (
+            <div className="flex flex-wrap gap-1 pt-1">
+              {clinicalState.detectedSymptoms.map((sym, idx) => (
+                <span
+                  key={idx}
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${
+                    sym.severity === 'critical'
+                      ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200 border border-rose-300'
+                      : sym.severity === 'severe'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border border-amber-300'
+                      : sym.severity === 'moderate'
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border border-blue-300'
+                      : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300'
+                  }`}
+                >
+                  <span>
+                    {selectedVoiceLang === 'or-IN'
+                      ? sym.labelOr
+                      : selectedVoiceLang === 'hi-IN'
+                      ? sym.labelHi
+                      : sym.labelEn}
+                  </span>
+                  <span className="opacity-70 text-[9px] uppercase">({sym.severity})</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {micError && (
           <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl text-xs text-rose-700 dark:text-rose-300 text-left flex items-start gap-2">
