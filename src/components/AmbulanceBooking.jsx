@@ -32,7 +32,10 @@ import {
   Lock,
   ChevronDown,
   ChevronUp,
-  Settings2
+  Settings2,
+  Copy,
+  Send,
+  Smartphone
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -60,6 +63,12 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
   const [formError, setFormError] = useState('');
   const [isDetectingGps, setIsDetectingGps] = useState(false);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
+
+  // Real-time GPS Location & SOS Contact State
+  const [liveCoords, setLiveCoords] = useState({ lat: 20.2668, lng: 85.8398, isLive: false, accuracy: null });
+  const [emergencyContact, setEmergencyContact] = useState(currentUser?.emergencyContact || currentUser?.familyPhone || '');
+  const [smsModalData, setSmsModalData] = useState(null);
+  const [toastMessage, setToastMessage] = useState('');
 
   // Active tracked mission state
   const [activeMission, setActiveMission] = useState(null);
@@ -147,7 +156,14 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       useLiveGps: '📍 ମୋର ଲାଇଭ୍ GPS ନିଅନ୍ତୁ',
       quickDispatchBtn: '🚨 ତୁରନ୍ତ ୧୦୮ ଆମ୍ବୁଲାନ୍ସ ଡାକନ୍ତୁ (Instant Dispatch)',
       showMoreDetails: 'ଅଧିକ ବିବରଣୀ ଯୋଡ଼ନ୍ତୁ (ଇଚ୍ଛାଧୀନ)',
-      hideMoreDetails: 'ଅତିରିକ୍ତ ବିବରଣୀ ଲୁଚାନ୍ତୁ'
+      hideMoreDetails: 'ଅତିରିକ୍ତ ବିବରଣୀ ଲୁଚାନ୍ତୁ',
+      whatsappSosBtn: 'WhatsApp SOS (ଲାଇଭ୍ GPS)',
+      smsSosBtn: 'SMS SOS (ତୁରନ୍ତ ବାର୍ତ୍ତା)',
+      instantSosBarTitle: '୧୦୮ ଜରୁରୀକାଳୀନ SOS ଡେସ୍କ (Emergency Action Center)',
+      emergencyContactLbl: 'ପରିବାର / ସମ୍ପର୍କୀୟ ଫୋନ୍ (ଐଚ୍ଛିକ)',
+      gpsLockedBadge: 'ଲାଇଭ୍ GPS ସଂଯୁକ୍ତ',
+      openInMaps: 'ମ୍ୟାପ୍',
+      copiedToClipboard: 'SMS ବାର୍ତ୍ତା କପି ହୋଇଛି! (108 / ପରିବାରକୁ ପଠାନ୍ତୁ)'
     },
     'hi-IN': {
       tabBook: '🚑 एम्बुलेंस बुलाएं',
@@ -208,7 +224,14 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       useLiveGps: '📍 मेरी लाइव GPS लोकेशन लें',
       quickDispatchBtn: '🚨 108 एम्बुलेंस तुरंत बुलाएं (Instant Dispatch)',
       showMoreDetails: 'अतिरिक्त विवरण जोड़ें (वैकल्पिक)',
-      hideMoreDetails: 'अतिरिक्त विवरण छुपाएं'
+      hideMoreDetails: 'अतिरिक्त विवरण छुपाएं',
+      whatsappSosBtn: 'WhatsApp SOS (लाइव GPS)',
+      smsSosBtn: 'SMS SOS (त्वरित संदेश)',
+      instantSosBarTitle: '108 आपातकालीन SOS डेस्क (Emergency Action Center)',
+      emergencyContactLbl: 'परिवार / आपातकालीन मोबाइल (वैकल्पिक)',
+      gpsLockedBadge: 'लाइव GPS सक्रिय',
+      openInMaps: 'मैप',
+      copiedToClipboard: 'SMS संदेश कॉपी हुआ! (108 / परिजनों को भेजें)'
     },
     'en-IN': {
       tabBook: '🚑 Book Ambulance',
@@ -269,7 +292,14 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       useLiveGps: '📍 Auto-Detect My Live GPS Location',
       quickDispatchBtn: '🚨 Dispatch 108 Ambulance Now',
       showMoreDetails: 'Add Hospital & Additional Details (Optional)',
-      hideMoreDetails: 'Hide Additional Details'
+      hideMoreDetails: 'Hide Additional Details',
+      whatsappSosBtn: 'WhatsApp SOS (Live GPS)',
+      smsSosBtn: 'SMS SOS (Instant Text)',
+      instantSosBarTitle: '108 Emergency SOS Action Center',
+      emergencyContactLbl: 'Family / Relative Mobile (Optional)',
+      gpsLockedBadge: 'Live GPS Locked',
+      openInMaps: 'Maps',
+      copiedToClipboard: 'SMS SOS text copied to clipboard! (Ready to send)'
     }
   }[lang] || {};
 
@@ -357,28 +387,67 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     return () => clearInterval(timer);
   }, [activeSubTab, activeMission]);
 
-  // Auto-Detect Real-Time GPS Location
-  const handleAutoGps = () => {
+  // Auto-Detect Real-Time GPS Location (with Reverse Geocoding)
+  const handleAutoGps = (silent = false) => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      if (!silent) alert('Geolocation is not supported by your browser.');
       return;
     }
     setIsDetectingGps(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         setIsDetectingGps(false);
-        const lat = pos.coords.latitude.toFixed(4);
-        const lng = pos.coords.longitude.toFixed(4);
-        setPickupAddress(`Live GPS: Lat ${lat}, Lng ${lng} (Bhubaneswar Metro Sector)`);
+        const lat = Number(pos.coords.latitude.toFixed(5));
+        const lng = Number(pos.coords.longitude.toFixed(5));
+        const accuracy = Math.round(pos.coords.accuracy || 10);
+        const coords = { lat, lng, isLive: true, accuracy };
+        setLiveCoords(coords);
+
+        // Attempt reverse geocoding via OpenStreetMap Nominatim
+        let geoAddress = `Live GPS: ${lat}, ${lng} (±${accuracy}m accuracy)`;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, {
+            headers: { 'Accept-Language': 'en' }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.display_name) {
+              const suburb = data.address?.suburb || data.address?.neighbourhood || data.address?.road || '';
+              const city = data.address?.city || data.address?.town || data.address?.suburb || data.address?.county || '';
+              const district = data.address?.state_district || data.address?.county || '';
+              const state = data.address?.state || '';
+              const landmark = [suburb, city].filter(Boolean).join(', ');
+              if (landmark) {
+                geoAddress = `${landmark} (GPS: ${lat}, ${lng})`;
+              } else {
+                geoAddress = data.display_name.slice(0, 75);
+              }
+              if (district) setPickupDistrict(district);
+              if (state) setPickupState(state);
+            }
+          }
+        } catch (e) {
+          // Keep coordinate string fallback
+        }
+        setPickupAddress(geoAddress);
       },
       (err) => {
         setIsDetectingGps(false);
-        // Fallback default
-        setPickupAddress('Bhubaneswar - Master Canteen Square (GPS Auto)');
+        if (!silent) {
+          console.warn('[Geolocation Error]', err);
+          setPickupAddress(`Master Canteen Square (GPS fallback: ${liveCoords.lat}, ${liveCoords.lng})`);
+        }
       },
-      { timeout: 7000, enableHighAccuracy: true }
+      { timeout: 9000, enableHighAccuracy: true, maximumAge: 0 }
     );
   };
+
+  // Attempt non-blocking GPS auto-detect on initial load
+  useEffect(() => {
+    if (navigator.geolocation && !liveCoords.isLive) {
+      handleAutoGps(true);
+    }
+  }, []);
 
   // Handle Dispatch Form Submit
   const handleDispatch = (e) => {
@@ -401,7 +470,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     }
 
     const effectiveName = patientName.trim() || currentUser?.name || 'Citizen Patient';
-    const effectivePickup = pickupAddress.trim() || 'Live GPS Coordinates (Master Canteen Area)';
+    const effectivePickup = pickupAddress.trim() || `Live GPS (${liveCoords.lat}, ${liveCoords.lng})`;
 
     const vehiclePool = [
       { no: 'OD-02-AB-1081', pilot: 'Sanjay Kumar Barik', phone: '+91 94371 10801', base: 'Master Canteen Emergency Bay' },
@@ -413,6 +482,14 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     const chosenVehicle = vehiclePool[Math.floor(Math.random() * vehiclePool.length)];
     const emergItem = emergencyTypes.find((et) => et.id === selectedEmergency);
     const emergLabel = emergItem ? emergItem.label[lang] || emergItem.label['en-IN'] : selectedEmergency;
+
+    // Accurate dynamic coordinates derived from actual patient location
+    const pLat = liveCoords.lat || 20.2710;
+    const pLng = liveCoords.lng || 85.8440;
+    const startLat = Number((pLat - 0.0125).toFixed(5));
+    const startLng = Number((pLng + 0.0085).toFixed(5));
+    const hospLat = Number((pLat + 0.0150).toFixed(5));
+    const hospLng = Number((pLng - 0.0110).toFixed(5));
 
     const newSlip = {
       id: `OD-108-${Math.floor(100000 + Math.random() * 900000)}`,
@@ -442,9 +519,9 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       notes: additionalNotes || 'Urgent 108 emergency response requested',
       status: 'DISPATCHED_EN_ROUTE',
       requestedAt: new Date().toLocaleString('en-IN'),
-      startCoords: { lat: 20.2640, lng: 85.8390 }, // Ambulance location
-      pickupCoords: { lat: 20.2710, lng: 85.8440 }, // Patient pickup
-      hospCoords: { lat: 20.2640, lng: 85.8235 } // Capital Hospital
+      startCoords: { lat: startLat, lng: startLng },
+      pickupCoords: { lat: pLat, lng: pLng },
+      hospCoords: { lat: hospLat, lng: hospLng }
     };
 
     const updated = saveAmbulanceRequest(newSlip);
@@ -456,36 +533,113 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     setEtaSeconds(420);
   };
 
-  // Automated 1-Click WhatsApp SOS Trigger
+  // Automated 1-Click WhatsApp SOS Trigger with Accurate Live Location & Dispatch Info
   const handleTriggerWhatsAppSos = () => {
-    if (!activeMission) return;
-    const coords = activeMission.pickupCoords || { lat: 20.2710, lng: 85.8440 };
-    const gMapsLink = `https://www.google.com/maps?q=${coords.lat},${coords.lng}`;
-    const message = `🚨 *EMERGENCY MEDICAL SOS — 108 AMBULANCE DISPATCHED*\n\n` +
-      `*Patient:* ${activeMission.patient?.name || 'Patient'} (${activeMission.patient?.age || '42'} yrs, ${activeMission.patient?.gender || 'Male'})\n` +
-      `*Condition:* ${activeMission.emergencyType} (${activeMission.ambulanceType})\n` +
-      `*Vehicle:* ${activeMission.vehicleNo} | *Pilot:* ${activeMission.driverName} (${activeMission.paramedicPhone})\n` +
-      `*Live ETA:* ~${Math.ceil(etaSeconds / 60)} Mins (${activeMission.distanceRemainingKm || 2.8} km away)\n` +
-      `*Pickup Location:* ${activeMission.pickup}\n` +
-      `*Destination Hospital:* ${activeMission.destination}\n` +
-      `*Live GPS Coordinates:* ${gMapsLink}\n\n` +
-      `_Sent via Odisha SwasthyaMitra National Health Mission (108 SOS)_`;
+    const coords = activeMission?.pickupCoords || (liveCoords.isLive ? liveCoords : { lat: liveCoords.lat, lng: liveCoords.lng });
+    const gMapsLink = `https://maps.google.com/?q=${coords.lat},${coords.lng}`;
+    const callerName = patientName || currentUser?.name || 'Citizen Patient';
+    const callerNum = patientPhone || currentUser?.phone || '108 Emergency Caller';
+    const emergItem = emergencyTypes.find((et) => et.id === selectedEmergency);
+    const emergTitle = emergItem ? emergItem.label[lang] || emergItem.label['en-IN'] : selectedEmergency;
+    const currentLoc = pickupAddress || `GPS (${coords.lat}, ${coords.lng})`;
+
+    let message = '';
+    if (activeMission) {
+      message = `🚨 *URGENT 108 AMBULANCE DISPATCH ALERT*\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `👤 *Patient:* ${activeMission.patient?.name || callerName} (${activeMission.patient?.age || '42'} yrs, ${activeMission.patient?.gender || 'Male'})\n` +
+        `📞 *Caller Mobile:* ${activeMission.patient?.phone || callerNum}\n` +
+        `⚠️ *Emergency:* ${activeMission.emergencyType} (${activeMission.ambulanceType})\n\n` +
+        `🚑 *AMBULANCE EN ROUTE:*\n` +
+        `• *Vehicle No:* ${activeMission.vehicleNo}\n` +
+        `• *Paramedic Pilot:* ${activeMission.driverName} (${activeMission.paramedicPhone})\n` +
+        `• *Live ETA:* ~${Math.ceil(etaSeconds / 60)} Mins (${activeMission.distanceRemainingKm || 2.8} km away)\n` +
+        `• *Destination:* ${activeMission.destination}\n\n` +
+        `📍 *PATIENT PICKUP LOCATION:*\n` +
+        `• *Address:* ${activeMission.pickup}\n` +
+        `• *Live Google Maps:* ${gMapsLink}\n` +
+        `• *GPS Coordinates:* ${coords.lat}, ${coords.lng}\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `⚡ *Dispatched via Odisha NHM 108 Emergency Network*\n` +
+        `📞 *Toll-Free Helpline:* Dial 108`;
+    } else {
+      message = `🚨 *EMERGENCY MEDICAL SOS — IMMEDIATE 108 AMBULANCE NEEDED*\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `👤 *Patient / Caller:* ${callerName}\n` +
+        `📞 *Contact Number:* ${callerNum}\n` +
+        `⚠️ *Emergency Medical Condition:* ${emergTitle}\n\n` +
+        `📍 *EXACT LIVE GPS LOCATION:*\n` +
+        `• *Google Maps Link:* ${gMapsLink}\n` +
+        `• *GPS Coordinates:* ${coords.lat}, ${coords.lng}\n` +
+        `• *Area / Landmark:* ${currentLoc}\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `🆘 *Please send 108 ambulance / emergency medical assistance immediately!*\n` +
+        `⚡ *Sent via Odisha SwasthyaMitra 108 Emergency Portal*`;
+    }
 
     const encoded = encodeURIComponent(message);
-    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+    const cleanPhone = (emergencyContact || '').replace(/\D/g, '');
+    const whatsappUrl = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}&text=${encoded}`
+      : `https://api.whatsapp.com/send?text=${encoded}`;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(message);
+      }
+    } catch (e) {}
+
+    window.open(whatsappUrl, '_blank');
+    setToastMessage('✓ WhatsApp Emergency SOS with Live GPS opened & copied to clipboard!');
     setSosSentToast(true);
-    setTimeout(() => setSosSentToast(false), 3000);
+    setTimeout(() => {
+      setSosSentToast(false);
+      setToastMessage('');
+    }, 3500);
   };
 
-  // Automated 1-Click SMS SOS Trigger
+  // Automated 1-Click SMS SOS Trigger with Clipboard Fallback & Exact GPS
   const handleTriggerSmsSos = () => {
-    if (!activeMission) return;
-    const coords = activeMission.pickupCoords || { lat: 20.2710, lng: 85.8440 };
-    const gMapsLink = `https://www.google.com/maps?q=${coords.lat},${coords.lng}`;
-    const message = `EMERGENCY 108 SOS: ${activeMission.patient?.name} (${activeMission.emergencyType}). Amb: ${activeMission.vehicleNo} arriving in ${Math.ceil(etaSeconds / 60)}m. GPS: ${gMapsLink}`;
-    window.location.href = `sms:?body=${encodeURIComponent(message)}`;
+    const coords = activeMission?.pickupCoords || (liveCoords.isLive ? liveCoords : { lat: liveCoords.lat, lng: liveCoords.lng });
+    const gMapsLink = `https://maps.google.com/?q=${coords.lat},${coords.lng}`;
+    const callerName = patientName || currentUser?.name || 'Citizen Patient';
+    const callerNum = patientPhone || currentUser?.phone || '108';
+    const emergItem = emergencyTypes.find((et) => et.id === selectedEmergency);
+    const emergTitle = emergItem ? emergItem.label[lang] || emergItem.label['en-IN'] : selectedEmergency;
+    const currentLoc = pickupAddress || `GPS (${coords.lat}, ${coords.lng})`;
+
+    let smsText = '';
+    if (activeMission) {
+      smsText = `🚨 108 SOS: Patient ${activeMission.patient?.name || callerName} (${activeMission.emergencyType}). Amb ${activeMission.vehicleNo} arriving in ~${Math.ceil(etaSeconds / 60)}m. Pilot: ${activeMission.paramedicPhone}. Dest: ${activeMission.destination}. Live GPS: ${gMapsLink}`;
+    } else {
+      smsText = `🚨 108 EMERGENCY SOS: Urgent medical help needed for ${callerName} (${emergTitle}). Caller: ${callerNum}. Pickup: ${currentLoc}. Live GPS: ${gMapsLink}. Dial 108 immediately.`;
+    }
+
+    const cleanPhone = (emergencyContact || '').replace(/\D/g, '');
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const separator = isIos ? '&' : '?';
+    const smsUrl = cleanPhone
+      ? `sms:${cleanPhone}${separator}body=${encodeURIComponent(smsText)}`
+      : `sms:${separator}body=${encodeURIComponent(smsText)}`;
+
+    // Always copy to clipboard for 100% desktop & mobile reliability
+    try {
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(smsText);
+      }
+    } catch (e) {}
+
+    try {
+      window.location.href = smsUrl;
+    } catch (e) {}
+
+    setSmsModalData({ text: smsText, recipient: cleanPhone || 'Emergency Contact / 108' });
+    setToastMessage('✓ SMS SOS message prepared & copied to clipboard!');
     setSosSentToast(true);
-    setTimeout(() => setSosSentToast(false), 3000);
+    setTimeout(() => {
+      setSosSentToast(false);
+      setToastMessage('');
+    }, 3500);
   };
 
   // Cancel Request
@@ -682,6 +836,106 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
         </div>
       </div>
 
+      {/* ── 108 Emergency Instant SOS Action Center (Always Visible) ── */}
+      <div className="bg-white rounded-2xl border-2 border-rose-500/30 p-4 shadow-md space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-rose-600 animate-ping shrink-0"></span>
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+              {txt.instantSosBarTitle}
+            </h3>
+          </div>
+
+          {/* Live GPS Lock Indicator */}
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleAutoGps(false)}
+              disabled={isDetectingGps}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer border ${
+                liveCoords.isLive
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                  : 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100'
+              }`}
+              title="Click to detect/refresh your live GPS coordinates"
+            >
+              <LocateFixed className={`w-3.5 h-3.5 ${isDetectingGps ? 'animate-spin' : ''}`} />
+              <span>
+                {isDetectingGps
+                  ? txt.gpsDetecting
+                  : liveCoords.isLive
+                    ? `${txt.gpsLockedBadge}: ${liveCoords.lat}, ${liveCoords.lng}`
+                    : txt.useLiveGps}
+              </span>
+            </button>
+
+            {/* Google Maps link preview */}
+            <a
+              href={`https://maps.google.com/?q=${liveCoords.lat},${liveCoords.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-0.5 font-bold"
+              title="Open current GPS location in Google Maps"
+            >
+              <ExternalLink className="w-3 h-3" />
+              <span>{txt.openInMaps}</span>
+            </a>
+          </div>
+        </div>
+
+        {/* 3 Large 1-Click Action Buttons: Call 108 | WhatsApp SOS | SMS SOS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {/* 1. Direct Voice Call */}
+          <a
+            href="tel:108"
+            className="py-3 px-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-98 cursor-pointer"
+          >
+            <Phone className="w-4 h-4 fill-white animate-bounce" />
+            <span>{txt.helplineBanner}</span>
+          </a>
+
+          {/* 2. WhatsApp SOS with Live GPS */}
+          <button
+            type="button"
+            onClick={handleTriggerWhatsAppSos}
+            className="py-3 px-3 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-98 cursor-pointer"
+            title="Send Instant WhatsApp Emergency SOS with Live GPS Link"
+          >
+            <Share2 className="w-4 h-4" />
+            <span>{txt.whatsappSosBtn}</span>
+          </button>
+
+          {/* 3. SMS SOS with Live GPS */}
+          <button
+            type="button"
+            onClick={handleTriggerSmsSos}
+            className="py-3 px-3 rounded-xl bg-slate-900 hover:bg-black text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-98 cursor-pointer"
+            title="Send Instant SMS SOS Beacon with Live GPS Coordinates"
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>{txt.smsSosBtn}</span>
+          </button>
+        </div>
+
+        {/* Optional Emergency Contact / Family Mobile inline bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-100 text-[11px]">
+          <div className="flex items-center gap-2 text-slate-600">
+            <Smartphone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <span className="font-bold">{txt.emergencyContactLbl}:</span>
+            <input
+              type="tel"
+              value={emergencyContact}
+              onChange={(e) => setEmergencyContact(e.target.value)}
+              placeholder="+91 94370 XXXXX"
+              className="px-2.5 py-1 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-800 outline-none w-44 focus:border-rose-500"
+            />
+          </div>
+          <span className="text-[10px] text-slate-500 italic">
+            * Leave blank to select any contact or WhatsApp group when sharing
+          </span>
+        </div>
+      </div>
+
       {/* ── Sub-Tabs Bar ────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -726,19 +980,6 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
           )}
         </button>
 
-        {/* 1-Click WhatsApp SOS Dispatch Button */}
-        {activeMission && (
-          <button
-            type="button"
-            onClick={handleTriggerWhatsAppSos}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#25D366] hover:bg-[#1EBE5D] text-white flex items-center gap-1.5 shadow-md cursor-pointer transition active:scale-95"
-            title="Send Automated Emergency WhatsApp SOS to Family & PHC Duty Doctor"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>WhatsApp SOS</span>
-          </button>
-        )}
-
         {/* In-Mission Tele-Consultation Link */}
         <button
           type="button"
@@ -753,9 +994,14 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
 
       {/* SOS Sent Toast Notification */}
       {sosSentToast && (
-        <div className="bg-emerald-600 text-white p-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg animate-fadeIn">
-          <Check className="w-4 h-4 text-emerald-200" />
-          <span>Emergency SOS with Live GPS Coordinates dispatched successfully!</span>
+        <div className="bg-emerald-600 text-white p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between gap-3 shadow-xl animate-fadeIn border border-emerald-500">
+          <div className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-emerald-200 shrink-0" />
+            <span>{toastMessage || 'Emergency SOS with Live GPS Coordinates dispatched successfully!'}</span>
+          </div>
+          <span className="text-[10px] bg-emerald-700 px-2 py-0.5 rounded-md font-mono">
+            {liveCoords.lat}, {liveCoords.lng}
+          </span>
         </div>
       )}
 
@@ -1114,7 +1360,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                   </label>
                   <button
                     type="button"
-                    onClick={handleAutoGps}
+                    onClick={() => handleAutoGps(false)}
                     disabled={isDetectingGps}
                     className="text-[11px] font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 transition cursor-pointer"
                   >
@@ -1132,6 +1378,31 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                     placeholder={txt.pickupPlaceholder}
                     className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 text-xs font-bold text-slate-900 outline-none"
                   />
+                </div>
+                {/* Quick Landmark Chips */}
+                <div className="flex items-center gap-1.5 mt-1.5 overflow-x-auto pb-1 text-[10px]">
+                  <span className="text-slate-400 font-bold shrink-0">Landmark Hubs:</span>
+                  {[
+                    { name: 'Master Canteen', lat: 20.2668, lng: 85.8398, dist: 'Khordha' },
+                    { name: 'Patia / KIIT', lat: 20.3540, lng: 85.8190, dist: 'Khordha' },
+                    { name: 'Cuttack SCB', lat: 20.4800, lng: 85.8820, dist: 'Cuttack' },
+                    { name: 'Puri Grand Rd', lat: 19.8110, lng: 85.8280, dist: 'Puri' },
+                    { name: 'Berhampur MKCG', lat: 19.3080, lng: 84.8020, dist: 'Ganjam' },
+                    { name: 'Sambalpur Burla', lat: 21.5030, lng: 83.8730, dist: 'Sambalpur' }
+                  ].map((lm) => (
+                    <button
+                      key={lm.name}
+                      type="button"
+                      onClick={() => {
+                        setPickupAddress(`${lm.name}, ${lm.dist} (GPS: ${lm.lat}, ${lm.lng})`);
+                        setPickupDistrict(lm.dist);
+                        setLiveCoords({ lat: lm.lat, lng: lm.lng, isLive: true, accuracy: 15 });
+                      }}
+                      className="px-2 py-0.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-md shrink-0 font-medium border border-slate-200 transition cursor-pointer"
+                    >
+                      {lm.name}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1291,6 +1562,28 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                   </>
                 )}
               </button>
+
+              {/* Secondary Instant SOS Options in Booking Card */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleTriggerWhatsAppSos}
+                  className="py-2.5 px-3 bg-[#25D366] hover:bg-[#1EBE5D] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer transition active:scale-95"
+                  title="Send Emergency WhatsApp SOS with Current Live GPS"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>{txt.whatsappSosBtn}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTriggerSmsSos}
+                  className="py-2.5 px-3 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer transition active:scale-95"
+                  title="Send Emergency SMS SOS with Current Live GPS"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>{txt.smsSosBtn}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1489,6 +1782,72 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                 className="flex-1 border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer"
               >
                 {txt.closeBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SMS SOS Dispatch Dialog Modal ── */}
+      {smsModalData && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-rose-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-slate-900">SMS SOS Emergency Beacon</h4>
+                  <span className="text-[11px] font-bold text-emerald-600">✓ Message Copied to Clipboard</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSmsModalData(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-800 font-mono leading-relaxed select-all max-h-40 overflow-y-auto">
+              {smsModalData.text}
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+              <span>Target Recipient: <strong className="text-slate-800 font-mono">{smsModalData.recipient}</strong></span>
+              <span className="text-emerald-700 font-bold">Ready to Send</span>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    navigator.clipboard?.writeText(smsModalData.text);
+                    alert(txt.copiedToClipboard || 'SMS text copied to clipboard!');
+                  } catch (e) {}
+                }}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Text</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                  const sep = isIos ? '&' : '?';
+                  const clean = (emergencyContact || '').replace(/\D/g, '');
+                  const link = clean
+                    ? `sms:${clean}${sep}body=${encodeURIComponent(smsModalData.text)}`
+                    : `sms:${sep}body=${encodeURIComponent(smsModalData.text)}`;
+                  window.location.href = link;
+                }}
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow transition cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Open SMS App</span>
               </button>
             </div>
           </div>
