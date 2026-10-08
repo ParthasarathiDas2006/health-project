@@ -10,27 +10,28 @@ export { getDoctorPhotoUrl, getDoctorGender, DOCTOR_PHOTOS, FEMALE_NAME_KEYWORDS
  * - Features clean SVG medical stethoscope & white-coat physician avatar as instant fallback
  * - 0ms layout shift, lazy loading, and verified RMP badge
  */
-export function DoctorAvatar({ doc, size = 'md', className = '' }) {
+export function DoctorAvatar({ doc, doctor, size = 'md', sizeClass, className = '' }) {
+  const doctorObj = doc || doctor;
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const gender = getDoctorGender(doc);
-  const photoUrl = getDoctorPhotoUrl(doc);
-  const initials = doc?.initials || 'DR';
-  const color = doc?.color || (gender === 'female' ? 'from-teal-600 to-emerald-700' : 'from-slate-700 to-emerald-900');
-  const docName = typeof doc?.name === 'string' ? doc.name : (doc?.nameEn || doc?.name?.['en-IN'] || 'Doctor');
+  const gender = getDoctorGender(doctorObj);
+  const photoUrl = doctorObj?.image || getDoctorPhotoUrl(doctorObj);
+  const initials = doctorObj?.initials || 'DR';
+  const color = doctorObj?.color || (gender === 'female' ? 'from-teal-600 to-emerald-700' : 'from-slate-700 to-emerald-900');
+  const docName = typeof doctorObj?.name === 'string' ? doctorObj.name : (doctorObj?.nameEn || doctorObj?.name?.['en-IN'] || 'Doctor');
 
-  const sizeClasses = {
+  const resolvedSizeClass = sizeClass || ({
     sm: 'w-10 h-10 text-xs rounded-xl',
     md: 'w-13 h-13 text-base rounded-2xl',
     lg: 'w-14 h-14 text-base rounded-2xl',
     xl: 'w-16 h-16 text-lg rounded-2xl'
-  }[size] || 'w-13 h-13 text-base rounded-2xl';
+  }[size] || 'w-13 h-13 text-base rounded-2xl');
 
   return (
     <div className={`relative shrink-0 select-none ${className}`}>
       <div
-        className={`${sizeClasses} text-white font-bold flex items-center justify-center shadow-xs bg-gradient-to-br ${color} overflow-hidden relative`}
+        className={`${resolvedSizeClass} text-white font-bold flex items-center justify-center shadow-xs bg-gradient-to-br ${color} overflow-hidden relative`}
       >
         {/* Instant Medical Doctor SVG Background / Fallback */}
         {(!photoUrl || imageError || !imageLoaded) && (
