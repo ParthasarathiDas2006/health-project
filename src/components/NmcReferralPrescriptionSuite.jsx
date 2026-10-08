@@ -1765,6 +1765,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
 
   // Generate localized SMS payload for 108 Emergency transit
   const generateSmsText = () => {
+    const originUrl = typeof window !== 'undefined' && window.location.origin
+      ? window.location.origin
+      : 'https://health-project-psi.vercel.app';
     const docId = verificationToken?.docId || 'NMC-OD-2026-992144';
     const cadId = verificationToken?.cadToken || 'CAD-108-OD-44102';
     const bloodLineOr = bloodRequisitionEnabled
@@ -1791,10 +1794,10 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     setShowWhatsAppModal(true);
   };
 
-  // Direct dispatch helper: sends via wa.me (works seamlessly across desktop & mobile)
-  const sendWhatsAppDirect = (targetPhone = '', pickContact = false) => {
+  // Direct dispatch helper: sends via WhatsApp Web, mobile app, or contact picker
+  const sendWhatsAppDirect = (targetPhone = '', pickContact = false, targetPlatform = 'universal') => {
     const sms = generateSmsText();
-    // Copy to clipboard first so the attendant always has the text ready even if WhatsApp prompts to paste
+    // Copy to clipboard first so the attendant always has the text ready
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(sms);
@@ -1805,16 +1808,28 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
 
     let url = '';
     const cleanPhone = (targetPhone || '').replace(/[^0-9]/g, '');
+    const isMockPresetPhone = targetPhone === currentCase.phone;
 
-    if (!pickContact && cleanPhone.length >= 10) {
+    // Only route to a specific phone if the user explicitly typed their own valid phone (not dummy preset)
+    if (!pickContact && !isMockPresetPhone && cleanPhone.length >= 10) {
       const formattedPhone = cleanPhone.length === 10
         ? `91${cleanPhone}`
         : cleanPhone.startsWith('91') && cleanPhone.length === 12
         ? cleanPhone
         : cleanPhone;
-      url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(sms)}`;
+
+      if (targetPlatform === 'web') {
+        url = `https://web.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(sms)}`;
+      } else {
+        url = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(sms)}`;
+      }
     } else {
-      url = `https://wa.me/?text=${encodeURIComponent(sms)}`;
+      // Universal WhatsApp dispatch with contact / family chooser (guaranteed to load without invalid number errors)
+      if (targetPlatform === 'web') {
+        url = `https://web.whatsapp.com/send?text=${encodeURIComponent(sms)}`;
+      } else {
+        url = `https://api.whatsapp.com/send?text=${encodeURIComponent(sms)}`;
+      }
     }
 
     let opened = false;
@@ -7932,22 +7947,22 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                 <span>{copiedWhatsApp ? 'Copied!' : 'Copy Slip Text'}</span>
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    sendWhatsAppDirect('', true);
+                    sendWhatsAppDirect('', true, 'web');
                     setShowWhatsAppModal(false);
                   }}
                   className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                  title="Pick family contact inside WhatsApp"
+                  title="Launch WhatsApp Web directly in browser"
                 >
-                  {lang === 'or-IN' ? 'ଯେକୌଣସି କଣ୍ଟାକ୍ଟକୁ ପଠାନ୍ତୁ' : lang === 'hi-IN' ? 'किसी भी संपर्क को भेजें' : 'Choose Contact'}
+                  🌐 WhatsApp Web
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    sendWhatsAppDirect(whatsAppRecipientPhone, false);
+                    sendWhatsAppDirect(whatsAppRecipientPhone, false, 'universal');
                     setShowWhatsAppModal(false);
                   }}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
