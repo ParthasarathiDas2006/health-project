@@ -44,13 +44,23 @@ import {
   AlertOctagon,
   RotateCcw,
   LifeBuoy,
-  Ambulance
+  Ambulance,
+  Bell,
+  Users
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getAmbulanceRequests, saveAmbulanceRequest, cancelAmbulanceRequest } from '../utils/authStorage';
 import { ODISHA_MEDICAL_FACILITIES, ODISHA_LOCATIONS, calculateDistanceKm } from '../utils/nearestMedicalData';
 import TeleConsultationSuite from './TeleConsultationSuite';
+
+// Default Organization Field Worker & Control Room Hotline Config
+export const DEFAULT_WORKER_SOS_CONFIG = {
+  phone: '9437010800', // Central Emergency Dispatcher / Worker Hotline
+  displayName: 'SwasthyaMitra Rapid Response Unit & Control Room',
+  formatted: '+91 94370 10800',
+  backupPhone: '9437110801'
+};
 
 // Live Regional Odisha Ambulance Fleet Network
 const FLEET_STATIONS = [
@@ -144,6 +154,22 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
   const [emergencyContact, setEmergencyContact] = useState(currentUser?.emergencyContact || currentUser?.familyPhone || '');
   const [smsModalData, setSmsModalData] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Dedicated Field Worker SOS Dispatch State
+  const [workerPhone, setWorkerPhone] = useState(() => {
+    return localStorage.getItem('swasthya_worker_sos_phone') || DEFAULT_WORKER_SOS_CONFIG.phone;
+  });
+  const [sosTargetMode, setSosTargetMode] = useState('worker'); // 'worker' | 'family'
+  const [showWorkerConfig, setShowWorkerConfig] = useState(false);
+  const [tempWorkerPhone, setTempWorkerPhone] = useState(workerPhone);
+  const [sosIncidents, setSosIncidents] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('swasthya_emergency_sos_log') || '[]');
+    } catch {
+      return [];
+    }
+  });
+  const [showIncidentModal, setShowIncidentModal] = useState(false);
 
   // Fast Panic Hold-to-Dispatch State
   const [holdProgress, setHoldProgress] = useState(0);
@@ -264,7 +290,13 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       mode108: '🚑 ୧୦୮ ଜରୁରୀକାଳୀନ (Trauma & ICU)',
       mode102: '🤱 ୧୦୨ ଜନନୀ ଏକ୍ସପ୍ରେସ୍ (ମାତୃ ସୁରକ୍ଷା)',
       mode112: '🚨 ୧୧୨ ସର୍ବଭାରତୀୟ ସହାୟତା',
-      offlineModeBadge: 'ଅଫ୍‌ଲାଇନ୍ ମୋଡ୍: ୧୦୮ SMS ଗେଟ୍‌ୱେ ସକ୍ରିୟ'
+      offlineModeBadge: 'ଅଫ୍‌ଲାଇନ୍ ମୋଡ୍: ୧୦୮ SMS ଗେଟ୍‌ୱେ ସକ୍ରିୟ',
+      sosSendToWorkers: 'ସିଧାସଳଖ ଆମ ରେସପନ୍ସ କର୍ମୀ ଓ କଣ୍ଟ୍ରୋଲ୍ ଡେସ୍କ (+୯୧ ',
+      sosSendToFamily: 'ପରିବାର / ବ୍ୟକ୍ତିଗତ ମୋବାଇଲ୍',
+      workerDeskBtn: 'କର୍ମୀ ଆକ୍ସନ୍ ଡେସ୍କ',
+      workerHotlineLbl: 'ଆମ ଇମରଜେନ୍ସି କର୍ମୀ ହଟ୍‌ଲାଇନ୍:',
+      setWorkerPhonePrompt: 'ଆମ କର୍ମୀଙ୍କ WhatsApp / ମୋବାଇଲ୍ ନମ୍ବର:',
+      saveWorkerPhone: 'ନମ୍ବର ସେଭ୍ କରନ୍ତୁ'
     },
     'hi-IN': {
       tabBook: '🚑 एम्बुलेंस बुलाएं',
@@ -346,7 +378,13 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       mode108: '🚑 108 आपातकालीन (Trauma & ICU)',
       mode102: '🤱 102 जननी एक्सप्रेस (मातृ सुरक्षा)',
       mode112: '🚨 112 अखिल भारतीय हेल्पलाइन',
-      offlineModeBadge: 'ऑफ़लाइन मोड: 108 SMS गेटवे सक्रिय'
+      offlineModeBadge: 'ऑफ़लाइन मोड: 108 SMS गेटवे सक्रिय',
+      sosSendToWorkers: 'सीधे हमारी रिस्पांस टीम / कार्यकर्ताओं को (+91 ',
+      sosSendToFamily: 'परिवार / व्यक्तिगत संपर्क',
+      workerDeskBtn: 'कार्यकर्ता एक्शन डेस्क',
+      workerHotlineLbl: 'हमारी आपातकालीन कार्यकर्ता हेल्पलाइन:',
+      setWorkerPhonePrompt: 'कार्यकर्ता टीम का WhatsApp / मोबाइल नंबर:',
+      saveWorkerPhone: 'नंबर सुरक्षित करें'
     },
     'en-IN': {
       tabBook: '🚑 Book Ambulance',
@@ -428,7 +466,13 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       mode108: '🚑 108 Emergency (Trauma & ICU)',
       mode102: '🤱 102 Janani Express (Maternal JSSK)',
       mode112: '🚨 112 All-Emergency Response',
-      offlineModeBadge: 'Offline Mode: Direct 108 Emergency SMS Gateway Active'
+      offlineModeBadge: 'Offline Mode: Direct 108 Emergency SMS Gateway Active',
+      sosSendToWorkers: 'Direct to Our Emergency Response Workers & Control Desk (+91 ',
+      sosSendToFamily: 'Family / Personal Contact',
+      workerDeskBtn: 'Worker Action Desk',
+      workerHotlineLbl: 'Our Emergency Worker Hotline:',
+      setWorkerPhonePrompt: 'Our Worker WhatsApp & Mobile Number:',
+      saveWorkerPhone: 'Save Hotline Number'
     }
   }[lang] || {};
 
@@ -807,7 +851,105 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     ]);
   };
 
-  // Automated 1-Click WhatsApp SOS Trigger with Accurate Live Location & Dispatch Info
+  // Alert Tone Synthesizer for Incoming / Dispatched Worker SOS
+  const playSosAlertTone = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.28);
+    } catch (e) {}
+  };
+
+  // Record SOS Incident for Field Workers and Control Room
+  const recordSosIncident = (channel, targetPhone, content) => {
+    const coords = activeMission?.pickupCoords || (liveCoords.isLive ? liveCoords : { lat: liveCoords.lat, lng: liveCoords.lng });
+    const gMapsLink = `https://maps.google.com/?q=${coords.lat},${coords.lng}`;
+    const callerName = patientName || currentUser?.name || 'Citizen Patient';
+    const callerNum = patientPhone || currentUser?.phone || '108 Caller';
+    const emergItem = emergencyTypes.find((et) => et.id === selectedEmergency);
+    const emergTitle = emergItem ? emergItem.label[lang] || emergItem.label['en-IN'] : selectedEmergency;
+    const currentLoc = pickupAddress || `GPS (${coords.lat}, ${coords.lng})`;
+
+    const newInc = {
+      id: 'SOS-' + Date.now(),
+      timestamp: new Date().toISOString(),
+      timeFormatted: new Date().toLocaleTimeString('en-IN'),
+      callerName,
+      callerPhone: callerNum,
+      emergencyType: emergTitle,
+      pickup: currentLoc,
+      coords,
+      gMapsLink,
+      targetPhone,
+      channel,
+      status: 'PENDING_WORKER_ACTION',
+      allocatedVehicle: activeMission?.vehicleNo || nearestVehicle?.no || 'Nearest 108 Fleet'
+    };
+
+    const updated = [newInc, ...sosIncidents.slice(0, 49)];
+    setSosIncidents(updated);
+    try {
+      localStorage.setItem('swasthya_emergency_sos_log', JSON.stringify(updated));
+    } catch (e) {}
+
+    playSosAlertTone();
+
+    try {
+      window.dispatchEvent(new CustomEvent('swasthya_sos_incident', { detail: newInc }));
+    } catch (e) {}
+
+    return newInc;
+  };
+
+  const handleUpdateIncidentStatus = (incId, newStatus) => {
+    const updated = sosIncidents.map((inc) => inc.id === incId ? { ...inc, status: newStatus } : inc);
+    setSosIncidents(updated);
+    try {
+      localStorage.setItem('swasthya_emergency_sos_log', JSON.stringify(updated));
+    } catch (e) {}
+  };
+
+  const handleClearIncidents = () => {
+    if (window.confirm('Clear all logged SOS incident alerts from action desk?')) {
+      setSosIncidents([]);
+      try {
+        localStorage.removeItem('swasthya_emergency_sos_log');
+      } catch (e) {}
+    }
+  };
+
+  const handleSaveWorkerPhone = (e) => {
+    if (e) e.preventDefault();
+    const clean = tempWorkerPhone.replace(/\D/g, '');
+    if (clean.length < 10) {
+      alert('Please enter a valid 10-digit mobile number for the field worker team.');
+      return;
+    }
+    setWorkerPhone(clean);
+    try {
+      localStorage.setItem('swasthya_worker_sos_phone', clean);
+    } catch (e) {}
+    setShowWorkerConfig(false);
+    setToastMessage(`✓ Worker hotline set to +91 ${clean}. All SOS dispatches will now go straight to your team!`);
+    setSosSentToast(true);
+    setTimeout(() => {
+      setSosSentToast(false);
+      setToastMessage('');
+    }, 4000);
+  };
+
+  // Automated 1-Click WhatsApp SOS Trigger Direct to Our Field Workers & Control Room
   const handleTriggerWhatsAppSos = () => {
     const coords = activeMission?.pickupCoords || (liveCoords.isLive ? liveCoords : { lat: liveCoords.lat, lng: liveCoords.lng });
     const gMapsLink = `https://maps.google.com/?q=${coords.lat},${coords.lng}`;
@@ -817,45 +959,60 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     const emergTitle = emergItem ? emergItem.label[lang] || emergItem.label['en-IN'] : selectedEmergency;
     const currentLoc = pickupAddress || `GPS (${coords.lat}, ${coords.lng})`;
 
+    // Target Phone: Directly to our workers unless user specifically chose custom family contact
+    const rawTarget = sosTargetMode === 'family' && emergencyContact
+      ? emergencyContact.replace(/\D/g, '')
+      : (workerPhone || DEFAULT_WORKER_SOS_CONFIG.phone).replace(/\D/g, '');
+
+    const cleanPhone = rawTarget.length === 10 ? '91' + rawTarget : rawTarget;
+    const isDirectToWorker = sosTargetMode === 'worker';
+
     let message = '';
-    if (activeMission) {
-      message = `🚨 *URGENT 108 AMBULANCE DISPATCH ALERT*\n` +
+    if (isDirectToWorker) {
+      message = `🚨 *URGENT EMERGENCY SOS ALERT — IMMEDIATE WORKER ACTION REQUIRED*\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
-        `👤 *Patient:* ${activeMission.patient?.name || callerName} (${activeMission.patient?.age || '42'} yrs, ${activeMission.patient?.gender || 'Male'})\n` +
-        `📞 *Caller Mobile:* ${activeMission.patient?.phone || callerNum}\n` +
-        `⚠️ *Emergency:* ${activeMission.emergencyType} (${activeMission.ambulanceType})\n\n` +
-        `🚑 *AMBULANCE EN ROUTE:*\n` +
-        `• *Vehicle No:* ${activeMission.vehicleNo}\n` +
-        `• *Paramedic Pilot:* ${activeMission.driverName} (${activeMission.paramedicPhone})\n` +
-        `• *Live ETA:* ~${Math.ceil(etaSeconds / 60)} Mins (${activeMission.distanceRemainingKm || 2.8} km away)\n` +
-        `• *Destination:* ${activeMission.destination}\n\n` +
-        `📍 *PATIENT PICKUP LOCATION:*\n` +
-        `• *Address:* ${activeMission.pickup}\n` +
-        `• *Live Google Maps:* ${gMapsLink}\n` +
-        `• *GPS Coordinates:* ${coords.lat}, ${coords.lng}\n` +
+        `👥 *ATTENTION FIELD WORKERS & CONTROL DESK:*\n` +
+        `A citizen has triggered an Emergency SOS Beacon requesting IMMEDIATE medical response!\n\n` +
+        `📍 *ACTIONABLE LIVE GPS LOCATION:*\n` +
+        `• *Google Maps Navigation:* ${gMapsLink}\n` +
+        `• *GPS Coordinates:* ${coords.lat}, ${coords.lng} (Accuracy: ±${coords.accuracy || 10}m)\n` +
+        `• *Pickup Address:* ${currentLoc}\n\n` +
+        `👤 *PATIENT / CALLER DETAILS:*\n` +
+        `• *Name:* ${callerName}\n` +
+        `• *Caller Mobile:* ${callerNum}\n` +
+        `• *Emergency Condition:* ⚠️ *${emergTitle}*\n` +
+        `• *Time Triggered:* ${new Date().toLocaleTimeString('en-IN')}\n\n` +
+        (activeMission
+          ? `🚑 *ALLOCATED AMBULANCE UNIT:*\n• *Vehicle:* ${activeMission.vehicleNo}\n• *Paramedic:* ${activeMission.paramedicPhone}\n• *ETA:* ~${Math.ceil(etaSeconds / 60)} Mins\n\n`
+          : `🚑 *NEAREST ESTIMATED FLEET:* ${nearestVehicle.station} (${nearestVehicle.no}, ~${nearestVehicle.etaMins}m ETA)\n\n`) +
+        `🆘 *IMMEDIATE FIELD WORKER PROTOCOL:*\n` +
+        `1. Call citizen back immediately at ${callerNum}\n` +
+        `2. Dispatch nearest responder or 108 ambulance\n` +
+        `3. Alert receiving hospital trauma bay\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
-        `⚡ *Dispatched via Odisha NHM 108 Emergency Network*\n` +
-        `📞 *Toll-Free Helpline:* Dial 108`;
+        `⚡ *Sent via Odisha SwasthyaMitra Rapid Response Network*`;
     } else {
       message = `🚨 *EMERGENCY MEDICAL SOS — IMMEDIATE 108 AMBULANCE NEEDED*\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `👤 *Patient / Caller:* ${callerName}\n` +
         `📞 *Contact Number:* ${callerNum}\n` +
-        `⚠️ *Emergency Medical Condition:* ${emergTitle}\n\n` +
+        `⚠️ *Emergency Condition:* ${emergTitle}\n\n` +
         `📍 *EXACT LIVE GPS LOCATION:*\n` +
         `• *Google Maps Link:* ${gMapsLink}\n` +
         `• *GPS Coordinates:* ${coords.lat}, ${coords.lng}\n` +
-        `• *Area / Landmark:* ${currentLoc}\n` +
+        `• *Pickup Address:* ${currentLoc}\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
-        `🆘 *Please send 108 ambulance / emergency medical assistance immediately!*\n` +
+        `🆘 *Please contact me immediately or dial 108!*\n` +
         `⚡ *Sent via Odisha SwasthyaMitra 108 Emergency Portal*`;
     }
 
     const encoded = encodeURIComponent(message);
-    const cleanPhone = (emergencyContact || '').replace(/\D/g, '');
     const whatsappUrl = cleanPhone
-      ? `https://api.whatsapp.com/send?phone=${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}&text=${encoded}`
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`
       : `https://api.whatsapp.com/send?text=${encoded}`;
+
+    // Record the incident in our local incident log for field workers
+    recordSosIncident('WhatsApp SOS', cleanPhone, message);
 
     try {
       if (navigator.clipboard?.writeText) {
@@ -864,15 +1021,19 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     } catch (e) {}
 
     window.open(whatsappUrl, '_blank');
-    setToastMessage('✓ WhatsApp Emergency SOS with Live GPS opened & copied to clipboard!');
+    setToastMessage(
+      isDirectToWorker
+        ? `✓ WhatsApp SOS dispatched directly to Field Worker (+${cleanPhone}) & Action Desk logged!`
+        : '✓ WhatsApp Emergency SOS with Live GPS opened & copied to clipboard!'
+    );
     setSosSentToast(true);
     setTimeout(() => {
       setSosSentToast(false);
       setToastMessage('');
-    }, 3500);
+    }, 4000);
   };
 
-  // Automated 1-Click SMS SOS Trigger with Clipboard Fallback & Exact GPS
+  // Automated 1-Click SMS SOS Trigger Direct to Our Field Workers & Control Room
   const handleTriggerSmsSos = () => {
     const coords = activeMission?.pickupCoords || (liveCoords.isLive ? liveCoords : { lat: liveCoords.lat, lng: liveCoords.lng });
     const gMapsLink = `https://maps.google.com/?q=${coords.lat},${coords.lng}`;
@@ -882,21 +1043,30 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     const emergTitle = emergItem ? emergItem.label[lang] || emergItem.label['en-IN'] : selectedEmergency;
     const currentLoc = pickupAddress || `GPS (${coords.lat}, ${coords.lng})`;
 
+    const rawTarget = sosTargetMode === 'family' && emergencyContact
+      ? emergencyContact.replace(/\D/g, '')
+      : (workerPhone || DEFAULT_WORKER_SOS_CONFIG.phone).replace(/\D/g, '');
+
+    const cleanPhone = rawTarget.length === 10 ? '91' + rawTarget : rawTarget;
+    const isDirectToWorker = sosTargetMode === 'worker';
+
     let smsText = '';
-    if (activeMission) {
-      smsText = `🚨 108 SOS: Patient ${activeMission.patient?.name || callerName} (${activeMission.emergencyType}). Amb ${activeMission.vehicleNo} arriving in ~${Math.ceil(etaSeconds / 60)}m. Pilot: ${activeMission.paramedicPhone}. Dest: ${activeMission.destination}. Live GPS: ${gMapsLink}`;
+    if (isDirectToWorker) {
+      smsText = `🚨 URGENT WORKER SOS: Caller ${callerName} (${callerNum}) needs immediate 108 help! Emergency: ${emergTitle}. Pickup: ${currentLoc}. Live GPS: ${gMapsLink}. Call caller or dispatch unit immediately!`;
     } else {
       smsText = `🚨 108 EMERGENCY SOS: Urgent medical help needed for ${callerName} (${emergTitle}). Caller: ${callerNum}. Pickup: ${currentLoc}. Live GPS: ${gMapsLink}. Dial 108 immediately.`;
     }
 
-    const cleanPhone = (emergencyContact || '').replace(/\D/g, '');
+    // Record the incident in Action Desk
+    recordSosIncident('SMS SOS', cleanPhone, smsText);
+
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const separator = isIos ? '&' : '?';
     const smsUrl = cleanPhone
       ? `sms:${cleanPhone}${separator}body=${encodeURIComponent(smsText)}`
       : `sms:${separator}body=${encodeURIComponent(smsText)}`;
 
-    // Always copy to clipboard for 100% desktop & mobile reliability
+    // Always copy to clipboard for 100% reliability
     try {
       if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(smsText);
@@ -907,13 +1077,17 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       window.location.href = smsUrl;
     } catch (e) {}
 
-    setSmsModalData({ text: smsText, recipient: cleanPhone || 'Emergency Contact / 108' });
-    setToastMessage('✓ SMS SOS message prepared & copied to clipboard!');
+    setSmsModalData({ text: smsText, recipient: cleanPhone ? `+${cleanPhone} (Field Worker Desk)` : 'Emergency Contact / 108' });
+    setToastMessage(
+      isDirectToWorker
+        ? `✓ SMS SOS directed straight to Field Worker (+${cleanPhone}) & Action Desk logged!`
+        : '✓ SMS SOS message prepared & copied to clipboard!'
+    );
     setSosSentToast(true);
     setTimeout(() => {
       setSosSentToast(false);
       setToastMessage('');
-    }, 3500);
+    }, 4000);
   };
 
   // Cancel Request
@@ -1174,17 +1348,37 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       </div>
 
       {/* ── 108 Emergency Instant SOS Action Center (Always Visible) ── */}
-      <div className="bg-white rounded-2xl border-2 border-rose-500/30 p-4 shadow-md space-y-3">
+      <div className="bg-white rounded-2xl border-2 border-rose-500/40 p-4 sm:p-5 shadow-md space-y-3.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-rose-600 animate-ping shrink-0"></span>
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-              {txt.instantSosBarTitle}
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <span>{txt.instantSosBarTitle}</span>
+              <span className="text-[10px] bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-full font-bold">
+                Direct Responder Gateway
+              </span>
             </h3>
           </div>
 
-          {/* Live GPS Lock Indicator */}
+          {/* Right Action Bar: Live GPS Lock & Worker Action Desk Drawer Button */}
           <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            {/* Worker Action Desk Modal Button */}
+            <button
+              type="button"
+              onClick={() => setShowIncidentModal(true)}
+              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[11px] rounded-lg shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+              title="Open Live Field Worker Emergency Dispatch Hub"
+            >
+              <Bell className="w-3.5 h-3.5 fill-current" />
+              <span>{txt.workerDeskBtn}</span>
+              {sosIncidents.filter((i) => i.status === 'PENDING_WORKER_ACTION').length > 0 && (
+                <span className="bg-red-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold animate-pulse">
+                  {sosIncidents.filter((i) => i.status === 'PENDING_WORKER_ACTION').length}
+                </span>
+              )}
+            </button>
+
+            {/* GPS Lock */}
             <button
               type="button"
               onClick={() => handleAutoGps(false)}
@@ -1220,6 +1414,96 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
           </div>
         </div>
 
+        {/* ── SOS Direct Recipient Routing Selector ── */}
+        <div className="p-3 bg-gradient-to-r from-slate-50 via-rose-50/40 to-slate-50 rounded-xl border border-slate-200/90 flex flex-col md:flex-row md:items-center justify-between gap-2.5 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 shrink-0">
+              SOS Direct Destination:
+            </span>
+            <button
+              type="button"
+              onClick={() => setSosTargetMode('worker')}
+              className={`px-3 py-1.5 rounded-lg border font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer ${
+                sosTargetMode === 'worker'
+                  ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>{txt.sosSendToWorkers}{workerPhone})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSosTargetMode('family')}
+              className={`px-3 py-1.5 rounded-lg border font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer ${
+                sosTargetMode === 'family'
+                  ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>{txt.sosSendToFamily}</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowWorkerConfig(!showWorkerConfig)}
+            className="text-[11px] font-bold text-slate-600 hover:text-rose-700 underline flex items-center gap-1 self-start md:self-auto cursor-pointer"
+          >
+            <Settings2 className="w-3.5 h-3.5" />
+            <span>{showWorkerConfig ? 'Hide Config' : '⚙️ Configure Worker Hotline'}</span>
+          </button>
+        </div>
+
+        {/* Worker Phone Configuration Drawer */}
+        {showWorkerConfig && (
+          <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl space-y-2 text-xs animate-fadeIn">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="font-black text-amber-950 block">{txt.workerHotlineLbl}</span>
+                <span className="text-[11px] text-amber-800 leading-snug">
+                  Set the mobile/WhatsApp phone for your response workers or control room. All SOS taps immediately open chats and send texts to this phone!
+                </span>
+              </div>
+              <form onSubmit={handleSaveWorkerPhone} className="flex items-center gap-2 shrink-0">
+                <input
+                  type="tel"
+                  value={tempWorkerPhone}
+                  onChange={(e) => setTempWorkerPhone(e.target.value)}
+                  placeholder="9437010800"
+                  className="px-2.5 py-1.5 bg-white border border-amber-400 rounded-lg font-mono font-bold text-slate-900 text-xs w-36 outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-black rounded-lg text-xs transition cursor-pointer"
+                >
+                  {txt.saveWorkerPhone}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Family Number Input (When in Family mode) */}
+        {sosTargetMode === 'family' && (
+          <div className="flex items-center gap-2 pt-1 border-t border-slate-100 text-xs text-slate-600">
+            <Smartphone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <span className="font-bold">{txt.emergencyContactLbl}:</span>
+            <input
+              type="tel"
+              value={emergencyContact}
+              onChange={(e) => setEmergencyContact(e.target.value)}
+              placeholder="+91 94370 XXXXX"
+              className="px-2.5 py-1 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-800 outline-none w-44 focus:border-rose-500"
+            />
+            <span className="text-[10px] text-slate-500 italic hidden sm:inline">
+              * Leave blank to select any contact or group
+            </span>
+          </div>
+        )}
+
         {/* 3 Large 1-Click Action Buttons: Call 108 | WhatsApp SOS | SMS SOS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           {/* 1. Direct Voice Call */}
@@ -1239,7 +1523,9 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
             title="Send Instant WhatsApp Emergency SOS with Live GPS Link"
           >
             <Share2 className="w-4 h-4" />
-            <span>{txt.whatsappSosBtn}</span>
+            <span>
+              {sosTargetMode === 'worker' ? `WhatsApp SOS -> Workers (+91 ${workerPhone.slice(-4)})` : txt.whatsappSosBtn}
+            </span>
           </button>
 
           {/* 3. SMS SOS with Live GPS */}
@@ -1250,26 +1536,10 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
             title="Send Instant SMS SOS Beacon with Live GPS Coordinates"
           >
             <MessageSquare className="w-4 h-4" />
-            <span>{txt.smsSosBtn}</span>
+            <span>
+              {sosTargetMode === 'worker' ? `SMS SOS -> Workers (+91 ${workerPhone.slice(-4)})` : txt.smsSosBtn}
+            </span>
           </button>
-        </div>
-
-        {/* Optional Emergency Contact / Family Mobile inline bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-100 text-[11px]">
-          <div className="flex items-center gap-2 text-slate-600">
-            <Smartphone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-            <span className="font-bold">{txt.emergencyContactLbl}:</span>
-            <input
-              type="tel"
-              value={emergencyContact}
-              onChange={(e) => setEmergencyContact(e.target.value)}
-              placeholder="+91 94370 XXXXX"
-              className="px-2.5 py-1 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-800 outline-none w-44 focus:border-rose-500"
-            />
-          </div>
-          <span className="text-[10px] text-slate-500 italic">
-            * Leave blank to select any contact or WhatsApp group when sharing
-          </span>
         </div>
       </div>
 
@@ -2385,6 +2655,206 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Open SMS App</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Field Worker Emergency Action Desk & Incident Dispatch Modal ── */}
+      {showIncidentModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600 flex items-center justify-center text-white shadow-md">
+                  <Bell className="w-5 h-5 animate-bounce" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm sm:text-base flex items-center gap-2">
+                    <span>Emergency Worker Incident Action Desk</span>
+                    <span className="text-[10px] bg-rose-500/40 text-rose-200 border border-rose-400/40 px-2 py-0.5 rounded-full font-mono">
+                      LIVE DISPATCH
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-300">
+                    Active Worker Hotline: <strong className="text-amber-300 font-mono">+91 {workerPhone}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowIncidentModal(false)}
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Subheader & Actions */}
+            <div className="p-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-700">Total Incidents: {sosIncidents.length}</span>
+                <span className="px-2 py-0.5 bg-rose-100 text-rose-800 rounded-full font-black text-[11px]">
+                  {sosIncidents.filter((i) => i.status === 'PENDING_WORKER_ACTION').length} Pending Immediate Action
+                </span>
+              </div>
+              {sosIncidents.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearIncidents}
+                  className="text-xs text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Clear All Logged</span>
+                </button>
+              )}
+            </div>
+
+            {/* Incidents List Body */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 flex-1">
+              {sosIncidents.length === 0 ? (
+                <div className="text-center py-12 space-y-2 text-slate-400">
+                  <ShieldCheck className="w-12 h-12 mx-auto text-emerald-500/70" />
+                  <p className="font-bold text-sm text-slate-700">No Pending Emergency SOS Beacons</p>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    When any user on this web portal taps WhatsApp SOS or SMS SOS, the emergency alert with live GPS and patient details will stream directly here and alert on your phone.
+                  </p>
+                </div>
+              ) : (
+                sosIncidents.map((inc) => (
+                  <div
+                    key={inc.id}
+                    className={`p-4 rounded-2xl border transition-all space-y-3 ${
+                      inc.status === 'PENDING_WORKER_ACTION'
+                        ? 'bg-rose-50/70 border-rose-300 ring-1 ring-rose-400/40'
+                        : inc.status === 'RESOLVED'
+                          ? 'bg-emerald-50/50 border-emerald-200 opacity-80'
+                          : 'bg-white border-slate-200'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2 py-0.5 rounded-full font-mono text-[10px] font-black bg-slate-900 text-white">
+                          {inc.channel || 'SOS BEACON'}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                          inc.status === 'PENDING_WORKER_ACTION'
+                            ? 'bg-red-600 text-white animate-pulse'
+                            : inc.status === 'RESPONDED'
+                              ? 'bg-amber-100 text-amber-800'
+                              : inc.status === 'DISPATCHED'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {inc.status === 'PENDING_WORKER_ACTION' ? '🚨 ACTION REQUIRED' : inc.status}
+                        </span>
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          {inc.timeFormatted || new Date(inc.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
+
+                      <span className="text-xs font-bold text-slate-700">
+                        Assigned Unit: <strong className="text-slate-900">{inc.allocatedVehicle || '108 Fleet'}</strong>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase block">Caller / Patient</span>
+                        <span className="font-extrabold text-slate-900 text-sm">{inc.callerName}</span>
+                        <span className="text-slate-600 block font-mono">{inc.callerPhone}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase block">Emergency Triage</span>
+                        <span className="font-extrabold text-rose-700">{inc.emergencyType}</span>
+                        <span className="text-slate-500 block truncate">{inc.pickup}</span>
+                      </div>
+                    </div>
+
+                    {/* Action Bar for Field Worker */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200/60">
+                      {/* Call Caller */}
+                      <a
+                        href={`tel:${inc.callerPhone}`}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Phone className="w-3.5 h-3.5 fill-white" />
+                        <span>Call Caller Now</span>
+                      </a>
+
+                      {/* Google Maps GPS */}
+                      <a
+                        href={inc.gMapsLink || `https://maps.google.com/?q=${inc.coords?.lat},${inc.coords?.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Open GPS Navigation</span>
+                      </a>
+
+                      {/* WhatsApp Caller */}
+                      {inc.callerPhone && (
+                        <a
+                          href={`https://api.whatsapp.com/send?phone=${inc.callerPhone.replace(/\D/g, '')}&text=${encodeURIComponent(`Hello ${inc.callerName}, this is SwasthyaMitra 108 Emergency Response. We received your SOS Beacon. Help is en route!`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          <span>WhatsApp Caller</span>
+                        </a>
+                      )}
+
+                      {/* Status Toggles */}
+                      <div className="ml-auto flex items-center gap-1.5">
+                        {inc.status === 'PENDING_WORKER_ACTION' && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateIncidentStatus(inc.id, 'RESPONDED')}
+                            className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-xs rounded-lg transition cursor-pointer"
+                          >
+                            Mark In Progress
+                          </button>
+                        )}
+                        {inc.status !== 'DISPATCHED' && inc.status !== 'RESOLVED' && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateIncidentStatus(inc.id, 'DISPATCHED')}
+                            className="px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-xs rounded-lg transition cursor-pointer"
+                          >
+                            Mark Dispatched
+                          </button>
+                        )}
+                        {inc.status !== 'RESOLVED' && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateIncidentStatus(inc.id, 'RESOLVED')}
+                            className="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold text-xs rounded-lg transition cursor-pointer"
+                          >
+                            Resolve
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+              <span>All SOS beacons are logged locally and dispatched with live GPS timestamps.</span>
+              <button
+                type="button"
+                onClick={() => setShowIncidentModal(false)}
+                className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition cursor-pointer"
+              >
+                Close Desk
               </button>
             </div>
           </div>
