@@ -324,8 +324,14 @@ export default function App() {
     setActiveTab('teleconsult');
   };
 
-  // Switch Hub Controller
+  // Switch Hub Controller with Strict Hierarchical RBAC Authorization
   const switchHub = (hubId) => {
+    // 1. Hierarchical vision guard: prevent unauthorized hub switching
+    if (hubId === 'admin' && !isAdmin) return;
+    if (hubId === 'driver' && !isAdmin && !isDriver) return;
+    if (hubId === 'doctor' && !isAdmin && !isDoctor) return;
+    if (hubId === 'phc' && !isAdmin && !isAsha && !isDoctor) return;
+
     setActiveHub(hubId);
     if (hubId === 'citizen') {
       if (!['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry', 'market', 'beds', 'bloodbank', 'teleconsult'].includes(activeTab)) {
@@ -348,8 +354,33 @@ export default function App() {
     }
   };
 
-  // Cross-hub navigation router for child components
+  // Cross-hub navigation router for child components with Hierarchical RBAC Guard
   const handleNavigateTab = (tab) => {
+    // Guard admin-only tabs
+    if (['admin', 'outbreak', 't23_outbreak', 'inventory', 't24_inventory', 'compliance', 't15_compliance'].includes(tab) && !isAdmin) {
+      setActiveHub('citizen');
+      setActiveTab('intake');
+      return;
+    }
+    // Guard driver-only tabs
+    if ((tab === 'ambulance_driver' || tab === 'driver_admin') && !isAdmin && !isDriver) {
+      setActiveHub('citizen');
+      setActiveTab('ambulance');
+      return;
+    }
+    // Guard clinical-only tabs
+    if (['dashboard', 'prescriptions', 'nmc_referral', 't29_nmc_referral', 't29_discharge', 'drugallergy', 't13_drugallergy', 'differential', 't12_differential', 'xray', 'riskscores', 't14_riskscores', 'hospitals', 'transfers'].includes(tab) && !isAdmin && !isDoctor) {
+      setActiveHub('citizen');
+      setActiveTab('booking');
+      return;
+    }
+    // Guard frontline PHC tabs
+    if (['phc_offline', 'asha_voice', 't17_asha_voice', 'family_triage', 't19_family_triage', 'maternal_anc', 't30_anc_maternal', 'pain_map', 't18_pain_map'].includes(tab) && !isAdmin && !isAsha && !isDoctor) {
+      setActiveHub('citizen');
+      setActiveTab('intake');
+      return;
+    }
+
     setActiveTab(tab);
     if (['intake', 'ocr', 'booking', 'nearest', 'ambulance', 'expiry', 'market'].includes(tab)) {
       setActiveHub('citizen');
@@ -942,11 +973,84 @@ export default function App() {
     }
   }[appLang] || {};
 
-  // Helper function to render active workspace component for both desktop & mobile views
-  const renderActiveWorkspace = () => (
-    <>
-      {/* ─── CITIZEN MODULES ─── */}
-      {activeTab === 'intake' && (
+  // Helper function to render active workspace component with Institutional Hierarchical RBAC Guard
+  const renderActiveWorkspace = () => {
+    // 1. Guard: State Command / Government Portal / Admin Desk
+    const isUnauthorizedAdmin = !isAdmin && ['admin', 'outbreak', 't23_outbreak', 'inventory', 't24_inventory', 'compliance', 't15_compliance'].includes(activeTab);
+    // 2. Guard: 108 Ambulance Pilot Console
+    const isUnauthorizedDriver = !isAdmin && !isDriver && ['ambulance_driver', 'driver_admin'].includes(activeTab);
+    // 3. Guard: Clinical RMP Doctor Cockpit
+    const isUnauthorizedClinical = !isAdmin && !isDoctor && ['dashboard', 'nmc_referral', 't29_nmc_referral', 't29_discharge', 'drugallergy', 't13_drugallergy', 'differential', 't12_differential', 'xray', 'riskscores', 't14_riskscores', 'abha_history', 't11_abha_history', 'hospitals', 'transfers'].includes(activeTab);
+    // 4. Guard: Rural PHC & ASHA Field Station
+    const isUnauthorizedPhc = !isAdmin && !isDoctor && !isAsha && ['phc_offline', 'asha_voice', 't17_asha_voice', 'family_triage', 't19_family_triage', 'maternal_anc', 't30_anc_maternal', 'pain_map', 't18_pain_map'].includes(activeTab);
+
+    if (isUnauthorizedAdmin || isUnauthorizedDriver || isUnauthorizedClinical || isUnauthorizedPhc) {
+      const tierLevel = isUnauthorizedAdmin ? 'Tier 5 (State Command)' : isUnauthorizedDriver ? 'Tier 4 (108 Pilot MDT)' : isUnauthorizedClinical ? 'Tier 3 (Doctor RMP)' : 'Tier 2 (ASHA Outreach)';
+      const tierTitle = isUnauthorizedAdmin
+        ? (appLang === 'or-IN' ? 'ରାଜ୍ୟ ପ୍ରଶାସନ ଓ ସରକାରୀ ପୋର୍ଟାଲ୍ ସଂରକ୍ଷିତ' : 'State Governance & Administration Portal Restricted')
+        : isUnauthorizedDriver
+        ? (appLang === 'or-IN' ? '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ପାଇଲଟ୍ କନ୍‌ସୋଲ୍ ସଂରକ୍ଷିତ' : '108 Ambulance Pilot MDT Console Restricted')
+        : isUnauthorizedClinical
+        ? (appLang === 'or-IN' ? 'ଡାକ୍ତରୀ କ୍ଲିନିକାଲ୍ କକ୍‌ପିଟ୍ ସଂରକ୍ଷିତ (RMP Only)' : 'Doctor Clinical Decision Cockpit Restricted')
+        : (appLang === 'or-IN' ? 'ଗ୍ରାମୀଣ PHC ଓ ଆଶା ଷ୍ଟେସନ୍ ସଂରକ୍ଷିତ' : 'Rural PHC & ASHA Field Station Restricted');
+      const tierDesc = isUnauthorizedAdmin
+        ? (appLang === 'or-IN'
+            ? 'ଏହି ବିଭାଗ କେବଳ ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ବିଭାଗ ସୁପର ଆଡମିନ୍ (State Health Mission) ଙ୍କ ପାଇଁ ଉଦ୍ଦିଷ୍ଟ। ନାଗରିକ ଖାତାରୁ ଏହି ପ୍ରଶାସନିକ ତଥ୍ୟ ଦେଖିବା ନିଷିଦ୍ଧ।'
+            : 'This module is restricted to State Health Mission Super Administrators under DPDP Act 2023. Public citizen accounts cannot access government logistics.')
+        : isUnauthorizedDriver
+        ? (appLang === 'or-IN'
+            ? 'ଏହି ବିଭାଗ କେବଳ ପ୍ରମାଣିତ ୧୦୮ ଆମ୍ବୁଲାନ୍ସ ପାଇଲଟ୍ ଓ EMT କ୍ରୁ ପାଇଁ ଉଦ୍ଦିଷ୍ଟ।'
+            : 'This module is restricted to certified 108 Emergency Ambulance Pilots and dispatch paramedics.')
+        : isUnauthorizedClinical
+        ? (appLang === 'or-IN'
+            ? 'ଏହି ବିଭାଗ କେବଳ ପଞ୍ଜୀକୃତ ଡାକ୍ତର (RMP / NMC) ଙ୍କ ବୈଧାନିକ ତଦାରଖ ପାଇଁ ଉଦ୍ଦିଷ୍ଟ।'
+            : 'This module is restricted to verified Registered Medical Practitioners (RMP / NMC).')
+        : (appLang === 'or-IN'
+            ? 'ଏହି ବିଭାଗ କେବଳ ଆଶା କର୍ମୀ ଓ ଗ୍ରାମୀଣ PHC କର୍ମଚାରୀଙ୍କ ପାଇଁ ଉଦ୍ଦିଷ୍ଟ।'
+            : 'This module is restricted to registered ASHA / ANM frontline community healthcare workers.');
+
+      return (
+        <div className="max-w-2xl mx-auto my-12 p-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl text-center space-y-4 animate-fadeIn">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-inner">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700">
+              <span>{tierLevel} Access Restricted</span>
+            </div>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white mt-3">
+              {tierTitle}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-lg mx-auto mt-2 leading-relaxed">
+              {tierDesc}
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+            <button
+              onClick={() => {
+                switchHub('citizen');
+                setActiveTab('intake');
+              }}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <User className="w-4 h-4" />
+              <span>{appLang === 'or-IN' ? 'ନାଗରିକ ଡେସ୍କକୁ ଫେରନ୍ତୁ' : 'Return to Citizen Care Desk'}</span>
+            </button>
+            <button
+              onClick={() => setShowProfileMenu(true)}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold text-xs border border-slate-300 dark:border-slate-700 transition-all cursor-pointer"
+            >
+              <span>{appLang === 'or-IN' ? 'ଡେମୋ ପରୀକ୍ଷା ପାଇଁ ଭୂମିକା ବଦଳାନ୍ତୁ (Switch)' : 'Switch Role (Cognizant Jury Demo)'}</span>
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {/* ─── CITIZEN MODULES ─── */}
+        {activeTab === 'intake' && (
         <div className="space-y-4">
           {generatedTriageNote && (
             <div
@@ -1430,6 +1534,7 @@ export default function App() {
       )}
     </>
   );
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
@@ -1452,6 +1557,7 @@ export default function App() {
             onLogout={handleLogout}
             renderActiveComponent={renderActiveWorkspace}
             onSwitchToDesktop={() => setViewModeOverride('desktop')}
+            onSwitchPersona={handleQuickPersonaSwitch}
           />
         </div>
       ) : (
@@ -1481,40 +1587,45 @@ export default function App() {
               ? 'RMP Decision Support (Non-Diagnostic) • MoHFW, NMC & Odisha Medical Council'
               : isAsha
               ? 'Rural Community Health Outreach Station • Offline PWA (AES-256 IndexedDB Active)'
-              : 'Citizen Healthcare Portal • BSKY & Ayushman Bharat (ଓଡ଼ିଶା) • Non-Diagnostic Triage'}
+              : isDriver
+              ? '108 Emergency Ambulance Command & Dispatch Telemetry (Odisha 108)'
+              : 'Citizen Healthcare Portal • BSKY & Ayushman Bharat (ଓଡ଼ିଶା) • Non-Diagnostic Public Access'}
           </span>
         </div>
 
         <div className="flex items-center gap-3 text-slate-400 text-[11px]">
-          {/* Offline / Online Sync Indicator with Interactive Jury Simulator */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => {
-                if (isAsha || isAdmin || isDoctor) {
+          {/* Offline / Online Sync Indicator: Staff only sees IndexedDB & Simulator, Citizens see clean portal status */}
+          {(isAdmin || isDoctor || isAsha) ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
                   setActiveHub('phc');
                   setActiveTab('phc_offline');
-                }
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
-                isAsha || isAdmin || isDoctor ? 'cursor-pointer' : 'cursor-default'
-              } ${
-                effectiveIsOnline
-                  ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900'
-                  : 'bg-amber-950/90 text-amber-300 border border-amber-500/60 animate-pulse hover:bg-amber-900'
-              }`}
-              title="Rural PHC Offline & IndexedDB Sync Status"
-            >
-              {effectiveIsOnline ? <Wifi className="w-3 h-3 text-emerald-400" /> : <WifiOff className="w-3 h-3 text-amber-400" />}
-              <span>{effectiveIsOnline ? 'Cloud Synced' : 'PHC Offline Mode (IndexedDB)'}</span>
-            </button>
-            <button
-              onClick={() => setIsSimulatedOffline(prev => !prev)}
-              className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer"
-              title="Click to toggle offline PHC mode for Cognizant Jury Demo"
-            >
-              {isSimulatedOffline ? 'Sim: OFFLINE ⚡' : 'Sim: ONLINE'}
-            </button>
-          </div>
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                  effectiveIsOnline
+                    ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900'
+                    : 'bg-amber-950/90 text-amber-300 border border-amber-500/60 animate-pulse hover:bg-amber-900'
+                }`}
+                title="Rural PHC Offline & IndexedDB Sync Status"
+              >
+                {effectiveIsOnline ? <Wifi className="w-3 h-3 text-emerald-400" /> : <WifiOff className="w-3 h-3 text-amber-400" />}
+                <span>{effectiveIsOnline ? 'Cloud Synced' : 'PHC Offline Mode (IndexedDB)'}</span>
+              </button>
+              <button
+                onClick={() => setIsSimulatedOffline(prev => !prev)}
+                className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer"
+                title="Click to toggle offline PHC mode for Cognizant Jury Demo"
+              >
+                {isSimulatedOffline ? 'Sim: OFFLINE ⚡' : 'Sim: ONLINE'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>{effectiveIsOnline ? 'Portal Connected' : 'Offline Mode'}</span>
+            </div>
+          )}
 
           {/* 🔑 FIREBASE CLOUD / API CONFIGURATION BUTTON: STRICTLY ADMIN ONLY */}
           {isAdmin && (
@@ -1619,9 +1730,11 @@ export default function App() {
                     ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
                     : isAsha
                     ? 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950 dark:text-teal-300'
+                    : isDriver
+                    ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950 dark:text-rose-300'
                     : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300'
                 }`}>
-                  {isAdmin ? 'ADMIN' : isDoctor ? 'DOCTOR' : isAsha ? 'ASHA / PHC' : 'CITIZEN'}
+                  {isAdmin ? 'TIER 5: STATE ADMIN' : isDoctor ? 'TIER 3: DOCTOR (RMP)' : isAsha ? 'TIER 2: ASHA OUTREACH' : isDriver ? 'TIER 4: 108 PILOT' : 'TIER 1: CITIZEN'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-md">
@@ -1630,11 +1743,11 @@ export default function App() {
             </div>
           </div>
 
-          {/* 4 CORE ROLE-BASED HUBS (Prioritized: Admin first for Administrators) */}
+          {/* HIERARCHICAL VISION: STRICT ROLE-BASED HUB SELECTOR */}
           <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
             {isAdmin ? (
               <>
-                {/* HUB 1 (ADMIN): STATE COMMAND */}
+                {/* HUB 1 (TIER 5): STATE COMMAND & LOGISTICS */}
                 <button
                   onClick={() => switchHub('admin')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1650,7 +1763,7 @@ export default function App() {
                   </span>
                 </button>
 
-                {/* HUB 2: DOCTOR */}
+                {/* HUB 2 (TIER 3): DOCTOR CLINICAL COCKPIT */}
                 <button
                   onClick={() => switchHub('doctor')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1668,7 +1781,7 @@ export default function App() {
                   )}
                 </button>
 
-                {/* HUB 3: RURAL PHC & ASHA */}
+                {/* HUB 3 (TIER 2): RURAL PHC & ASHA */}
                 <button
                   onClick={() => switchHub('phc')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1684,7 +1797,7 @@ export default function App() {
                   </span>
                 </button>
 
-                {/* HUB 4: CITIZEN */}
+                {/* HUB 4 (TIER 1): CITIZEN */}
                 <button
                   onClick={() => switchHub('citizen')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1697,7 +1810,7 @@ export default function App() {
                   <span>{uiText.hubCitizen}</span>
                 </button>
 
-                {/* HUB 5 (ADMIN): AMBULANCE DRIVER & MDT */}
+                {/* HUB 5 (TIER 4): AMBULANCE DRIVER & MDT */}
                 <button
                   onClick={() => switchHub('driver')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1713,9 +1826,25 @@ export default function App() {
                   </span>
                 </button>
               </>
-            ) : (
+            ) : isDoctor ? (
               <>
-                {/* HUB 1: CITIZEN */}
+                {/* TIER 3 (DOCTOR): CLINICAL COCKPIT */}
+                <button
+                  onClick={() => switchHub('doctor')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'doctor'
+                      ? 'bg-slate-900 dark:bg-slate-950 text-white shadow-md ring-2 ring-emerald-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <Stethoscope className="w-4 h-4 text-emerald-400" />
+                  <span>{uiText.hubDoctor}</span>
+                  <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">
+                    RMP
+                  </span>
+                </button>
+
+                {/* TIER 1: CITIZEN CARE */}
                 <button
                   onClick={() => switchHub('citizen')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1727,26 +1856,10 @@ export default function App() {
                   <User className="w-4 h-4" />
                   <span>{uiText.hubCitizen}</span>
                 </button>
-
-                {/* HUB 2: DOCTOR */}
-                <button
-                  onClick={() => switchHub('doctor')}
-                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                    activeHub === 'doctor'
-                      ? 'bg-slate-900 dark:bg-slate-950 text-white shadow-md ring-2 ring-emerald-400/40'
-                      : 'text-slate-700 dark:text-slate-300 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-                  }`}
-                >
-                  <Stethoscope className="w-4 h-4 text-emerald-400" />
-                  <span>{uiText.hubDoctor}</span>
-                  {generatedTriageNote && (
-                    <span className="bg-rose-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold animate-pulse">
-                      1
-                    </span>
-                  )}
-                </button>
-
-                {/* HUB 3: RURAL PHC & ASHA */}
+              </>
+            ) : isAsha ? (
+              <>
+                {/* TIER 2 (ASHA / PHC): FRONTLINE OUTREACH */}
                 <button
                   onClick={() => switchHub('phc')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1758,27 +1871,26 @@ export default function App() {
                   <Database className="w-4 h-4 text-teal-300" />
                   <span>{uiText.hubPhc}</span>
                   <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">
-                    OFFLINE
+                    OFFLINE PWA
                   </span>
                 </button>
 
-                {/* HUB 4: STATE COMMAND */}
+                {/* TIER 1: CITIZEN CARE */}
                 <button
-                  onClick={() => switchHub('admin')}
+                  onClick={() => switchHub('citizen')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                    activeHub === 'admin'
-                      ? 'bg-purple-800 text-white shadow-md ring-2 ring-purple-400/40'
-                      : 'text-purple-950 dark:text-purple-300 hover:text-purple-800 hover:bg-purple-100/60 dark:hover:bg-purple-950/60'
+                    activeHub === 'citizen'
+                      ? 'bg-amber-600 text-white shadow-md ring-2 ring-amber-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
                   }`}
                 >
-                  <ShieldCheck className="w-4 h-4 text-amber-400" />
-                  <span>{uiText.hubAdmin}</span>
-                  <span className="bg-amber-400 text-purple-950 text-[9px] px-1.5 py-0.2 rounded-full font-black">
-                    GOV
-                  </span>
+                  <User className="w-4 h-4" />
+                  <span>{uiText.hubCitizen}</span>
                 </button>
-
-                {/* HUB 5: AMBULANCE DRIVER & MDT */}
+              </>
+            ) : isDriver ? (
+              <>
+                {/* TIER 4 (108 PILOT): DISPATCH MDT */}
                 <button
                   onClick={() => switchHub('driver')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1790,7 +1902,34 @@ export default function App() {
                   <Truck className="w-4 h-4 text-amber-400" />
                   <span>{uiText.hubDriver}</span>
                   <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
-                    108
+                    108 MDT
+                  </span>
+                </button>
+
+                {/* TIER 1: CITIZEN CARE */}
+                <button
+                  onClick={() => switchHub('citizen')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'citizen'
+                      ? 'bg-amber-600 text-white shadow-md ring-2 ring-amber-400/40'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                  <span>{uiText.hubCitizen}</span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* TIER 1 (CITIZEN / PATIENT / GUEST): PURE CITIZEN ACCESS ONLY */}
+                <button
+                  onClick={() => switchHub('citizen')}
+                  className="px-3.5 py-2 rounded-xl text-xs font-black flex items-center gap-2 transition-all whitespace-nowrap bg-amber-600 text-white shadow-md ring-2 ring-amber-400/40 cursor-pointer"
+                >
+                  <User className="w-4 h-4" />
+                  <span>{uiText.hubCitizen}</span>
+                  <span className="bg-amber-400 text-amber-950 text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider">
+                    CITIZEN CARE
                   </span>
                 </button>
               </>

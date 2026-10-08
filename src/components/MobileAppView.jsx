@@ -55,7 +55,8 @@ export default function MobileAppView({
   onOpenAuth,
   onLogout,
   renderActiveComponent,
-  onSwitchToDesktop
+  onSwitchToDesktop,
+  onSwitchPersona
 }) {
   const [mobileSection, setMobileSection] = useState('home'); // 'home' | 'services' | 'records' | 'profile' | 'detail'
   const [showAdvisoryDetail, setShowAdvisoryDetail] = useState(false);
@@ -219,113 +220,151 @@ export default function MobileAppView({
     setTimeout(() => setCopiedAbha(false), 2000);
   };
 
-  // Action Portal Cards (Matching the 2-Column Mockup 1 & 2)
-  const actionCards = useMemo(() => [
-    {
-      id: 'intake',
-      hub: 'citizen',
-      title: t.triageTitle,
-      icon: Activity,
-      iconBg: 'bg-rose-50 text-rose-500 border border-rose-200',
-      tag: 'AI Mic'
-    },
-    {
-      id: 'beds',
-      hub: 'citizen',
-      title: t.bedTitle,
-      icon: Bed,
-      iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
-      tag: 'Live Beds'
-    },
-    {
-      id: 'ambulance',
-      hub: 'citizen',
-      title: t.ambTitle,
-      icon: Truck,
-      iconBg: 'bg-amber-50 text-amber-600 border border-amber-200',
-      tag: '108 SOS'
-    },
-    {
-      id: 'doctors',
-      hub: 'citizen',
-      title: t.docTitle,
-      icon: Stethoscope,
-      iconBg: 'bg-blue-50 text-blue-600 border border-blue-200',
-      tag: 'OPD Directory'
-    },
-    {
-      id: 'teleconsult',
-      hub: 'citizen',
-      title: t.teleconsultTitle,
-      icon: Video,
-      iconBg: 'bg-purple-50 text-purple-600 border border-purple-200',
-      tag: 'Live WebRTC'
-    },
-    {
-      id: 'prescriptions',
-      hub: 'doctor',
-      title: t.rxTitle,
-      icon: FileText,
-      iconBg: 'bg-purple-50 text-purple-600 border border-purple-200',
-      tag: 'NMC Rx'
-    },
-    {
-      id: 'nearest',
-      hub: 'citizen',
-      title: t.gpsTitle,
-      icon: MapPin,
-      iconBg: 'bg-sky-50 text-sky-600 border border-sky-200',
-      tag: 'GPS Map'
-    },
-    {
-      id: 'blood',
-      hub: 'citizen',
-      title: t.bloodTitle,
-      icon: Droplet,
-      iconBg: 'bg-red-50 text-red-600 border border-red-200',
-      tag: 'OSBTC Stock'
-    },
-    {
-      id: 'medicines',
-      hub: 'citizen',
-      title: t.medTitle,
-      icon: Pill,
-      iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-200',
-      tag: 'OCR Safe'
-    },
-    {
-      id: 'market',
-      hub: 'citizen',
-      title: t.marketTitle,
-      icon: ShoppingBag,
-      iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
-      tag: '28+ Meds'
-    },
-    {
-      id: 'phc_offline',
-      hub: 'asha',
-      title: t.phcTitle,
-      icon: Database,
-      iconBg: 'bg-teal-50 text-teal-600 border border-teal-200',
-      tag: 'Offline'
-    },
-    {
-      id: 'asha_field',
-      hub: 'asha',
-      title: t.ashaTitle,
-      icon: HeartPulse,
-      iconBg: 'bg-pink-50 text-pink-600 border border-pink-200',
-      tag: 'Field'
-    },
-    {
-      id: 'admin',
-      hub: 'admin',
-      title: t.adminTitle,
-      icon: Layers,
-      iconBg: 'bg-slate-100 text-slate-700 border border-slate-300',
-      tag: 'Command'
+  const userRole = currentUser?.roleCategory || 'patient';
+  const isAdmin = userRole === 'admin';
+  const isDriver = userRole === 'driver' || userRole === 'ambulance';
+  const isDoctor = userRole === 'doctor' || userRole === 'nurse';
+  const isAsha = userRole === 'asha' || userRole === 'anm';
+
+  // Action Portal Cards (Strict Hierarchical Role-Based Access Control)
+  const actionCards = useMemo(() => {
+    // 1. Citizen Tier Base Cards (Public Healthcare Services)
+    const list = [
+      {
+        id: 'intake',
+        hub: 'citizen',
+        title: t.triageTitle,
+        icon: Activity,
+        iconBg: 'bg-rose-50 text-rose-500 border border-rose-200',
+        tag: 'AI Mic'
+      },
+      {
+        id: 'beds',
+        hub: 'citizen',
+        title: t.bedTitle,
+        icon: Bed,
+        iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
+        tag: 'Live Beds'
+      },
+      {
+        id: 'ambulance',
+        hub: 'citizen',
+        title: t.ambTitle,
+        icon: Truck,
+        iconBg: 'bg-amber-50 text-amber-600 border border-amber-200',
+        tag: '108 SOS'
+      },
+      {
+        id: 'doctors',
+        hub: 'citizen',
+        title: t.docTitle,
+        icon: Stethoscope,
+        iconBg: 'bg-blue-50 text-blue-600 border border-blue-200',
+        tag: 'OPD Directory'
+      },
+      {
+        id: 'teleconsult',
+        hub: 'citizen',
+        title: t.teleconsultTitle,
+        icon: Video,
+        iconBg: 'bg-purple-50 text-purple-600 border border-purple-200',
+        tag: 'Live WebRTC'
+      },
+      {
+        id: 'nearest',
+        hub: 'citizen',
+        title: t.gpsTitle,
+        icon: MapPin,
+        iconBg: 'bg-sky-50 text-sky-600 border border-sky-200',
+        tag: 'GPS Map'
+      },
+      {
+        id: 'blood',
+        hub: 'citizen',
+        title: t.bloodTitle,
+        icon: Droplet,
+        iconBg: 'bg-red-50 text-red-600 border border-red-200',
+        tag: 'OSBTC Stock'
+      },
+      {
+        id: 'medicines',
+        hub: 'citizen',
+        title: t.medTitle,
+        icon: Pill,
+        iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-200',
+        tag: 'OCR Safe'
+      },
+      {
+        id: 'market',
+        hub: 'citizen',
+        title: t.marketTitle,
+        icon: ShoppingBag,
+        iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
+        tag: '28+ Meds'
+      }
+    ];
+
+    // 2. Doctor Tier Modules
+    if (isDoctor || isAdmin) {
+      list.push({
+        id: 'prescriptions',
+        hub: 'doctor',
+        title: t.rxTitle,
+        icon: FileText,
+        iconBg: 'bg-purple-50 text-purple-600 border border-purple-200',
+        tag: 'NMC Rx'
+      });
     }
-  ], [t]);
+
+    // 3. ASHA Frontline Tier Modules
+    if (isAsha || isAdmin || isDoctor) {
+      list.push({
+        id: 'phc_offline',
+        hub: 'phc',
+        title: t.phcTitle,
+        icon: Database,
+        iconBg: 'bg-teal-50 text-teal-600 border border-teal-200',
+        tag: 'Offline DB'
+      });
+    }
+
+    if (isAsha || isAdmin) {
+      list.push({
+        id: 'asha_field',
+        hub: 'phc',
+        title: t.ashaTitle,
+        icon: HeartPulse,
+        iconBg: 'bg-pink-50 text-pink-600 border border-pink-200',
+        tag: 'Field Outreach'
+      });
+    }
+
+    // 4. Logistics 108 Ambulance Pilot Tier
+    if (isDriver || isAdmin) {
+      list.push({
+        id: 'ambulance_driver',
+        hub: 'driver',
+        title: appLang === 'or-IN' ? '୧୦୮ ପାଇଲଟ୍ MDT' : '108 Pilot MDT Console',
+        icon: Truck,
+        iconBg: 'bg-rose-50 text-rose-600 border border-rose-200',
+        tag: '108 MDT'
+      });
+    }
+
+    // 5. State Administration Tier
+    if (isAdmin) {
+      list.push({
+        id: 'admin',
+        hub: 'admin',
+        title: t.adminTitle,
+        icon: Layers,
+        iconBg: 'bg-slate-100 text-slate-700 border border-slate-300',
+        tag: 'Command'
+      });
+    }
+
+    return list;
+  }, [t, isAdmin, isDoctor, isAsha, isDriver, appLang]);
 
   // Open a specific module in full screen mobile detail
   const handleOpenModule = (tabKey, hubKey) => {
@@ -494,22 +533,41 @@ export default function MobileAppView({
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </button>
 
-              <button
-                type="button"
-                onClick={() => handleOpenModule('prescriptions', 'doctor')}
-                className="w-full p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs flex items-center justify-between active:scale-98 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 flex items-center justify-center">
-                    <FileText className="w-5 h-5" />
+              {isDoctor || isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => handleOpenModule('prescriptions', 'doctor')}
+                  className="w-full p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs flex items-center justify-between active:scale-98 transition-all cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 flex items-center justify-center">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">Hospital Referral Slips</div>
+                      <div className="text-[10px] text-slate-500">Official inter-hospital clinical transfer memos</div>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Hospital Referral Slips</div>
-                    <div className="text-[10px] text-slate-500">Official inter-hospital clinical transfer memos</div>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleOpenModule('medicines', 'citizen')}
+                  className="w-full p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs flex items-center justify-between active:scale-98 transition-all cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 flex items-center justify-center">
+                      <Pill className="w-5 h-5" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">Medicine Safety & Expiry Records</div>
+                      <div className="text-[10px] text-slate-500">Scanned strip batch safety and verification vault</div>
+                    </div>
                   </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+              )}
             </div>
           </div>
         ) : mobileSection === 'profile' ? (
@@ -615,6 +673,84 @@ export default function MobileAppView({
                 </button>
               </div>
             </div>
+
+            {/* 🎭 1-CLICK INSTANT DEMO PERSONA SWITCHER */}
+            {onSwitchPersona && (
+              <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <span>🎭 Switch Role (Live Demo Review)</span>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                    Hierarchical RBAC
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onSwitchPersona('patient')}
+                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                      userRole === 'patient'
+                        ? 'bg-amber-100 border-amber-400 text-amber-950 font-bold shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div className="text-xs font-bold text-amber-800 dark:text-amber-400">Citizen</div>
+                    <div className="text-[10px] text-slate-500">Tier 1: Public Care</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onSwitchPersona('doctor')}
+                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                      isDoctor
+                        ? 'bg-emerald-100 border-emerald-400 text-emerald-950 font-bold shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div className="text-xs font-bold text-emerald-800 dark:text-emerald-400">Doctor (RMP)</div>
+                    <div className="text-[10px] text-slate-500">Tier 3: Clinical</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onSwitchPersona('asha')}
+                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                      isAsha
+                        ? 'bg-teal-100 border-teal-400 text-teal-950 font-bold shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div className="text-xs font-bold text-teal-800 dark:text-teal-400">ASHA / PHC</div>
+                    <div className="text-[10px] text-slate-500">Tier 2: Outreach</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onSwitchPersona('admin')}
+                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                      isAdmin
+                        ? 'bg-purple-100 border-purple-400 text-purple-950 font-bold shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div className="text-xs font-bold text-purple-800 dark:text-purple-400">Super Admin</div>
+                    <div className="text-[10px] text-slate-500">Tier 5: State Gov</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onSwitchPersona('driver')}
+                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer col-span-2 ${
+                      isDriver
+                        ? 'bg-rose-100 border-rose-400 text-rose-950 font-bold shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div className="text-xs font-bold text-rose-800 dark:text-rose-400">108 Ambulance Pilot</div>
+                    <div className="text-[10px] text-slate-500">Tier 4: Dispatch MDT</div>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Switch User / Role Portal */}
             <button
