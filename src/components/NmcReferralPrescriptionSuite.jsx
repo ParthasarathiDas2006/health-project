@@ -7890,7 +7890,14 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                 : 'Send the official emergency referral slip directly to the patient’s family, accompanying attendant, or 108 ambulance driver via WhatsApp:'}
             </p>
 
-            <div className="space-y-1.5">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendWhatsAppDirect(whatsAppRecipientPhone, false, 'universal');
+                setShowWhatsAppModal(false);
+              }}
+              className="space-y-1.5"
+            >
               <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
                 <span>{lang === 'or-IN' ? 'ପ୍ରାପ୍ତକର୍ତ୍ତାଙ୍କ WhatsApp ନମ୍ବର (Family / Attendant):' : lang === 'hi-IN' ? 'प्राप्तकर्ता का WhatsApp नंबर (Family / Attendant):' : 'Recipient WhatsApp Number (Family / Attendant):'}</span>
                 <button
@@ -7902,26 +7909,46 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                 </button>
               </label>
               <div className="flex items-center gap-2">
-                <input
-                  type="tel"
-                  value={whatsAppRecipientPhone}
-                  onChange={(e) => setWhatsAppRecipientPhone(e.target.value)}
-                  placeholder="e.g. 9437190214 or +91 94371 90214"
-                  className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white focus:outline-emerald-500"
-                />
+                <div className="relative flex-1">
+                  <input
+                    type="tel"
+                    value={whatsAppRecipientPhone}
+                    onChange={(e) => setWhatsAppRecipientPhone(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        sendWhatsAppDirect(whatsAppRecipientPhone, false, 'universal');
+                        setShowWhatsAppModal(false);
+                      }
+                    }}
+                    placeholder="e.g. 9876543210 or +91 98765 43210"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white focus:outline-emerald-500 pr-14"
+                    autoFocus
+                  />
+                  {whatsAppRecipientPhone && (
+                    <button
+                      type="button"
+                      onClick={() => setWhatsAppRecipientPhone('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      title="Clear number"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
                 <button
-                  type="button"
-                  onClick={() => setWhatsAppRecipientPhone('')}
-                  className="px-2.5 py-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer"
-                  title="Clear phone number to choose contact in WhatsApp"
+                  type="submit"
+                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
+                  title="Press Enter or click to send to WhatsApp"
                 >
-                  Clear
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{lang === 'or-IN' ? 'ପଠାନ୍ତୁ (Enter ↵)' : lang === 'hi-IN' ? 'भेजें (Enter ↵)' : 'Enter ↵'}</span>
                 </button>
               </div>
               <p className="text-[10px] text-slate-500">
-                {lang === 'or-IN' ? 'ଟିପ୍ପଣୀ: ନମ୍ବର ଖାଲି ରଖିଲେ WhatsApp ଖୋଲିବା ପରେ ଆପଣ ଯେକୌଣସି କଣ୍ଟାକ୍ଟ କିମ୍ବା ଗ୍ରୁପ୍ ବାଛିପାରିବେ।' : lang === 'hi-IN' ? 'सुझाव: नंबर खाली छोड़ने पर WhatsApp खुलने पर आप किसी भी संपर्क या ग्रुप को चुन सकते हैं।' : 'Tip: Leave blank to open WhatsApp and pick any contact or group from your chats.'}
+                {lang === 'or-IN' ? 'ଟିପ୍ପଣୀ: ନମ୍ବର ଲେଖି କୀବୋର୍ଡର Enter ଦବାନ୍ତୁ କିମ୍ବା "Enter ↵" ବଟନ୍ କ୍ଲିକ୍ କରନ୍ତୁ।' : lang === 'hi-IN' ? 'सुझाव: नंबर दर्ज कर कीबोर्ड का Enter दबाएं अथवा "Enter ↵" बटन दबाएं।' : 'Tip: Enter number and press keyboard Enter or click "Enter ↵" button.'}
               </p>
-            </div>
+            </form>
 
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
