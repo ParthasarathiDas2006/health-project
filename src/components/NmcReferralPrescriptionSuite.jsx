@@ -845,6 +845,9 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
 
   // Modals & Panels
   const [showSmsModal, setShowSmsModal] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [whatsAppRecipientPhone, setWhatsAppRecipientPhone] = useState(currentCase.phone || '');
+  const [copiedWhatsApp, setCopiedWhatsApp] = useState(false);
   const [showDoctorModal, setShowDoctorModal] = useState(false);
   const [showSignModal, setShowSignModal] = useState(false);
   const [showIcdModal, setShowIcdModal] = useState(false);
@@ -964,6 +967,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     setPatientGender(currentCase.gender);
     setPatientAbha(currentCase.abhaId);
     setPatientPhone(currentCase.phone);
+    setWhatsAppRecipientPhone(currentCase.phone || '');
     setPatientWeight(currentCase.weight);
     setPatientAllergies(currentCase.allergies);
     setDiagnosis(currentCase.provisionalDiagnosis);
@@ -1783,14 +1787,63 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
 
   // WhatsApp 1-Click Family & Attendant Referral Dispatch
   const handleWhatsAppDispatch = () => {
-    const cleanPhone = (patientPhone || '').replace(/[^0-9]/g, '');
+    setWhatsAppRecipientPhone(patientPhone || '');
+    setShowWhatsAppModal(true);
+  };
+
+  // Direct dispatch helper: sends via wa.me (works seamlessly across desktop & mobile)
+  const sendWhatsAppDirect = (targetPhone = '', pickContact = false) => {
     const sms = generateSmsText();
-    const url = cleanPhone.length >= 10
-      ? `https://api.whatsapp.com/send?phone=${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}&text=${encodeURIComponent(sms)}`
-      : `https://api.whatsapp.com/send?text=${encodeURIComponent(sms)}`;
-    window.open(url, '_blank');
-    setToastMessage('WhatsApp referral dispatch launched successfully!');
-    setTimeout(() => setToastMessage(null), 3000);
+    // Copy to clipboard first so the attendant always has the text ready even if WhatsApp prompts to paste
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(sms);
+      }
+    } catch (e) {
+      console.warn('Clipboard write failed:', e);
+    }
+
+    let url = '';
+    const cleanPhone = (targetPhone || '').replace(/[^0-9]/g, '');
+
+    if (!pickContact && cleanPhone.length >= 10) {
+      const formattedPhone = cleanPhone.length === 10
+        ? `91${cleanPhone}`
+        : cleanPhone.startsWith('91') && cleanPhone.length === 12
+        ? cleanPhone
+        : cleanPhone;
+      url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(sms)}`;
+    } else {
+      url = `https://wa.me/?text=${encodeURIComponent(sms)}`;
+    }
+
+    let opened = false;
+    try {
+      const win = window.open(url, '_blank', 'noopener,noreferrer');
+      if (win && !win.closed && typeof win.closed !== 'undefined') {
+        opened = true;
+      }
+    } catch (err) {
+      console.warn('window.open intercepted:', err);
+    }
+
+    if (!opened) {
+      try {
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        opened = true;
+      } catch (err2) {
+        window.location.href = url;
+      }
+    }
+
+    setToastMessage(lang === 'or-IN' ? '✓ WhatsApp ରେଫରାଲ୍ ଆରମ୍ଭ ହେଲା! ମେସେଜ୍ କପି ହୋଇଛି।' : lang === 'hi-IN' ? '✓ WhatsApp रेफरल शुरू हुआ! संदेश कॉपी हो गया।' : '✓ WhatsApp Referral launched! Message copied to clipboard.');
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   // Trigger official print dialog
@@ -7783,6 +7836,126 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
                 {copiedSms ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedSms ? 'SMS Copied!' : 'Copy SMS Text'}</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────── */}
+      {/* MODAL: WHATSAPP FAMILY & ATTENDANT REFERRAL DISPATCH */}
+      {/* ───────────────────────────────────────────────────────── */}
+      {showWhatsAppModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md">
+                  <Share2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                    {lang === 'or-IN' ? 'WhatsApp ପରିବାର ଓ ସହାୟକ ରେଫରାଲ୍' : lang === 'hi-IN' ? 'WhatsApp परिवार व परिचारक रेफरल' : 'WhatsApp Family & Attendant Referral'}
+                  </h3>
+                  <span className="text-[11px] text-slate-500 font-mono">Form 27 • 108 Emergency Transit Slip</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowWhatsAppModal(false)}
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              {lang === 'or-IN'
+                ? 'ଏହି ରେଫରାଲ୍ ସ୍ଲିପ୍ ରୋଗୀଙ୍କ ପରିବାର, ସହାୟକ କିମ୍ବା ୧୦୮ ଆମ୍ବୁଲାନ୍ସ ଡ୍ରାଇଭରଙ୍କୁ WhatsApp ମାଧ୍ୟମରେ ତତକ୍ଷଣାତ୍ ପଠାନ୍ତୁ:'
+                : lang === 'hi-IN'
+                ? 'यह रेफरल पर्ची मरीज के परिवार, परिचारक या 108 एम्बुलेंस चालक को WhatsApp पर तुरंत भेजें:'
+                : 'Send the official emergency referral slip directly to the patient’s family, accompanying attendant, or 108 ambulance driver via WhatsApp:'}
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>{lang === 'or-IN' ? 'ପ୍ରାପ୍ତକର୍ତ୍ତାଙ୍କ WhatsApp ନମ୍ବର (Family / Attendant):' : lang === 'hi-IN' ? 'प्राप्तकर्ता का WhatsApp नंबर (Family / Attendant):' : 'Recipient WhatsApp Number (Family / Attendant):'}</span>
+                <button
+                  type="button"
+                  onClick={() => setWhatsAppRecipientPhone(patientPhone || '')}
+                  className="text-[10px] text-emerald-600 hover:underline cursor-pointer"
+                >
+                  {lang === 'or-IN' ? 'ରୋଗୀଙ୍କ ନମ୍ବର ବ୍ୟବହାର କରନ୍ତୁ' : lang === 'hi-IN' ? 'मरीज का नंबर उपयोग करें' : 'Use Patient Phone'}
+                </button>
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="tel"
+                  value={whatsAppRecipientPhone}
+                  onChange={(e) => setWhatsAppRecipientPhone(e.target.value)}
+                  placeholder="e.g. 9437190214 or +91 94371 90214"
+                  className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white focus:outline-emerald-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setWhatsAppRecipientPhone('')}
+                  className="px-2.5 py-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer"
+                  title="Clear phone number to choose contact in WhatsApp"
+                >
+                  Clear
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-500">
+                {lang === 'or-IN' ? 'ଟିପ୍ପଣୀ: ନମ୍ବର ଖାଲି ରଖିଲେ WhatsApp ଖୋଲିବା ପରେ ଆପଣ ଯେକୌଣସି କଣ୍ଟାକ୍ଟ କିମ୍ବା ଗ୍ରୁପ୍ ବାଛିପାରିବେ।' : lang === 'hi-IN' ? 'सुझाव: नंबर खाली छोड़ने पर WhatsApp खुलने पर आप किसी भी संपर्क या ग्रुप को चुन सकते हैं।' : 'Tip: Leave blank to open WhatsApp and pick any contact or group from your chats.'}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                {lang === 'or-IN' ? 'ପୂର୍ବାବଲୋକନ (Referral Slip Preview):' : lang === 'hi-IN' ? 'पूर्वावलोकन (Referral Slip Preview):' : 'Slip Content Preview:'}
+              </span>
+              <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-mono text-[11px] text-slate-800 dark:text-slate-200 whitespace-pre-wrap border border-slate-200 dark:border-slate-700 max-h-48 overflow-y-auto select-all">
+                {generateSmsText()}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  const txtContent = generateSmsText();
+                  navigator.clipboard.writeText(txtContent);
+                  setCopiedWhatsApp(true);
+                  setTimeout(() => setCopiedWhatsApp(false), 2500);
+                }}
+                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                {copiedWhatsApp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedWhatsApp ? 'Copied!' : 'Copy Slip Text'}</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    sendWhatsAppDirect('', true);
+                    setShowWhatsAppModal(false);
+                  }}
+                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  title="Pick family contact inside WhatsApp"
+                >
+                  {lang === 'or-IN' ? 'ଯେକୌଣସି କଣ୍ଟାକ୍ଟକୁ ପଠାନ୍ତୁ' : lang === 'hi-IN' ? 'किसी भी संपर्क को भेजें' : 'Choose Contact'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sendWhatsAppDirect(whatsAppRecipientPhone, false);
+                    setShowWhatsAppModal(false);
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-white" />
+                  <span>{lang === 'or-IN' ? 'WhatsApp ରେ ଖୋଲନ୍ତୁ ➔' : lang === 'hi-IN' ? 'WhatsApp पर खोलें ➔' : 'Open in WhatsApp ➔'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
