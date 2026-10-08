@@ -7,25 +7,56 @@
  * Works 100% offline, zero latency, high-resolution vector output.
  */
 
+function escapeXml(unsafe) {
+  if (unsafe === undefined || unsafe === null) return '';
+  return String(unsafe).replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
+}
+
+function parsePrice(val, fallback = 30.0) {
+  if (typeof val === 'number') return val;
+  const parsed = parseFloat(val);
+  return isNaN(parsed) ? fallback : parsed;
+}
+
 /**
  * Generates an SVG Data URI for a Full Pharmaceutical Blister Strip
  */
-export function generateFullStripSvg(med) {
+export function generateFullStripSvg(med = {}) {
   const width = 420;
   const height = 260;
+  const medName = med.name || med.medicineName || med.title || 'Medicine';
+  const medGeneric = med.generic || med.genericName || med.salt || '';
+  const dosageForm = med.dosageForm || med.form || 'Tablet Strip';
+  const batchNo = med.batchNo || med.batch || 'BT-2026';
+  const mfgDate = med.mfgDate || med.mfg || '01/2025';
+  const expDate = med.expDate || med.exp || '12/2027';
+  const mrpNum = parsePrice(med.mrp, 35.0);
+  const janNum = parsePrice(med.janAushadhiPrice, 8.5);
+
   const pillColor = med.pillColor || '#ffffff';
   const pillShape = med.pillShape || 'round';
-  const foilColor = med.foilColor || '#cbd5e1';
   const isAluAlu = med.packType === 'alu-alu';
   const cavitiesTotal = Math.min(med.cavitiesTotal || 10, 15);
   const cols = cavitiesTotal > 10 ? 5 : cavitiesTotal > 6 ? 5 : 4;
   const rows = Math.ceil(cavitiesTotal / cols);
 
+  const nameLower = (medName || '').toLowerCase();
+  const genericLower = (medGeneric || '').toLowerCase();
+
   // Determine secondary capsule color if dual-tone
   let secondaryColor = '#fef08a'; // gold/ivory
-  if (med.generic.toLowerCase().includes('amox') || med.name.toLowerCase().includes('mox')) {
+  if (genericLower.includes('amox') || nameLower.includes('mox')) {
     secondaryColor = '#fef08a';
-  } else if (med.name.toLowerCase().includes('pan-d')) {
+  } else if (nameLower.includes('pan-d')) {
     secondaryColor = '#ffffff';
   } else {
     secondaryColor = pillColor;
@@ -33,15 +64,15 @@ export function generateFullStripSvg(med) {
 
   // Pill debossed imprint label
   let imprint = 'Rx';
-  if (med.name.toLowerCase().includes('dolo')) imprint = 'DOLO 650';
-  else if (med.name.toLowerCase().includes('mox')) imprint = 'AMOX 500';
-  else if (med.name.toLowerCase().includes('calpol')) imprint = 'CALPOL';
-  else if (med.name.toLowerCase().includes('pan 40') || med.name.toLowerCase().includes('pantocid')) imprint = 'PAN 40';
-  else if (med.name.toLowerCase().includes('augmentin')) imprint = 'AUG 625';
-  else if (med.name.toLowerCase().includes('azee') || med.name.toLowerCase().includes('azith')) imprint = 'AZI 500';
-  else if (med.name.toLowerCase().includes('glycomet')) imprint = 'M 500';
-  else if (med.name.toLowerCase().includes('combiflam')) imprint = 'CF 400';
-  else if (med.name.toLowerCase().includes('cetzine')) imprint = 'CET 10';
+  if (nameLower.includes('dolo')) imprint = 'DOLO 650';
+  else if (nameLower.includes('mox')) imprint = 'AMOX 500';
+  else if (nameLower.includes('calpol')) imprint = 'CALPOL';
+  else if (nameLower.includes('pan 40') || nameLower.includes('pantocid') || nameLower.includes('pan-')) imprint = 'PAN 40';
+  else if (nameLower.includes('augmentin')) imprint = 'AUG 625';
+  else if (nameLower.includes('azee') || nameLower.includes('azith')) imprint = 'AZI 500';
+  else if (nameLower.includes('glycomet') || nameLower.includes('metformin')) imprint = 'M 500';
+  else if (nameLower.includes('combiflam')) imprint = 'CF 400';
+  else if (nameLower.includes('cetzine')) imprint = 'CET 10';
 
   // Render cavity pills
   let pillsSvg = '';
@@ -129,7 +160,7 @@ export function generateFullStripSvg(med) {
         <!-- Micro Knurling Foil Pattern -->
         <pattern id="knurlPattern" width="4" height="4" patternUnits="userSpaceOnUse">
           <line x1="0" y1="0" x2="4" y2="4" stroke="#475569" stroke-width="0.3" opacity="0.3" />
-          <line x1="4" y1="0" x2="0" y2="4" stroke="#475569" stroke-width="0.3" opacity="0.3" />
+          <line x1="4" y1="0" x2="4" y2="4" stroke="#475569" stroke-width="0.3" opacity="0.3" />
         </pattern>
 
         <!-- Drop Shadow Filter -->
@@ -149,8 +180,8 @@ export function generateFullStripSvg(med) {
 
       <!-- Top Header Strip -->
       <rect x="28" y="14" width="${width - 40}" height="32" rx="8" fill="#0f172a" opacity="0.08" />
-      <text x="36" y="29" font-family="sans-serif" font-size="12" font-weight="900" fill="#0f172a">${escapeXml(med.name.toUpperCase())}</text>
-      <text x="36" y="41" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#334155">${escapeXml(med.generic)} • ${escapeXml(med.dosageForm)}</text>
+      <text x="36" y="29" font-family="sans-serif" font-size="12" font-weight="900" fill="#0f172a">${escapeXml(medName.toUpperCase())}</text>
+      <text x="36" y="41" font-family="sans-serif" font-size="8.5" font-weight="700" fill="#334155">${escapeXml(medGeneric)} • ${escapeXml(dosageForm)}</text>
       
       <!-- PMBJP Official Seal Badge -->
       <rect x="${width - 130}" y="18" width="112" height="22" rx="6" fill="#047857" opacity="0.9" />
@@ -163,8 +194,8 @@ export function generateFullStripSvg(med) {
 
       <!-- Bottom Crimped Foil Edge with Stamped Batch and Expiry -->
       <rect x="28" y="${height - 36}" width="${width - 40}" height="22" rx="6" fill="#000000" opacity="0.12" />
-      <text x="36" y="${height - 22}" font-family="monospace" font-size="8.5" font-weight="900" fill="#0f172a">B.NO: ${escapeXml(med.batchNo)}  MFG: ${escapeXml(med.mfgDate)}  EXP: ${escapeXml(med.expDate)}</text>
-      <text x="${width - 24}" y="${height - 22}" font-family="monospace" font-size="8" font-weight="800" fill="#475569" text-anchor="end">MRP ₹${med.mrp.toFixed(2)} | PMBJP ₹${med.janAushadhiPrice.toFixed(2)}</text>
+      <text x="36" y="${height - 22}" font-family="monospace" font-size="8.5" font-weight="900" fill="#0f172a">B.NO: ${escapeXml(batchNo)}  MFG: ${escapeXml(mfgDate)}  EXP: ${escapeXml(expDate)}</text>
+      <text x="${width - 24}" y="${height - 22}" font-family="monospace" font-size="8" font-weight="800" fill="#475569" text-anchor="end">MRP ₹${mrpNum.toFixed(2)} | PMBJP ₹${janNum.toFixed(2)}</text>
     </svg>
   `.trim();
 
@@ -175,32 +206,40 @@ export function generateFullStripSvg(med) {
  * Generates an SVG Data URI for a Scissored / Severed Cut Pill Blister Strip
  * Features realistic sheared cut-edges, scissor guide line, clipped cavities, and severed stamps.
  */
-export function generateScissoredStripSvg(med) {
+export function generateScissoredStripSvg(med = {}) {
   const width = 380;
   const height = 240;
+  const medName = med.name || med.medicineName || med.title || 'Medicine';
+  const medGeneric = med.generic || med.genericName || med.salt || '';
+  const batchNo = med.batchNo || med.batch || 'BT-2026';
+  const expDate = med.expDate || med.exp || '12/2027';
+
   const pillColor = med.pillColor || '#ffffff';
   const pillShape = med.pillShape || 'round';
-  const foilColor = med.foilColor || '#cbd5e1';
   const isAluAlu = med.packType === 'alu-alu';
   const cavitiesRemaining = Math.max(1, Math.min(med.cavitiesRemaining || 3, 4));
   const isExpired = med.status === 'EXPIRED';
 
+  const nameLower = (medName || '').toLowerCase();
+  const genericLower = (medGeneric || '').toLowerCase();
+
   let secondaryColor = '#fef08a';
-  if (med.generic.toLowerCase().includes('amox') || med.name.toLowerCase().includes('mox')) {
+  if (genericLower.includes('amox') || nameLower.includes('mox')) {
     secondaryColor = '#fef08a';
-  } else if (med.name.toLowerCase().includes('pan-d')) {
+  } else if (nameLower.includes('pan-d')) {
     secondaryColor = '#ffffff';
   } else {
     secondaryColor = pillColor;
   }
 
   let imprint = 'Rx';
-  if (med.name.toLowerCase().includes('dolo')) imprint = 'DOLO 650';
-  else if (med.name.toLowerCase().includes('mox')) imprint = 'AMOX 500';
-  else if (med.name.toLowerCase().includes('pan')) imprint = 'PAN 40';
-  else if (med.name.toLowerCase().includes('augmentin')) imprint = 'AUG 625';
-  else if (med.name.toLowerCase().includes('azee')) imprint = 'AZI 500';
-  else if (med.name.toLowerCase().includes('calpol')) imprint = 'CALPOL';
+  if (nameLower.includes('dolo')) imprint = 'DOLO 650';
+  else if (nameLower.includes('mox')) imprint = 'AMOX 500';
+  else if (nameLower.includes('pan')) imprint = 'PAN 40';
+  else if (nameLower.includes('augmentin')) imprint = 'AUG 625';
+  else if (nameLower.includes('azee') || nameLower.includes('azith')) imprint = 'AZI 500';
+  else if (nameLower.includes('calpol')) imprint = 'CALPOL';
+  else if (nameLower.includes('glycomet') || nameLower.includes('metformin')) imprint = 'M 500';
 
   // Render cut cavities
   let cutPillsSvg = '';
@@ -275,7 +314,7 @@ export function generateScissoredStripSvg(med) {
 
         <pattern id="cutKnurl" width="4" height="4" patternUnits="userSpaceOnUse">
           <line x1="0" y1="0" x2="4" y2="4" stroke="#334155" stroke-width="0.3" opacity="0.35" />
-          <line x1="4" y1="0" x2="0" y2="4" stroke="#334155" stroke-width="0.3" opacity="0.35" />
+          <line x1="4" y1="0" x2="4" y2="4" stroke="#334155" stroke-width="0.3" opacity="0.35" />
         </pattern>
 
         <filter id="cutDropShad" x="-10%" y="-10%" width="130%" height="130%">
@@ -303,8 +342,8 @@ export function generateScissoredStripSvg(med) {
       <text x="268" y="58" font-family="monospace" font-size="7.5" font-weight="900" fill="#e11d48">CUT FOIL EDGE</text>
 
       <!-- Top Label on severed piece -->
-      <text x="32" y="32" font-family="sans-serif" font-size="12" font-weight="900" fill="#0f172a">${escapeXml(med.name.toUpperCase())}</text>
-      <text x="32" y="44" font-family="sans-serif" font-size="8" font-weight="700" fill="#334155">${escapeXml(med.generic)}</text>
+      <text x="32" y="32" font-family="sans-serif" font-size="12" font-weight="900" fill="#0f172a">${escapeXml(medName.toUpperCase())}</text>
+      <text x="32" y="44" font-family="sans-serif" font-size="8" font-weight="700" fill="#334155">${escapeXml(medGeneric)}</text>
       
       <!-- Cut Banner Badge -->
       <rect x="32" y="52" width="150" height="18" rx="4" fill="#e11d48" opacity="0.9" />
@@ -321,7 +360,7 @@ export function generateScissoredStripSvg(med) {
       <!-- Severed Stamped Date & Batch at bottom (simulating sliced off text) -->
       <rect x="30" y="200" width="240" height="20" rx="4" fill="#000000" opacity="0.12" />
       <text x="36" y="214" font-family="monospace" font-size="8.5" font-weight="900" fill="${isExpired ? '#b91c1c' : '#0f172a'}">
-        B.NO: ${escapeXml(med.batchNo)}   EXP: ${escapeXml(med.expDate)} ${isExpired ? '[EXPIRED]' : '[VALID]'}
+        B.NO: ${escapeXml(batchNo)}   EXP: ${escapeXml(expDate)} ${isExpired ? '[EXPIRED]' : '[VALID]'}
       </text>
 
       <!-- Severed Edge Shading Gradient overlay -->
@@ -330,18 +369,4 @@ export function generateScissoredStripSvg(med) {
   `.trim();
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(svgContent)}`;
-}
-
-function escapeXml(unsafe) {
-  if (!unsafe) return '';
-  return String(unsafe).replace(/[<>&'"]/g, (c) => {
-    switch (c) {
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '&': return '&amp;';
-      case '\'': return '&apos;';
-      case '"': return '&quot;';
-      default: return c;
-    }
-  });
 }

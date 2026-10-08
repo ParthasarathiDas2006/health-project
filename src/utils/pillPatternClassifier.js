@@ -578,7 +578,9 @@ export function classifyPillAndFoilPattern(input = {}) {
     selectedImprint,
     rawBatchNo,
     presetMedicine?.name,
+    presetMedicine?.medicineName,
     presetMedicine?.generic,
+    presetMedicine?.salt,
     presetMedicine?.brand
   ]
     .filter(Boolean)
@@ -588,7 +590,16 @@ export function classifyPillAndFoilPattern(input = {}) {
   // If a preset medicine from market was directly passed, boost its signature
   let targetSignature = null;
   if (presetMedicine) {
-    const pName = (presetMedicine.name + ' ' + presetMedicine.generic).toLowerCase();
+    const pName = [
+      presetMedicine.name,
+      presetMedicine.medicineName,
+      presetMedicine.generic,
+      presetMedicine.salt
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
     targetSignature = PHARMACEUTICAL_PATTERN_SIGNATURES.find((sig) => {
       return sig.textTokens.some((tok) => pName.includes(tok));
     });
@@ -613,28 +624,30 @@ export function classifyPillAndFoilPattern(input = {}) {
     }
 
     // 2. Shape matching
+    const sigShape = (sig.morphology?.shape || '').toLowerCase();
     if (selectedShape) {
-      if (selectedShape.toLowerCase() === sig.morphology.shape.toLowerCase()) {
+      if (selectedShape.toLowerCase() === sigShape) {
         score += 25;
         matches.shapeMatch = true;
       }
     } else if (presetMedicine?.pillShape) {
-      if (presetMedicine.pillShape.toLowerCase() === sig.morphology.shape.toLowerCase()) {
+      if (presetMedicine.pillShape.toLowerCase() === sigShape) {
         score += 25;
         matches.shapeMatch = true;
       }
     }
 
     // 3. Color matching
+    const sigPrimaryHex = (sig.morphology?.primaryHex || '').toLowerCase();
+    const sigColorDesc = JSON.stringify(sig.morphology?.colorDescription || {}).toLowerCase();
     if (selectedColor) {
       const c = selectedColor.toLowerCase();
-      const sigColorDesc = JSON.stringify(sig.morphology.colorDescription).toLowerCase();
-      if (sigColorDesc.includes(c) || c === sig.morphology.primaryHex.toLowerCase()) {
+      if (sigColorDesc.includes(c) || c === sigPrimaryHex) {
         score += 20;
         matches.colorMatch = true;
       }
     } else if (presetMedicine?.pillColor) {
-      if (presetMedicine.pillColor.toLowerCase() === sig.morphology.primaryHex.toLowerCase()) {
+      if (presetMedicine.pillColor.toLowerCase() === sigPrimaryHex) {
         score += 20;
         matches.colorMatch = true;
       }
@@ -643,20 +656,22 @@ export function classifyPillAndFoilPattern(input = {}) {
     // 4. Imprint / Debossing matching
     if (selectedImprint) {
       const imp = selectedImprint.toLowerCase();
-      if (sig.morphology.imprints.some((i) => imp.includes(i.toLowerCase()) || i.toLowerCase().includes(imp))) {
+      const imprints = sig.morphology?.imprints || [];
+      if (imprints.some((i) => imp.includes((i || '').toLowerCase()) || (i || '').toLowerCase().includes(imp))) {
         score += 25;
         matches.imprintMatch = true;
       }
     }
 
     // 5. Foil type matching
+    const sigPackType = (sig.foilSpecs?.packType || '').toLowerCase();
     if (selectedFoil) {
-      if (selectedFoil.toLowerCase() === sig.foilSpecs.packType.toLowerCase()) {
+      if (selectedFoil.toLowerCase() === sigPackType) {
         score += 15;
         matches.foilMatch = true;
       }
     } else if (presetMedicine?.packType) {
-      if (presetMedicine.packType.toLowerCase() === sig.foilSpecs.packType.toLowerCase()) {
+      if (presetMedicine.packType.toLowerCase() === sigPackType) {
         score += 15;
         matches.foilMatch = true;
       }

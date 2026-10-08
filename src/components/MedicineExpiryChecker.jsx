@@ -554,8 +554,9 @@ export default function MedicineExpiryChecker({
       }
     ].map((s) => ({
       ...s,
-      scissoredStripImage: generateScissoredStripSvg(s),
-      fullStripImage: generateFullStripSvg(s)
+      name: s.name || s.medicineName,
+      scissoredStripImage: generateScissoredStripSvg({ ...s, name: s.name || s.medicineName }),
+      fullStripImage: generateFullStripSvg({ ...s, name: s.name || s.medicineName })
     }));
   }, [lang, txt]);
 
@@ -1439,7 +1440,7 @@ export default function MedicineExpiryChecker({
                   EXP: {sample.expDate} • {sample.status}
                 </span>
                 <span className={`text-[9px] font-mono block ${scanResult?.id === sample.id ? 'text-teal-200' : 'text-teal-700'}`}>
-                  {sample.pillShape.toUpperCase()} • {sample.pillColor}
+                  {(sample.pillShape || 'CAPSULE').toUpperCase()} • {sample.pillColor || '#ffffff'}
                 </span>
               </div>
               <ChevronRight className={`w-4 h-4 shrink-0 transition-transform group-hover:translate-x-0.5 ${scanResult?.id === sample.id ? 'text-white' : 'text-slate-400'}`} />
