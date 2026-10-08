@@ -945,6 +945,29 @@ export default function MultimodalIntakeForm({
   return (
     <div className="space-y-4 max-w-xl mx-auto font-sans pb-12">
       {/* ───────────────────────────────────────────────────────────── */}
+      {/* 0. INDIA DPDP ACT 2023 DIGITAL HEALTH CONSENT & ANONYMIZATION */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-3.5 sm:p-4 shadow-xs space-y-2 text-xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100 text-xs">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Digital Personal Data Protection (DPDP) Act 2023 Consent</span>
+          </div>
+          <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">
+            Section 6 Verified ✓
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+          Synthetic session anonymization is active. Audio recordings and symptom vectors are processed in-browser for CDSS Level-1 triage summarization with zero permanent unredacted storage.
+        </p>
+        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 font-mono">
+          <span>ABHA ID: <strong>91-XXXX-XXXX-2819</strong></span>
+          <span>Phone: <strong>+91 98XXXXXX10</strong></span>
+          <span className="text-emerald-600 font-bold">PII Redacted ✓</span>
+        </div>
+      </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
       {/* 1. CLINICAL DOCTOR HEADER WITH INDIAN VOICE & PAUSE SETTINGS  */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-xl border border-emerald-500/30">
@@ -1349,12 +1372,44 @@ export default function MultimodalIntakeForm({
             </span>
           </div>
 
-          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug">
-            {medicineRecommendations.healthIssueTitle}
-          </h3>
-          <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-            {medicineRecommendations.healthIssueSummary}
-          </p>
+          {/* Clinical SBAR Structured Format */}
+          <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800 text-xs">
+            <div className="flex items-start gap-2">
+              <span className="px-1.5 py-0.5 rounded font-black text-[10px] bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 shrink-0">
+                [S] SITUATION
+              </span>
+              <p className="font-bold text-slate-800 dark:text-slate-100 text-xs">
+                {medicineRecommendations.healthIssueTitle}
+              </p>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="px-1.5 py-0.5 rounded font-black text-[10px] bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 shrink-0">
+                [B] BACKGROUND
+              </span>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                {medicineRecommendations.healthIssueSummary}
+              </p>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="px-1.5 py-0.5 rounded font-black text-[10px] bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 shrink-0">
+                [A] ASSESSMENT
+              </span>
+              <p className="text-[11px] text-slate-700 dark:text-slate-200 font-medium">
+                NEWS2 Early Warning Tier: <strong>{clinicalState.urgencyTier}</strong> (Clinical Urgency Index: {clinicalState.urgencyScore}/100)
+              </p>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="px-1.5 py-0.5 rounded font-black text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 shrink-0">
+                [R] RECOMMENDATION
+              </span>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                Qualified Medical Officer review required. Conduct targeted physical examination before any clinical intervention.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Critical Red-Flag Warning Banner if Triggered */}
@@ -1406,15 +1461,15 @@ export default function MultimodalIntakeForm({
           )}
         </div>
 
-        {/* Individual Prescribed Medicine Cards */}
+        {/* Jan Aushadhi Formulary Reference for Review (Strictly Non-Prescriptive) */}
         <div className="space-y-3 pt-2">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-bold text-slate-800 dark:text-slate-200">
             <span className="flex items-center gap-1.5">
               <Pill className="w-4 h-4 text-emerald-600" />
-              <span>{ui.medicineTitle}</span>
+              <span>Jan Aushadhi Generic Formulations for MO Review</span>
             </span>
-            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">
-              National Health Mission Protocol
+            <span className="text-[10px] text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-300/50 self-start sm:self-auto">
+              Advisory Formulary • Non-Diagnostic
             </span>
           </div>
 

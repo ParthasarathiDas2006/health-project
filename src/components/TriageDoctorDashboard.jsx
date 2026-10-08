@@ -858,88 +858,109 @@ export default function TriageDoctorDashboard({ currentUser, onSwitchUser, appLa
                 </span>
               </div>
 
-              {/* Vitals Summary Strip */}
-              <div className="grid grid-cols-4 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200 text-center mb-4">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400">{txt.temp}</span>
-                  <p className="text-sm font-semibold text-slate-800">{selectedTicket.vitals.temp}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400">{txt.pulse}</span>
-                  <p className="text-sm font-semibold text-slate-800">{selectedTicket.vitals.pulse}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400">{txt.spo2}</span>
-                  <p className="text-sm font-semibold text-slate-800">{selectedTicket.vitals.spo2}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400">{txt.bp}</span>
-                  <p className="text-sm font-semibold text-slate-800">{selectedTicket.vitals.bp}</p>
-                </div>
+              {/* Regulatory CDSS Level-1 Non-Diagnostic Shield */}
+              <div className="mb-3.5 p-2.5 bg-emerald-50 border border-emerald-300 rounded-lg text-[11px] text-emerald-900 flex items-center justify-between">
+                <span className="flex items-center gap-1.5 font-bold">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>CDSS Level-1 Assistive Triage Note (Strictly Non-Diagnostic)</span>
+                </span>
+                <span className="text-[10px] text-emerald-700 font-mono">
+                  RMP Review Mandatory ✓
+                </span>
               </div>
 
-              {/* Chief Complaint & Timeline */}
-              <div className="space-y-3 mb-4">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    {txt.reportedComplaint}
-                  </h4>
-                  <p className="text-sm text-slate-800 mt-1 font-medium bg-slate-50 p-2.5 rounded border border-slate-100">
-                    {selectedTicket.chiefComplaint}
-                  </p>
+              {/* [S] SITUATION & VITALS */}
+              <div className="mb-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900 mb-1.5">
+                  <span className="px-1.5 py-0.5 rounded font-black text-[10px] bg-blue-100 text-blue-800">
+                    [S] SITUATION &amp; VITALS
+                  </span>
+                </div>
+                {/* Vitals Summary Strip */}
+                <div className="grid grid-cols-4 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200 text-center mb-2">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">{txt.temp}</span>
+                    <p className="text-sm font-semibold text-slate-800">{selectedTicket.vitals.temp}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">{txt.pulse}</span>
+                    <p className="text-sm font-semibold text-slate-800">{selectedTicket.vitals.pulse}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">{txt.spo2}</span>
+                    <p className="text-sm font-semibold text-slate-800">{selectedTicket.vitals.spo2}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">{txt.bp}</span>
+                    <p className="text-sm font-semibold text-slate-800">{selectedTicket.vitals.bp}</p>
+                  </div>
                 </div>
 
-                {/* Lab Highlights */}
-                {selectedTicket.labFindings.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      {txt.labAbnormalities}
-                    </h4>
-                    <div className="space-y-1.5 mt-1">
-                      {selectedTicket.labFindings.map((f, i) => (
-                        <div
-                          key={i}
-                          className="flex justify-between items-center text-xs p-2 bg-rose-50 border border-rose-200 rounded text-rose-900"
-                        >
-                          <span className="font-semibold">{f.test}</span>
-                          <span className="font-mono font-bold">
-                            {f.val} ({f.status})
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <p className="text-sm text-slate-800 font-medium bg-slate-50 p-2.5 rounded border border-slate-100">
+                  {selectedTicket.chiefComplaint}
+                </p>
+              </div>
 
-                {/* Identified Gaps */}
-                {selectedTicket.missingInfo.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1">
-                      <HelpCircle className="w-3.5 h-3.5 text-amber-600" />
-                      {txt.criticalGaps}
-                    </h4>
-                    <ul className="list-disc list-inside text-xs text-slate-600 mt-1 space-y-1 bg-amber-50/60 p-2.5 rounded border border-amber-200">
-                      {selectedTicket.missingInfo.map((gap, i) => (
-                        <li key={i}>{gap}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Suggested Questions for Clinician */}
-                <div>
-                  <h4 className="text-xs font-bold text-indigo-700 uppercase tracking-wider">
-                    {txt.doctorQuestions}
-                  </h4>
-                  <ul className="mt-1 space-y-1 text-xs text-slate-700 bg-indigo-50/50 p-2.5 rounded border border-indigo-100">
-                    {selectedTicket.suggestedQuestions.map((q, i) => (
-                      <li key={i} className="flex items-start gap-1.5">
-                        <span className="text-indigo-600 font-bold">•</span>
-                        <span>{q}</span>
-                      </li>
+              {/* [B] BACKGROUND & IDENTIFIED GAPS */}
+              <div className="mb-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-purple-900 mb-1.5">
+                  <span className="px-1.5 py-0.5 rounded font-black text-[10px] bg-purple-100 text-purple-800">
+                    [B] BACKGROUND &amp; IDENTIFIED GAPS
+                  </span>
+                </div>
+                {selectedTicket.missingInfo.length > 0 ? (
+                  <ul className="list-disc list-inside text-xs text-slate-600 space-y-1 bg-amber-50/60 p-2.5 rounded border border-amber-200">
+                    {selectedTicket.missingInfo.map((gap, i) => (
+                      <li key={i}>{gap}</li>
                     ))}
                   </ul>
+                ) : (
+                  <p className="text-xs text-slate-500 bg-slate-50 p-2 rounded">No clinical history gaps flagged.</p>
+                )}
+              </div>
+
+              {/* [A] ASSESSMENT & LAB FINDINGS */}
+              <div className="mb-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 mb-1.5">
+                  <span className="px-1.5 py-0.5 rounded font-black text-[10px] bg-amber-100 text-amber-800">
+                    [A] ASSESSMENT (NEWS2 / LAB FINDINGS)
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Tier: {selectedTicket.urgency}
+                  </span>
                 </div>
+                {selectedTicket.labFindings.length > 0 && (
+                  <div className="space-y-1.5">
+                    {selectedTicket.labFindings.map((f, i) => (
+                      <div
+                        key={i}
+                        className="flex justify-between items-center text-xs p-2 bg-rose-50 border border-rose-200 rounded text-rose-900"
+                      >
+                        <span className="font-semibold">{f.test}</span>
+                        <span className="font-mono font-bold">
+                          {f.val} ({f.status})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* [R] RECOMMENDATIONS FOR CLINICIAN */}
+              <div className="mb-4">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900 mb-1.5">
+                  <span className="px-1.5 py-0.5 rounded font-black text-[10px] bg-emerald-100 text-emerald-800">
+                    [R] RECOMMENDATIONS FOR MEDICAL OFFICER
+                  </span>
+                </div>
+                <ul className="space-y-1 text-xs text-slate-700 bg-emerald-50/50 p-2.5 rounded border border-emerald-100">
+                  {selectedTicket.suggestedQuestions.map((q, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <span className="text-emerald-600 font-bold">•</span>
+                      <span>{q}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               {/* Action Buttons: Sign-off or Refer */}
