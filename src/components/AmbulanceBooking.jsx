@@ -43,7 +43,8 @@ import {
   Wifi,
   AlertOctagon,
   RotateCcw,
-  LifeBuoy
+  LifeBuoy,
+  Ambulance
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
