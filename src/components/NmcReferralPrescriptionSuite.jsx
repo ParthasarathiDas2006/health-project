@@ -845,6 +845,8 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
 
   // Modals & Panels
   const [showSmsModal, setShowSmsModal] = useState(false);
+  const [smsRecipientPhone, setSmsRecipientPhone] = useState(currentCase.phone || '');
+  const [smsRecipientType, setSmsRecipientType] = useState('attendant'); // 'attendant' | 'asha' | '108_emt' | 'custom'
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [whatsAppRecipientPhone, setWhatsAppRecipientPhone] = useState(currentCase.phone || '');
   const [copiedWhatsApp, setCopiedWhatsApp] = useState(false);
@@ -968,6 +970,7 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
     setPatientAbha(currentCase.abhaId);
     setPatientPhone(currentCase.phone);
     setWhatsAppRecipientPhone(currentCase.phone || '');
+    setSmsRecipientPhone(currentCase.phone || '');
     setPatientWeight(currentCase.weight);
     setPatientAllergies(currentCase.allergies);
     setDiagnosis(currentCase.provisionalDiagnosis);
@@ -1758,9 +1761,46 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
   // Copy SMS Token
   const handleCopySms = () => {
     const text = generateSmsText();
-    navigator.clipboard.writeText(text);
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text);
+    }
     setCopiedSms(true);
     setTimeout(() => setCopiedSms(false), 2500);
+  };
+
+  // Dispatch SMS via device Messages app / mobile carrier
+  const handleSendSms = (phone = smsRecipientPhone) => {
+    const text = generateSmsText();
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text);
+      }
+    } catch (e) {
+      console.warn('Clipboard write failed:', e);
+    }
+
+    const clean = (phone || '').replace(/\D/g, '');
+    const isIos = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const separator = isIos ? '&' : '?';
+
+    const smsUrl = clean
+      ? `sms:${clean}${separator}body=${encodeURIComponent(text)}`
+      : `sms:${separator}body=${encodeURIComponent(text)}`;
+
+    try {
+      window.location.href = smsUrl;
+    } catch (e) {
+      console.warn('Could not launch sms: URI', e);
+    }
+
+    setToastMessage(
+      lang === 'or-IN'
+        ? `✓ ୧୦୮ SMS ଟୋକନ୍ ପଠାଗଲା (${clean || 'ପ୍ରାପ୍ତକର୍ତ୍ତା'})! କ୍ଲିପବୋର୍ଡରେ କପି ହୋଇଛି।`
+        : lang === 'hi-IN'
+        ? `✓ 108 SMS टोकन भेजा गया (${clean || 'प्राप्तकर्ता'})! क्लिपबोर्ड पर कॉपी हो गया।`
+        : `✓ 108 SMS Token dispatched to ${clean || 'Recipient'}! Message copied to clipboard.`
+    );
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   // Generate localized SMS payload for 108 Emergency transit
@@ -7813,44 +7853,176 @@ export default function NmcReferralPrescriptionSuite({ currentUser, appLang, ini
       {/* ───────────────────────────────────────────────────────── */}
       {showSmsModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 p-6 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-rose-600" />
-                <h3 className="font-bold text-sm text-slate-900">
-                  NHM 108 Emergency Transit SMS Token
-                </h3>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md">
+                  <Smartphone className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                    {lang === 'or-IN' ? '୧୦୮ ଜରୁରୀକାଳୀନ SMS ଟୋକନ୍ ପ୍ରେରଣ' : lang === 'hi-IN' ? '108 आपातकालीन SMS टोकन प्रेषण' : 'NHM 108 Emergency Transit SMS Dispatch'}
+                  </h3>
+                  <span className="text-[11px] text-slate-500 font-mono">108 CAD Automated Emergency Gateway</span>
+                </div>
               </div>
               <button
                 onClick={() => setShowSmsModal(false)}
-                className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold p-1 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              This SMS token is transmitted to the patient attendant, escorting ASHA worker, and the nearest 108 ALS ambulance base:
-            </p>
+            {/* Whom to Send Selector */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                {lang === 'or-IN' ? 'କାହାକୁ ପଠାଯିବ ବାଛନ୍ତୁ (Whom to Send):' : lang === 'hi-IN' ? 'किसे भेजना है चुनें (Whom to Send):' : 'Select Recipient (Whom to Send):'}
+              </label>
 
-            <div className="p-3 bg-slate-100 rounded-xl font-mono text-xs text-slate-800 whitespace-pre-wrap border border-slate-200 max-h-60 overflow-y-auto">
-              {generateSmsText()}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSmsRecipientType('attendant');
+                    setSmsRecipientPhone(patientPhone || '');
+                  }}
+                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                    smsRecipientType === 'attendant'
+                      ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-400 dark:border-rose-700 text-rose-900 dark:text-rose-200 font-bold'
+                      : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="block font-bold text-[11px]">👤 {lang === 'or-IN' ? 'ରୋଗୀ / ସହାୟକ' : lang === 'hi-IN' ? 'मरीज / परिजन' : 'Patient Attendant'}</span>
+                  <span className="text-[10px] opacity-75 font-mono truncate block">{patientPhone || 'Family'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSmsRecipientType('asha');
+                    setSmsRecipientPhone('+91 94378 11402');
+                  }}
+                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                    smsRecipientType === 'asha'
+                      ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-400 dark:border-rose-700 text-rose-900 dark:text-rose-200 font-bold'
+                      : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="block font-bold text-[11px]">🩺 {lang === 'or-IN' ? 'ଆଶା କର୍ମୀ' : lang === 'hi-IN' ? 'आशा कार्यकर्ता' : 'Escorting ASHA'}</span>
+                  <span className="text-[10px] opacity-75 font-mono truncate block">+91 94378 11402</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSmsRecipientType('108_emt');
+                    setSmsRecipientPhone('108');
+                  }}
+                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer col-span-2 sm:col-span-1 ${
+                    smsRecipientType === '108_emt'
+                      ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-400 dark:border-rose-700 text-rose-900 dark:text-rose-200 font-bold'
+                      : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="block font-bold text-[11px]">🚑 {lang === 'or-IN' ? '୧୦୮ CAD ଡେସ୍କ' : lang === 'hi-IN' ? '108 CAD कंट्रोल' : '108 Ambulance Desk'}</span>
+                  <span className="text-[10px] opacity-75 font-mono truncate block">Dial 108 / EMT</span>
+                </button>
+              </div>
+
+              {/* Form with Recipient Phone Input & Enter / Send Button */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendSms(smsRecipientPhone);
+                  setShowSmsModal(false);
+                }}
+                className="space-y-1.5 pt-1"
+              >
+                <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                  <span>{lang === 'or-IN' ? 'ପ୍ରାପ୍ତକର୍ତ୍ତାଙ୍କ ମୋବାଇଲ୍ ନମ୍ବର (Recipient Number):' : lang === 'hi-IN' ? 'प्राप्तकर्ता मोबाइल नंबर (Recipient Number):' : 'Recipient Mobile Phone Number:'}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">SMS Ready</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="tel"
+                      value={smsRecipientPhone}
+                      onChange={(e) => {
+                        setSmsRecipientPhone(e.target.value);
+                        setSmsRecipientType('custom');
+                      }}
+                      placeholder="e.g. 9437190214 or 108"
+                      className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white focus:outline-rose-500 pr-14"
+                      autoFocus
+                    />
+                    {smsRecipientPhone && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSmsRecipientPhone('');
+                          setSmsRecipientType('custom');
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                        title="Clear number"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
+                    title="Send SMS via device / gateway"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>{lang === 'or-IN' ? 'SMS ପଠାନ୍ତୁ (Send ➔)' : lang === 'hi-IN' ? 'SMS भेजें (Send ➔)' : 'Send SMS ➔'}</span>
+                  </button>
+                </div>
+              </form>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            {/* Token Message Preview */}
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                {lang === 'or-IN' ? 'SMS ଟୋକନ୍ ସାରାଂଶ (108 Transit SMS Payload):' : lang === 'hi-IN' ? 'SMS टोकन सामग्री (108 Transit SMS Payload):' : '108 Transit SMS Token Content:'}
+              </span>
+              <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-mono text-[11px] text-slate-800 dark:text-slate-200 whitespace-pre-wrap border border-slate-200 dark:border-slate-700 max-h-40 overflow-y-auto select-all">
+                {generateSmsText()}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
               <button
+                type="button"
                 onClick={() => setShowSmsModal(false)}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
-                Close
+                {lang === 'or-IN' ? 'ବନ୍ଦ କରନ୍ତୁ' : lang === 'hi-IN' ? 'बंद करें' : 'Close'}
               </button>
-              <button
-                onClick={handleCopySms}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
-              >
-                {copiedSms ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedSms ? 'SMS Copied!' : 'Copy SMS Text'}</span>
-              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopySms}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  {copiedSms ? <Check className="w-3.5 h-3.5 text-rose-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedSms ? 'Copied!' : 'Copy SMS Text'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSendSms(smsRecipientPhone);
+                    setShowSmsModal(false);
+                  }}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5 text-white" />
+                  <span>{lang === 'or-IN' ? 'SMS ପଠାନ୍ତୁ ➔' : lang === 'hi-IN' ? 'SMS भेजें ➔' : 'Send SMS Now ➔'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
