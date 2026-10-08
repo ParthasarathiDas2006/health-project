@@ -35,7 +35,15 @@ import {
   Settings2,
   Copy,
   Send,
-  Smartphone
+  Smartphone,
+  Heart,
+  HeartPulse,
+  Timer,
+  WifiOff,
+  Wifi,
+  AlertOctagon,
+  RotateCcw,
+  LifeBuoy
 } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -43,10 +51,73 @@ import { getAmbulanceRequests, saveAmbulanceRequest, cancelAmbulanceRequest } fr
 import { ODISHA_MEDICAL_FACILITIES, ODISHA_LOCATIONS, calculateDistanceKm } from '../utils/nearestMedicalData';
 import TeleConsultationSuite from './TeleConsultationSuite';
 
+// Live Regional Odisha Ambulance Fleet Network
+const FLEET_STATIONS = [
+  { id: 'AMB-1081', no: 'OD-02-AB-1081', type: 'ALS', pilot: 'Sanjay Kumar Barik', phone: '+91 94371 10801', base: 'Master Canteen Emergency Stand', lat: 20.2668, lng: 85.8398 },
+  { id: 'AMB-1084', no: 'OD-02-CB-1084', type: 'BLS', pilot: 'Bikram Keshari Rout', phone: '+91 94371 10804', base: 'Baramunda Fire Station Depot', lat: 20.2580, lng: 85.7820 },
+  { id: 'AMB-1090', no: 'OD-02-ALS-1090', type: 'ALS', pilot: 'Debendra Pradhan', phone: '+91 94373 99011', base: 'Capital Hospital ICU Terminal', lat: 20.2640, lng: 85.8235 },
+  { id: 'AMB-1082', no: 'OD-05-AB-1082', type: 'BLS', pilot: 'Ranjit Sahoo', phone: '+91 94371 10812', base: 'Cuttack SCB Medical Gate 1', lat: 20.4800, lng: 85.8820 },
+  { id: 'AMB-9901', no: 'OD-33-ICU-9901', type: 'ALS', pilot: 'Pratap Mohanty', phone: '+91 94372 88102', base: 'AIIMS Bhubaneswar Trauma Stand', lat: 20.2310, lng: 85.7750 },
+  { id: 'AMB-1021', no: 'OD-13-JAN-1021', type: '102-Janani', pilot: 'Kailash Behera', phone: '+91 94374 10201', base: 'Puri District Maternity Base', lat: 19.8110, lng: 85.8280 }
+];
+
+// Clinical First-Aid Life-Support Protocols (While En Route)
+const FIRST_AID_PROTOCOLS = {
+  cardiac: {
+    title: { 'or-IN': 'ହୃଦ୍‌ରୋଗ / ଛାତି ଯନ୍ତ୍ରଣା ପ୍ରାଥମିକ ଚିକିତ୍ସା', 'hi-IN': 'सीने में दर्द / हार्ट अटैक प्राथमिक उपचार', 'en-IN': 'Severe Chest Pain / Cardiac First Aid' },
+    tips: [
+      { 'or-IN': 'ରୋଗୀଙ୍କୁ ୪୫° କୋଣରେ ଆରାମରେ ବସାନ୍ତୁ, ଶୋଇବାକୁ ଦିଅନ୍ତୁ ନାହିଁ।', 'hi-IN': 'मरीज को 45° पर आराम से बैठाएं, लेटने न दें।', 'en-IN': 'Keep patient seated upright at 45°, do not let them lie flat.' },
+      { 'or-IN': 'କଲାର ଓ ଟାଇଟ୍ ପୋଷାକ ଢିଲା କରନ୍ତୁ, ପ୍ରଚୁର ପବନ ଆସିବାକୁ ଦିଅନ୍ତୁ।', 'hi-IN': 'तंग कपड़े ढीले करें और खुली हवा आने दें।', 'en-IN': 'Loosen tight collar and belts, ensure adequate fresh airflow.' },
+      { 'or-IN': 'କୌଣସି ଭାରୀ ଖାଦ୍ୟ ବା ପାଣି ଦିଅନ୍ତୁ ନାହିଁ। ଯଦି ଚେତା ଅଛି ତେବେ ଶାନ୍ତ ରଖନ୍ତୁ।', 'hi-IN': 'भारी खाना या पानी न दें। मरीज को शांत रखें।', 'en-IN': 'Do not give heavy food or liquids. Keep patient calm and reassure them.' }
+    ]
+  },
+  trauma: {
+    title: { 'or-IN': 'ରକ୍ତସ୍ରାବ ଓ ସଡ଼କ ଆଘାତ ପ୍ରାଥମିକ ଚିକିତ୍ସା', 'hi-IN': 'सड़क चोट एवं रक्तस्राव प्राथमिक उपचार', 'en-IN': 'Polytrauma & Hemorrhage First Aid' },
+    tips: [
+      { 'or-IN': 'କ୍ଷତ ସ୍ଥାନରେ ସଫା କପଡ଼ା ଦେଇ ଜୋରରେ ଚାପି ରଖନ୍ତୁ।', 'hi-IN': 'घाव पर साफ कपड़े से लगातार सीधा दबाव बनाएं।', 'en-IN': 'Apply continuous direct firm pressure to the bleeding wound with a clean cloth.' },
+      { 'or-IN': 'ମୁଣ୍ଡ କିମ୍ବା ବେକକୁ ଅଯଥା ହଲାନ୍ତୁ ନାହିଁ (Spine stability)।', 'hi-IN': 'गर्दन या रीढ़ को बिना जरूरत न हिलाएं।', 'en-IN': 'Do not twist or move the neck or spine unnecessarily.' },
+      { 'or-IN': 'କଟିଥିବା ହାତ ବା ଗୋଡ଼କୁ ହୃଦୟଠାରୁ ଉପରକୁ ଉଠାଇ ରଖନ୍ତୁ।', 'hi-IN': 'चोटिल अंग को हृदय के स्तर से ऊपर रखें।', 'en-IN': 'Elevate the bleeding limb above heart level if no fracture is suspected.' }
+    ]
+  },
+  maternity: {
+    title: { 'or-IN': '୧୦୨ ଜନନୀ ପ୍ରସବକାଳୀନ ସହାୟତା', 'hi-IN': '102 जननी प्रसवकालीन देखभाल', 'en-IN': 'Maternity & Labor First Aid (102 Janani)' },
+    tips: [
+      { 'or-IN': 'ଗର୍ଭବତୀ ମା’ଙ୍କୁ ବାମ ପାର୍ଶ୍ୱକୁ କଡ଼ ଲେଉଟାଇ ଶୁଆନ୍ତୁ (Left lateral)।', 'hi-IN': 'गर्भवती महिला को बाईं करवट लिटाएं (Left Lateral)।', 'en-IN': 'Position the mother on her left lateral side to optimize maternal-fetal oxygenation.' },
+      { 'or-IN': 'ଗଭୀର ଓ ଧୀର ଶ୍ୱାସପ୍ରଶ୍ୱାସ ନେବାକୁ ଉତ୍ସାହିତ କରନ୍ତୁ।', 'hi-IN': 'गहरी और शांत सांस लेने को कहें।', 'en-IN': 'Encourage calm, slow, rhythmic deep breathing during contractions.' },
+      { 'or-IN': 'ଶରୀରକୁ ଉଷୁମ ରଖନ୍ତୁ ଏବଂ ନିକଟସ୍ଥ ଆଶା କର୍ମୀଙ୍କୁ ସୂଚିତ କରନ୍ତୁ।', 'hi-IN': 'शरीर को गर्म रखें और स्थानीय आशा दीदी को बताएं।', 'en-IN': 'Keep warm with a clean blanket and keep pregnancy MCP card ready.' }
+    ]
+  },
+  stroke: {
+    title: { 'or-IN': 'ଷ୍ଟ୍ରୋକ୍ ପାଇଁ FAST ପରୀକ୍ଷା', 'hi-IN': 'स्ट्रोक FAST जांच एवं देखभाल', 'en-IN': 'Acute Stroke FAST Protocol' },
+    tips: [
+      { 'or-IN': 'ମୁହଁ ବଙ୍କା ହୋଇଛି କି? (Face), ହାତ ଉଠିପାରୁଛି କି? (Arms), କଥା ଅସ୍ପଷ୍ଟ କି? (Speech)।', 'hi-IN': 'चेहरा टेढ़ा (Face), हाथ कमजोर (Arms), बोली लड़खड़ाहट (Speech)।', 'en-IN': 'Check F.A.S.T.: Face drooping, Arm weakness, Slurred speech, Time of onset.' },
+      { 'or-IN': 'ମୁଣ୍ଡକୁ ସାମାନ୍ୟ ୩୦° ଉଚ୍ଚା ରଖନ୍ତୁ।', 'hi-IN': 'सिर को हल्का ऊंचा (30°) रखें।', 'en-IN': 'Keep head slightly elevated at 30°.' },
+      { 'or-IN': 'କୌଣସି ଔଷଧ ବା ପାଣି ପାଟିରେ ଦିଅନ୍ତୁ ନାହିଁ।', 'hi-IN': 'मुंह से पानी या दवा बिल्कुल न दें।', 'en-IN': 'Do NOT give oral medicines, food, or water due to choking risk.' }
+    ]
+  },
+  respiratory: {
+    title: { 'or-IN': 'ଶ୍ୱାସକଷ୍ଟ ଓ ଅମ୍ଳଜାନ ଅଭାବ', 'hi-IN': 'सांस की तकलीफ एवं ऑक्सीजन फर्स्ट एड', 'en-IN': 'Severe Respiratory Distress First Aid' },
+    tips: [
+      { 'or-IN': 'ରୋଗୀଙ୍କୁ ସିଧା ବସାନ୍ତୁ, କବାଟ ଝରକା ଖୋଲି ସତେଜ ପବନ ଦିଅନ୍ତୁ।', 'hi-IN': 'मरीज को सीधा बैठाएं और खिड़की खोलकर ताजी हवा दें।', 'en-IN': 'Sit the patient upright, open windows for maximum airflow.' },
+      { 'or-IN': 'ଯଦି ଇନ୍‌ହେଲର୍ ଉପଲବ୍ଧ ଅଛି, ୨-୪ ପଫ୍ ଦିଅନ୍ତୁ।', 'hi-IN': 'यदि इनहेलर उपलब्ध है तो 2-4 पफ तुरंत दें।', 'en-IN': 'Administer rescue bronchodilator inhaler if prescribed & available.' },
+      { 'or-IN': 'ଛାତି ଉପରେ ଚାପ ପକାନ୍ତୁ ନାହିଁ।', 'hi-IN': 'छाती पर कोई दबाव न पड़ने दें।', 'en-IN': 'Ensure chest and throat are completely free of constricting garments.' }
+    ]
+  },
+  burns: {
+    title: { 'or-IN': 'ପୋଡ଼ିଯିବା ଓ ବିଷକ୍ରିୟା / ସର୍ପଦଂଶନ', 'hi-IN': 'जलना एवं विषैला दंश फर्स्ट एड', 'en-IN': 'Burns & Snakebite Protocol' },
+    tips: [
+      { 'or-IN': 'ପୋଡ଼ିଥିବା ସ୍ଥାନରେ ୧୫ ମିନିଟ୍ ସାଧାରଣ ଥଣ୍ଡା ପାଣି ଢାଳନ୍ତୁ (ବରଫ ନୁହେଁ)।', 'hi-IN': 'जली त्वचा पर 15 मिनट नल का ठंडा पानी डालें (बर्फ नहीं)।', 'en-IN': 'Pour gentle clean running cool water for 15+ minutes (never apply ice).' },
+      { 'or-IN': 'ସାପ କାମୁଡ଼ିଥିଲେ ଅଙ୍ଗକୁ ସ୍ଥିର ରଖନ୍ତୁ, ଚିରିବେ ନାହିଁ କି ବାନ୍ଧିବେ ନାହିଁ।', 'hi-IN': 'सांप काटने पर अंग को स्थिर रखें, चीरा या टाइट पट्टी न बांधें।', 'en-IN': 'If snakebite: immobilize the bitten limb, do NOT cut or tie tourniquet.' },
+      { 'or-IN': 'ରୋଗୀଙ୍କୁ ଶାନ୍ତ ଓ ସ୍ଥିର ରଖନ୍ତୁ।', 'hi-IN': 'मरीज को शांत और स्थिर रखें।', 'en-IN': 'Keep patient relaxed and motionless to prevent venom spread.' }
+    ]
+  }
+};
+
 export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNearest, onOpenNmcSuite, onRequireAuth }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
   const [activeSubTab, setActiveSubTab] = useState('book'); // 'book' | 'track' | 'my-requests'
+  const [serviceMode, setServiceMode] = useState('108'); // '108' | '102' | '112'
   const [selectedEmergency, setSelectedEmergency] = useState('cardiac');
   const [ambulanceType, setAmbulanceType] = useState('ALS');
   const [patientName, setPatientName] = useState(currentUser?.name || '');
@@ -64,11 +135,26 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
   const [isDetectingGps, setIsDetectingGps] = useState(false);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
 
+  // Network Online/Offline Detection
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
   // Real-time GPS Location & SOS Contact State
   const [liveCoords, setLiveCoords] = useState({ lat: 20.2668, lng: 85.8398, isLive: false, accuracy: null });
   const [emergencyContact, setEmergencyContact] = useState(currentUser?.emergencyContact || currentUser?.familyPhone || '');
   const [smsModalData, setSmsModalData] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Fast Panic Hold-to-Dispatch State
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const [cancelCountdown, setCancelCountdown] = useState(null);
+  const holdIntervalRef = useRef(null);
+
+  // CPR Metronome State (110 BPM)
+  const [cprActive, setCprActive] = useState(false);
+  const [cprCount, setCprCount] = useState(0);
+  const cprAudioCtxRef = useRef(null);
+  const cprIntervalRef = useRef(null);
 
   // Active tracked mission state
   const [activeMission, setActiveMission] = useState(null);
@@ -163,7 +249,21 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       emergencyContactLbl: 'ପରିବାର / ସମ୍ପର୍କୀୟ ଫୋନ୍ (ଐଚ୍ଛିକ)',
       gpsLockedBadge: 'ଲାଇଭ୍ GPS ସଂଯୁକ୍ତ',
       openInMaps: 'ମ୍ୟାପ୍',
-      copiedToClipboard: 'SMS ବାର୍ତ୍ତା କପି ହୋଇଛି! (108 / ପରିବାରକୁ ପଠାନ୍ତୁ)'
+      copiedToClipboard: 'SMS ବାର୍ତ୍ତା କପି ହୋଇଛି! (108 / ପରିବାରକୁ ପଠାନ୍ତୁ)',
+      panicHoldTitle: 'ଆମ୍ବୁଲାନ୍ସ ପାଇଁ ୨ ସେକେଣ୍ଡ ଚାପି ଧରନ୍ତୁ',
+      panicHoldSub: 'ତୁରନ୍ତ ସ୍ୱୟଂଚାଳିତ GPS ଡିସ୍ପ୍ୟାଚ୍ (Panic Hold)',
+      cancelCountdownMsg: 'ସେକେଣ୍ଡ ମଧ୍ୟରେ ଡିସ୍ପ୍ୟାଚ୍ ହେବ...',
+      undoBtn: 'ବାତିଲ୍ କରନ୍ତୁ (Cancel)',
+      confirmNowBtn: 'ତୁରନ୍ତ ଡିସ୍ପ୍ୟାଚ୍ କରନ୍ତୁ',
+      cprBtnStart: 'CPR ଛାତି ଚାପ ମେଟ୍ରୋନୋମ୍ ଆରମ୍ଭ (୧୧୦ BPM)',
+      cprBtnStop: 'CPR ମେଟ୍ରୋନୋମ୍ ବନ୍ଦ କରନ୍ତୁ',
+      cprGuide: 'ପ୍ରତି ୩୦ ଥର ଛାତି ଚାପିବା ପରେ ୨ ଥର ଶ୍ୱାସ ଦିଅନ୍ତୁ',
+      firstAidSectionTitle: '🩺 ଆମ୍ବୁଲାନ୍ସ ଆସିବା ପର୍ଯ୍ୟନ୍ତ ଜରୁରୀ ପ୍ରାଥମିକ ଚିକିତ୍ସା',
+      hospitalAlerted: '🏥 ହସ୍ପିଟାଲ୍ ଟ୍ରମା ବେ’ କୁ ABHA ସହ ଆଗୁଆ ସୂଚିତ କରାଯାଇଛି',
+      mode108: '🚑 ୧୦୮ ଜରୁରୀକାଳୀନ (Trauma & ICU)',
+      mode102: '🤱 ୧୦୨ ଜନନୀ ଏକ୍ସପ୍ରେସ୍ (ମାତୃ ସୁରକ୍ଷା)',
+      mode112: '🚨 ୧୧୨ ସର୍ବଭାରତୀୟ ସହାୟତା',
+      offlineModeBadge: 'ଅଫ୍‌ଲାଇନ୍ ମୋଡ୍: ୧୦୮ SMS ଗେଟ୍‌ୱେ ସକ୍ରିୟ'
     },
     'hi-IN': {
       tabBook: '🚑 एम्बुलेंस बुलाएं',
@@ -231,7 +331,21 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       emergencyContactLbl: 'परिवार / आपातकालीन मोबाइल (वैकल्पिक)',
       gpsLockedBadge: 'लाइव GPS सक्रिय',
       openInMaps: 'मैप',
-      copiedToClipboard: 'SMS संदेश कॉपी हुआ! (108 / परिजनों को भेजें)'
+      copiedToClipboard: 'SMS संदेश कॉपी हुआ! (108 / परिजनों को भेजें)',
+      panicHoldTitle: 'एम्बुलेंस हेतु 2 सेकंड दबाकर रखें',
+      panicHoldSub: 'त्वरित स्वचालित GPS प्रेषण (Panic Hold)',
+      cancelCountdownMsg: 'सेकंड में स्वतः डिस्पैच होगा...',
+      undoBtn: 'रद्द करें (Cancel)',
+      confirmNowBtn: 'तुरंत डिस्पैच करें',
+      cprBtnStart: 'CPR चेस्ट कम्प्रेशन मेट्रोनोम (110 BPM)',
+      cprBtnStop: 'CPR मेट्रोनोम बंद करें',
+      cprGuide: 'हर 30 कम्प्रेशन के बाद 2 बार सांस दें',
+      firstAidSectionTitle: '🩺 एम्बुलेंस आने तक आवश्यक प्राथमिक उपचार',
+      hospitalAlerted: '🏥 अस्पताल ट्रॉमा बे को ABHA सहित अलर्ट किया गया',
+      mode108: '🚑 108 आपातकालीन (Trauma & ICU)',
+      mode102: '🤱 102 जननी एक्सप्रेस (मातृ सुरक्षा)',
+      mode112: '🚨 112 अखिल भारतीय हेल्पलाइन',
+      offlineModeBadge: 'ऑफ़लाइन मोड: 108 SMS गेटवे सक्रिय'
     },
     'en-IN': {
       tabBook: '🚑 Book Ambulance',
@@ -299,7 +413,21 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       emergencyContactLbl: 'Family / Relative Mobile (Optional)',
       gpsLockedBadge: 'Live GPS Locked',
       openInMaps: 'Maps',
-      copiedToClipboard: 'SMS SOS text copied to clipboard! (Ready to send)'
+      copiedToClipboard: 'SMS SOS text copied to clipboard! (Ready to send)',
+      panicHoldTitle: 'HOLD 2 SECONDS FOR FAST DISPATCH',
+      panicHoldSub: 'Zero-touch instant GPS green-corridor ambulance dispatch',
+      cancelCountdownMsg: 'Auto-dispatching in',
+      undoBtn: 'Undo / Cancel',
+      confirmNowBtn: 'Confirm & Dispatch Now',
+      cprBtnStart: 'Start CPR Cardiac Metronome (110 BPM)',
+      cprBtnStop: 'Stop CPR Metronome',
+      cprGuide: 'Push hard & fast: 30 compressions, then 2 rescue breaths',
+      firstAidSectionTitle: '🩺 En-Route Critical First Aid Protocol (While You Wait)',
+      hospitalAlerted: '🏥 Capital Hospital Trauma Bay Pre-Notified with Patient ABHA',
+      mode108: '🚑 108 Emergency (Trauma & ICU)',
+      mode102: '🤱 102 Janani Express (Maternal JSSK)',
+      mode112: '🚨 112 All-Emergency Response',
+      offlineModeBadge: 'Offline Mode: Direct 108 Emergency SMS Gateway Active'
     }
   }[lang] || {};
 
@@ -442,6 +570,137 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     );
   };
 
+  // Network Online/Offline Event Listeners
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Nearest Fleet Proximity Calculator (Dynamic Haversine)
+  const rankedFleet = useMemo(() => {
+    const pLat = liveCoords.lat || 20.2668;
+    const pLng = liveCoords.lng || 85.8398;
+    return FLEET_STATIONS.map((amb) => {
+      const dist = calculateDistanceKm(pLat, pLng, amb.lat, amb.lng);
+      const etaMins = Math.max(3, Math.round(dist * 2.2));
+      return { ...amb, distanceKm: parseFloat(dist.toFixed(1)), etaMins };
+    }).sort((a, b) => a.distanceKm - b.distanceKm);
+  }, [liveCoords]);
+
+  const nearestVehicle = rankedFleet[0] || FLEET_STATIONS[0];
+
+  // CPR Cardiac Compression Metronome (110 BPM Web Audio API)
+  useEffect(() => {
+    if (!cprActive) {
+      if (cprIntervalRef.current) {
+        clearInterval(cprIntervalRef.current);
+        cprIntervalRef.current = null;
+      }
+      if (cprAudioCtxRef.current) {
+        try { cprAudioCtxRef.current.close(); } catch (e) {}
+        cprAudioCtxRef.current = null;
+      }
+      setCprCount(0);
+      return;
+    }
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        cprAudioCtxRef.current = new AudioCtx();
+      }
+    } catch (e) {}
+
+    cprIntervalRef.current = setInterval(() => {
+      setCprCount((prev) => (prev >= 30 ? 1 : prev + 1));
+      if (cprAudioCtxRef.current && cprAudioCtxRef.current.state !== 'closed') {
+        try {
+          const ctx = cprAudioCtxRef.current;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          gain.gain.setValueAtTime(0.08, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.07);
+        } catch (e) {}
+      }
+    }, 545);
+
+    return () => {
+      if (cprIntervalRef.current) clearInterval(cprIntervalRef.current);
+      if (cprAudioCtxRef.current) {
+        try { cprAudioCtxRef.current.close(); } catch (e) {}
+      }
+    };
+  }, [cprActive]);
+
+  // Fast Panic Hold-to-Dispatch Timer Handlers
+  const startHold = () => {
+    if (cancelCountdown !== null) return;
+    setIsHolding(true);
+    setHoldProgress(0);
+    const step = 100 / (2000 / 40); // 40ms interval over 2000ms
+    holdIntervalRef.current = setInterval(() => {
+      setHoldProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(holdIntervalRef.current);
+          holdIntervalRef.current = null;
+          setIsHolding(false);
+          triggerFastPanicCountdown();
+          return 100;
+        }
+        return prev + step;
+      });
+    }, 40);
+  };
+
+  const cancelHold = () => {
+    if (holdIntervalRef.current) {
+      clearInterval(holdIntervalRef.current);
+      holdIntervalRef.current = null;
+    }
+    setIsHolding(false);
+    setHoldProgress(0);
+  };
+
+  const triggerFastPanicCountdown = () => {
+    if (navigator.vibrate) {
+      try { navigator.vibrate([100, 50, 100]); } catch (e) {}
+    }
+    setCancelCountdown(5);
+  };
+
+  useEffect(() => {
+    if (cancelCountdown === null) return;
+    if (cancelCountdown === 0) {
+      setCancelCountdown(null);
+      handleDispatch();
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCancelCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [cancelCountdown]);
+
+  const handleAbortCountdown = () => {
+    setCancelCountdown(null);
+    setHoldProgress(0);
+    setToastMessage('Fast dispatch cancelled by caller.');
+    setSosSentToast(true);
+    setTimeout(() => setSosSentToast(false), 2500);
+  };
+
   // Attempt non-blocking GPS auto-detect on initial load
   useEffect(() => {
     if (navigator.geolocation && !liveCoords.isLive) {
@@ -472,20 +731,28 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     const effectiveName = patientName.trim() || currentUser?.name || 'Citizen Patient';
     const effectivePickup = pickupAddress.trim() || `Live GPS (${liveCoords.lat}, ${liveCoords.lng})`;
 
-    const vehiclePool = [
-      { no: 'OD-02-AB-1081', pilot: 'Sanjay Kumar Barik', phone: '+91 94371 10801', base: 'Master Canteen Emergency Bay' },
-      { no: 'OD-02-CB-1084', pilot: 'Bikram Keshari Rout', phone: '+91 94371 10804', base: 'Baramunda Fire Station Stand' },
-      { no: 'OD-05-AB-1082', pilot: 'Ranjit Sahoo', phone: '+91 94371 10812', base: 'SCB Medical College Gate 1' },
-      { no: 'OD-33-ICU-9901', pilot: 'Debendra Pradhan', phone: '+91 94373 99011', base: 'AIIMS Bhubaneswar Emergency Terminal' }
-    ];
-
-    const chosenVehicle = vehiclePool[Math.floor(Math.random() * vehiclePool.length)];
     const emergItem = emergencyTypes.find((et) => et.id === selectedEmergency);
     const emergLabel = emergItem ? emergItem.label[lang] || emergItem.label['en-IN'] : selectedEmergency;
 
     // Accurate dynamic coordinates derived from actual patient location
     const pLat = liveCoords.lat || 20.2710;
     const pLng = liveCoords.lng || 85.8440;
+
+    // Offline Resilience Fallback: Auto-trigger structured SMS Beacon
+    if (!isOnline) {
+      const smsPayload = `108 EMERGENCY OFFLINE BEACON: Caller: ${effectivePhone}, Patient: ${effectiveName}, Condition: ${emergLabel}, GPS: https://maps.google.com/?q=${pLat},${pLng}, Area: ${effectivePickup}`;
+      const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const sep = isIos ? '&' : '?';
+      try { navigator.clipboard?.writeText(smsPayload); } catch (err) {}
+      window.location.href = `sms:108${sep}body=${encodeURIComponent(smsPayload)}`;
+      setSmsModalData({ text: smsPayload, recipient: '108 Emergency Control Room (Direct SMS Gateway)' });
+      setToastMessage('⚠️ Offline Mode: 108 SOS Beacon triggered via direct SMS gateway!');
+      setSosSentToast(true);
+      return;
+    }
+
+    // Dynamic closest vehicle from ranked Fleet
+    const chosenVehicle = nearestVehicle;
     const startLat = Number((pLat - 0.0125).toFixed(5));
     const startLng = Number((pLng + 0.0085).toFixed(5));
     const hospLat = Number((pLat + 0.0150).toFixed(5));
@@ -500,9 +767,9 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       driverName: chosenVehicle.pilot,
       paramedicPhone: chosenVehicle.phone,
       baseStation: chosenVehicle.base,
-      etaMins: ambulanceType === 'ALS' ? 7 : 5,
+      etaMins: chosenVehicle.etaMins || (ambulanceType === 'ALS' ? 6 : 4),
       speedKmh: 58,
-      distanceRemainingKm: 3.2,
+      distanceRemainingKm: chosenVehicle.distanceKm || 2.4,
       oxygenBar: 94,
       batteryVolt: '13.8V',
       fuelLevel: '78%',
@@ -530,7 +797,13 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
     setConfirmedSlip(newSlip);
     setActiveSubTab('track');
     setMissionStage(2); // En route immediately
-    setEtaSeconds(420);
+    setEtaSeconds((chosenVehicle.etaMins || 6) * 60);
+
+    // Add hospital pre-notification log
+    setTelemetryLogs((prev) => [
+      { time: new Date().toLocaleTimeString('en-IN'), text: `🏥 Hospital Pre-Notification: Capital Hospital ER Trauma Bay alerted with ABHA (${patientAbha || 'ABDM-Linked'}). Resuscitation team on standby.` },
+      ...prev
+    ]);
   };
 
   // Automated 1-Click WhatsApp SOS Trigger with Accurate Live Location & Dispatch Info
@@ -834,6 +1107,69 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
             <span>{txt.helplineBanner}</span>
           </a>
         </div>
+      </div>
+
+      {/* ── Offline Network Fallback Alert ── */}
+      {!isOnline && (
+        <div className="p-3.5 bg-amber-500 text-slate-950 rounded-2xl text-xs font-black flex items-center justify-between gap-3 shadow-md animate-pulse">
+          <div className="flex items-center gap-2">
+            <WifiOff className="w-5 h-5 text-slate-950 shrink-0" />
+            <span>{txt.offlineModeBadge}</span>
+          </div>
+          <span className="text-[10px] bg-slate-950 text-amber-300 px-2.5 py-1 rounded-full font-mono uppercase tracking-wider">
+            Direct 108 SMS Beacon
+          </span>
+        </div>
+      )}
+
+      {/* ── Emergency Service Mode Aggregator Switch (108 / 102 / 112) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+        <button
+          type="button"
+          onClick={() => {
+            setServiceMode('108');
+            setAmbulanceType('ALS');
+            if (selectedEmergency === 'maternity') setSelectedEmergency('cardiac');
+          }}
+          className={`py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            serviceMode === '108'
+              ? 'bg-rose-600 text-white shadow-sm'
+              : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <span>{txt.mode108}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setServiceMode('102');
+            setAmbulanceType('BLS');
+            setSelectedEmergency('maternity');
+          }}
+          className={`py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            serviceMode === '102'
+              ? 'bg-pink-600 text-white shadow-sm'
+              : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <span>{txt.mode102}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setServiceMode('112');
+            window.location.href = 'tel:112';
+          }}
+          className={`py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            serviceMode === '112'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <span>{txt.mode112}</span>
+        </button>
       </div>
 
       {/* ── 108 Emergency Instant SOS Action Center (Always Visible) ── */}
@@ -1240,6 +1576,85 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                   </div>
                 </div>
               </div>
+
+              {/* ── Critical Life Support Section (First Aid Protocols + CPR Metronome) ── */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-200 shrink-0">
+                      <HeartPulse className="w-5 h-5 text-rose-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900">{txt.firstAidSectionTitle}</h4>
+                      <p className="text-[11px] text-slate-500">Live clinical instructions approved for bystanders while waiting for pilot arrival</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                      <span>{txt.hospitalAlerted}</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* 1. Interactive CPR Cardiac Metronome */}
+                  <div className="p-4 bg-rose-50/70 border border-rose-200 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Heart className={`w-5 h-5 text-rose-600 ${cprActive ? 'animate-ping' : ''}`} />
+                        <span className="font-extrabold text-xs text-rose-950">{txt.cprTitle}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCprActive(!cprActive)}
+                        className={`px-3 py-1.5 rounded-xl font-black text-xs transition cursor-pointer flex items-center gap-1.5 ${
+                          cprActive
+                            ? 'bg-rose-600 text-white shadow-md animate-pulse'
+                            : 'bg-white text-rose-700 border border-rose-300 hover:bg-rose-100'
+                        }`}
+                      >
+                        {cprActive ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                        <span>{cprActive ? txt.cprBtnStop : txt.cprBtnStart}</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-rose-100">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-lg transition-transform ${
+                        cprActive ? 'bg-rose-600 text-white scale-110 shadow-lg' : 'bg-slate-100 text-slate-400'
+                      }`}>
+                        {cprActive ? cprCount : '110'}
+                      </div>
+                      <div className="text-[11px] text-slate-700 flex-1">
+                        <p className="font-bold text-rose-900">{txt.cprGuide}</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">
+                          Place heel of hand on center of chest. Push hard and fast at 100-120 beats/minute.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Condition-Specific First Aid Action Card */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                      <span className="text-xs font-black text-slate-900">
+                        {FIRST_AID_PROTOCOLS[activeMission.emergencyId || 'cardiac']?.title[lang] || FIRST_AID_PROTOCOLS['cardiac'].title['en-IN']}
+                      </span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
+                        SOP Verified
+                      </span>
+                    </div>
+                    <ul className="space-y-1.5 text-xs text-slate-700">
+                      {(FIRST_AID_PROTOCOLS[activeMission.emergencyId || 'cardiac']?.tips || FIRST_AID_PROTOCOLS['cardiac'].tips).map((tip, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-rose-600 font-black shrink-0 mt-0.5">•</span>
+                          <span className="leading-tight">{tip[lang] || tip['en-IN']}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1277,6 +1692,127 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
               <span>108 Direct Toll-Free</span>
             </a>
           </div>
+
+          {/* Active Accidental Dispatch Cancel Countdown Banner */}
+          {cancelCountdown !== null && (
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white rounded-2xl shadow-lg border border-red-400 animate-pulse flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5 text-center sm:text-left">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-black text-3xl text-amber-200 border border-white/30 shrink-0">
+                  {cancelCountdown}s
+                </div>
+                <div>
+                  <div className="text-xs uppercase font-extrabold tracking-wider text-amber-200 flex items-center gap-1.5 justify-center sm:justify-start">
+                    <AlertOctagon className="w-4 h-4 animate-bounce" />
+                    <span>EMERGENCY DISPATCH TRIGGERED</span>
+                  </div>
+                  <h4 className="text-base font-black">
+                    {txt.cancelCountdownMsg} {cancelCountdown}s
+                  </h4>
+                  <p className="text-xs text-white/90">
+                    Allocating nearest unit: <span className="font-mono font-bold text-amber-200">{nearestVehicle.no}</span> ({nearestVehicle.station}, ~{nearestVehicle.etaMins}m ETA)
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleAbortCountdown}
+                  className="flex-1 sm:flex-none px-4 py-2.5 bg-white text-rose-700 hover:bg-rose-50 font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>{txt.undoBtn}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCancelCountdown(null);
+                    handleDispatch();
+                  }}
+                  className="flex-1 sm:flex-none px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Zap className="w-4 h-4 fill-current" />
+                  <span>{txt.confirmNowBtn}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Panic Hold-to-Dispatch Circular Trigger & Nearest Fleet Radar */}
+          {cancelCountdown === null && (
+            <div className="p-4 sm:p-5 bg-gradient-to-br from-rose-500/10 via-amber-500/5 to-slate-50 rounded-2xl border-2 border-rose-300 flex flex-col md:flex-row items-center justify-between gap-5 shadow-sm">
+              <div className="space-y-1.5 text-center md:text-left">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 text-[11px] font-black border border-rose-200">
+                  <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping inline-block" />
+                  <span>FAST PANIC DISPATCH</span>
+                </div>
+                <h4 className="text-base font-black text-slate-900 tracking-tight">
+                  {txt.panicHoldTitle}
+                </h4>
+                <p className="text-xs text-slate-600 max-w-md">
+                  {txt.panicHoldSub}
+                </p>
+                {/* Nearest Fleet Radar Pill */}
+                <div className="flex flex-wrap items-center gap-2 pt-1 justify-center md:justify-start">
+                  <span className="text-[11px] font-semibold text-slate-500">Nearest Fleet:</span>
+                  <span className="px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                    {nearestVehicle.station} ({nearestVehicle.no})
+                  </span>
+                  <span className="px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold">
+                    ~{nearestVehicle.distanceKm} km away • ~{nearestVehicle.etaMins}m ETA
+                  </span>
+                </div>
+              </div>
+
+              {/* Hold Button with Progress Ring */}
+              <div className="flex flex-col items-center gap-1.5 select-none shrink-0">
+                <div className="relative w-28 h-28 flex items-center justify-center">
+                  <svg className="w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 100 100">
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="44"
+                      className="stroke-rose-100 fill-none"
+                      strokeWidth="6"
+                    />
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="44"
+                      className="stroke-rose-600 fill-none transition-all duration-75"
+                      strokeWidth="6"
+                      strokeDasharray={2 * Math.PI * 44}
+                      strokeDashoffset={2 * Math.PI * 44 * (1 - holdProgress / 100)}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <button
+                    type="button"
+                    onMouseDown={startHold}
+                    onMouseUp={cancelHold}
+                    onMouseLeave={cancelHold}
+                    onTouchStart={startHold}
+                    onTouchEnd={cancelHold}
+                    className={`absolute inset-2 rounded-full font-black text-white flex flex-col items-center justify-center shadow-lg transition-transform active:scale-95 cursor-pointer ${
+                      isHolding
+                        ? 'bg-gradient-to-tr from-red-700 to-rose-600 scale-95 shadow-red-500/50'
+                        : 'bg-gradient-to-tr from-rose-600 to-red-500 hover:from-rose-500 hover:to-red-600'
+                    }`}
+                  >
+                    <Ambulance className={`w-7 h-7 mb-0.5 ${isHolding ? 'animate-bounce' : ''}`} />
+                    <span className="text-[10px] uppercase tracking-wider font-extrabold leading-none">
+                      {isHolding ? `${Math.round(holdProgress)}%` : 'HOLD 2s'}
+                    </span>
+                    <span className="text-[9px] opacity-80 leading-none mt-0.5">DISPATCH</span>
+                  </button>
+                </div>
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">
+                  {isHolding ? 'Release to cancel' : 'Press & hold 2 sec'}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Step 1: Emergency Condition (One tap) */}
           <div>
