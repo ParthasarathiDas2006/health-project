@@ -56,10 +56,10 @@ import TeleConsultationSuite from './TeleConsultationSuite';
 
 // Default Organization Field Worker & Control Room Hotline Config
 const DEFAULT_WORKER_SOS_CONFIG = {
-  phone: '9437010800', // Central Emergency Dispatcher / Worker Hotline
-  displayName: 'SwasthyaMitra Rapid Response Unit & Control Room',
-  formatted: '+91 94370 10800',
-  backupPhone: '9437110801'
+  phone: '7008509631', // User's Dedicated Response Hotline
+  displayName: 'Emergency Action Desk & Field Response Unit',
+  formatted: '+91 70085 09631',
+  backupPhone: '7008509631'
 };
 
 // Live Regional Odisha Ambulance Fleet Network
@@ -155,13 +155,18 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
   const [smsModalData, setSmsModalData] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
 
-  // Dedicated Field Worker SOS Dispatch State
+  // Dedicated Field Worker SOS Dispatch State (Targeted to 7008509631)
   const [workerPhone, setWorkerPhone] = useState(() => {
-    return localStorage.getItem('swasthya_worker_sos_phone') || DEFAULT_WORKER_SOS_CONFIG.phone;
+    const saved = localStorage.getItem('swasthya_worker_sos_phone');
+    if (!saved || saved === '9437010800') {
+      localStorage.setItem('swasthya_worker_sos_phone', '7008509631');
+      return '7008509631';
+    }
+    return saved;
   });
   const [sosTargetMode, setSosTargetMode] = useState('worker'); // 'worker' | 'family'
   const [showWorkerConfig, setShowWorkerConfig] = useState(false);
-  const [tempWorkerPhone, setTempWorkerPhone] = useState(workerPhone);
+  const [tempWorkerPhone, setTempWorkerPhone] = useState('7008509631');
   const [sosIncidents, setSosIncidents] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('swasthya_emergency_sos_log') || '[]');
@@ -789,9 +794,10 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
       const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const sep = isIos ? '&' : '?';
       try { navigator.clipboard?.writeText(smsPayload); } catch (err) {}
-      window.location.href = `sms:108${sep}body=${encodeURIComponent(smsPayload)}`;
-      setSmsModalData({ text: smsPayload, recipient: '108 Emergency Control Room (Direct SMS Gateway)' });
-      setToastMessage('⚠️ Offline Mode: 108 SOS Beacon triggered via direct SMS gateway!');
+      const targetPhone = (workerPhone || '7008509631').replace(/\D/g, '');
+      window.location.href = `sms:${targetPhone}${sep}body=${encodeURIComponent(smsPayload)}`;
+      setSmsModalData({ text: smsPayload, recipient: `+91 ${targetPhone} (Direct Emergency Gateway)`, phone: targetPhone });
+      setToastMessage(`⚠️ Offline Mode: SOS Beacon directed to +91 ${targetPhone} via SMS!`);
       setSosSentToast(true);
       return;
     }
@@ -1472,7 +1478,7 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                   type="tel"
                   value={tempWorkerPhone}
                   onChange={(e) => setTempWorkerPhone(e.target.value)}
-                  placeholder="9437010800"
+                  placeholder="7008509631"
                   className="px-2.5 py-1.5 bg-white border border-amber-400 rounded-lg font-mono font-bold text-slate-900 text-xs w-36 outline-none focus:ring-2 focus:ring-amber-500"
                 />
                 <button
@@ -2645,10 +2651,8 @@ export default function AmbulanceBooking({ currentUser, appLang, onNavigateToNea
                 onClick={() => {
                   const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
                   const sep = isIos ? '&' : '?';
-                  const clean = (emergencyContact || '').replace(/\D/g, '');
-                  const link = clean
-                    ? `sms:${clean}${sep}body=${encodeURIComponent(smsModalData.text)}`
-                    : `sms:${sep}body=${encodeURIComponent(smsModalData.text)}`;
+                  const clean = (smsModalData.phone || workerPhone || '7008509631').replace(/\D/g, '');
+                  const link = `sms:${clean}${sep}body=${encodeURIComponent(smsModalData.text)}`;
                   window.location.href = link;
                 }}
                 className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow transition cursor-pointer"
