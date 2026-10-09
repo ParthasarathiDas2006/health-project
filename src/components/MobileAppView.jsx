@@ -78,94 +78,230 @@ export default function MobileAppView({
   const patientGender = currentUser?.gender || 'Male';
   const patientDob = '10/10/1982';
 
-  // Multilingual translations
+  // Language normalization & active language resolver
+  const normalizedLang = useMemo(() => {
+    if (!appLang) return 'or-IN';
+    if (appLang.startsWith('hi')) return 'hi-IN';
+    if (appLang.startsWith('en')) return 'en-IN';
+    return 'or-IN';
+  }, [appLang]);
+
+  // Multilingual translations dictionary
   const t = useMemo(() => {
-    return {
+    const dict = {
       'or-IN': {
-        brandTitle: 'SwasthyaMitra Odisha',
-        brandSubtitle: 'Odisha Digital Health Mission (ABDM)',
+        brandTitle: 'ସ୍ୱାସ୍ଥ୍ୟମିତ୍ର ଓଡ଼ିଶା',
+        brandSubtitle: 'ଓଡ଼ିଶା ଡିଜିଟାଲ୍ ସ୍ୱାସ୍ଥ୍ୟ ମିଶନ (ABDM)',
         odishaGov: 'ଓଡ଼ିଶା ଡିଜିଟାଲ୍ ସ୍ୱାସ୍ଥ୍ୟ ମିଶନ',
-        abhaCardTitle: 'ABHA Digital Health ID',
-        emergency108: '108 EMERGENCY SOS',
-        healthAlertTitle: 'PUBLIC HEALTH ALERT: Dengue & Heatwave Prevention Protocols Active in Odisha. Report Symptoms Immediately.',
-        viewDetails: 'VIEW DETAILS',
-        searchPlaceholder: 'Search doctors, beds, ambulance, blood...',
-        triageTitle: 'AI Symptom Voice Triage',
-        triageSub: 'Multilingual Voice & Triage Note',
-        bedTitle: 'Hospital Bed Tracker',
-        bedSub: '10,770 Live ICU & General Beds',
-        ambTitle: 'GPS 108 Ambulance Dispatch',
-        ambSub: 'Instant GPS Emergency SOS',
-        docTitle: 'Doctor Video Consultation',
-        docSub: '2,523 OMC Verified Specialists',
-        rxTitle: 'Digital Prescription Slips',
-        rxSub: 'NMC Digital Rx & Referral Slips',
-        gpsTitle: 'Nearest Hospital GPS',
-        gpsSub: 'PHC, CHC & DHH Navigator',
-        bloodTitle: 'Blood Bank Network',
-        bloodSub: '8,420 OSBTC Blood Units',
-        medTitle: 'Medicine Expiry & Safety',
-        medSub: 'OCR & Drug Interaction Guard',
+        abhaCardTitle: 'ଆଭା (ABHA) ଡିଜିଟାଲ୍ ସ୍ୱାସ୍ଥ୍ୟ ID',
+        emergency108: '୧୦୮ ଜରୁରୀକାଳୀନ SOS',
+        healthAlertTitle: 'ଜନସ୍ୱାସ୍ଥ୍ୟ ସତର୍କତା: ଓଡ଼ିଶାରେ ଡେଙ୍ଗୁ ଓ ତାତି ପ୍ରକୋପ ନିୟନ୍ତ୍ରଣ ପ୍ରୋଟୋକଲ୍ ଜାରି। ଲକ୍ଷଣ ଦେଖାଦେଲେ ତୁରନ୍ତ ଯାଞ୍ଚ କରନ୍ତୁ।',
+        viewDetails: 'ବିବରଣୀ ଦେଖନ୍ତୁ',
+        searchPlaceholder: 'ଡାକ୍ତର, ବେଡ୍, ଆମ୍ବୁଲାନ୍ସ, ରକ୍ତ ଭଣ୍ଡାର ଖୋଜନ୍ତୁ...',
+        triageTitle: 'AI ଲକ୍ଷଣ ଓ ସ୍ୱର ଟ୍ରିଆଜ୍',
+        triageSub: 'ବହୁଭାଷୀ ଭଏସ୍ ଓ ଡାକ୍ତରୀ ଟ୍ରିଆଜ୍ ସାରାଂଶ',
+        triageTag: 'AI ମାଇକ୍',
+        bedTitle: 'ହସ୍ପିଟାଲ୍ ବେଡ୍ ଟ୍ରାକର୍',
+        bedSub: '୧୦,୭୭୦ ଲାଇଭ୍ ଆଇସିୟୁ ଓ ସାଧାରଣ ବେଡ୍',
+        bedTag: 'ଲାଇଭ୍ ବେଡ୍',
+        ambTitle: 'GPS ୧୦୮ ଆମ୍ବୁଲାନ୍ସ କଲ୍',
+        ambSub: 'ତୁରନ୍ତ ଜରୁରୀକାଳୀନ SOS ଡିସପାଚ୍',
+        ambTag: '୧୦୮ SOS',
+        docTitle: 'ଡାକ୍ତର ଭିଡିଓ ପରାମର୍ଶ',
+        docSub: '୨,୫୨୩ OMC ପଞ୍ଜୀକୃତ ବିଶେଷଜ୍ଞ',
+        docTag: 'OPD ତାଲିକା',
+        rxTitle: 'ଡିଜିଟାଲ୍ ପ୍ରେସକ୍ରିପସନ୍ ସ୍ଲିପ୍',
+        rxSub: 'NMC ଡିଜିଟାଲ୍ Rx ଏବଂ ରେଫରାଲ୍ ସ୍ଲିପ୍',
+        rxTag: 'NMC Rx',
+        gpsTitle: 'ନିକଟସ୍ଥ ହସ୍ପିଟାଲ୍ GPS',
+        gpsSub: 'PHC, CHC ଓ DHH ମାର୍ଗଦର୍ଶକ',
+        gpsTag: 'GPS ମ୍ୟାପ୍',
+        bloodTitle: 'ରକ୍ତ ଭଣ୍ଡାର ନେଟୱର୍କ',
+        bloodSub: '୮,୪୨୦ OSBTC ରକ୍ତ ୟୁନିଟ୍ ଉପଲବ୍ଧ',
+        bloodTag: 'OSBTC ରକ୍ତ',
+        medTitle: 'ଔଷଧ ସୁରକ୍ଷା ଓ ଅବଧି ଯାଞ୍ଚ',
+        medSub: 'OCR ସ୍କାନର୍ ଓ ଔଷଧ ପାରସ୍ପରିକ କ୍ରିୟା ସୁରକ୍ଷା',
+        medTag: 'OCR ଯାଞ୍ଚ',
         marketTitle: 'ଔଷଧ ବଜାର ଓ ଜନଔଷଧି',
         marketSub: '୨୮+ ଔଷଧ ଓ କଟା ଷ୍ଟ୍ରିପ୍ QR',
-        phcTitle: 'PHC Offline Sync Engine',
-        phcSub: 'Zero-Internet Rural Clinic DB',
-        ashaTitle: 'ASHA Field Worker Portal',
-        ashaSub: 'Maternal & Child Health Surveys',
-        adminTitle: 'State Command Hub',
-        adminSub: '30-District Health Governance',
-        teleconsultTitle: 'ଭିଡିଓ ଟେଲିକନସଲଟେସନ୍',
+        marketTag: '୨୮+ ଔଷଧ',
+        phcTitle: 'PHC ଅଫଲାଇନ୍ ସିଙ୍କ୍ ଇଞ୍ଜିନ୍',
+        phcSub: 'ଇଣ୍ଟରନେଟ୍ ବିନା ଗ୍ରାମୀଣ କ୍ଲିନିକ୍ ଡାଟାବେସ୍',
+        phcTag: 'ଅଫଲାଇନ୍ DB',
+        ashaTitle: 'ଆଶା କର୍ମୀ ଫିଲ୍ଡ ପୋର୍ଟାଲ୍',
+        ashaSub: 'ମାତୃ ଓ ଶିଶୁ ସ୍ୱାସ୍ଥ୍ୟ ସର୍ଭେକ୍ଷଣ',
+        ashaTag: 'ଆଶା ଫିଲ୍ଡ',
+        adminTitle: 'ରାଜ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ କମାଣ୍ଡ ହବ୍',
+        adminSub: '୩୦-ଜିଲ୍ଲା ସ୍ୱାସ୍ଥ୍ୟ ପରିଚାଳନା ଓ ଟେଲିମେଟ୍ରି',
+        adminTag: 'କମାଣ୍ଡ',
+        pilotTitle: '୧୦୮ ପାଇଲଟ୍ MDT କନସୋଲ୍',
+        pilotTag: '୧୦୮ MDT',
+        teleconsultTitle: 'ଲାଇଭ୍ ଭିଡିଓ ଟେଲିକନସଲ୍ଟ',
         teleconsultSub: 'ଲାଇଭ୍ WebRTC ଭିଡିଓ କଲ୍ ଓ ଡିଜିଟାଲ୍ Rx',
+        teleconsultTag: 'ଲାଇଭ୍ ଭିଡିଓ',
         teleconsultNav: 'ଭିଡିଓ OPD',
-        home: 'Home',
-        services: 'Services',
-        records: 'Health Records',
-        profile: 'Profile',
-        backToHome: 'Back',
-        copySuccess: 'ABHA Copied!'
+        home: 'ମୂଳପୃଷ୍ଠା',
+        services: 'ସେବା ସମୂହ',
+        records: 'ସ୍ୱାସ୍ଥ୍ୟ ରେକର୍ଡ',
+        profile: 'ପ୍ରୋଫାଇଲ୍',
+        backToHome: 'ଫେରନ୍ତୁ',
+        copySuccess: 'ଆଭା ନମ୍ବର କପି ହୋଇଛି!',
+        linkedAbha: 'ସଂଯୁକ୍ତ ଆଭା:',
+        recordsHeading: 'ସ୍ୱାସ୍ଥ୍ୟ ରେକର୍ଡ ସମୂହ',
+        recordsSub: 'ଆୟୁଷ୍ମାନ ଭାରତ ଡିଜିଟାଲ୍ ହେଲଥ୍ ଭଲ୍ଟ',
+        recordsShieldText: 'ଆପଣଙ୍କ ହସ୍ପିଟାଲ୍ ଭିଜିଟ୍, ପ୍ରେସକ୍ରିପସନ୍ ଏବଂ ଟ୍ରିଆଜ୍ ଇତିହାସ ଓଡ଼ିଶା ସ୍ୱାସ୍ଥ୍ୟ ନେଟୱର୍କ ସହ ସୁରକ୍ଷିତ ଭାବେ ସିଙ୍କ୍ ହୋଇଛି।',
+        doctorConsultations: 'ଡାକ୍ତର ପରାମର୍ଶ ରେକର୍ଡ',
+        doctorConsultationsSub: 'ଆଗାମୀ OPD ଟୋକନ୍ ଓ ଭିଡିଓ କଲ୍ ଇତିହାସ',
+        triageAssessments: 'ପୂର୍ବ AI ଟ୍ରିଆଜ୍ ଆକଳନ',
+        triageAssessmentsSub: 'ସ୍ୱର ଲକ୍ଷଣ ରେକର୍ଡ ଓ ଜରୁରୀକାଳୀନ ଟ୍ରିଆଜ୍ ଲଗ୍',
+        referralSlips: 'ହସ୍ପିଟାଲ୍ ରେଫରାଲ୍ ସ୍ଲିପ୍',
+        referralSlipsSub: 'ସରକାରୀ ଆନ୍ତଃ-ହସ୍ପିଟାଲ୍ କ୍ଲିନିକାଲ୍ ଟ୍ରାନ୍ସଫର ମେମୋ',
+        medicineRecords: 'ଔଷଧ ସୁରକ୍ଷା ଓ ଅବଧି ରେକର୍ଡ',
+        medicineRecordsSub: 'ସ୍କାନ୍ ହୋଇଥିବା ଔଷଧ ବ୍ୟାଚ୍ ସୁରକ୍ଷା ଭଲ୍ଟ',
+        servicesHeading: 'ସ୍ୱାସ୍ଥ୍ୟ ସେବା ସମୂହ',
+        servicesSub: 'ସମସ୍ତ ଓଡ଼ିଶା ABDM କ୍ଲିନିକାଲ୍ ମଡ୍ୟୁଲ୍',
+        profileHeading: 'ପ୍ରୋଫାଇଲ୍ ଏବଂ ପସନ୍ଦ',
+        langPref: 'ଭାଷା ପସନ୍ଦ (Language Preference)',
+        colorTheme: 'ରଙ୍ଗ ଥିମ୍ (Color Theme)',
+        themeLight: 'ଉଜ୍ଜ୍ୱଳ',
+        themeDark: 'ଗାଢ଼',
+        themeSepia: 'ସେପିଆ',
+        switchRoleDemo: 'ଭୂମିକା ପରିବର୍ତ୍ତନ (ଲାଇଭ୍ ଡେମୋ ରିଭ୍ୟୁ)',
+        citizenRole: 'ନାଗରିକ (Citizen)',
+        citizenRoleSub: 'ସ୍ତର ୧: ସାଧାରଣ ସେବା',
+        doctorRole: 'ଡାକ୍ତର (Doctor / RMP)',
+        doctorRoleSub: 'ସ୍ତର ୩: କ୍ଲିନିକାଲ୍',
+        ashaRole: 'ଆଶା କର୍ମୀ (ASHA / PHC)',
+        ashaRoleSub: 'ସ୍ତର ୨: ଫିଲ୍ଡ ଆଉଟରିଚ୍',
+        adminRole: 'ସୁପର ଆଡମିନ୍ (Super Admin)',
+        adminRoleSub: 'ସ୍ତର ୫: ରାଜ୍ୟ ସରକାର',
+        driverRole: '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ପାଇଲଟ୍',
+        driverRoleSub: 'ସ୍ତର ୪: ଜରୁରୀକାଳୀନ MDT',
+        switchUserPortal: 'ଉପଭୋକ୍ତା / ଷ୍ଟାଫ୍ ପୋର୍ଟାଲ୍ ବଦଳାନ୍ତୁ',
+        switchToDesktop: 'ଡେସ୍କଟପ୍ ମଲ୍ଟି-ହବ୍ ଭ୍ୟୁ କୁ ଯାଆନ୍ତୁ',
+        signIn: 'ଲଗ୍-ଇନ୍ / ଖାତା ଖୋଲନ୍ତୁ',
+        signOut: 'ଲଗ୍-ଆଉଟ୍ କରନ୍ତୁ',
+        abhaQrTitle: 'ଆଭା (ABHA) ଡିଜିଟାଲ୍ QR କୋଡ୍',
+        abhaQrSub: 'ଯେକୌଣସି PHC, CHC, କିମ୍ବା DHH OPD କାଉଣ୍ଟରରେ କାଗଜହୀନ ପଞ୍ଜୀକରଣ ପାଇଁ ସ୍କାନ୍ କରନ୍ତୁ।',
+        advisoryTitle: 'ଓଡ଼ିଶା ଜନସ୍ୱାସ୍ଥ୍ୟ ଡେଙ୍ଗୁ ଓ ତାତି ପରାମର୍ଶ',
+        issuedBy: 'ଜାରିକର୍ତ୍ତା: ସ୍ୱାସ୍ଥ୍ୟ ଓ ପରିବାର କଲ୍ୟାଣ ବିଭାଗ, ଓଡ଼ିଶା ସରକାର।',
+        advisoryP1: 'ସମସ୍ତ CHC ରେ ଡେଙ୍ଗୁ ପ୍ରାରମ୍ଭିକ ପରୀକ୍ଷା ଓ ପ୍ଲେଟଲେଟ୍ କାଉଣ୍ଟର ସକ୍ରିୟ।',
+        advisoryP2: 'ଦିବା ୧୧:୦୦ ରୁ ଅପରାହ୍ନ ୩:୩୦ ମଧ୍ୟରେ ସିଧାସଳଖ ସୂର୍ଯ୍ୟକିରଣରୁ ଦୂରେଇ ରୁହନ୍ତୁ।',
+        advisoryP3: 'ପ୍ରଚୁର ପାଣି, ଘୋଳଦହି, ଲେମ୍ବୁ ପାଣି ଏବଂ ORS ପିଅନ୍ତୁ।',
+        advisoryP4: 'ଜ୍ୱର ସହିତ କମ୍ପନ କିମ୍ବା ଦେହ ହାତ ବିନ୍ଧା ହେଲେ AI ଲକ୍ଷଣ ଟ୍ରିଆଜ୍ ବ୍ୟବହାର କରନ୍ତୁ କିମ୍ବା ନିକଟସ୍ଥ PHC କୁ ତୁରନ୍ତ ଯାଆନ୍ତୁ।',
+        understood: 'ବୁଝିଗଲି (Understood)',
+        close: 'ବନ୍ଦ କରନ୍ତୁ (Close)',
+        genderMale: 'ପୁରୁଷ',
+        genderFemale: 'ମହିଳା',
+        genderOther: 'ଅନ୍ୟାନ୍ୟ',
+        dobLabel: 'ଜନ୍ମ:'
       },
       'hi-IN': {
-        brandTitle: 'SwasthyaMitra Odisha',
-        brandSubtitle: 'Odisha Digital Health Mission (ABDM)',
+        brandTitle: 'स्वास्थ्यमित्र ओडिशा',
+        brandSubtitle: 'ओडिशा डिजिटल हेल्थ मिशन (ABDM)',
         odishaGov: 'ओडिशा डिजिटल हेल्थ मिशन',
-        abhaCardTitle: 'ABHA Digital Health ID',
-        emergency108: '108 EMERGENCY SOS',
-        healthAlertTitle: 'PUBLIC HEALTH ALERT: ओडिशा में डेंगू व लू से बचाव निर्देश जारी। लक्षण दिखने पर तुरंत जांच करें।',
-        viewDetails: 'VIEW DETAILS',
-        searchPlaceholder: 'Search doctors, beds, ambulance, blood...',
-        triageTitle: 'AI Symptom Voice Triage',
-        triageSub: 'AI लक्षण जांच एवं वॉइस इनपुट',
-        bedTitle: 'Hospital Bed Tracker',
-        bedSub: 'लाइव ICU व जनरल बेड उपलब्धता',
-        ambTitle: 'GPS 108 Ambulance Dispatch',
-        ambSub: 'आपातकालीन 108 एम्बुलेंस जीपीएस',
-        docTitle: 'Doctor Video Consultation',
-        docSub: '2,523 OMC विशेषज्ञ डॉक्टर',
-        rxTitle: 'Digital Prescription Slips',
-        rxSub: 'डिजिटल प्रिस्क्रिप्शन व रेफरल पर्ची',
-        gpsTitle: 'Nearest Hospital GPS',
-        gpsSub: 'निकटतम PHC / CHC अस्पताल मैप',
-        bloodTitle: 'Blood Bank Network',
-        bloodSub: 'OSBTC रियल-टाइम रक्त भंडार',
-        medTitle: 'Medicine Expiry & Safety',
-        medSub: 'दवा सुरक्षा व एक्सपायरी स्कैनर',
+        abhaCardTitle: 'आभा (ABHA) डिजिटल हेल्थ आईडी',
+        emergency108: '108 आपातकालीन SOS',
+        healthAlertTitle: 'जनस्वास्थ्य चेतावनी: ओडिशा में डेंगू व लू से बचाव निर्देश जारी। लक्षण दिखने पर तुरंत जांच करें।',
+        viewDetails: 'विवरण देखें',
+        searchPlaceholder: 'डॉक्टर, बेड, एम्बुलेंस, ब्लड बैंक खोजें...',
+        triageTitle: 'AI लक्षण व स्वर ट्राइएज',
+        triageSub: 'बहुभाषी वॉइस इनपुट एवं क्लिनिकल ट्राइएज नोट',
+        triageTag: 'AI माइक',
+        bedTitle: 'अस्पताल बेड ट्रैकर',
+        bedSub: '10,770 लाइव ICU व सामान्य बेड',
+        bedTag: 'लाइव बेड',
+        ambTitle: 'GPS 108 एम्बुलेंस डिस्पैच',
+        ambSub: 'तत्काल 108 आपातकालीन जीपीएस कॉल',
+        ambTag: '108 SOS',
+        docTitle: 'डॉक्टर वीडियो परामर्श',
+        docSub: '2,523 OMC सत्यापित विशेषज्ञ डॉक्टर',
+        docTag: 'OPD सूची',
+        rxTitle: 'डिजिटल प्रिस्क्रिप्शन पर्ची',
+        rxSub: 'NMC डिजिटल Rx एवं रेफरल पर्ची',
+        rxTag: 'NMC Rx',
+        gpsTitle: 'निकटतम अस्पताल GPS',
+        gpsSub: 'PHC, CHC व DHH नेविगेटर मैप',
+        gpsTag: 'GPS मैप',
+        bloodTitle: 'ब्लड बैंक नेटवर्क',
+        bloodSub: '8,420 OSBTC ब्लड यूनिट्स उपलब्धता',
+        bloodTag: 'OSBTC रक्त',
+        medTitle: 'दवा सुरक्षा व एक्सपायरी जांच',
+        medSub: 'OCR स्कैनर व ड्रग इंटरेक्शन सुरक्षा',
+        medTag: 'OCR जांच',
         marketTitle: 'दवा बाज़ार एवं जन औषधि',
-        marketSub: '28+ दवाएं व कटी स्ट्रिप QR',
-        phcTitle: 'PHC Offline Sync Engine',
-        phcSub: 'जीरो इंटरनेट ग्रामीण डाटा सिंक',
-        ashaTitle: 'ASHA Field Worker Portal',
+        marketSub: '28+ दवाएं व कटी स्ट्रिप QR जांच',
+        marketTag: '28+ दवाएं',
+        phcTitle: 'PHC ऑफलाइन सिंक इंजन',
+        phcSub: 'जीरो-इंटरनेट ग्रामीण क्लीनिक डेटाबेस',
+        phcTag: 'ऑफलाइन DB',
+        ashaTitle: 'आशा कार्यकर्ता फील्ड पोर्टल',
         ashaSub: 'मातृ एवं शिशु स्वास्थ्य सर्वेक्षण',
-        adminTitle: 'State Command Hub',
-        adminSub: '30 जिला कमान एवं टेलीमेट्री',
-        teleconsultTitle: 'लाइव वीडियो टेलीपरामर्श',
-        teleconsultSub: 'WebRTC वीडियो कॉल एवं डिजिटल पर्ची',
+        ashaTag: 'आशा फील्ड',
+        adminTitle: 'राज्य स्वास्थ्य कमांड हब',
+        adminSub: '30-जिला स्वास्थ्य प्रशासन व टेलीमेट्री',
+        adminTag: 'कमांड',
+        pilotTitle: '108 एम्बुलेंस पायलट कंसोल',
+        pilotTag: '108 MDT',
+        teleconsultTitle: 'लाइव वीडियो टेली-परामर्श',
+        teleconsultSub: 'लाइव WebRTC वीडियो कॉल एवं डिजिटल पर्ची',
+        teleconsultTag: 'लाइव वीडियो',
         teleconsultNav: 'वीडियो OPD',
-        home: 'Home',
-        services: 'Services',
-        records: 'Health Records',
-        profile: 'Profile',
-        backToHome: 'Back',
-        copySuccess: 'ABHA Copied!'
+        home: 'होम',
+        services: 'सेवाएं',
+        records: 'स्वास्थ्य रिकॉर्ड्स',
+        profile: 'प्रोफ़ाइल',
+        backToHome: 'वापस',
+        copySuccess: 'आभा नंबर कॉपी किया गया!',
+        linkedAbha: 'लिंक्ड आभा:',
+        recordsHeading: 'स्वास्थ्य रिकॉर्ड्स',
+        recordsSub: 'आयुष्मान भारत डिजिटल हेल्थ वॉल्ट',
+        recordsShieldText: 'आपके अस्पताल परामर्श, प्रिस्क्रिप्शन और ट्राइएज इतिहास ओडिशा स्वास्थ्य नेटवर्क पर सुरक्षित रूप से सिंक हैं।',
+        doctorConsultations: 'डॉक्टर परामर्श रिकॉर्ड',
+        doctorConsultationsSub: 'आगामी OPD टोकन एवं वीडियो कॉल इतिहास',
+        triageAssessments: 'विगत AI ट्राइएज आकलन',
+        triageAssessmentsSub: 'वॉइस लक्षण रिकॉर्ड एवं आपातकालीन ट्राइएज लॉग',
+        referralSlips: 'अस्पताल रेफरल पर्चियां',
+        referralSlipsSub: 'आधिकारिक अंतर-अस्पताल क्लीनिकल ट्रांसफर मेमो',
+        medicineRecords: 'दवा सुरक्षा व एक्सपायरी रिकॉर्ड',
+        medicineRecordsSub: 'स्कैन की गई स्ट्रिप बैच सुरक्षा एवं सत्यापन वॉल्ट',
+        servicesHeading: 'स्वास्थ्य सेवाएं',
+        servicesSub: 'उपलब्ध ओडिशा ABDM क्लीनिकल मॉड्यूल्स',
+        profileHeading: 'प्रोफ़ाइल एवं प्राथमिकताएं',
+        langPref: 'भाषा प्राथमिकता (Language Preference)',
+        colorTheme: 'रंग थीम (Color Theme)',
+        themeLight: 'लाइट',
+        themeDark: 'डार्क',
+        themeSepia: 'सेपिया',
+        switchRoleDemo: 'भूमिका बदलें (लाइव डेमो रिव्यू)',
+        citizenRole: 'नागरिक (Citizen)',
+        citizenRoleSub: 'स्तर 1: सार्वजनिक सेवा',
+        doctorRole: 'डॉक्टर (Doctor / RMP)',
+        doctorRoleSub: 'स्तर 3: क्लीनिकल',
+        ashaRole: 'आशा कार्यकर्ता (ASHA / PHC)',
+        ashaRoleSub: 'स्तर 2: आउटरीच',
+        adminRole: 'सुपर एडमिन (Super Admin)',
+        adminRoleSub: 'स्तर 5: राज्य प्रशासन',
+        driverRole: '108 एम्बुलेंस पायलट',
+        driverRoleSub: 'स्तर 4: डिस्पैच MDT',
+        switchUserPortal: 'उपयोगकर्ता / स्टाफ पोर्टल बदलें',
+        switchToDesktop: 'डेस्कटॉप मल्टी-हब व्यू पर जाएं',
+        signIn: 'साइन इन / खाता बनाएं',
+        signOut: 'साइन आउट',
+        abhaQrTitle: 'आभा (ABHA) डिजिटल QR कोड',
+        abhaQrSub: 'किसी भी PHC, CHC या DHH OPD काउंटर पर तत्काल पेपरलेस पंजीकरण के लिए स्कैन करें।',
+        advisoryTitle: 'जनस्वास्थ्य डेंगू एवं लू परामर्श',
+        issuedBy: 'जारीकर्ता: स्वास्थ्य एवं परिवार कल्याण विभाग, ओडिशा सरकार।',
+        advisoryP1: 'सभी CHC में डेंगू की प्रारंभिक जांच एवं प्लेटलेट काउंटर सक्रिय हैं।',
+        advisoryP2: 'सुबह 11:00 बजे से दोपहर 3:30 बजे तक सीधी धूप से बचें।',
+        advisoryP3: 'पर्याप्त मात्रा में पानी, छाछ, नींबू पानी और ओआरएस पिएं।',
+        advisoryP4: 'कंपकंपी के साथ बुखार या बदन दर्द होने पर AI लक्षण ट्राइएज का उपयोग करें या तुरंत निकटतम PHC जाएं।',
+        understood: 'समझ गया (Understood)',
+        close: 'बंद करें (Close)',
+        genderMale: 'पुरुष',
+        genderFemale: 'महिला',
+        genderOther: 'अन्य',
+        dobLabel: 'जन्म:'
       },
       'en-IN': {
         brandTitle: 'SwasthyaMitra Odisha',
@@ -173,45 +309,118 @@ export default function MobileAppView({
         odishaGov: 'ODISHA DIGITAL HEALTH MISSION',
         abhaCardTitle: 'ABHA Digital Health ID',
         emergency108: '108 EMERGENCY SOS',
-        healthAlertTitle: 'PUBLIC HEALTH ALERT: Dengue Prevention Protocols Active in Bhubaneswar. Report Symptoms Immediately.',
+        healthAlertTitle: 'PUBLIC HEALTH ALERT: Dengue & Heatwave Prevention Protocols Active in Odisha. Report Symptoms Immediately.',
         viewDetails: 'VIEW DETAILS',
         searchPlaceholder: 'Search doctors, beds, ambulance, blood...',
         triageTitle: 'AI Symptom Voice Triage',
         triageSub: 'Multilingual Voice & Triage Note',
+        triageTag: 'AI Mic',
         bedTitle: 'Hospital Bed Tracker',
         bedSub: '10,770 Live ICU & General Beds',
+        bedTag: 'Live Beds',
         ambTitle: 'GPS 108 Ambulance Dispatch',
         ambSub: 'Instant GPS Emergency SOS',
+        ambTag: '108 SOS',
         docTitle: 'Doctor Video Consultation',
         docSub: '2,523 OMC Verified Specialists',
+        docTag: 'OPD Directory',
         rxTitle: 'Digital Prescription Slips',
         rxSub: 'NMC Digital Rx & Referral Slips',
+        rxTag: 'NMC Rx',
         gpsTitle: 'Nearest Hospital GPS',
         gpsSub: 'PHC, CHC & DHH Navigator',
+        gpsTag: 'GPS Map',
         bloodTitle: 'Blood Bank Network',
         bloodSub: '8,420 OSBTC Blood Units',
+        bloodTag: 'OSBTC Stock',
         medTitle: 'Medicine Expiry & Safety',
         medSub: 'OCR & Drug Interaction Guard',
+        medTag: 'OCR Safe',
         marketTitle: 'Medicine Market & Jan Aushadhi',
         marketSub: '28+ Medicines & Cut Strip QR',
+        marketTag: '28+ Meds',
         phcTitle: 'PHC Offline Sync Engine',
         phcSub: 'Zero-Internet Rural Clinic DB',
+        phcTag: 'Offline DB',
         ashaTitle: 'ASHA Field Worker Portal',
         ashaSub: 'Maternal & Child Health Surveys',
+        ashaTag: 'Field Outreach',
         adminTitle: 'State Command Hub',
         adminSub: '30-District Health Governance',
+        adminTag: 'Command',
+        pilotTitle: '108 Pilot MDT Console',
+        pilotTag: '108 MDT',
         teleconsultTitle: 'Live Video Teleconsult',
         teleconsultSub: 'In-App WebRTC Video & AI SOAP Scribe',
+        teleconsultTag: 'Live Video',
         teleconsultNav: 'Video OPD',
         home: 'Home',
         services: 'Services',
         records: 'Health Records',
         profile: 'Profile',
         backToHome: 'Back',
-        copySuccess: 'ABHA Copied!'
+        copySuccess: 'ABHA Copied!',
+        linkedAbha: 'Linked ABHA:',
+        recordsHeading: 'Health Records',
+        recordsSub: 'Ayushman Bharat Digital Health Vault',
+        recordsShieldText: 'Your hospital visits, diagnostic prescriptions, and triage history are securely synced with the Odisha Health Network.',
+        doctorConsultations: 'Doctor Consultations',
+        doctorConsultationsSub: 'Upcoming OPD tokens & video call history',
+        triageAssessments: 'Past AI Triage Assessments',
+        triageAssessmentsSub: 'Voice symptom records & emergency triage logs',
+        referralSlips: 'Hospital Referral Slips',
+        referralSlipsSub: 'Official inter-hospital clinical transfer memos',
+        medicineRecords: 'Medicine Safety & Expiry Records',
+        medicineRecordsSub: 'Scanned strip batch safety and verification vault',
+        servicesHeading: 'Healthcare Services',
+        servicesSub: 'All available Odisha ABDM clinical modules',
+        profileHeading: 'Profile & Preferences',
+        langPref: 'Language Preference',
+        colorTheme: 'Color Theme',
+        themeLight: 'Light',
+        themeDark: 'Dark',
+        themeSepia: 'Sepia',
+        switchRoleDemo: 'Switch Role (Live Demo Review)',
+        citizenRole: 'Citizen',
+        citizenRoleSub: 'Tier 1: Public Care',
+        doctorRole: 'Doctor (RMP)',
+        doctorRoleSub: 'Tier 3: Clinical',
+        ashaRole: 'ASHA / PHC',
+        ashaRoleSub: 'Tier 2: Outreach',
+        adminRole: 'Super Admin',
+        adminRoleSub: 'Tier 5: State Gov',
+        driverRole: '108 Ambulance Pilot',
+        driverRoleSub: 'Tier 4: Dispatch MDT',
+        switchUserPortal: 'Switch User / Staff Portal',
+        switchToDesktop: 'Switch to Desktop Multi-Hub View',
+        signIn: 'Sign In / Create Account',
+        signOut: 'Sign Out',
+        abhaQrTitle: 'ABHA Digital QR',
+        abhaQrSub: 'Scan at any PHC, CHC, or DHH OPD counter for instant paperless registration.',
+        advisoryTitle: 'Public Health Dengue & Heatwave Advisory',
+        issuedBy: 'Issued by: Health & Family Welfare Dept, Govt of Odisha.',
+        advisoryP1: 'Dengue early testing and platelet counters active across all CHCs.',
+        advisoryP2: 'Avoid direct exposure to sunlight between 11:00 AM and 3:30 PM.',
+        advisoryP3: 'Drink plenty of water, buttermilk, lemon water, and ORS.',
+        advisoryP4: 'In case of fever with shivering or body ache, use AI Symptom Triage or visit nearest PHC immediately.',
+        understood: 'Understood',
+        close: 'Close',
+        genderMale: 'Male',
+        genderFemale: 'Female',
+        genderOther: 'Other',
+        dobLabel: 'DOB:'
       }
-    }[appLang] || {};
-  }, [appLang]);
+    };
+    return dict[normalizedLang] || dict['or-IN'];
+  }, [normalizedLang]);
+
+  // Localized Gender
+  const localizedGender = useMemo(() => {
+    const g = (patientGender || '').toLowerCase();
+    if (g.includes('fem') || g.includes('महिला') || g.includes('ମହିଳା')) return t.genderFemale;
+    if (g.includes('mal') || g.includes('पुरुष') || g.includes('ପୁରୁଷ')) return t.genderMale;
+    return patientGender || t.genderOther;
+  }, [patientGender, t]);
 
   // Copy ABHA handler
   const handleCopyAbha = () => {
@@ -234,73 +443,91 @@ export default function MobileAppView({
         id: 'intake',
         hub: 'citizen',
         title: t.triageTitle,
+        sub: t.triageSub,
         icon: Activity,
         iconBg: 'bg-rose-50 text-rose-500 border border-rose-200',
-        tag: 'AI Mic'
+        tag: t.triageTag,
+        searchKeywords: 'triage symptom voice mic ଆଇ ଲକ୍ଷଣ ସ୍ୱର ଟ୍ରିଆଜ୍ लक्षण जांच'
       },
       {
         id: 'beds',
         hub: 'citizen',
         title: t.bedTitle,
+        sub: t.bedSub,
         icon: Bed,
         iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
-        tag: 'Live Beds'
+        tag: t.bedTag,
+        searchKeywords: 'beds icu general hospital ବେଡ୍ ଆଇସିୟୁ ହସ୍ପିଟାଲ୍ बेड'
       },
       {
         id: 'ambulance',
         hub: 'citizen',
         title: t.ambTitle,
+        sub: t.ambSub,
         icon: Truck,
         iconBg: 'bg-amber-50 text-amber-600 border border-amber-200',
-        tag: '108 SOS'
+        tag: t.ambTag,
+        searchKeywords: 'ambulance 108 emergency gps ଆମ୍ବୁଲାନ୍ସ ଏମରଜେନ୍ସି एम्बुलेंस'
       },
       {
         id: 'doctors',
         hub: 'citizen',
         title: t.docTitle,
+        sub: t.docSub,
         icon: Stethoscope,
         iconBg: 'bg-blue-50 text-blue-600 border border-blue-200',
-        tag: 'OPD Directory'
+        tag: t.docTag,
+        searchKeywords: 'doctor opd specialist consultation ଡାକ୍ତର ଡାକ୍ତରଖାନା डॉक्टर'
       },
       {
         id: 'teleconsult',
         hub: 'citizen',
         title: t.teleconsultTitle,
+        sub: t.teleconsultSub,
         icon: Video,
         iconBg: 'bg-purple-50 text-purple-600 border border-purple-200',
-        tag: 'Live WebRTC'
+        tag: t.teleconsultTag,
+        searchKeywords: 'teleconsult video call webrtc ଭିଡିଓ କଲ୍ ଟେଲିକନସଲ୍ଟ वीडियो'
       },
       {
         id: 'nearest',
         hub: 'citizen',
         title: t.gpsTitle,
+        sub: t.gpsSub,
         icon: MapPin,
         iconBg: 'bg-sky-50 text-sky-600 border border-sky-200',
-        tag: 'GPS Map'
+        tag: t.gpsTag,
+        searchKeywords: 'hospital gps map phc chc dhh ନିକଟସ୍ଥ ହସ୍ପିଟାଲ୍ ମ୍ୟାପ୍ अस्पताल'
       },
       {
         id: 'blood',
         hub: 'citizen',
         title: t.bloodTitle,
+        sub: t.bloodSub,
         icon: Droplet,
         iconBg: 'bg-red-50 text-red-600 border border-red-200',
-        tag: 'OSBTC Stock'
+        tag: t.bloodTag,
+        searchKeywords: 'blood bank donor osbtc ରକ୍ତ ଭଣ୍ଡାର ब्लड बैंक'
       },
       {
         id: 'medicines',
         hub: 'citizen',
         title: t.medTitle,
+        sub: t.medSub,
         icon: Pill,
         iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-200',
-        tag: 'OCR Safe'
+        tag: t.medTag,
+        searchKeywords: 'medicine expiry ocr safety ଔଷଧ ଏକ୍ସପାଏରୀ ସୁରକ୍ଷା दवा जांच'
       },
       {
         id: 'market',
         hub: 'citizen',
         title: t.marketTitle,
+        sub: t.marketSub,
         icon: ShoppingBag,
         iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
-        tag: '28+ Meds'
+        tag: t.marketTag,
+        searchKeywords: 'medicine market generic jan aushadhi ଔଷଧ ବଜାର ଜନଔଷଧି दवा बाज़ार'
       }
     ];
 
@@ -310,9 +537,11 @@ export default function MobileAppView({
         id: 'prescriptions',
         hub: 'doctor',
         title: t.rxTitle,
+        sub: t.rxSub,
         icon: FileText,
         iconBg: 'bg-purple-50 text-purple-600 border border-purple-200',
-        tag: 'NMC Rx'
+        tag: t.rxTag,
+        searchKeywords: 'nmc prescription rx referral ଡିଜିଟାଲ୍ ପ୍ରେସକ୍ରିପସନ୍ पर्ची'
       });
     }
 
@@ -322,9 +551,11 @@ export default function MobileAppView({
         id: 'phc_offline',
         hub: 'phc',
         title: t.phcTitle,
+        sub: t.phcSub,
         icon: Database,
         iconBg: 'bg-teal-50 text-teal-600 border border-teal-200',
-        tag: 'Offline DB'
+        tag: t.phcTag,
+        searchKeywords: 'phc offline rural clinic sync ଅଫଲାଇନ୍ ସିଙ୍କ୍ ऑफलाइन'
       });
     }
 
@@ -333,9 +564,11 @@ export default function MobileAppView({
         id: 'asha_field',
         hub: 'phc',
         title: t.ashaTitle,
+        sub: t.ashaSub,
         icon: HeartPulse,
         iconBg: 'bg-pink-50 text-pink-600 border border-pink-200',
-        tag: 'Field Outreach'
+        tag: t.ashaTag,
+        searchKeywords: 'asha frontline outreach survey ମାତୃ ଶିଶୁ ଆଶା आशा'
       });
     }
 
@@ -344,10 +577,12 @@ export default function MobileAppView({
       list.push({
         id: 'ambulance_driver',
         hub: 'driver',
-        title: appLang === 'or-IN' ? '୧୦୮ ପାଇଲଟ୍ MDT' : '108 Pilot MDT Console',
+        title: t.pilotTitle,
+        sub: t.ambSub,
         icon: Truck,
         iconBg: 'bg-rose-50 text-rose-600 border border-rose-200',
-        tag: '108 MDT'
+        tag: t.pilotTag,
+        searchKeywords: '108 driver pilot mdt dispatch ଆମ୍ବୁଲାନ୍ସ ପାଇଲଟ୍ पायलट'
       });
     }
 
@@ -357,14 +592,16 @@ export default function MobileAppView({
         id: 'admin',
         hub: 'admin',
         title: t.adminTitle,
+        sub: t.adminSub,
         icon: Layers,
         iconBg: 'bg-slate-100 text-slate-700 border border-slate-300',
-        tag: 'Command'
+        tag: t.adminTag,
+        searchKeywords: 'admin command governance ରାଜ୍ୟ କମାଣ୍ଡ प्रशासन'
       });
     }
 
     return list;
-  }, [t, isAdmin, isDoctor, isAsha, isDriver, appLang]);
+  }, [t, isAdmin, isDoctor, isAsha, isDriver]);
 
   // Open a specific module in full screen mobile detail
   const handleOpenModule = (tabKey, hubKey) => {
@@ -381,12 +618,16 @@ export default function MobileAppView({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Filtered Cards based on search
+  // Filtered Cards based on search with multilingual keyword support
   const filteredCards = useMemo(() => {
     if (!searchQuery.trim()) return actionCards;
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase().trim();
     return actionCards.filter(
-      (c) => c.title.toLowerCase().includes(q)
+      (c) =>
+        (c.title && c.title.toLowerCase().includes(q)) ||
+        (c.sub && c.sub.toLowerCase().includes(q)) ||
+        (c.tag && c.tag.toLowerCase().includes(q)) ||
+        (c.searchKeywords && c.searchKeywords.toLowerCase().includes(q))
     );
   }, [actionCards, searchQuery]);
 
@@ -415,19 +656,32 @@ export default function MobileAppView({
                 {actionCards.find((c) => c.id === selectedMobileTab)?.title || 'Health Module'}
               </div>
 
-              {/* Language Pill */}
+              {/* 3-Language Pill (Odia | Hindi | English) */}
               <div className="flex items-center bg-black/25 rounded-full p-0.5 text-[10px] font-bold">
                 <button
                   type="button"
                   onClick={() => setAppLang('or-IN')}
-                  className={`px-2 py-0.5 rounded-full ${appLang === 'or-IN' ? 'bg-white text-emerald-950 shadow-xs' : 'text-emerald-200'}`}
+                  className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                    normalizedLang === 'or-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200 hover:text-white'
+                  }`}
                 >
                   ଓଡ଼ିଆ
                 </button>
                 <button
                   type="button"
+                  onClick={() => setAppLang('hi-IN')}
+                  className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                    normalizedLang === 'hi-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200 hover:text-white'
+                  }`}
+                >
+                  हिन्दी
+                </button>
+                <button
+                  type="button"
                   onClick={() => setAppLang('en-IN')}
-                  className={`px-2 py-0.5 rounded-full ${appLang === 'en-IN' ? 'bg-white text-emerald-950 shadow-xs' : 'text-emerald-200'}`}
+                  className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                    normalizedLang === 'en-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200 hover:text-white'
+                  }`}
                 >
                   EN
                 </button>
@@ -445,8 +699,8 @@ export default function MobileAppView({
           /* ───────────────────────────────────────────────────────────── */
           <div className="flex-1 flex flex-col p-4 space-y-4 animate-fadeIn">
             <div className="pt-2">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">Healthcare Services</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">All available Odisha ABDM clinical modules</p>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">{t.servicesHeading}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t.servicesSub}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -480,8 +734,8 @@ export default function MobileAppView({
           <div className="flex-1 flex flex-col p-4 space-y-4 animate-fadeIn">
             <div className="pt-2 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-black text-slate-900 dark:text-white">Health Records</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Ayushman Bharat Digital Health Vault</p>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">{t.recordsHeading}</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t.recordsSub}</p>
               </div>
               <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-300">
                 ABDM 256-BIT
@@ -491,10 +745,10 @@ export default function MobileAppView({
             <div className="bg-emerald-50 dark:bg-emerald-950/40 p-3.5 rounded-2xl border border-emerald-200 dark:border-emerald-800 text-xs space-y-1">
               <div className="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Linked ABHA: {abhaNumber}</span>
+                <span>{t.linkedAbha} {abhaNumber}</span>
               </div>
               <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
-                Your hospital visits, diagnostic prescriptions, and triage history are securely synced with the Odisha Health Network.
+                {t.recordsShieldText}
               </p>
             </div>
 
@@ -509,8 +763,8 @@ export default function MobileAppView({
                     <Calendar className="w-5 h-5" />
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Doctor Consultations</div>
-                    <div className="text-[10px] text-slate-500">Upcoming OPD tokens & video call history</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">{t.doctorConsultations}</div>
+                    <div className="text-[10px] text-slate-500">{t.doctorConsultationsSub}</div>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -526,8 +780,8 @@ export default function MobileAppView({
                     <Activity className="w-5 h-5" />
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Past AI Triage Assessments</div>
-                    <div className="text-[10px] text-slate-500">Voice symptom records & emergency triage logs</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">{t.triageAssessments}</div>
+                    <div className="text-[10px] text-slate-500">{t.triageAssessmentsSub}</div>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -544,8 +798,8 @@ export default function MobileAppView({
                       <FileText className="w-5 h-5" />
                     </div>
                     <div className="text-left">
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">Hospital Referral Slips</div>
-                      <div className="text-[10px] text-slate-500">Official inter-hospital clinical transfer memos</div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">{t.referralSlips}</div>
+                      <div className="text-[10px] text-slate-500">{t.referralSlipsSub}</div>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -561,8 +815,8 @@ export default function MobileAppView({
                       <Pill className="w-5 h-5" />
                     </div>
                     <div className="text-left">
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">Medicine Safety & Expiry Records</div>
-                      <div className="text-[10px] text-slate-500">Scanned strip batch safety and verification vault</div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">{t.medicineRecords}</div>
+                      <div className="text-[10px] text-slate-500">{t.medicineRecordsSub}</div>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -576,7 +830,7 @@ export default function MobileAppView({
           /* ───────────────────────────────────────────────────────────── */
           <div className="flex-1 flex flex-col p-4 space-y-4 animate-fadeIn">
             <div className="pt-2">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">Profile & Preferences</h2>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">{t.profileHeading}</h2>
             </div>
 
             {/* Profile Avatar Card */}
@@ -593,13 +847,13 @@ export default function MobileAppView({
 
             {/* Language Switcher */}
             <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Language Preference (ଭାଷା ଚୟନ)</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">{t.langPref}</label>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setAppLang('or-IN')}
                   className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    appLang === 'or-IN'
+                    normalizedLang === 'or-IN'
                       ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
                       : 'bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                   }`}
@@ -610,7 +864,7 @@ export default function MobileAppView({
                   type="button"
                   onClick={() => setAppLang('hi-IN')}
                   className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    appLang === 'hi-IN'
+                    normalizedLang === 'hi-IN'
                       ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
                       : 'bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                   }`}
@@ -621,7 +875,7 @@ export default function MobileAppView({
                   type="button"
                   onClick={() => setAppLang('en-IN')}
                   className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    appLang === 'en-IN'
+                    normalizedLang === 'en-IN'
                       ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
                       : 'bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600'
                   }`}
@@ -633,7 +887,7 @@ export default function MobileAppView({
 
             {/* Theme Mode */}
             <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Color Theme</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">{t.colorTheme}</label>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
@@ -645,7 +899,7 @@ export default function MobileAppView({
                   }`}
                 >
                   <Sun className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Light</span>
+                  <span>{t.themeLight}</span>
                 </button>
                 <button
                   type="button"
@@ -657,7 +911,7 @@ export default function MobileAppView({
                   }`}
                 >
                   <Moon className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Dark</span>
+                  <span>{t.themeDark}</span>
                 </button>
                 <button
                   type="button"
@@ -669,7 +923,7 @@ export default function MobileAppView({
                   }`}
                 >
                   <BookOpen className="w-3.5 h-3.5 text-amber-300" />
-                  <span>Sepia</span>
+                  <span>{t.themeSepia}</span>
                 </button>
               </div>
             </div>
@@ -678,7 +932,7 @@ export default function MobileAppView({
             {onSwitchPersona && (
               <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                  <span>🎭 Switch Role (Live Demo Review)</span>
+                  <span>🎭 {t.switchRoleDemo}</span>
                   <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
                     Hierarchical RBAC
                   </span>
@@ -693,8 +947,8 @@ export default function MobileAppView({
                         : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <div className="text-xs font-bold text-amber-800 dark:text-amber-400">Citizen</div>
-                    <div className="text-[10px] text-slate-500">Tier 1: Public Care</div>
+                    <div className="text-xs font-bold text-amber-800 dark:text-amber-400">{t.citizenRole}</div>
+                    <div className="text-[10px] text-slate-500">{t.citizenRoleSub}</div>
                   </button>
 
                   <button
@@ -706,8 +960,8 @@ export default function MobileAppView({
                         : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <div className="text-xs font-bold text-emerald-800 dark:text-emerald-400">Doctor (RMP)</div>
-                    <div className="text-[10px] text-slate-500">Tier 3: Clinical</div>
+                    <div className="text-xs font-bold text-emerald-800 dark:text-emerald-400">{t.doctorRole}</div>
+                    <div className="text-[10px] text-slate-500">{t.doctorRoleSub}</div>
                   </button>
 
                   <button
@@ -719,8 +973,8 @@ export default function MobileAppView({
                         : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <div className="text-xs font-bold text-teal-800 dark:text-teal-400">ASHA / PHC</div>
-                    <div className="text-[10px] text-slate-500">Tier 2: Outreach</div>
+                    <div className="text-xs font-bold text-teal-800 dark:text-teal-400">{t.ashaRole}</div>
+                    <div className="text-[10px] text-slate-500">{t.ashaRoleSub}</div>
                   </button>
 
                   <button
@@ -732,8 +986,8 @@ export default function MobileAppView({
                         : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <div className="text-xs font-bold text-purple-800 dark:text-purple-400">Super Admin</div>
-                    <div className="text-[10px] text-slate-500">Tier 5: State Gov</div>
+                    <div className="text-xs font-bold text-purple-800 dark:text-purple-400">{t.adminRole}</div>
+                    <div className="text-[10px] text-slate-500">{t.adminRoleSub}</div>
                   </button>
 
                   <button
@@ -745,8 +999,8 @@ export default function MobileAppView({
                         : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <div className="text-xs font-bold text-rose-800 dark:text-rose-400">108 Ambulance Pilot</div>
-                    <div className="text-[10px] text-slate-500">Tier 4: Dispatch MDT</div>
+                    <div className="text-xs font-bold text-rose-800 dark:text-rose-400">{t.driverRole}</div>
+                    <div className="text-[10px] text-slate-500">{t.driverRoleSub}</div>
                   </button>
                 </div>
               </div>
@@ -759,7 +1013,7 @@ export default function MobileAppView({
               className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all cursor-pointer"
             >
               <LogIn className="w-4 h-4" />
-              <span>Switch User / Staff Portal</span>
+              <span>{t.switchUserPortal}</span>
             </button>
 
             {onSwitchToDesktop && (
@@ -769,7 +1023,7 @@ export default function MobileAppView({
                 className="w-full py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 shadow-sm active:scale-98 transition-all cursor-pointer"
               >
                 <Monitor className="w-4 h-4 text-emerald-400" />
-                <span>Switch to Desktop Multi-Hub View</span>
+                <span>{t.switchToDesktop}</span>
               </button>
             )}
 
@@ -780,7 +1034,7 @@ export default function MobileAppView({
                 className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md active:scale-98 transition-all cursor-pointer animate-pulse"
               >
                 <LogIn className="w-4 h-4" />
-                <span>Sign In / Create Account (ଲଗ୍-ଇନ୍ / ଖାତା ଖୋଲନ୍ତୁ)</span>
+                <span>{t.signIn}</span>
               </button>
             ) : (
               <button
@@ -789,7 +1043,7 @@ export default function MobileAppView({
                 className="w-full py-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Sign Out ({currentUser.name})</span>
+                <span>{t.signOut} ({currentUser.name})</span>
               </button>
             )}
           </div>
@@ -824,19 +1078,32 @@ export default function MobileAppView({
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  {/* Language Toggle */}
+                  {/* Language Toggle: Odia | Hindi | English */}
                   <div className="flex items-center bg-black/25 rounded-full p-0.5 text-[10px] font-bold">
                     <button
                       type="button"
                       onClick={() => setAppLang('or-IN')}
-                      className={`px-2 py-0.5 rounded-full transition-all ${appLang === 'or-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200'}`}
+                      className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                        normalizedLang === 'or-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200 hover:text-white'
+                      }`}
                     >
                       ଓଡ଼ିଆ
                     </button>
                     <button
                       type="button"
+                      onClick={() => setAppLang('hi-IN')}
+                      className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                        normalizedLang === 'hi-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200 hover:text-white'
+                      }`}
+                    >
+                      हिन्दी
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setAppLang('en-IN')}
-                      className={`px-2 py-0.5 rounded-full transition-all ${appLang === 'en-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200'}`}
+                      className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                        normalizedLang === 'en-IN' ? 'bg-white text-emerald-950 font-black shadow-xs' : 'text-emerald-200 hover:text-white'
+                      }`}
                     >
                       EN
                     </button>
@@ -912,7 +1179,7 @@ export default function MobileAppView({
                       </button>
                     </div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      DOB: {patientDob} • {patientGender}
+                      {t.dobLabel} {patientDob} • {localizedGender}
                     </div>
                   </div>
 
@@ -1127,7 +1394,7 @@ export default function MobileAppView({
           <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 text-center">
               <div className="flex items-center justify-between border-b pb-3">
-                <span className="font-bold text-sm text-slate-900 dark:text-white">ABHA Digital QR</span>
+                <span className="font-bold text-sm text-slate-900 dark:text-white">{t.abhaQrTitle}</span>
                 <button
                   type="button"
                   onClick={() => setShowQrModal(false)}
@@ -1144,7 +1411,7 @@ export default function MobileAppView({
               <div>
                 <div className="font-bold text-sm text-slate-900 dark:text-white">{patientName}</div>
                 <div className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">{abhaNumber}</div>
-                <p className="text-[11px] text-slate-500 mt-2">Scan at any PHC, CHC, or DHH OPD counter for instant paperless registration.</p>
+                <p className="text-[11px] text-slate-500 mt-2">{t.abhaQrSub}</p>
               </div>
 
               <button
@@ -1152,7 +1419,7 @@ export default function MobileAppView({
                 onClick={() => setShowQrModal(false)}
                 className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs"
               >
-                Close
+                {t.close}
               </button>
             </div>
           </div>
@@ -1167,7 +1434,7 @@ export default function MobileAppView({
               <div className="flex items-center justify-between border-b pb-2.5">
                 <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-xs">
                   <AlertTriangle className="w-4 h-4" />
-                  <span>Public Health Dengue & Heatwave Advisory</span>
+                  <span>{t.advisoryTitle}</span>
                 </div>
                 <button
                   type="button"
@@ -1179,12 +1446,12 @@ export default function MobileAppView({
               </div>
 
               <div className="text-xs text-slate-700 dark:text-slate-300 space-y-2 leading-relaxed">
-                <p><strong>Issued by:</strong> Health & Family Welfare Dept, Govt of Odisha.</p>
+                <p><strong>{t.issuedBy}</strong></p>
                 <ul className="list-disc pl-4 space-y-1 text-[11px]">
-                  <li>Dengue early testing and platelet counters active across all CHCs.</li>
-                  <li>Avoid direct exposure to sunlight between 11:00 AM and 3:30 PM.</li>
-                  <li>Drink plenty of water, buttermilk, lemon water, and ORS.</li>
-                  <li>In case of fever with shivering or body ache, use <strong>AI Symptom Triage</strong> or visit nearest PHC immediately.</li>
+                  <li>{t.advisoryP1}</li>
+                  <li>{t.advisoryP2}</li>
+                  <li>{t.advisoryP3}</li>
+                  <li>{t.advisoryP4}</li>
                 </ul>
               </div>
 
@@ -1193,7 +1460,7 @@ export default function MobileAppView({
                 onClick={() => setShowAdvisoryDetail(false)}
                 className="w-full py-2.5 rounded-xl bg-amber-700 text-white font-bold text-xs"
               >
-                Understood
+                {t.understood}
               </button>
             </div>
           </div>
