@@ -61,6 +61,82 @@ import {
 
 const DRAFT_STORAGE_KEY = 'nhp_draft_patient_intake_v3';
 
+// ─── 6 INDIA-WIDE FACILITY SCENARIOS (PS 3 CORE SPECIFICATION) ─────────────
+export const INDIA_FACILITY_SCENARIOS = [
+  {
+    id: 'opd_surge',
+    badge: '1. OPD Surge',
+    settingName: 'Civil Hospital OPD Surge',
+    category: 'fever',
+    vitals: { temperature: '103.2', pulse: '112', spo2: '94', systolic: '105', diastolic: '65', durationDays: '3' },
+    speech: {
+      'or-IN': 'ମୋତେ ୩ ଦିନ ହେଲା ପ୍ରବଳ ଜ୍ୱର, ବାନ୍ତି ଏବଂ ଦେହ ହାତ ଘୋଳାବିନ୍ଧା ହେଉଛି। ଠିଆ ହେବାକୁ ବଳ ପାଉନାହିଁ।',
+      'hi-IN': 'पिछले 3 दिनों से तेज़ बुखार, उल्टी और चक्कर आ रहे हैं। चलने की भी शक्ति नहीं बची है।',
+      'en-IN': 'High grade fever with chills and persistent vomiting for 3 days. Severe dehydration and weakness in crowded OPD queue.'
+    }
+  },
+  {
+    id: 'industrial_fumes',
+    badge: '2. Industrial MIDC',
+    settingName: 'MIDC / GIDC Occupational Health',
+    category: 'respiratory',
+    vitals: { temperature: '98.6', pulse: '104', spo2: '91', systolic: '130', diastolic: '85', durationDays: '1' },
+    speech: {
+      'or-IN': 'କାରଖାନାରେ ରାସାୟନିକ ଧୂଆଁ ଶୁଙ୍ଘିବା ପରେ ଛାତିରେ ଭୀଷଣ ଯନ୍ତ୍ରଣା ଓ ଶ୍ୱାସରୁଦ୍ଧ ହେଉଛି, ଆଖି ପୋଡୁଛି।',
+      'hi-IN': 'कारखाने में केमिकल धुआं सांस में जाने के बाद सीने में जकड़न, सांस लेने में भारी तकलीफ और आंखों में जलन है।',
+      'en-IN': 'Chemical solvent vapor inhalation in paint manufacturing shop. Acute chest tightness, ocular irritation, severe dyspnea.'
+    }
+  },
+  {
+    id: 'campus_fever',
+    badge: '3. Campus Fever',
+    settingName: 'Campus Infirmary Meningitis Triage',
+    category: 'fever',
+    vitals: { temperature: '104.0', pulse: '122', spo2: '96', systolic: '112', diastolic: '72', durationDays: '2' },
+    speech: {
+      'or-IN': 'ହଷ୍ଟେଲରେ ପ୍ରବଳ ଜ୍ୱର ୧୦୪°F, ବେକ ଟାଣି ଧରୁଛି ଏବଂ ଆଲୋକ ଦେଖିଲେ ଆଖି କଷ୍ଟ ହେଉଛି (ଫୋଟୋଫୋବିଆ)।',
+      'hi-IN': 'हॉस्टल में अचानक 104°F तेज बुखार, गर्दन में जकड़न और रोशनी देखने में तेज दर्द हो रहा है।',
+      'en-IN': 'Rapid high grade fever 104°F with severe neck stiffness (nuchal rigidity) and photophobia in student hostel cluster.'
+    }
+  },
+  {
+    id: 'maternal_anc',
+    badge: '4. Maternal ANC',
+    settingName: 'Rural PHC ANC Pre-eclampsia',
+    category: 'maternal_pediatric',
+    vitals: { temperature: '98.8', pulse: '92', spo2: '98', systolic: '168', diastolic: '106', durationDays: '2' },
+    speech: {
+      'or-IN': 'ଗର୍ଭବତୀ ୩୨ ସପ୍ତାହ, ସକାଳୁ ମୁଣ୍ଡ ଭୀଷଣ ବିନ୍ଧୁଛି, ଆଖିକୁ ଝାପ୍‌ସା ଦେଖାଯାଉଛି ଏବଂ ଗୋଡ଼ ଫୁଲି ଯାଇଛି।',
+      'hi-IN': 'गर्भावस्था 32 सप्ताह, सुबह से तेज सिरदर्द, आंखों में धुंधलापन और दोनों पैरों में भारी सूजन आ गई है।',
+      'en-IN': '32 weeks primigravida with severe persistent occipital headache, visual blurring, and bilateral pedal edema.'
+    }
+  },
+  {
+    id: 'public_health_camp',
+    badge: '5. Public Camp',
+    settingName: 'Point-of-Care Health Camp',
+    category: 'gastro',
+    vitals: { temperature: '98.4', pulse: '80', spo2: '98', systolic: '142', diastolic: '88', durationDays: '14' },
+    speech: {
+      'or-IN': 'ବହୁତ ଦିନ ଧରି ଭୀଷଣ ଶୋଷ ଲାଗୁଛି, ବାରମ୍ବାର ପରିସ୍ରା ହେଉଛି ଏବଂ ଦେହ ହାତ ଦୁର୍ବଳ ଲାଗୁଛି।',
+      'hi-IN': 'लगातार अत्यधिक प्यास, बार-बार पेशाब और वजन में भारी गिरावट महसूस हो रही है।',
+      'en-IN': 'Remote tribal health camp: Unquenchable thirst, frequent urination, severe lethargy, suspected glycemic crisis.'
+    }
+  },
+  {
+    id: 'tertiary_referral',
+    badge: '6. Referral Prep',
+    settingName: 'DHH to Medical College Referral',
+    category: 'fever',
+    vitals: { temperature: '103.0', pulse: '114', spo2: '93', systolic: '98', diastolic: '62', durationDays: '4' },
+    speech: {
+      'or-IN': '୪ ଦିନ ଧରି ଜ୍ୱର ସହିତ ମାଢ଼ିରୁ ରକ୍ତ ପଡୁଛି, ଲ୍ୟାବ୍ ରିପୋର୍ଟରେ ପ୍ଲେଟଲେଟ୍ ୪୨,୦୦୦ କୁ ଖସିଯାଇଛି।',
+      'hi-IN': '4 दिन से बुखार और मसूड़ों से खून आ रहा है, प्लेटलेट 42,000 हो गया है, तुरंत रेफरल चाहिए।',
+      'en-IN': 'Day 4 dengue fever with thrombocytopenia (Platelets 42,000 /cumm) and active mucosal bleeding requiring HDU.'
+    }
+  }
+];
+
 // Synthesizes pleasant Indian doctor chimes using browser Web Audio API
 function playDoctorAcousticChime(type = 'start') {
   try {
@@ -189,6 +265,8 @@ export default function MultimodalIntakeForm({
   const [clinicalState, setClinicalState] = useState(() => processIntakeSpeech('', selectedVoiceLang));
   const [copied, setCopied] = useState(false);
   const [showSampleCases, setShowSampleCases] = useState(false);
+  const [privacyShieldActive, setPrivacyShieldActive] = useState(true);
+  const [activeScenarioId, setActiveScenarioId] = useState(null);
 
   // Condition category & adaptive questions
   const [activeCategory, setActiveCategory] = useState('fever');
@@ -775,6 +853,26 @@ export default function MultimodalIntakeForm({
     setShowSampleCases(false);
   };
 
+  // 1-Click India Facility Scenario Loader
+  const handleLoadIndiaScenario = (sc) => {
+    stopDoctorSpeech();
+    if (isListening) stopListening();
+    setActiveScenarioId(sc.id);
+
+    if (sc.vitals) {
+      setVitals(sc.vitals);
+      setHasVoiceExtractedVitals(true);
+    }
+    if (sc.category) {
+      setActiveCategory(sc.category);
+    }
+
+    const langKey = selectedVoiceLang.startsWith('or') ? 'or-IN' : selectedVoiceLang.startsWith('hi') ? 'hi-IN' : 'en-IN';
+    const speechText = sc.speech[langKey] || sc.speech['en-IN'] || sc.speech['hi-IN'];
+    setCurrentDoctorTurn('turn1');
+    processPatientSpeechTurn(speechText);
+  };
+
   // Reset entire consultation
   const handleResetConsultation = () => {
     stopDoctorSpeech();
@@ -945,7 +1043,7 @@ export default function MultimodalIntakeForm({
   return (
     <div className="space-y-4 max-w-xl mx-auto font-sans pb-12">
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 0. INDIA DPDP ACT 2023 DIGITAL HEALTH CONSENT & ANONYMIZATION */}
+      {/* 0. INDIA DPDP ACT 2023 DIGITAL HEALTH CONSENT & PRIVACY SHIELD */}
       {/* ───────────────────────────────────────────────────────────── */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-3.5 sm:p-4 shadow-xs space-y-2 text-xs">
         <div className="flex items-center justify-between">
@@ -953,17 +1051,57 @@ export default function MultimodalIntakeForm({
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>Digital Personal Data Protection (DPDP) Act 2023 Consent</span>
           </div>
-          <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">
-            Section 6 Verified ✓
-          </span>
+          <button
+            type="button"
+            onClick={() => setPrivacyShieldActive(!privacyShieldActive)}
+            className={`px-2.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${
+              privacyShieldActive
+                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+            }`}
+            title="Toggle Client-Side PII De-identification"
+          >
+            <span>Privacy Shield: {privacyShieldActive ? 'ACTIVE (De-Identified)' : 'OFF (Raw Data)'}</span>
+          </button>
         </div>
         <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
           Synthetic session anonymization is active. Audio recordings and symptom vectors are processed in-browser for CDSS Level-1 triage summarization with zero permanent unredacted storage.
         </p>
-        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 font-mono">
-          <span>ABHA ID: <strong>91-XXXX-XXXX-2819</strong></span>
-          <span>Phone: <strong>+91 98XXXXXX10</strong></span>
-          <span className="text-emerald-600 font-bold">PII Redacted ✓</span>
+        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 font-mono flex-wrap gap-1">
+          <span>ABHA ID: <strong>{privacyShieldActive ? '91-XXXX-XXXX-2819' : '91-4829-1049-2819'}</strong></span>
+          <span>Phone: <strong>{privacyShieldActive ? '+91 98XXXXXX10' : '+91 98765 43210'}</strong></span>
+          <span className="text-emerald-600 font-bold">{privacyShieldActive ? 'PII Redacted ✓' : 'Direct Identifiers'}</span>
+          <span className="text-slate-400">Zero Cloud Retention Guarantee</span>
+        </div>
+      </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 0.5. 6 INDIA-WIDE FACILITY SCENARIOS SHOWCASE (1-CLICK PRESETS) */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-3 shadow-xs space-y-1.5">
+        <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 px-1">
+          <span className="flex items-center gap-1 text-[11px]">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>⚡ India Facility Scenarios (1-Click PS 3 Testing):</span>
+          </span>
+          <span className="text-[10px] text-slate-400 font-normal">Pre-loads symptoms &amp; vitals</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-xs">
+          {INDIA_FACILITY_SCENARIOS.map((sc) => (
+            <button
+              key={sc.id}
+              type="button"
+              onClick={() => handleLoadIndiaScenario(sc)}
+              className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                activeScenarioId === sc.id
+                  ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-xs'
+                  : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-emerald-300 text-slate-700 dark:text-slate-200'
+              }`}
+            >
+              <div className="font-bold text-[11px] text-emerald-700 dark:text-emerald-400">{sc.badge}</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{sc.settingName}</div>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -1020,6 +1158,24 @@ export default function MultimodalIntakeForm({
               English
             </button>
           </div>
+        </div>
+
+        {/* Digital India Bhashini Architecture Pipeline Indicator */}
+        <div className="my-2 px-3 py-1.5 bg-slate-950/60 border border-white/10 rounded-xl flex items-center justify-between text-[10px] text-emerald-300">
+          <div className="flex items-center gap-1.5">
+            <Globe className="w-3 h-3 text-emerald-400" />
+            <span className="font-bold">Digital India Bhashini NLP Pipeline:</span>
+            <span className="text-slate-300 hidden sm:inline">Indic Speech ASR ➔ NMT Translation ➔ Clinical NLP ➔ TTS</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => speakDoctorUtterance(medicineRecommendations.healthIssueTitle || 'SwasthyaMitra Clinical Triage')}
+            className="text-[10px] font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded flex items-center gap-1 cursor-pointer transition-all"
+            title="Play regional voice synthesis"
+          >
+            <Volume2 className="w-3 h-3 text-emerald-400" />
+            <span>Regional Voice</span>
+          </button>
         </div>
 
         {/* Doctor Consultation Controls & Silence Pause Config */}

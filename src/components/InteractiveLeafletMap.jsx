@@ -21,25 +21,25 @@ export default function InteractiveLeafletMap({
   const routePolylineRef = useRef(null);
   const routeDecorationsRef = useRef([]);
 
-  // Use 'carto' as default for lightning-fast CDN tile loading worldwide
-  const [mapStyle, setMapStyle] = useState('carto'); // 'carto' | 'osm'
+  // Default to standard OpenStreetMap & Humanitarian Health OSM (100% free, zero API key watermarks)
+  const [mapStyle, setMapStyle] = useState('osm'); // 'osm' | 'hot'
   const tileLayerRef = useRef(null);
 
   const activeHospital = hospitals.find((h) => h.id === activeHospitalId) || hospitals[0];
 
-  // Tile layer configs with explicit subdomains and maxZoom
+  // Tile layer configs with explicit subdomains and maxZoom (100% free, open-source, no API key required)
   const TILE_LAYERS = {
-    carto: {
-      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      subdomains: 'abcd',
-      maxZoom: 19,
-      attribution: '&copy; CARTO &copy; OpenStreetMap contributors'
-    },
     osm: {
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       subdomains: ['a', 'b', 'c'],
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
+    },
+    hot: {
+      url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+      subdomains: ['a', 'b', 'c'],
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors, Humanitarian OpenStreetMap Team'
     }
   };
 
@@ -66,7 +66,7 @@ export default function InteractiveLeafletMap({
 
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    const layerConfig = TILE_LAYERS[mapStyle] || TILE_LAYERS.carto;
+    const layerConfig = TILE_LAYERS[mapStyle] || TILE_LAYERS.osm;
     tileLayerRef.current = L.tileLayer(layerConfig.url, {
       maxZoom: 19,
       subdomains: layerConfig.subdomains,
@@ -107,7 +107,7 @@ export default function InteractiveLeafletMap({
     if (tileLayerRef.current) {
       mapInstanceRef.current.removeLayer(tileLayerRef.current);
     }
-    const config = TILE_LAYERS[mapStyle] || TILE_LAYERS.carto;
+    const config = TILE_LAYERS[mapStyle] || TILE_LAYERS.osm;
     tileLayerRef.current = L.tileLayer(config.url, {
       maxZoom: 19,
       subdomains: config.subdomains,
@@ -470,8 +470,8 @@ export default function InteractiveLeafletMap({
         </button>
 
         <button
-          onClick={() => setMapStyle((s) => (s === 'carto' ? 'osm' : 'carto'))}
-          title="Switch Map Tiles (Voyager / OpenStreetMap)"
+          onClick={() => setMapStyle((s) => (s === 'osm' ? 'hot' : 'osm'))}
+          title="Switch Map Tiles (Standard OpenStreetMap / Humanitarian Medical OSM)"
           className="bg-white/95 hover:bg-white text-slate-800 p-2.5 rounded-xl shadow-lg border border-slate-200 transition-all hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
         >
           <Layers className="w-4 h-4 text-purple-600" />
