@@ -56,7 +56,8 @@ import {
   parseSpokenTemperature,
   getClinicalMedicineRecommendations,
   DOCTOR_CONVERSATION_QUESTIONS,
-  buildDoctorPrescriptionSpeech
+  buildDoctorPrescriptionSpeech,
+  buildTriageScribeCompletionSpeech
 } from '../utils/clinicalIntakeModel';
 
 const DRAFT_STORAGE_KEY = 'nhp_draft_patient_intake_v3';
@@ -601,8 +602,8 @@ export default function MultimodalIntakeForm({
         const langKey = selectedVoiceLang.startsWith('or') ? 'or' : selectedVoiceLang.startsWith('hi') ? 'hi' : 'en';
         doctorNextQuestion = DOCTOR_CONVERSATION_QUESTIONS.turn3_timeline_vitals.prompts[langKey];
       } else {
-        // Turn 4: Final clinical diagnosis & prescription
-        doctorNextQuestion = buildDoctorPrescriptionSpeech(clinicalResult, medRecs, selectedVoiceLang);
+        // Turn 4: Final clinical triage note completion (strictly non-diagnostic)
+        doctorNextQuestion = buildTriageScribeCompletionSpeech(clinicalResult, medRecs, selectedVoiceLang);
       }
 
       // Add doctor's question to conversation
@@ -893,9 +894,9 @@ export default function MultimodalIntakeForm({
 
   // Copy transcript
   const handleCopy = () => {
-    const textToCopy = `[Dr. Swasthya Mitra Consultation]\n${conversationHistory
-      .map((m) => `${m.sender === 'doctor' ? 'Dr. Swasthya Mitra' : 'Patient'}: ${m.text}`)
-      .join('\n\n')}\n\n[Health Issue]: ${medicineRecommendations.healthIssueTitle}\n[Prescribed Medicines]:\n${medicineRecommendations.medicines
+    const textToCopy = `[Swasthya Mitra Clinical Triage Intake Note]\n${conversationHistory
+      .map((m) => `${m.sender === 'doctor' ? 'Swasthya Mitra Scribe' : 'Patient'}: ${m.text}`)
+      .join('\n\n')}\n\n[Identified Symptom Cluster for Doctor Review]: ${medicineRecommendations.healthIssueTitle}\n[Standard PHC Formulary Reference for Reviewing Doctor (Non-Prescriptive)]:\n${medicineRecommendations.medicines
       .map((m) => `• ${m.name}: ${m.dosage}`)
       .join('\n')}`;
     navigator.clipboard.writeText(textToCopy);
@@ -971,71 +972,71 @@ export default function MultimodalIntakeForm({
     onIntakeComplete(payload);
   };
 
-  // Multi-lingual UI strings
+  // Multi-lingual UI strings (Strictly Non-Diagnostic Scribe Architecture)
   const ui = {
     'or-IN': {
-      title: 'ଡାକ୍ତର ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର (AI Doctor Voice Consultation)',
-      subtitle: 'ଡାକ୍ତର ଗୋଟିଏ ପରେ ଗୋଟିଏ ପ୍ରଶ୍ନ ପଚାରିବେ - ସ୍ପଷ୍ଟ ଭାବେ କୁହନ୍ତୁ',
-      micListening: 'ଡାକ୍ତର ଶୁଣୁଛନ୍ତି... କୁହନ୍ତୁ',
+      title: 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଏଆଇ ଟ୍ରାଏଜ୍ ସହାୟକ (AI Triage Scribe)',
+      subtitle: 'ଲକ୍ଷଣ ଓ ଭାଇଟାଲ୍ସ ସଂଗ୍ରହ • ଡାକ୍ତରଙ୍କ ସମୀକ୍ଷା ପାଇଁ ସଂରଚିତ ନୋଟ୍ ପ୍ରସ୍ତୁତ କରେ',
+      micListening: 'ଟ୍ରାଏଜ୍ ସହାୟକ ଶୁଣୁଛନ୍ତି... କୁହନ୍ତୁ',
       silenceNotice: 'ବାକ୍ୟ ସମାପ୍ତ: ୫ ସେକେଣ୍ଡ ମଧ୍ୟରେ ସ୍ୱୟଂକ୍ରିୟ ରେକର୍ଡ ହେବ',
       sendNowBtn: 'ସମାପ୍ତ / ପଠାନ୍ତୁ',
       restartBtn: 'ପୁନର୍ବାର ଆରମ୍ଭ (Restart)',
-      doctorBadge: 'ଡାକ୍ତର ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର',
+      doctorBadge: 'ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଟ୍ରାଏଜ୍ ସହାୟକ',
       patientBadge: 'ଆପଣ (Patient)',
-      healthIssueLabel: 'ଡାକ୍ତରଙ୍କ ରୋଗ ବିଶ୍ଳେଷଣ (Doctor Diagnosis):',
-      medicineTitle: 'ପ୍ରସ୍ତାବିତ ପ୍ରାଥମିକ ଔଷଧ ଓ ଖୁରାକ:',
+      healthIssueLabel: 'ଚିହ୍ନଟ ହୋଇଥିବା ଲକ୍ଷଣ ସମୂହ (ଡାକ୍ତରଙ୍କ ସମୀକ୍ଷା ପାଇଁ):',
+      medicineTitle: 'ସନ୍ଦର୍ଭ PHC ଔଷଧ ନିର୍ଦ୍ଦେଶିକା ଓ ପ୍ରାଥମିକ ସେବା (ଡାକ୍ତରୀ ଅନୁମୋଦନ ଆବଶ୍ୟକ):',
       teleDoctorBtn: 'ଅନ୍-କଲ୍ ଡାକ୍ତରଙ୍କ ସହ କଥା ହୁଅନ୍ତୁ',
       pharmacyBtn: 'PHC ଔଷଧ ଷ୍ଟକ୍ ଯାଞ୍ଚ',
       ambulanceBtn: '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ଡାକନ୍ତୁ',
-      submitBtn: 'Save Consultation & Generate Triage'
+      submitBtn: 'Save Intake & Generate Triage'
     },
     'hi-IN': {
-      title: 'डॉ. स्वास्थ्य मित्र (AI Doctor Voice Consultation)',
-      subtitle: 'डॉक्टर एक के बाद एक सवाल पूछेंगे - स्पष्ट आवाज में बताएं',
-      micListening: 'डॉक्टर सुन रहे हैं... बोलें',
+      title: 'स्वास्थ्य मित्र एआई ट्रायज सहायक (AI Triage Scribe)',
+      subtitle: 'लक्षण व वाइटल संग्रह • डॉक्टर समीक्षा हेतु संरचित ट्रायज नोट निर्माण',
+      micListening: 'ट्रायज सहायक सुन रहे हैं... बोलें',
       silenceNotice: 'बोलना समाप्त: 5 सेकंड में स्वतः रिकॉर्ड होगा',
       sendNowBtn: 'हो गया / भेजें',
       restartBtn: 'पुनः शुरू करें (Restart)',
-      doctorBadge: 'डॉ. स्वास्थ्य मित्र',
+      doctorBadge: 'स्वास्थ्य मित्र ट्रायज सहायक',
       patientBadge: 'आप (Patient)',
-      healthIssueLabel: 'डॉक्टर का नैदानिक परामर्श (Doctor Diagnosis):',
-      medicineTitle: 'सुझाई गई दवाएं एवं सही खुराक:',
+      healthIssueLabel: 'पहचाना गया लक्षण समूह (डॉक्टर समीक्षा हेतु):',
+      medicineTitle: 'संदर्भ PHC फॉर्मुलरी एवं प्राथमिक राहत (डॉक्टर परामर्श अनिवार्य):',
       teleDoctorBtn: 'ड्यूटी डॉक्टर से वीडियो कॉल करें',
       pharmacyBtn: 'PHC दवा स्टॉक देखें',
       ambulanceBtn: '108 एम्बुलेंस बुलाएं',
-      submitBtn: 'Save Consultation & Generate Triage'
+      submitBtn: 'Save Intake & Generate Triage'
     },
     'en-IN': {
-      title: 'Dr. Swasthya Mitra (AI Doctor Voice Consultation)',
-      subtitle: 'Doctor asks step-by-step questions • Natural Indian voice consultation',
-      micListening: 'Doctor is listening... speak your symptom',
+      title: 'Swasthya Mitra (AI Multimodal Triage Scribe)',
+      subtitle: 'Multimodal symptom intake • Structures triage notes for qualified Medical Officer review',
+      micListening: 'Triage scribe is listening... speak your symptom',
       silenceNotice: 'Speech pause detected: auto-submitting in 5s',
       sendNowBtn: 'Done Speaking / Send',
-      restartBtn: 'Restart Consultation',
-      doctorBadge: 'Dr. Swasthya Mitra',
+      restartBtn: 'Restart Intake',
+      doctorBadge: 'Swasthya Mitra Triage Scribe',
       patientBadge: 'You (Patient)',
-      healthIssueLabel: 'Doctor Clinical Diagnosis & Assessment:',
-      medicineTitle: 'Prescribed First-Aid Medicines & Schedule:',
+      healthIssueLabel: 'Identified Symptom Cluster (For Reviewing Doctor):',
+      medicineTitle: 'Reference PHC Formulary & Supportive First-Aid (Doctor Review Required):',
       teleDoctorBtn: 'Connect with Tele-Doctor on Call',
       pharmacyBtn: 'Check PHC Pharmacy Stock',
       ambulanceBtn: 'Call 108 Ambulance',
-      submitBtn: 'Save Consultation & Generate Triage'
+      submitBtn: 'Save Intake & Generate Triage'
     }
   }[selectedVoiceLang] || {
-    title: 'Dr. Swasthya Mitra (AI Doctor Voice Consultation)',
-    subtitle: 'Doctor asks step-by-step questions • Natural Indian voice consultation',
-    micListening: 'Doctor is listening... speak your symptom',
+    title: 'Swasthya Mitra (AI Multimodal Triage Scribe)',
+    subtitle: 'Multimodal symptom intake • Structures triage notes for qualified Medical Officer review',
+    micListening: 'Triage scribe is listening... speak your symptom',
     silenceNotice: 'Speech pause detected: auto-submitting in 5s',
     sendNowBtn: 'Done Speaking / Send',
-    restartBtn: 'Restart Consultation',
-    doctorBadge: 'Dr. Swasthya Mitra',
+    restartBtn: 'Restart Intake',
+    doctorBadge: 'Swasthya Mitra Triage Scribe',
     patientBadge: 'You (Patient)',
-    healthIssueLabel: 'Doctor Clinical Diagnosis & Assessment:',
-    medicineTitle: 'Prescribed First-Aid Medicines & Schedule:',
+    healthIssueLabel: 'Identified Symptom Cluster (For Reviewing Doctor):',
+    medicineTitle: 'Reference PHC Formulary & Supportive First-Aid (Doctor Review Required):',
     teleDoctorBtn: 'Connect with Tele-Doctor on Call',
     pharmacyBtn: 'Check PHC Pharmacy Stock',
     ambulanceBtn: 'Call 108 Ambulance',
-    submitBtn: 'Save Consultation & Generate Triage'
+    submitBtn: 'Save Intake & Generate Triage'
   };
 
   const activeProto = CONDITION_PROTOCOLS[activeCategory] || CONDITION_PROTOCOLS.fever;
@@ -1228,7 +1229,7 @@ export default function MultimodalIntakeForm({
               >
                 <div className="flex items-center justify-between w-full mb-1">
                   <span className="font-bold text-emerald-300 text-[11px]">{sc.badge}</span>
-                  <span className="text-[10px] text-slate-400 group-hover:text-amber-300">Tap to Load & Prescribe →</span>
+                  <span className="text-[10px] text-slate-400 group-hover:text-amber-300">Tap to Simulate Triage Intake →</span>
                 </div>
                 <p className="text-slate-200 text-[11px] line-clamp-2 italic font-normal">"{sc.speech}"</p>
               </button>
@@ -1250,7 +1251,7 @@ export default function MultimodalIntakeForm({
             {isDoctorSpeaking && (
               <span className="text-[11px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 animate-pulse">
                 <Volume2 className="w-3 h-3 text-amber-600 animate-bounce" />
-                <span>Doctor is speaking...</span>
+                <span>AI Scribe is speaking...</span>
               </span>
             )}
             <button
@@ -1622,12 +1623,15 @@ export default function MultimodalIntakeForm({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-bold text-slate-800 dark:text-slate-200">
             <span className="flex items-center gap-1.5">
               <Pill className="w-4 h-4 text-emerald-600" />
-              <span>Jan Aushadhi Generic Formulations for MO Review</span>
+              <span>Jan Aushadhi Generic Reference Formulary (For Reviewing Medical Officer Only)</span>
             </span>
             <span className="text-[10px] text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-300/50 self-start sm:self-auto">
               Advisory Formulary • Non-Diagnostic
             </span>
           </div>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 italic">
+            Formulary details are advisory decision-support references for the Medical Officer. Attending doctor verification and prescription sign-off are legally mandatory.
+          </p>
 
           <div className="space-y-2.5">
             {medicineRecommendations.medicines.map((med) => (
@@ -1663,7 +1667,7 @@ export default function MultimodalIntakeForm({
                 <div className="bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-700 text-xs space-y-1">
                   <div className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Dosage: {med.dosage}</span>
+                    <span>Standard Reference Dosage (For MO Review): {med.dosage}</span>
                   </div>
                   <p className="text-[11px] text-slate-600 dark:text-slate-300 pl-5">
                     <strong>Action:</strong> {med.purpose}

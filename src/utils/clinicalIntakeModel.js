@@ -1726,17 +1726,14 @@ export function getClinicalMedicineRecommendations(clinicalState = {}, language 
     isEmergency: m.isEmergency || false
   }));
 
-  // Build spoken dialogue script
+  // Build spoken dialogue script (Strictly non-diagnostic triage summary)
   let spokenScript = '';
   if (langKey === 'or') {
-    const medNames = localizedMedicines.map((m) => m.name.split('(')[0].trim()).join(' ଏବଂ ');
-    spokenScript = `ନମସ୍କାର। ଆପଣଙ୍କ ଲକ୍ଷଣ ଅନୁସାରେ, ଆପଣଙ୍କର ସ୍ୱାସ୍ଥ୍ୟ ସମସ୍ୟା ହେଉଛି: ${healthIssueTitle}। ଆପଣଙ୍କ ଉପଶମ ପାଇଁ ପ୍ରସ୍ତାବିତ ପ୍ରାଥମିକ ଔଷଧ: ${medNames}। ଦୟାକରି ଔଷଧ ନିୟମିତ ଖାଆନ୍ତୁ ଏବଂ ଆମ ପ୍ଲାଟଫର୍ମରେ ଥିବା ଡାକ୍ତରଙ୍କ ସହ କଥା ହୁଅନ୍ତୁ।`;
+    spokenScript = `ଧନ୍ୟବାଦ। ଆପଣଙ୍କ ଲକ୍ଷଣ ଓ ଭାଇଟାଲ୍ସ ସଫଳତାର ସହ ଲିପିବଦ୍ଧ ହୋଇଛି: ${healthIssueTitle}। ଏହା କେବଳ ଏକ ଟ୍ରାଏଜ୍ ନୋଟ୍ ଅଟେ, କୌଣସି ରୋଗ ନିର୍ଣ୍ଣୟ ବା ଔଷଧ ବ୍ୟବସ୍ଥାପତ୍ର ନୁହେଁ। ଦୟାକରି କର୍ତ୍ତବ୍ୟରତ ଡାକ୍ତରଙ୍କ ସହ ପରାମର୍ଶ କରନ୍ତୁ।`;
   } else if (langKey === 'hi') {
-    const medNames = localizedMedicines.map((m) => m.name.split('(')[0].trim()).join(' और ');
-    spokenScript = `नमस्ते। आपके बताए गए लक्षणों के अनुसार, आपकी स्वास्थ्य समस्या है: ${healthIssueTitle}। प्राथमिक राहत के लिए सुझाई गई दवाएं हैं: ${medNames}। कृपया खुराक के अनुसार दवा लें और हमारे प्लेटफॉर्म पर उपस्थित डॉक्टर से परामर्श करें।`;
+    spokenScript = `धन्यवाद। आपके लक्षण और वाइटल संकेत दर्ज कर लिए गए हैं: ${healthIssueTitle}। यह केवल एक संरचित ट्रायज नोट है, कोई चिकित्सकीय निदान या दवा पर्ची नहीं है। कृपया ड्यूटी डॉक्टर से परामर्श करें।`;
   } else {
-    const medNames = localizedMedicines.map((m) => m.name.split('(')[0].trim()).join(', and ');
-    spokenScript = `Hello! Based on your reported symptoms, your provisional health issue is: ${healthIssueTitle}. For immediate relief, the recommended medicines are: ${medNames}. Please review the dosage precautions and you can consult our tele-doctor directly on this platform.`;
+    spokenScript = `Thank you. Your reported symptoms and vitals have been structured under: ${healthIssueTitle}. This is an assistive triage note only, not a clinical diagnosis or prescription. Please consult the attending Medical Officer.`;
   }
 
   return {
@@ -1752,8 +1749,8 @@ export function getClinicalMedicineRecommendations(clinicalState = {}, language 
 }
 
 /**
- * Turn-by-Turn Clinical Doctor Consultation Engine
- * Empathetic Indian Doctor style with natural conversational questioning.
+ * Turn-by-Turn Clinical Intake & Scribe Engine
+ * Conversational triage questions for structured intake. Strictly non-diagnostic.
  */
 export const DOCTOR_CONVERSATION_QUESTIONS = {
   turn1_chief_complaint: {
@@ -1761,9 +1758,9 @@ export const DOCTOR_CONVERSATION_QUESTIONS = {
     stepNumber: 1,
     title: { en: 'Chief Health Complaint', hi: 'मुख्य स्वास्थ्य समस्या', or: 'ମୁଖ୍ୟ ସ୍ୱାସ୍ଥ୍ୟ ସମସ୍ୟା' },
     prompts: {
-      en: 'Namaste! I am Dr. Swasthya Mitra. Don’t worry, please tell me: what main health problem or symptoms are you facing today?',
-      hi: 'नमस्ते! मैं डॉ. स्वास्थ्य मित्र हूं। बिल्कुल घबराएं नहीं, कृपया बताएं: आज आपको क्या मुख्य तकलीफ या लक्षण महसूस हो रहे हैं?',
-      or: 'ନମସ୍କାର! ମୁଁ ଡାକ୍ତର ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର। ବିଲକୁଲ ବ୍ୟସ୍ତ ହୁଅନ୍ତୁ ନାହିଁ, କୁହନ୍ତୁ: ଆଜି ଆପଣଙ୍କର କଣ ମୁଖ୍ୟ ଅସୁବିଧା ବା ଲକ୍ଷଣ ହେଉଛି?'
+      en: 'Namaste! I am your AI Swasthya Mitra Triage Scribe. Please tell me: what main symptoms or discomfort are you experiencing today?',
+      hi: 'नमस्ते! मैं आपका एआई स्वास्थ्य मित्र ट्रायज सहायक हूँ। कृपया बताएं: आज आपको क्या मुख्य तकलीफ या लक्षण महसूस हो रहे हैं?',
+      or: 'ନମସ୍କାର! ମୁଁ ଆପଣଙ୍କ ଏଆଇ ସ୍ୱାସ୍ଥ୍ୟ ମିତ୍ର ଟ୍ରାଏଜ ସହାୟକ। ଦୟାକରି କୁହନ୍ତୁ: ଆଜି ଆପଣଙ୍କର କଣ ମୁଖ୍ୟ ଅସୁବିଧା ବା ଲକ୍ଷଣ ହେଉଛି?'
     }
   },
   turn2_targeted_inquiry: {
@@ -1821,22 +1818,26 @@ export const DOCTOR_CONVERSATION_QUESTIONS = {
 };
 
 /**
- * Builds empathetic Indian doctor final diagnosis & prescription script
+ * Builds empathetic triage scribe summary script for Medical Officer review.
+ * Strictly non-diagnostic and non-prescriptive.
  */
-export function buildDoctorPrescriptionSpeech(clinicalState, medRecs, language = 'or-IN') {
+export function buildTriageScribeCompletionSpeech(clinicalState, medRecs, language = 'or-IN') {
   const langKey = language.startsWith('or') ? 'or' : language.startsWith('hi') ? 'hi' : 'en';
   const issue = medRecs.healthIssueTitle;
-  const meds = medRecs.medicines;
 
   if (langKey === 'hi') {
-    const medNames = meds.map((m) => m.name.split('(')[0].trim()).join(' और ');
-    return `बहुत-बहुत धन्यवाद। मैंने आपकी सभी बातें ध्यान से सुन ली हैं। आपके लक्षणों के आधार पर, आपकी स्वास्थ्य समस्या है: ${issue}। घबराने की बिल्कुल बात नहीं है। प्राथमिक राहत के लिए मैं आपको निम्नलिखित दवाएं सुझा रहा हूं: ${medNames}। कृपया खुराक के अनुसार दवा लें और बहुत सारा पानी या ओआरएस पिएं। यदि तकलीफ अधिक बढ़े तो हमारे प्लेटफॉर्म पर उपस्थित डॉक्टर से तुरंत वीडियो कॉल पर बात करें।`;
+    return `बहुत-बहुत धन्यवाद। मैंने आपके सभी लक्षणों, समय-सीमा और वाइटल संकेतों को ड्यूटी पर उपस्थित मेडिकल ऑफिसर की समीक्षा हेतु ट्रायज नोट में दर्ज कर लिया है। संभावित लक्षण समूह: ${issue}। सुरक्षा नियमों के अनुसार, यह एआई प्रणाली कोई चिकित्सीय निदान या दवा पर्ची जारी नहीं करती है। प्राथमिक देखभाल हेतु पर्याप्त पानी पिएं, और क्लिनिकल जांच व दवा पर्ची के लिए कृपया उपस्थित डॉक्टर से परामर्श लें।`;
   } else if (langKey === 'or') {
-    const medNames = meds.map((m) => m.name.split('(')[0].trim()).join(' ଏବଂ ');
-    return `ଅନେକ ଅନେକ ଧନ୍ୟବାଦ। ମୁଁ ଆପଣଙ୍କ ସମସ୍ତ କଥା ଧ୍ୟାନ ଦେଇ ଶୁଣିଲି। ଆପଣଙ୍କ ଲକ୍ଷଣ ଅନୁସାରେ, ଆପଣଙ୍କର ସ୍ୱାସ୍ଥ୍ୟ ସମସ୍ୟା ହେଉଛି: ${issue}। ଭୟଭୀତ ହେବାର କୌଣସି କାରଣ ନାହିଁ। ପ୍ରାଥମିକ ଉପଶମ ପାଇଁ ପ୍ରସ୍ତାବିତ ଔଷଧ: ${medNames}। ଦୟାକରି ନିୟମ ଅନୁସାରେ ଔଷଧ ଖାଆନ୍ତୁ ଏବଂ ଓଆରଏସ୍ ପାଣି ପିଅନ୍ତୁ। ଆବଶ୍ୟକ ହେଲେ ଆମ ଡାକ୍ତରଙ୍କ ସହ ସିଧାସଳଖ କଥା ହୁଅନ୍ତୁ।`;
+    return `ଅନେକ ଅନେକ ଧନ୍ୟବାଦ। ମୁଁ ଆପଣଙ୍କ ସମସ୍ତ ଲକ୍ଷଣ, ସମୟସୀମା ଏବଂ ଭାଇଟାଲ୍ସ ସୂଚନାକୁ କର୍ତ୍ତବ୍ୟରତ ମେଡିକାଲ୍ ଅଫିସରଙ୍କ ସମୀକ୍ଷା ପାଇଁ ଏକ ସଂରଚିତ ଟ୍ରାଏଜ୍ ନୋଟ୍‌ରେ ଲିପିବଦ୍ଧ କରିଛି। ଲକ୍ଷଣ ସମୂହ: ${issue}। ନିରାପତ୍ତା ନିୟମ ଅନୁସାରେ ଏହି ସହାୟକ କୌଣସି ରୋଗ ନିର୍ଣ୍ଣୟ କରେ ନାହିଁ ବା ଔଷଧ ଲେଖେ ନାହିଁ। ଦୟାକରି କର୍ତ୍ତବ୍ୟରତ ଡାକ୍ତରଙ୍କ ପରାମର୍ଶ ନିଅନ୍ତୁ।`;
   } else {
-    const medNames = meds.map((m) => m.name.split('(')[0].trim()).join(', and ');
-    return `Thank you very much. I have carefully evaluated everything you shared. Based on your symptoms across our consultation, your provisional clinical issue is: ${issue}. Do not worry. For safe first-aid relief, I recommend: ${medNames}. Please observe the dosage precautions and stay well hydrated. You can also connect directly with our tele-doctor on call.`;
+    return `Thank you very much. I have transcribed and structured your symptoms, timeline, and vital indicators into an objective triage note for the attending Medical Officer to evaluate. Symptom cluster: ${issue}. By strict safety protocol, this AI assistant does not diagnose conditions or prescribe medications. Please consult the qualified Medical Officer on duty for clinical evaluation and prescription.`;
   }
+}
+
+/**
+ * Backward compatibility alias for buildTriageScribeCompletionSpeech
+ */
+export function buildDoctorPrescriptionSpeech(clinicalState, medRecs, language = 'or-IN') {
+  return buildTriageScribeCompletionSpeech(clinicalState, medRecs, language);
 }
 
