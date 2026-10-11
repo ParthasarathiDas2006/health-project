@@ -99,7 +99,7 @@ export const ODISHA_30_DISTRICTS_TELEMETRY = [
   { id: 'OD-30', name: 'Subarnapur (ସୁବର୍ଣ୍ଣପୁର)', zone: 'Western', cdmo: 'Dr. Bisweswar Mishra', hospital: 'District Headquarters Hospital, Sonepur', beds: 240, occupied: 175, icuBeds: 25, ambulanceUnits: 12, status: 'Normal', phone: '+91 6654 220211', alertCount: 0 }
 ];
 
-export const APEX_MEDICAL_COLLEGES_TELEMETRY = [
+const APEX_MEDICAL_COLLEGES_TELEMETRY = [
   { name: 'SCB Medical College & Hospital', city: 'Cuttack', beds: 1200, occupied: 1080, icu: 180, superintendent: 'Prof. (Dr.) Sudhanshu Sekhar Mishra', type: 'Apex State Referral' },
   { name: 'AIIMS Hospital', city: 'Bhubaneswar', beds: 960, occupied: 890, icu: 150, superintendent: 'Dr. Dilip Kumar Parida', type: 'National Apex Institute' },
   { name: 'MKCG Medical College & Hospital', city: 'Berhampur', beds: 850, occupied: 720, icu: 110, superintendent: 'Prof. (Dr.) Santosh Kumar Mishra', type: 'South Odisha Apex' },
@@ -2438,6 +2438,20 @@ export default function AdminPage({ currentUser, appLang = 'or-IN', onNavigateTa
                       <div className="text-xs text-emerald-900 font-semibold mt-0.5">
                         {b.wardName || b.ward || 'General Medical Ward'} • {b.bedTypeName || b.bedType || 'Oxygen Bed'}
                       </div>
+                      {(b.plotNumber || b.roomNumber) && (
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px]">
+                          {b.plotNumber && (
+                            <span className="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                              📍 {b.plotNumber}
+                            </span>
+                          )}
+                          {b.roomNumber && (
+                            <span className="font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                              🚪 {b.roomNumber} {b.floor ? `(${b.floor})` : ''}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <button
                       type="button"

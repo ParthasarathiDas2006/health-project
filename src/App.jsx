@@ -36,6 +36,7 @@ import { syncBloodBankFromFirestore } from './utils/bloodBankStorage';
 const NmcReferralPrescriptionSuite = lazy(() => import('./components/NmcReferralPrescriptionSuite'));
 const PhcOfflineSyncSuite = lazy(() => import('./components/PhcOfflineSyncSuite'));
 const TelemedicineVideoSuite = lazy(() => import('./components/TelemedicineVideoSuite'));
+import HealthcareHierarchyModal from './components/HealthcareHierarchyModal';
 
 import {
   Activity,
@@ -99,6 +100,7 @@ export default function App() {
   const [isSimulatedOffline, setIsSimulatedOffline] = useState(false);
   const effectiveIsOnline = isOnline && !isSimulatedOffline;
   const [showCriticalEmergencyModal, setShowCriticalEmergencyModal] = useState(false);
+  const [showHierarchyModal, setShowHierarchyModal] = useState(false);
 
   // Role Category computation
   const userRole = currentUser?.roleCategory || 'patient';
@@ -729,6 +731,15 @@ export default function App() {
         chiefComplaint: currentIntake?.chiefComplaint || currentIntake?.translatedSummary || currentIntake?.rawSpeech || 'Routine medical evaluation',
         vitals: currentIntake?.vitals || { temperature: '98.6', pulse: '72', systolic: '120', diastolic: '80', spo2: '98' },
         ocrMetrics: currentOcr?.metrics || [],
+        sourceSnippet: currentOcr?.rawText || null,
+        ocrSource: currentOcr?.sourceType || currentOcr?.fileName || (currentOcr?.metrics?.length ? 'Synthetic Sample Lab Slip' : null),
+        missingInfo: (currentOcr?.dataGaps && currentOcr.dataGaps.length > 0)
+          ? currentOcr.dataGaps
+          : [
+              'Hematocrit (PCV) not recorded',
+              'Standing BP / Postural vitals unmeasured'
+            ],
+        auditDisclaimer: 'NON-DIAGNOSTIC TRIAGE SUMMARY. Generated solely to assist triage prioritization. Requires mandatory review by Registered Medical Practitioner.',
         sourceAudioSummary: currentIntake?.rawSpeech || currentIntake?.originalSpeech || null,
         englishTranslation: currentIntake?.translatedSummary || currentIntake?.clinicalTranslation || null,
         healthIssue: currentIntake?.healthIssue || null,
@@ -786,12 +797,12 @@ export default function App() {
       protocol: 'ଡାକ୍ତରୀ ନିଷ୍ପତ୍ତି ସହାୟକ (Non-Diagnostic) | BSKY & NHM ଅନ୍ତର୍ଭୁକ୍ତ',
       facilityLabel: 'କେନ୍ଦ୍ର:',
       portalTag: isAdmin ? 'ରାଜ୍ୟ ସୁପର ଆଡମିନ୍' : isDriver ? '୧୦୮ ଆମ୍ବୁଲାନ୍ସ ପାଇଲଟ୍ କକ୍‌ପିଟ୍' : isDoctor ? 'ଡାକ୍ତରୀ କକ୍‌ପିଟ୍' : isAsha ? 'ଆଶା ଫିଲ୍ଡ ଷ୍ଟେସନ୍' : 'ନାଗରିକ ପୋର୍ଟାଲ୍',
-      // Hubs
-      hubCitizen: isAdmin ? '୪. ନାଗରିକ ସ୍ୱାସ୍ଥ୍ୟ ଡେସ୍କ' : '୧. ନାଗରିକ ସ୍ୱାସ୍ଥ୍ୟ ଡେସ୍କ',
-      hubDoctor: '୨. ଡାକ୍ତର କ୍ଲିନିକାଲ୍ କକ୍‌ପିଟ୍',
-      hubPhc: '୩. ଗ୍ରାମୀଣ PHC ଓ ଆଶା',
-      hubAdmin: isAdmin ? '୧. ରାଜ୍ୟ କମାଣ୍ଡ ଓ ପ୍ରଶାସନ' : '୪. ରାଜ୍ୟ କମାଣ୍ଡ ଓ ଲଜିଷ୍ଟିକ୍ସ',
-      hubDriver: '୫. ଆମ୍ବୁଲାନ୍ସ ପାଇଲଟ୍ (108 MDT)',
+      // Hubs (5-Tier Institutional Hierarchy)
+      hubAdmin: '୧. ରାଜ୍ୟ କମାଣ୍ଡ (Tier 5)',
+      hubDriver: '୨. ୧୦୮ ଆମ୍ବୁଲାନ୍ସ MDT (Tier 4)',
+      hubDoctor: '୩. ଡାକ୍ତର କକ୍‌ପିଟ୍ (Tier 3)',
+      hubPhc: '୪. ଗ୍ରାମୀଣ PHC ଓ ଆଶା (Tier 2)',
+      hubCitizen: '୫. ନାଗରିକ ଡେସ୍କ (Tier 1)',
       // Citizen Subtabs
       sub_intake: 'ମୋର ଲକ୍ଷଣ ଦାଖଲ',
       sub_ocr: 'ଲ୍ୟାବ୍ ରିପୋର୍ଟ OCR',
@@ -850,12 +861,12 @@ export default function App() {
       protocol: 'क्लिनिकल निर्णय समर्थन (Non-Diagnostic) | आयुष्मान भारत एवं NHM',
       facilityLabel: 'केंद्र:',
       portalTag: isAdmin ? 'राज्य सुपर एडमिन' : isDriver ? '108 एम्बुलेंस पायलट कॉकपिट' : isDoctor ? 'डॉक्टर कॉकपिट' : isAsha ? 'आशा फील्ड स्टेशन' : 'नागरिक पोर्टल',
-      // Hubs
-      hubCitizen: isAdmin ? '4. नागरिक स्वास्थ्य डेस्क' : '1. नागरिक स्वास्थ्य डेस्क',
-      hubDoctor: '2. डॉक्टर क्लिनिकल कॉकपिट',
-      hubPhc: '3. ग्रामीण PHC एवं आशा',
-      hubAdmin: isAdmin ? '1. राज्य कमान एवं प्रशासन' : '4. राज्य प्रशासन एवं लॉजिस्टिक्स',
-      hubDriver: '5. एम्बुलेंस पायलट (108 MDT)',
+      // Hubs (5-Tier Institutional Hierarchy)
+      hubAdmin: '1. राज्य कमान (Tier 5)',
+      hubDriver: '2. 108 एम्बुलेंस MDT (Tier 4)',
+      hubDoctor: '3. डॉक्टर क्लिनिकल कॉकपिट (Tier 3)',
+      hubPhc: '4. ग्रामीण PHC एवं आशा (Tier 2)',
+      hubCitizen: '5. नागरिक स्वास्थ्य डेस्क (Tier 1)',
       // Citizen Subtabs
       sub_intake: 'लक्षण दर्ज करें',
       sub_ocr: 'लैब रिपोर्ट OCR',
@@ -914,12 +925,12 @@ export default function App() {
       protocol: 'Human-in-the-Loop Decision Support (Non-Diagnostic) | MoHFW Aligned',
       facilityLabel: 'Facility:',
       portalTag: isAdmin ? 'State Super Admin' : isDriver ? '108 Ambulance Pilot Cockpit' : isDoctor ? 'Doctor Cockpit' : isAsha ? 'ASHA Field Station' : 'Citizen Portal',
-      // Hubs
-      hubCitizen: isAdmin ? '4. Citizen Health Desk' : '1. Citizen Health Desk',
-      hubDoctor: '2. Doctor Clinical Cockpit',
-      hubPhc: '3. Rural PHC & ASHA Station',
-      hubAdmin: isAdmin ? '1. State Health Command' : '4. State Health Command',
-      hubDriver: '5. Ambulance Pilot (108 MDT)',
+      // Hubs (5-Tier Institutional Hierarchy)
+      hubAdmin: '1. State Health Command (Tier 5)',
+      hubDriver: '2. 108 Ambulance Pilot MDT (Tier 4)',
+      hubDoctor: '3. Doctor Clinical Cockpit (Tier 3)',
+      hubPhc: '4. Rural PHC & ASHA Station (Tier 2)',
+      hubCitizen: '5. Citizen Health Desk (Tier 1)',
       // Citizen Subtabs
       sub_intake: 'Symptom Intake',
       sub_ocr: 'Lab Report OCR',
@@ -1145,11 +1156,19 @@ export default function App() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-current/10">
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-current/10">
                 <div className="text-[11px] opacity-75">
                   {appLang === 'or-IN' ? 'ଏହି ଟିକେଟ୍ ଡାକ୍ତର ଡ୍ୟାସବୋର୍ଡ ସହିତ ସଂଲଗ୍ନ ହୋଇଛି।' : appLang === 'hi-IN' ? 'यह टिकट डॉक्टर डैशबोर्ड से लिंक हो चुका है।' : 'Dispatched to on-duty medical officer queue.'}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => handleNavigateTab('beds')}
+                    className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs shadow transition-all cursor-pointer flex items-center gap-1.5"
+                    title="Reserve Hospital Bed"
+                  >
+                    <Bed className="w-3.5 h-3.5" />
+                    Hospital Bed
+                  </button>
                   {generatedTriageNote.urgency === 'RED' && (
                     <button
                       onClick={() => handleNavigateTab('ambulance')}
@@ -1166,7 +1185,36 @@ export default function App() {
                     <Video className="w-3.5 h-3.5" />
                     Teleconsult
                   </button>
+                  {(isAdmin || isDoctor) ? (
+                    <button
+                      onClick={() => {
+                        setActiveHub('doctor');
+                        setActiveTab('dashboard');
+                      }}
+                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs shadow transition-all cursor-pointer flex items-center gap-1.5"
+                      title="View this ticket in Clinical Doctor Review Station"
+                    >
+                      <Stethoscope className="w-3.5 h-3.5" />
+                      Doctor Queue Review
+                    </button>
+                  ) : (
+                    <div className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-xs">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>
+                        {appLang === 'or-IN'
+                          ? '✓ ଡାକ୍ତର ଧାଡ଼ିକୁ ପ୍ରେରିତ (ଲାଇଭ୍ ଟ୍ରାଏଜ୍ ସକ୍ରିୟ)'
+                          : appLang === 'hi-IN'
+                          ? '✓ ऑन-ड्यूटी डॉक्टर कतार में भेजा गया'
+                          : '✓ Dispatched to On-Duty Medical Officer Queue'}
+                      </span>
+                    </div>
+                  )}
                 </div>
+              </div>
+
+              {/* Regulatory Non-Diagnostic Legal Disclaimer Banner (Slide 9 Rubric Item #1) */}
+              <div className="mt-2.5 pt-2 border-t border-current/10 text-center text-[10px] font-mono opacity-80 leading-tight">
+                NON-DIAGNOSTIC TRIAGE SUMMARY • Generated solely to assist triage prioritization • Requires mandatory review by Registered Medical Practitioner (RMP)
               </div>
             </div>
           )}
@@ -1312,7 +1360,9 @@ export default function App() {
               appLang={appLang}
               onSwitchUser={() => setShowAuthPage(true)}
               onNavigateToNmc={() => handleNavigateTab('nmc_referral')}
+              onOpenNmcSuite={() => handleNavigateTab('nmc_referral')}
               onOpenTeleconsult={handleOpenTeleconsult}
+              onNavigateTab={handleNavigateTab}
               newGeneratedTicket={generatedTriageNote}
             />
           </Suspense>
@@ -1558,6 +1608,7 @@ export default function App() {
             renderActiveComponent={renderActiveWorkspace}
             onSwitchToDesktop={() => setViewModeOverride('desktop')}
             onSwitchPersona={handleQuickPersonaSwitch}
+            onOpenHierarchyModal={() => setShowHierarchyModal(true)}
           />
         </div>
       ) : (
@@ -1652,6 +1703,14 @@ export default function App() {
           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
             {uiText.portalTag}
           </span>
+          <button
+            onClick={() => setShowHierarchyModal(true)}
+            className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-900/80 hover:bg-indigo-800 text-indigo-200 border border-indigo-500/40 text-[10px] font-bold transition-all cursor-pointer shadow-xs"
+            title="Open 5-Tier Healthcare System Hierarchy Architecture"
+          >
+            <Layers className="w-3 h-3 text-indigo-400" />
+            <span>{appLang === 'or-IN' ? '🏛️ ସ୍ୱାସ୍ଥ୍ୟ ସ୍ତର' : appLang === 'hi-IN' ? '🏛️ 5-स्तरीय स्वास्थ्य' : '🏛️ System Hierarchy'}</span>
+          </button>
           <span className="hidden sm:inline">|</span>
           <button
             onClick={() => setViewModeOverride('mobile')}
@@ -1723,19 +1782,27 @@ export default function App() {
                 <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
                   {uiText.title}
                 </h1>
-                <span className={`px-2 py-0.5 text-[10px] font-black rounded-md border ${
-                  isAdmin
-                    ? 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950 dark:text-purple-300'
-                    : isDoctor
-                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
-                    : isAsha
-                    ? 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950 dark:text-teal-300'
-                    : isDriver
-                    ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950 dark:text-rose-300'
-                    : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300'
-                }`}>
-                  {isAdmin ? 'TIER 5: STATE ADMIN' : isDoctor ? 'TIER 3: DOCTOR (RMP)' : isAsha ? 'TIER 2: ASHA OUTREACH' : isDriver ? 'TIER 4: 108 PILOT' : 'TIER 1: CITIZEN'}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowHierarchyModal(true)}
+                  className={`px-2 py-0.5 text-[10px] font-black rounded-md border cursor-pointer hover:opacity-90 transition-all flex items-center gap-1 shadow-xs ${
+                    isAdmin
+                      ? 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950 dark:text-purple-300'
+                      : isDoctor
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                      : isAsha
+                      ? 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950 dark:text-teal-300'
+                      : isDriver
+                      ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950 dark:text-rose-300'
+                      : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300'
+                  }`}
+                  title="Click to inspect 5-Tier Healthcare System Hierarchy Architecture"
+                >
+                  <Layers className="w-2.5 h-2.5" />
+                  <span>
+                    {isAdmin ? 'TIER 5: STATE ADMIN' : isDoctor ? 'TIER 3: DOCTOR (RMP)' : isAsha ? 'TIER 2: ASHA OUTREACH' : isDriver ? 'TIER 4: 108 PILOT' : 'TIER 1: CITIZEN'}
+                  </span>
+                </button>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-md">
                 {uiText.subtitle}
@@ -1743,7 +1810,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* HIERARCHICAL VISION: STRICT ROLE-BASED HUB SELECTOR */}
+          {/* HIERARCHICAL VISION: STRICT ROLE-BASED HUB SELECTOR (TOP-DOWN 5-TIER ORDER) */}
           <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
             {isAdmin ? (
               <>
@@ -1763,7 +1830,23 @@ export default function App() {
                   </span>
                 </button>
 
-                {/* HUB 2 (TIER 3): DOCTOR CLINICAL COCKPIT */}
+                {/* HUB 2 (TIER 4): 108 AMBULANCE FLEET & MDT */}
+                <button
+                  onClick={() => switchHub('driver')}
+                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+                    activeHub === 'driver'
+                      ? 'bg-rose-700 text-white shadow-md ring-2 ring-rose-400/40'
+                      : 'text-rose-950 dark:text-rose-300 hover:text-rose-800 hover:bg-rose-100/60 dark:hover:bg-rose-950/60'
+                  }`}
+                >
+                  <Truck className="w-4 h-4 text-amber-400" />
+                  <span>{uiText.hubDriver}</span>
+                  <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
+                    108 MDT
+                  </span>
+                </button>
+
+                {/* HUB 3 (TIER 3): DOCTOR CLINICAL COCKPIT */}
                 <button
                   onClick={() => switchHub('doctor')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1781,7 +1864,7 @@ export default function App() {
                   )}
                 </button>
 
-                {/* HUB 3 (TIER 2): RURAL PHC & ASHA */}
+                {/* HUB 4 (TIER 2): RURAL PHC & ASHA */}
                 <button
                   onClick={() => switchHub('phc')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1797,7 +1880,7 @@ export default function App() {
                   </span>
                 </button>
 
-                {/* HUB 4 (TIER 1): CITIZEN */}
+                {/* HUB 5 (TIER 1): CITIZEN */}
                 <button
                   onClick={() => switchHub('citizen')}
                   className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
@@ -1808,22 +1891,6 @@ export default function App() {
                 >
                   <User className="w-4 h-4" />
                   <span>{uiText.hubCitizen}</span>
-                </button>
-
-                {/* HUB 5 (TIER 4): AMBULANCE DRIVER & MDT */}
-                <button
-                  onClick={() => switchHub('driver')}
-                  className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
-                    activeHub === 'driver'
-                      ? 'bg-rose-700 text-white shadow-md ring-2 ring-rose-400/40'
-                      : 'text-rose-950 dark:text-rose-300 hover:text-rose-800 hover:bg-rose-100/60 dark:hover:bg-rose-950/60'
-                  }`}
-                >
-                  <Truck className="w-4 h-4 text-amber-400" />
-                  <span>{uiText.hubDriver}</span>
-                  <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
-                    108
-                  </span>
                 </button>
               </>
             ) : isDoctor ? (
@@ -2087,92 +2154,156 @@ export default function App() {
                       <p className="text-[10px] text-slate-500 truncate mt-1">📍 {currentUser.facility}</p>
                     </div>
 
-                    {/* 🎭 1-CLICK INSTANT DEMO PERSONA SWITCHER */}
+                    {/* 🎭 1-CLICK INSTANT DEMO PERSONA SWITCHER (5-TIER HIERARCHICAL PYRAMID) */}
                     <div className="p-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50">
                       <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
-                        <span>🎭 Switch Persona (Live Demo)</span>
-                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">1-Click</span>
+                        <span>🎭 Switch Persona (5-Tier RBAC)</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            setShowHierarchyModal(true);
+                          }}
+                          className="text-[9px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                        >
+                          <Layers className="w-2.5 h-2.5" />
+                          <span>Hierarchy Architecture</span>
+                        </button>
                       </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleQuickPersonaSwitch('patient')}
-                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
-                            isPatient
-                              ? 'bg-amber-100 border-amber-400 text-amber-950 font-bold shadow-xs'
-                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-amber-400'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400">
-                            <User className="w-3.5 h-3.5" />
-                            <span>Citizen</span>
-                          </div>
-                          <div className="text-[10px] text-slate-500 truncate">Pratap (Patient)</div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleQuickPersonaSwitch('doctor')}
-                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
-                            isDoctor
-                              ? 'bg-emerald-100 border-emerald-400 text-emerald-950 font-bold shadow-xs'
-                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-400'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-400">
-                            <Stethoscope className="w-3.5 h-3.5" />
-                            <span>Doctor (RMP)</span>
-                          </div>
-                          <div className="text-[10px] text-slate-500 truncate">Dr. Soumya (MO)</div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleQuickPersonaSwitch('asha')}
-                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
-                            isAsha
-                              ? 'bg-teal-100 border-teal-400 text-teal-950 font-bold shadow-xs'
-                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-teal-400'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-teal-800 dark:text-teal-400">
-                            <Database className="w-3.5 h-3.5" />
-                            <span>ASHA / PHC</span>
-                          </div>
-                          <div className="text-[10px] text-slate-500 truncate">Sunita Devi (ASHA)</div>
-                        </button>
-
+                      <div className="space-y-1.5">
+                        {/* TIER 5: SUPER ADMIN */}
                         <button
                           type="button"
                           onClick={() => handleQuickPersonaSwitch('admin')}
-                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                          className={`w-full p-2 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
                             isAdmin
                               ? 'bg-purple-100 border-purple-400 text-purple-950 font-bold shadow-xs'
                               : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-purple-400'
                           }`}
                         >
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-purple-800 dark:text-purple-400">
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            <span>Super Admin</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-purple-700 text-white flex items-center justify-center text-[10px] font-black">
+                              T5
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-900 dark:text-purple-300">
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>Super Admin (CDMO)</span>
+                              </div>
+                              <div className="text-[10px] text-slate-500 truncate">Sunil Biswal • State Apex Command</div>
+                            </div>
                           </div>
-                          <div className="text-[10px] text-slate-500 truncate">Sunil Biswal (Admin)</div>
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-200/60 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 font-bold">
+                            TIER 5
+                          </span>
                         </button>
 
-                        {/* 5th 1-Click Persona: Ambulance Pilot */}
+                        {/* TIER 4: 108 AMBULANCE PILOT */}
                         <button
                           type="button"
                           onClick={() => handleQuickPersonaSwitch('driver')}
-                          className={`p-2 rounded-xl text-left border transition-all cursor-pointer col-span-2 ${
+                          className={`w-full p-2 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
                             isDriver
                               ? 'bg-rose-100 border-rose-400 text-rose-950 font-bold shadow-xs'
                               : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-rose-400'
                           }`}
                         >
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-rose-800 dark:text-rose-400">
-                            <Truck className="w-3.5 h-3.5" />
-                            <span>108 Ambulance Pilot (ପାଇଲଟ୍)</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-rose-700 text-white flex items-center justify-center text-[10px] font-black">
+                              T4
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-rose-900 dark:text-rose-300">
+                                <Truck className="w-3.5 h-3.5" />
+                                <span>108 Ambulance Pilot</span>
+                              </div>
+                              <div className="text-[10px] text-slate-500 truncate">Sanjay Barik • ALS MDT Dispatch</div>
+                            </div>
                           </div>
-                          <div className="text-[10px] text-slate-500 truncate">Sanjay Barik (108 ALS • OD-02-AB-1081)</div>
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-200/60 dark:bg-rose-900/40 text-rose-800 dark:text-rose-300 font-bold">
+                            TIER 4
+                          </span>
+                        </button>
+
+                        {/* TIER 3: DOCTOR CLINICAL COCKPIT */}
+                        <button
+                          type="button"
+                          onClick={() => handleQuickPersonaSwitch('doctor')}
+                          className={`w-full p-2 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
+                            isDoctor
+                              ? 'bg-emerald-100 border-emerald-400 text-emerald-950 font-bold shadow-xs'
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-[10px] font-black">
+                              T3
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300">
+                                <Stethoscope className="w-3.5 h-3.5" />
+                                <span>Doctor (RMP MO)</span>
+                              </div>
+                              <div className="text-[10px] text-slate-500 truncate">Dr. Soumya Mishra • Clinical Decision</div>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-200/60 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 font-bold">
+                            TIER 3
+                          </span>
+                        </button>
+
+                        {/* TIER 2: ASHA / RURAL PHC */}
+                        <button
+                          type="button"
+                          onClick={() => handleQuickPersonaSwitch('asha')}
+                          className={`w-full p-2 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
+                            isAsha
+                              ? 'bg-teal-100 border-teal-400 text-teal-950 font-bold shadow-xs'
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-teal-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-teal-700 text-white flex items-center justify-center text-[10px] font-black">
+                              T2
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-teal-900 dark:text-teal-300">
+                                <Database className="w-3.5 h-3.5" />
+                                <span>ASHA / Frontline PHC</span>
+                              </div>
+                              <div className="text-[10px] text-slate-500 truncate">Sunita Devi • Offline Community PWA</div>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-teal-200/60 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300 font-bold">
+                            TIER 2
+                          </span>
+                        </button>
+
+                        {/* TIER 1: CITIZEN CARE */}
+                        <button
+                          type="button"
+                          onClick={() => handleQuickPersonaSwitch('patient')}
+                          className={`w-full p-2 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
+                            isPatient
+                              ? 'bg-amber-100 border-amber-400 text-amber-950 font-bold shadow-xs'
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-amber-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-amber-600 text-white flex items-center justify-center text-[10px] font-black">
+                              T1
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-300">
+                                <User className="w-3.5 h-3.5" />
+                                <span>Citizen / Patient</span>
+                              </div>
+                              <div className="text-[10px] text-slate-500 truncate">Pratap Mohanty • Self-Triage & Beds</div>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-200/60 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-bold">
+                            TIER 1
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -2789,6 +2920,21 @@ export default function App() {
           onConfigSaved={handleFirebaseConfigSaved}
         />
       )}
+
+      {/* 🏛️ 5-Tier Indian Healthcare System Hierarchy & RBAC Architecture Modal */}
+      <HealthcareHierarchyModal
+        isOpen={showHierarchyModal}
+        onClose={() => setShowHierarchyModal(false)}
+        currentUser={currentUser}
+        appLang={appLang}
+        activeHub={activeHub}
+        onSwitchHub={(hubId) => {
+          switchHub(hubId);
+        }}
+        onSwitchPersona={(role) => {
+          handleQuickPersonaSwitch(role);
+        }}
+      />
     </div>
   );
 }

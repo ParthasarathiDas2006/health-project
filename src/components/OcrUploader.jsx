@@ -142,6 +142,10 @@ Blood Pressure            178/104      mmHg       (<120/80)         [STAGE 2 HTN
       rawText: demo.snippet,
       metrics: parsed,
       fileName: demo.title,
+      sourceType: 'Synthetic Sample Report (PS 1 Benchmarking)',
+      dataGaps: demo.metrics.platelet
+        ? ['Hematocrit (PCV) not recorded', 'Dengue NS1 / IgM Antigen pending', 'Standing BP / Orthostatic vitals unmeasured']
+        : ['Urine Microalbumin not recorded', 'HbA1c test pending', 'Fundus examination unperformed']
     });
   };
 

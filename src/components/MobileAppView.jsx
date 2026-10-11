@@ -56,7 +56,8 @@ export default function MobileAppView({
   onLogout,
   renderActiveComponent,
   onSwitchToDesktop,
-  onSwitchPersona
+  onSwitchPersona,
+  onOpenHierarchyModal
 }) {
   const [mobileSection, setMobileSection] = useState('home'); // 'home' | 'services' | 'records' | 'profile' | 'detail'
   const [showAdvisoryDetail, setShowAdvisoryDetail] = useState(false);
@@ -928,79 +929,126 @@ export default function MobileAppView({
               </div>
             </div>
 
-            {/* 🎭 1-CLICK INSTANT DEMO PERSONA SWITCHER */}
+            {/* 🏛️ 5-TIER HEALTHCARE HIERARCHY BUTTON */}
+            {onOpenHierarchyModal && (
+              <button
+                type="button"
+                onClick={onOpenHierarchyModal}
+                className="w-full py-3 px-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 font-black text-xs flex items-center justify-center gap-2 shadow-xs hover:bg-indigo-100 transition-all cursor-pointer"
+              >
+                <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <span>🏛️ 5-Tier Healthcare Hierarchy Architecture</span>
+              </button>
+            )}
+
+            {/* 🎭 1-CLICK INSTANT DEMO PERSONA SWITCHER (5-TIER RBAC) */}
             {onSwitchPersona && (
               <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                   <span>🎭 {t.switchRoleDemo}</span>
                   <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
-                    Hierarchical RBAC
+                    5-Tier RBAC
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onSwitchPersona('patient')}
-                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
-                      userRole === 'patient'
-                        ? 'bg-amber-100 border-amber-400 text-amber-950 font-bold shadow-xs'
-                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <div className="text-xs font-bold text-amber-800 dark:text-amber-400">{t.citizenRole}</div>
-                    <div className="text-[10px] text-slate-500">{t.citizenRoleSub}</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onSwitchPersona('doctor')}
-                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
-                      isDoctor
-                        ? 'bg-emerald-100 border-emerald-400 text-emerald-950 font-bold shadow-xs'
-                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <div className="text-xs font-bold text-emerald-800 dark:text-emerald-400">{t.doctorRole}</div>
-                    <div className="text-[10px] text-slate-500">{t.doctorRoleSub}</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onSwitchPersona('asha')}
-                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
-                      isAsha
-                        ? 'bg-teal-100 border-teal-400 text-teal-950 font-bold shadow-xs'
-                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <div className="text-xs font-bold text-teal-800 dark:text-teal-400">{t.ashaRole}</div>
-                    <div className="text-[10px] text-slate-500">{t.ashaRoleSub}</div>
-                  </button>
-
+                <div className="space-y-1.5">
+                  {/* TIER 5: ADMIN */}
                   <button
                     type="button"
                     onClick={() => onSwitchPersona('admin')}
-                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                    className={`w-full p-2.5 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
                       isAdmin
                         ? 'bg-purple-100 border-purple-400 text-purple-950 font-bold shadow-xs'
                         : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <div className="text-xs font-bold text-purple-800 dark:text-purple-400">{t.adminRole}</div>
-                    <div className="text-[10px] text-slate-500">{t.adminRoleSub}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md bg-purple-700 text-white flex items-center justify-center text-[9px] font-black">T5</span>
+                      <div>
+                        <div className="text-xs font-bold text-purple-800 dark:text-purple-300">{t.adminRole}</div>
+                        <div className="text-[10px] text-slate-500">{t.adminRoleSub}</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold text-purple-700 dark:text-purple-300">STATE APEX</span>
                   </button>
 
+                  {/* TIER 4: DRIVER */}
                   <button
                     type="button"
                     onClick={() => onSwitchPersona('driver')}
-                    className={`p-2 rounded-xl text-left border transition-all cursor-pointer col-span-2 ${
+                    className={`w-full p-2.5 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
                       isDriver
                         ? 'bg-rose-100 border-rose-400 text-rose-950 font-bold shadow-xs'
                         : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <div className="text-xs font-bold text-rose-800 dark:text-rose-400">{t.driverRole}</div>
-                    <div className="text-[10px] text-slate-500">{t.driverRoleSub}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md bg-rose-700 text-white flex items-center justify-center text-[9px] font-black">T4</span>
+                      <div>
+                        <div className="text-xs font-bold text-rose-800 dark:text-rose-400">{t.driverRole}</div>
+                        <div className="text-[10px] text-slate-500">{t.driverRoleSub}</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold text-rose-700 dark:text-rose-300">108 MDT</span>
+                  </button>
+
+                  {/* TIER 3: DOCTOR */}
+                  <button
+                    type="button"
+                    onClick={() => onSwitchPersona('doctor')}
+                    className={`w-full p-2.5 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
+                      isDoctor
+                        ? 'bg-emerald-100 border-emerald-400 text-emerald-950 font-bold shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md bg-emerald-700 text-white flex items-center justify-center text-[9px] font-black">T3</span>
+                      <div>
+                        <div className="text-xs font-bold text-emerald-800 dark:text-emerald-400">{t.doctorRole}</div>
+                        <div className="text-[10px] text-slate-500">{t.doctorRoleSub}</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-300">CLINICAL RMP</span>
+                  </button>
+
+                  {/* TIER 2: ASHA */}
+                  <button
+                    type="button"
+                    onClick={() => onSwitchPersona('asha')}
+                    className={`w-full p-2.5 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
+                      isAsha
+                        ? 'bg-teal-100 border-teal-400 text-teal-950 font-bold shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md bg-teal-700 text-white flex items-center justify-center text-[9px] font-black">T2</span>
+                      <div>
+                        <div className="text-xs font-bold text-teal-800 dark:text-teal-400">{t.ashaRole}</div>
+                        <div className="text-[10px] text-slate-500">{t.ashaRoleSub}</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold text-teal-700 dark:text-teal-300">OUTREACH PWA</span>
+                  </button>
+
+                  {/* TIER 1: CITIZEN */}
+                  <button
+                    type="button"
+                    onClick={() => onSwitchPersona('patient')}
+                    className={`w-full p-2.5 rounded-xl text-left border transition-all cursor-pointer flex items-center justify-between ${
+                      userRole === 'patient'
+                        ? 'bg-amber-100 border-amber-400 text-amber-950 font-bold shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md bg-amber-600 text-white flex items-center justify-center text-[9px] font-black">T1</span>
+                      <div>
+                        <div className="text-xs font-bold text-amber-800 dark:text-amber-400">{t.citizenRole}</div>
+                        <div className="text-[10px] text-slate-500">{t.citizenRoleSub}</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold text-amber-700 dark:text-amber-300">CITIZEN CARE</span>
                   </button>
                 </div>
               </div>
@@ -1148,8 +1196,23 @@ export default function MobileAppView({
                     </div>
                   </div>
 
-                  <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-[10px] font-bold border border-amber-300">
-                    🌿
+                  <div className="flex items-center gap-1.5">
+                    {onOpenHierarchyModal && (
+                      <button
+                        type="button"
+                        onClick={onOpenHierarchyModal}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-[9px] font-black cursor-pointer hover:bg-indigo-100 transition-all shadow-2xs"
+                        title="Open 5-Tier Healthcare System Hierarchy Architecture"
+                      >
+                        <Layers className="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-400" />
+                        <span>
+                          {isAdmin ? 'TIER 5' : isDriver ? 'TIER 4' : isDoctor ? 'TIER 3' : isAsha ? 'TIER 2' : 'TIER 1'}
+                        </span>
+                      </button>
+                    )}
+                    <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-[10px] font-bold border border-amber-300">
+                      🌿
+                    </div>
                   </div>
                 </div>
 

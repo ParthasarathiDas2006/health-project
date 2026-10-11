@@ -63,7 +63,7 @@ import {
 const DRAFT_STORAGE_KEY = 'nhp_draft_patient_intake_v3';
 
 // ─── 6 INDIA-WIDE FACILITY SCENARIOS (PS 3 CORE SPECIFICATION) ─────────────
-export const INDIA_FACILITY_SCENARIOS = [
+const INDIA_FACILITY_SCENARIOS = [
   {
     id: 'opd_surge',
     badge: '1. OPD Surge',
@@ -291,6 +291,9 @@ export default function MultimodalIntakeForm({
     getClinicalMedicineRecommendations(clinicalState, selectedVoiceLang)
   );
 
+  // DPDP Act 2023 Session Draft & Right to Erasure state
+  const [draftWiped, setDraftWiped] = useState(false);
+
   // References
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(false);
@@ -309,6 +312,82 @@ export default function MultimodalIntakeForm({
   const silenceCountdownIntervalRef = useRef(null);
   const currentTurnRef = useRef('turn1');
   currentTurnRef.current = currentDoctorTurn;
+
+  // Restore draft on mount if available
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed.transcript && !transcript) {
+          setTranscript(parsed.transcript);
+          baseTextRef.current = parsed.transcript;
+          fullTextRef.current = parsed.transcript;
+          setCumulativePatientSpeech(parsed.cumulativePatientSpeech || parsed.transcript);
+          if (parsed.vitals) setVitals(parsed.vitals);
+          if (parsed.activeCategory) setActiveCategory(parsed.activeCategory);
+          if (parsed.targetedAnswers) setTargetedAnswers(parsed.targetedAnswers);
+          if (parsed.painSeverity) setPainSeverity(parsed.painSeverity);
+        }
+      }
+    } catch (e) {
+      // Non-blocking fallback
+    }
+  }, []);
+
+  // Autosave draft when speech or vitals change (Slide 8/10 Local Caching)
+  useEffect(() => {
+    if (transcript || cumulativePatientSpeech) {
+      try {
+        localStorage.setItem(
+          DRAFT_STORAGE_KEY,
+          JSON.stringify({
+            transcript,
+            cumulativePatientSpeech,
+            vitals,
+            activeCategory,
+            targetedAnswers,
+            painSeverity,
+            savedAt: new Date().toISOString()
+          })
+        );
+      } catch (e) {
+        // Non-blocking fallback
+      }
+    }
+  }, [transcript, cumulativePatientSpeech, vitals, activeCategory, targetedAnswers, painSeverity]);
+
+  // DPDP Right to Erasure / Data Minimization Draft Wipe
+  const handleWipeDraftAndSession = () => {
+    try {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem('nhp_current_intake');
+    } catch (e) {
+      // Non-blocking fallback
+    }
+    setTranscript('');
+    setInterimTranscript('');
+    baseTextRef.current = '';
+    fullTextRef.current = '';
+    setCumulativePatientSpeech('');
+    setConversationHistory([]);
+    setCurrentDoctorTurn('turn1');
+    setDoctorSpeechText('');
+    setActiveScenarioId(null);
+    setTargetedAnswers({});
+    setPainSeverity('3');
+    setVitals({
+      temperature: '98.6',
+      pulse: '76',
+      spo2: '98',
+      systolic: '120',
+      diastolic: '80',
+      durationDays: '1'
+    });
+    setClinicalState(processIntakeSpeech('', selectedVoiceLang));
+    setDraftWiped(true);
+    setTimeout(() => setDraftWiped(false), 3000);
+  };
 
   // Sync prop language with internal voice lang
   useEffect(() => {
@@ -1068,11 +1147,24 @@ export default function MultimodalIntakeForm({
         <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
           Synthetic session anonymization is active. Audio recordings and symptom vectors are processed in-browser for CDSS Level-1 triage summarization with zero permanent unredacted storage.
         </p>
-        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 font-mono flex-wrap gap-1">
+        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-500 font-mono flex-wrap gap-1.5">
           <span>ABHA ID: <strong>{privacyShieldActive ? '91-XXXX-XXXX-2819' : '91-4829-1049-2819'}</strong></span>
           <span>Phone: <strong>{privacyShieldActive ? '+91 98XXXXXX10' : '+91 98765 43210'}</strong></span>
           <span className="text-emerald-600 font-bold">{privacyShieldActive ? 'PII Redacted ✓' : 'Direct Identifiers'}</span>
-          <span className="text-slate-400">Zero Cloud Retention Guarantee</span>
+          <span className="text-slate-400">Zero Cloud Retention</span>
+          <button
+            type="button"
+            onClick={handleWipeDraftAndSession}
+            className={`ml-auto px-2 py-0.5 rounded border transition-all cursor-pointer font-bold flex items-center gap-1 ${
+              draftWiped
+                ? 'bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                : 'bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-700 dark:bg-rose-950/60 dark:border-rose-900 dark:text-rose-300'
+            }`}
+            title="Right to Erasure & DPDP Data Minimization: Wipe locally stored intake draft and session vectors"
+          >
+            <Trash2 className="w-3 h-3 text-rose-500" />
+            <span>{draftWiped ? 'Draft Wiped ✓' : 'Clear Stored Draft / Wipe Data'}</span>
+          </button>
         </div>
       </div>
 

@@ -769,15 +769,21 @@ export const logoutUser = () => {
 const DEFAULT_BED_BOOKINGS = [
   {
     id: 'BED-OD-9012',
+    reservationKey: 'BED-OD-9012',
     timestamp: '2026-03-10T06:30:00.000Z',
     hospitalId: 'scb_cuttack',
     hospitalName: 'SCB Medical College & Hospital, Cuttack',
     hospitalAddress: 'Mangalabag, Cuttack, Odisha 753007',
     hospitalPhone: '0671-2414080',
+    plotNumber: 'Plot No. 14, Mangalabag Apex Enclave (North Campus)',
+    blockWing: 'New Super Specialty Block (SSB-1)',
+    floor: '3rd Floor',
+    roomNumber: 'Room 302 (Cardiothoracic ICU Suite)',
     bedTypeId: 'icu',
     bedTypeName: 'ICU with Mechanical Ventilator',
     wardName: 'Cardiothoracic ICU (CTVS Bay-2), 3rd Floor',
     bedNumber: 'ICU-VENT-04',
+    wayfinding: 'Main Gate ➔ Super Specialty Block-1 ➔ Elevator B to 3rd Floor ➔ Room 302',
     patientName: 'Trilochan Mohapatra',
     patientPhone: '+91 94371 88201',
     patientAbha: '91-4481-9023-1144',
@@ -791,15 +797,21 @@ const DEFAULT_BED_BOOKINGS = [
   },
   {
     id: 'BED-OD-8841',
+    reservationKey: 'BED-OD-8841',
     timestamp: '2026-03-10T07:15:00.000Z',
     hospitalId: 'aiims_bbsr',
     hospitalName: 'AIIMS Hospital, Bhubaneswar',
     hospitalAddress: 'Sijua, Patrapada, Bhubaneswar, Odisha 751019',
     hospitalPhone: '0674-2476789',
+    plotNumber: 'Plot No. 1, Patrapada Health City, Sector-A',
+    blockWing: 'Block-A (Apex Resuscitation & Trauma Complex)',
+    floor: 'Ground Floor',
+    roomNumber: 'Room G-04 (Emergency Trauma Bay-2)',
     bedTypeId: 'trauma',
     bedTypeName: 'Emergency Trauma Resuscitation Bed',
     wardName: 'Emergency Apex Trauma Bay, Ground Floor',
     bedNumber: 'TRAUMA-BAY-02',
+    wayfinding: 'Ambulance Portico ➔ Enter Bay-2 Gate ➔ Resuscitation Station Room G-04',
     patientName: 'Bikram Keshari Rout',
     patientPhone: '+91 98612 34509',
     patientAbha: '91-7712-4091-8821',
@@ -813,15 +825,21 @@ const DEFAULT_BED_BOOKINGS = [
   },
   {
     id: 'BED-OD-7723',
+    reservationKey: 'BED-OD-7723',
     timestamp: '2026-03-10T08:00:00.000Z',
     hospitalId: 'capital_bbsr',
     hospitalName: 'Capital Hospital, Bhubaneswar',
     hospitalAddress: 'Unit 6, Ganga Nagar, Bhubaneswar, Odisha 751001',
     hospitalPhone: '0674-2391983',
+    plotNumber: 'Plot No. 6, Ganga Nagar Medical Enclave (Unit-6)',
+    blockWing: 'Block-2 (High Dependency Respiratory Wing)',
+    floor: '2nd Floor',
+    roomNumber: 'Room 205 (HDU Oxygen Unit)',
     bedTypeId: 'hdu',
     bedTypeName: 'High Dependency Oxygen Bed',
     wardName: 'High Dependency Unit (HDU-B), 2nd Floor',
     bedNumber: 'HDU-O2-09',
+    wayfinding: 'Unit-6 Main Entry ➔ Block-2 ➔ Lift to 2nd Floor ➔ Room 205',
     patientName: 'Soudamini Nayak',
     patientPhone: '+91 94380 77123',
     patientAbha: '91-2290-6611-3456',
@@ -835,15 +853,21 @@ const DEFAULT_BED_BOOKINGS = [
   },
   {
     id: 'BED-OD-6619',
+    reservationKey: 'BED-OD-6619',
     timestamp: '2026-03-10T08:25:00.000Z',
     hospitalId: 'mkcg_berhampur',
     hospitalName: 'MKCG Medical College & Hospital, Berhampur',
     hospitalAddress: 'Medical Campus, Berhampur, Ganjam, Odisha 760004',
     hospitalPhone: '0680-2292704',
+    plotNumber: 'Plot No. 22, Medical College Campus, Berhampur',
+    blockWing: 'Inpatient Medicine Block-C',
+    floor: '3rd Floor',
+    roomNumber: 'Room 314 (Male Inpatient Ward No. 4)',
     bedTypeId: 'general',
     bedTypeName: 'General Medicine Inpatient Bed',
     wardName: 'Male Medicine Ward No. 4, Block-C',
     bedNumber: 'GEN-MED-18',
+    wayfinding: 'Campus Gate 1 ➔ Block-C ➔ Stairway/Elevator to 3rd Floor ➔ Room 314',
     patientName: 'Kalu Charan Padhi',
     patientPhone: '+91 94372 66551',
     patientAbha: '91-8841-3322-9901',
@@ -857,15 +881,21 @@ const DEFAULT_BED_BOOKINGS = [
   },
   {
     id: 'BED-OD-5504',
+    reservationKey: 'BED-OD-5504',
     timestamp: '2026-03-10T08:50:00.000Z',
     hospitalId: 'vimsar_burla',
     hospitalName: 'VIMSAR Medical College & Hospital, Burla',
     hospitalAddress: 'Burla, Sambalpur, Odisha 768017',
     hospitalPhone: '0663-2430768',
+    plotNumber: 'Plot No. 9, Institutional Health Enclave, Burla',
+    blockWing: 'Surgical Super-Specialty Wing-A',
+    floor: '3rd Floor',
+    roomNumber: 'Room 308 (Post-Operative Recovery)',
     bedTypeId: 'surgical',
     bedTypeName: 'Surgical High Dependency Bed',
     wardName: 'Surgical Step-Down Ward, 3rd Floor',
     bedNumber: 'SURG-POST-06',
+    wayfinding: 'Burla Campus Reception ➔ Wing-A ➔ Central Lift to 3rd Floor ➔ Room 308',
     patientName: 'Hemanta Meher',
     patientPhone: '+91 99370 88992',
     patientAbha: '91-5512-3344-7788',
@@ -879,15 +909,21 @@ const DEFAULT_BED_BOOKINGS = [
   },
   {
     id: 'BED-OD-4431',
+    reservationKey: 'BED-OD-4431',
     timestamp: '2026-03-10T09:10:00.000Z',
     hospitalId: 'dhh_puri',
     hospitalName: 'District Headquarters Hospital (DHH), Puri',
     hospitalAddress: 'Hospital Square, Grand Road, Puri, Odisha 752001',
     hospitalPhone: '06752-222046',
+    plotNumber: 'Plot No. 3, Grand Road Healthcare Sector, Puri',
+    blockWing: 'Maternal & Child Care Center (MCH)',
+    floor: '1st Floor',
+    roomNumber: 'Room 106 (MCH Labor & Delivery Observation)',
     bedTypeId: 'maternity',
     bedTypeName: 'Maternal Delivery Care Bed',
     wardName: 'MCH Labor & Delivery Observation, 1st Floor',
     bedNumber: 'MAT-DELIV-03',
+    wayfinding: 'Grand Road Gate ➔ MCH Building ➔ Ramp to 1st Floor ➔ Room 106',
     patientName: 'Priyanka Das',
     patientPhone: '+91 94391 22334',
     patientAbha: '91-3311-6655-2244',
@@ -901,15 +937,21 @@ const DEFAULT_BED_BOOKINGS = [
   },
   {
     id: 'BED-OD-3398',
+    reservationKey: 'BED-OD-3398',
     timestamp: '2026-03-10T09:35:00.000Z',
     hospitalId: 'dhh_balasore',
     hospitalName: 'District Headquarters Hospital (DHH), Balasore',
     hospitalAddress: 'Station Road, Balasore, Odisha 756001',
     hospitalPhone: '06782-262032',
+    plotNumber: 'Plot No. 8, Station Road Medical Sector, Balasore',
+    blockWing: 'Special Newborn Care Unit (SNCU) & PICU Complex',
+    floor: '2nd Floor',
+    roomNumber: 'Room 210 (Pediatric Critical Care)',
     bedTypeId: 'pediatric',
     bedTypeName: 'Pediatric Intensive Care Bed',
     wardName: 'Special Newborn Care Unit (SNCU) & PICU',
     bedNumber: 'PED-ICU-05',
+    wayfinding: 'Station Road Gate ➔ Pediatric Wing ➔ Lift-1 to 2nd Floor ➔ Room 210',
     patientName: 'Baby of Sanjukta Giri (4 Months)',
     patientPhone: '+91 94373 44112',
     patientAbha: '91-6622-4411-9988',
@@ -923,15 +965,21 @@ const DEFAULT_BED_BOOKINGS = [
   },
   {
     id: 'BED-OD-2287',
+    reservationKey: 'BED-OD-2287',
     timestamp: '2026-03-10T09:55:00.000Z',
     hospitalId: 'igh_rourkela',
     hospitalName: 'Ispat General Hospital (IGH), Rourkela',
     hospitalAddress: 'Sector 19, Rourkela, Sundargarh, Odisha 769005',
     hospitalPhone: '0661-2646201',
+    plotNumber: 'Plot No. 19, Sector-19 Health Complex, Rourkela',
+    blockWing: 'Acute Burn Critical Care Center',
+    floor: 'Ground Floor',
+    roomNumber: 'Room G-08 (Burn Isolation Bay)',
     bedTypeId: 'burn',
     bedTypeName: 'Burn ICU Isolation Bed',
     wardName: 'Acute Burn ICU & Decontamination Bay',
     bedNumber: 'BURN-ICU-02',
+    wayfinding: 'Burn Emergency Reception ➔ Sterile Corridor ➔ Room G-08',
     patientName: 'Mahendra Kisan',
     patientPhone: '+91 94374 88771',
     patientAbha: '91-1199-3355-7711',
@@ -945,15 +993,21 @@ const DEFAULT_BED_BOOKINGS = [
   },
   {
     id: 'BED-OD-1192',
+    reservationKey: 'BED-OD-1192',
     timestamp: '2026-03-10T10:15:00.000Z',
     hospitalId: 'sln_koraput',
     hospitalName: 'Saheed Laxman Nayak MCH & DHH, Koraput',
     hospitalAddress: 'Medical College Road, Koraput, Odisha 764020',
     hospitalPhone: '06852-250102',
+    plotNumber: 'Plot No. 5, Medical College Road, Koraput',
+    blockWing: 'High Dependency Infectious Disease Unit',
+    floor: '1st Floor',
+    roomNumber: 'Room 112 (HDU Ward Unit)',
     bedTypeId: 'hdu',
     bedTypeName: 'High Dependency Inpatient Bed',
     wardName: 'High Dependency Infectious Disease Unit',
     bedNumber: 'HDU-INF-04',
+    wayfinding: 'SLN Main Entrance ➔ East Wing ➔ 1st Floor Corridor ➔ Room 112',
     patientName: 'Dambaru Jani',
     patientPhone: '+91 94382 11990',
     patientAbha: '91-7744-1188-3322',
@@ -967,15 +1021,21 @@ const DEFAULT_BED_BOOKINGS = [
   },
   {
     id: 'BED-OD-1045',
+    reservationKey: 'BED-OD-1045',
     timestamp: '2026-03-10T10:40:00.000Z',
     hospitalId: 'capital_bbsr',
     hospitalName: 'Capital Hospital, Bhubaneswar',
     hospitalAddress: 'Unit 6, Bhubaneswar, Odisha 751001',
     hospitalPhone: '0674-2391983',
+    plotNumber: 'Plot No. 6, Ganga Nagar Medical Enclave (Unit-6)',
+    blockWing: 'Nephrology & Renal Dialysis Wing',
+    floor: '2nd Floor',
+    roomNumber: 'Room 202 (Dialysis Recovery Unit)',
     bedTypeId: 'renal',
     bedTypeName: 'Dialysis Post-Procedure Recovery Bed',
     wardName: 'Renal Care & Hemodialysis Recovery, 2nd Floor',
     bedNumber: 'RENAL-HDU-01',
+    wayfinding: 'Unit-6 Gate 2 ➔ Nephrology Center ➔ 2nd Floor ➔ Room 202',
     patientName: 'Prafulla Kumar Samal',
     patientPhone: '+91 98611 77224',
     patientAbha: '91-9933-2211-4477',
@@ -1670,7 +1730,53 @@ export const getBedBookings = () => {
       localStorage.setItem(BED_STORAGE_KEY, JSON.stringify(DEFAULT_BED_BOOKINGS));
       return DEFAULT_BED_BOOKINGS;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    let modified = false;
+    const enriched = parsed.map((item) => {
+      // If item is missing reservationKey, plotNumber, or roomNumber, enrich from defaults or generate
+      if (!item.reservationKey || !item.plotNumber || !item.roomNumber) {
+        modified = true;
+        const matchingDefault = DEFAULT_BED_BOOKINGS.find((d) => d.id === item.id);
+        const plotNumber =
+          item.plotNumber ||
+          matchingDefault?.plotNumber ||
+          'Plot No. 1, Main Medical Campus Sector';
+        const blockWing =
+          item.blockWing ||
+          matchingDefault?.blockWing ||
+          item.wardName ||
+          'Block-A Super-Specialty Wing';
+        const floor =
+          item.floor ||
+          matchingDefault?.floor ||
+          (item.wardName && item.wardName.includes('Ground') ? 'Ground Floor' : '2nd Floor');
+        const roomNumber =
+          item.roomNumber ||
+          matchingDefault?.roomNumber ||
+          `Room 204 (${item.bedTypeName || 'Specialty Bay'})`;
+        const reservationKey = item.reservationKey || item.id;
+        const wayfinding =
+          item.wayfinding ||
+          matchingDefault?.wayfinding ||
+          `Enter via Main Gate ➔ Proceed to ${plotNumber.split(',')[0]} ➔ Take Elevator to ${floor} ➔ ${roomNumber}`;
+
+        return {
+          ...item,
+          reservationKey,
+          plotNumber,
+          blockWing,
+          floor,
+          roomNumber,
+          wayfinding
+        };
+      }
+      return item;
+    });
+
+    if (modified) {
+      localStorage.setItem(BED_STORAGE_KEY, JSON.stringify(enriched));
+    }
+    return enriched;
   } catch (e) {
     console.error('Failed to read bed bookings:', e);
     return DEFAULT_BED_BOOKINGS;

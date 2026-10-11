@@ -24,7 +24,13 @@ import {
   ExternalLink,
   Sparkles,
   FileText,
-  Lock
+  Lock,
+  Key,
+  Copy,
+  Check,
+  Compass,
+  Navigation,
+  DoorOpen
 } from 'lucide-react';
 import { getBedBookings, saveBedBooking, cancelBedBooking } from '../utils/authStorage';
 
@@ -306,6 +312,138 @@ const HOSPITALS_DATABASE = [
   }
 ];
 
+// Hospital Campus Plot & Room Allotment Database
+const HOSPITAL_CAMPUS_PLOTS = {
+  'hosp-1': {
+    plotNumber: 'Plot No. 1, Patrapada Health City, Sector-A',
+    campus: 'Apex AIIMS Campus',
+    blocks: {
+      icu: { block: 'Block-A (Trauma & Critical Care Tower)', floor: '2nd Floor', room: 'Room 204 (ICU Isolation Suite)' },
+      oxygen: { block: 'Block-B (Super-Specialty HDU Wing)', floor: '3rd Floor', room: 'Room 312 (High Flow O2 Ward)' },
+      trauma: { block: 'Block-A (Apex Resuscitation Complex)', floor: 'Ground Floor', room: 'Room G-04 (Emergency Bay 1)' },
+      maternity: { block: 'Block-C (Mother & Child Center - MCH)', floor: '1st Floor', room: 'Room 108 (Obstetric Suite)' },
+      pediatric: { block: 'Block-C (Pediatric Care Wing)', floor: '2nd Floor', room: 'Room 216 (Pediatric HDU)' },
+      general: { block: 'Block-D (Inpatient Ward Block)', floor: '4th Floor', room: 'Room 405 (Inpatient Ward Section)' }
+    }
+  },
+  'hosp-2': {
+    plotNumber: 'Plot No. 14, Mangalabag Apex Enclave (North Campus)',
+    campus: 'SCB Medical Campus',
+    blocks: {
+      icu: { block: 'New Super Specialty Block (SSB-1)', floor: '3rd Floor', room: 'Room 302 (Cardiothoracic ICU)' },
+      oxygen: { block: 'Medicine Complex (Wing-B)', floor: '2nd Floor', room: 'Room 210 (Oxygen HDU Unit)' },
+      trauma: { block: 'Central Emergency Casualty Complex', floor: 'Ground Floor', room: 'Room G-02 (Red Triage Bay)' },
+      maternity: { block: 'MCH Center of Excellence (Block-E)', floor: '1st Floor', room: 'Room 114 (Maternity Suite)' },
+      pediatric: { block: 'Sardar Vallabhbhai Patel Sishu Bhawan', floor: '2nd Floor', room: 'Room 208 (Neonatal Care)' },
+      general: { block: 'Main Medical Inpatient Wing (Block-M)', floor: '3rd Floor', room: 'Room 318 (Medicine Ward-D)' }
+    }
+  },
+  'hosp-3': {
+    plotNumber: 'Plot No. 6, Ganga Nagar Medical Enclave (Unit-6)',
+    campus: 'Capital PGI Campus',
+    blocks: {
+      icu: { block: 'PGI Super Specialty Wing (Block-P)', floor: '2nd Floor', room: 'Room 201 (ICU Care)' },
+      oxygen: { block: 'Respiratory & Pulmonology Ward (Block-2)', floor: '3rd Floor', room: 'Room 305 (HDU Bay)' },
+      trauma: { block: '24x7 Casualty & Trauma Center', floor: 'Ground Floor', room: 'Room G-01 (Acute Resuscitation)' },
+      maternity: { block: 'Janani Suraksha MCH Building', floor: '1st Floor', room: 'Room 106 (Labor & Delivery)' },
+      pediatric: { block: 'Pediatric Care Center (Block-C)', floor: '2nd Floor', room: 'Room 212 (Child Care Bay)' },
+      general: { block: 'Civil Inpatient Block (Wing-A)', floor: '2nd Floor', room: 'Room 220 (General Ward)' }
+    }
+  },
+  'hosp-4': {
+    plotNumber: 'Plot No. 22, Medical College Campus, Berhampur',
+    campus: 'MKCG Southern Regional Campus',
+    blocks: {
+      icu: { block: 'Apex Multi-Specialty Block-1', floor: '2nd Floor', room: 'Room 206 (Ventilator ICU)' },
+      oxygen: { block: 'High Dependency HDU Complex (East Wing)', floor: '3rd Floor', room: 'Room 309 (Oxygen Unit)' },
+      trauma: { block: 'Central Casualty Emergency Wing', floor: 'Ground Floor', room: 'Room G-05 (Trauma Bay)' },
+      maternity: { block: 'Janani Suraksha MCH Wing', floor: '1st Floor', room: 'Room 111 (Postnatal Suite)' },
+      pediatric: { block: 'Pediatric ICU Complex (PICU)', floor: '2nd Floor', room: 'Room 215 (Pediatric Care)' },
+      general: { block: 'Male & Female Inpatient Ward Block 5', floor: '3rd Floor', room: 'Room 325 (Inpatient Ward)' }
+    }
+  },
+  'hosp-5': {
+    plotNumber: 'Plot No. 9, Institutional Health Enclave, Burla',
+    campus: 'VIMSAR Western Apex Campus',
+    blocks: {
+      icu: { block: 'Super Specialty Complex (Wing-A)', floor: '2nd Floor', room: 'Room 208 (Critical CCU)' },
+      oxygen: { block: 'Pulmonology & HDU Building', floor: '3rd Floor', room: 'Room 315 (O2 Supported Ward)' },
+      trauma: { block: 'Apex Trauma Care Center', floor: 'Ground Floor', room: 'Room G-03 (Resuscitation Bay)' },
+      maternity: { block: 'Obstetrics & Gynaecology Hospital', floor: '1st Floor', room: 'Room 104 (Delivery Ward)' },
+      pediatric: { block: 'Special Child Care Unit (SNCU)', floor: '2nd Floor', room: 'Room 218 (Pediatric Ward)' },
+      general: { block: 'General Medicine Hospital Complex', floor: '4th Floor', room: 'Room 412 (Medical Ward)' }
+    }
+  },
+  'hosp-6': {
+    plotNumber: 'Plot No. 3, Grand Road Healthcare Sector, Puri',
+    campus: 'DHH Puri District Campus',
+    blocks: {
+      icu: { block: 'District ICU & Critical Care Tower', floor: '2nd Floor', room: 'Room 203 (ICU Ward)' },
+      oxygen: { block: 'Oxygen Supported HDU Wing', floor: '2nd Floor', room: 'Room 207 (HDU Ward)' },
+      trauma: { block: 'Emergency Casualty & Trauma Block', floor: 'Ground Floor', room: 'Room G-01 (Casualty Bay)' },
+      maternity: { block: 'Mother & Child Care Center (MCH)', floor: '1st Floor', room: 'Room 102 (Maternity Bay)' },
+      pediatric: { block: 'SNCU Pediatric Ward', floor: '1st Floor', room: 'Room 109 (Child Care)' },
+      general: { block: 'Main District Inpatient Block', floor: '3rd Floor', room: 'Room 304 (General Ward)' }
+    }
+  }
+};
+
+function getAllocationDetails(hospital, bedTypeId) {
+  const hospId = hospital?.id;
+  const config = HOSPITAL_CAMPUS_PLOTS[hospId];
+  if (config && config.blocks && config.blocks[bedTypeId]) {
+    const b = config.blocks[bedTypeId];
+    return {
+      plotNumber: config.plotNumber,
+      campus: config.campus,
+      blockWing: b.block,
+      floor: b.floor,
+      roomNumber: b.room,
+      wayfinding: `Enter via Main Campus Gate ➔ Proceed to ${config.plotNumber.split(',')[0]} ➔ Head to ${b.block} ➔ Take Elevator/Ramp to ${b.floor} ➔ Report to Nursing Station opposite ${b.room}`
+    };
+  }
+
+  // Fallback generator
+  const plotNum = hospital?.address ? `Plot No. 12, ${hospital.address.split(',')[0]} Sector` : 'Plot No. 5, Healthcare Zone';
+  const floorMap = {
+    icu: '2nd Floor',
+    oxygen: '3rd Floor',
+    trauma: 'Ground Floor',
+    maternity: '1st Floor',
+    pediatric: '2nd Floor',
+    general: '4th Floor'
+  };
+  const roomMap = {
+    icu: 'Room 204 (ICU Isolation Suite)',
+    oxygen: 'Room 312 (High Dependency HDU)',
+    trauma: 'Room G-04 (Emergency Casualty Bay)',
+    maternity: 'Room 108 (Obstetric Delivery Suite)',
+    pediatric: 'Room 216 (Pediatric Care Wing)',
+    general: 'Room 405 (Inpatient Ward Unit)'
+  };
+  const blockMap = {
+    icu: 'Block-A (Critical Care Wing)',
+    oxygen: 'Block-B (HDU Oxygen Wing)',
+    trauma: 'Casualty Emergency Building',
+    maternity: 'Mother & Child Care Center (MCH)',
+    pediatric: 'Pediatric Care Block',
+    general: 'General Inpatient Block'
+  };
+
+  const floor = floorMap[bedTypeId] || '2nd Floor';
+  const room = roomMap[bedTypeId] || 'Room 201 (Ward Unit)';
+  const block = blockMap[bedTypeId] || 'Main Hospital Wing';
+
+  return {
+    plotNumber: plotNum,
+    campus: hospital?.name?.['en-IN'] || 'Hospital Campus',
+    blockWing: block,
+    floor: floor,
+    roomNumber: room,
+    wayfinding: `Enter via Main Gate ➔ Proceed to ${plotNum.split(',')[0]} ➔ Go to ${block} ➔ ${floor} ➔ Check-in at ${room}`
+  };
+}
+
 export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite, onRequireAuth }) {
   const lang = appLang || currentUser?.preferredLanguage || 'or-IN';
 
@@ -332,6 +470,15 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
 
   // Confirmation Slip Modal
   const [confirmedSlip, setConfirmedSlip] = useState(null);
+  const [copiedKey, setCopiedKey] = useState(false);
+
+  const handleCopyKey = (key) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(key);
+    }
+    setCopiedKey(true);
+    setTimeout(() => setCopiedKey(false), 2500);
+  };
 
   // Stored Reservations
   const [reservations, setReservations] = useState(() => getBedBookings());
@@ -397,7 +544,18 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
       totalFreeOverall: 'ମୋଟ ଖାଲି ବେଡ୍:',
       icuBedsFree: 'ଆଇସିୟୁ ବେଡ୍ ଖାଲି:',
       guestLockMsg: 'ଅତିଥି ଭାବରେ ହସ୍ପିଟାଲ୍ ବେଡ୍ ରିଜର୍ଭେସନ୍ କରିବା ଅନୁମୋଦିତ ନୁହେଁ। ବେଡ୍ ନିଶ୍ଚିତ କରିବା ପାଇଁ ଦୟାକରି ଲଗ୍-ଇନ୍ କରନ୍ତୁ।',
-      guestLoginBtn: '🔑 ଲଗ୍-ଇନ୍ / ରେଜିଷ୍ଟ୍ରେସନ୍ କରନ୍ତୁ'
+      guestLoginBtn: '🔑 ଲଗ୍-ଇନ୍ / ରେଜିଷ୍ଟ୍ରେସନ୍ କରନ୍ତୁ',
+      reservationKeyTitle: 'ଅଫିସିଆଲ୍ ରିଜର୍ଭେସନ୍ କି (Reservation Key)',
+      plotNumber: 'ପ୍ଲଟ୍ ନମ୍ବର ଓ କ୍ୟାମ୍ପସ (Plot & Campus)',
+      roomNumber: 'ନିର୍ଦ୍ଧାରିତ ରୁମ୍ ନମ୍ବର (Room No)',
+      floorLevel: 'ମହଲା / ସ୍ତର (Floor)',
+      blockWing: 'ବ୍ଲକ୍ ଓ ୱିଙ୍ଗ୍ (Block & Wing)',
+      assignedBedNo: 'ନିର୍ଦ୍ଧାରିତ ବେଡ୍ ନମ୍ବର (Bed No)',
+      wayfindingTitle: 'ହସ୍ପିଟାଲ୍ ମାର୍ଗଦର୍ଶନ (Route & Wayfinding)',
+      locationHeader: 'ନିର୍ଦ୍ଧାରିତ ପ୍ଲଟ୍, ବ୍ଲକ୍ ଓ ରୁମ୍ ସ୍ଥାନ (Plot & Room Allocation)',
+      copyKeyBtn: 'ରିଜର୍ଭେସନ୍ କି କପି କରନ୍ତୁ',
+      copied: 'କପି ହୋଇଗଲା! ✓',
+      viewPass: 'ପାସ୍ ଓ ରୁମ୍ ମାର୍ଗଦର୍ଶନ ଦେଖନ୍ତୁ'
     },
     'hi-IN': {
       headerTitle: 'अस्पताल बेड उपलब्धता एवं डिजिटल प्रवेश (Bed Booking)',
@@ -448,7 +606,18 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
       totalFreeOverall: 'कुल खाली बेड:',
       icuBedsFree: 'आईसीयू खाली बेड:',
       guestLockMsg: 'अतिथि खाते से अस्पताल बेड आरक्षित करना मान्य नहीं है। कृपया डिजिटल प्रवेश पास जारी करने हेतु लॉगिन करें।',
-      guestLoginBtn: '🔑 लॉगिन / नया खाता बनाएं'
+      guestLoginBtn: '🔑 लॉगिन / नया खाता बनाएं',
+      reservationKeyTitle: 'आधिकारिक आरक्षण कुंजी (Official Reservation Key)',
+      plotNumber: 'प्लॉट नंबर एवं परिसर (Plot & Campus)',
+      roomNumber: 'आवंटित कमरा नंबर (Room No)',
+      floorLevel: 'मंजिल (Floor)',
+      blockWing: 'ब्लॉक एवं विंग (Block & Wing)',
+      assignedBedNo: 'आवंटित बेड नंबर (Bed No)',
+      wayfindingTitle: 'अस्पताल मार्गदर्शिका (कमरे तक कैसे पहुंचें)',
+      locationHeader: 'आवंटित प्लॉट, ब्लॉक एवं कमरा विवरण (Plot & Room Allocation)',
+      copyKeyBtn: 'आरक्षण कुंजी कॉपी करें',
+      copied: 'कुंजी कॉपी हो गई! ✓',
+      viewPass: 'प्रवेश पर्ची एवं कमरा विवरण देखें'
     },
     'en-IN': {
       headerTitle: 'Hospital Bed Availability & Digital Admission Pass',
@@ -499,7 +668,18 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
       totalFreeOverall: 'Total Available Beds:',
       icuBedsFree: 'Free ICU Beds:',
       guestLockMsg: 'Hospital bed reservation is restricted for Guest accounts. Please sign in or register to secure your digital admission pass.',
-      guestLoginBtn: '🔑 Sign In / Register to Book Bed'
+      guestLoginBtn: '🔑 Sign In / Register to Book Bed',
+      reservationKeyTitle: 'Official Reservation Key (Digital Pass Key)',
+      plotNumber: 'Plot Number & Campus Sector',
+      roomNumber: 'Allotted Room Number',
+      floorLevel: 'Floor Level',
+      blockWing: 'Building Block & Wing',
+      assignedBedNo: 'Assigned Bed No',
+      wayfindingTitle: 'Hospital Wayfinding & Route Directions',
+      locationHeader: 'Allotted Plot, Block & Room Allocation',
+      copyKeyBtn: 'Copy Reservation Key',
+      copied: 'Key Copied! ✓',
+      viewPass: 'View Admission Pass & Route'
     }
   }[lang] || {};
 
@@ -530,22 +710,14 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const dateCode = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const bookingId = `BED-OD-${dateCode}-${randomSuffix}`;
-    const wardName = targetBedType.id === 'icu' 
-      ? 'Block-A Critical Care Unit (CCU), 2nd Floor'
-      : targetBedType.id === 'oxygen' 
-      ? 'Block-B High Dependency Oxygen Ward, 3rd Floor'
-      : targetBedType.id === 'trauma'
-      ? 'Casualty Resuscitation Bay-1, Ground Floor'
-      : targetBedType.id === 'maternity'
-      ? 'Mother & Child Care Center (MCH), 1st Floor'
-      : targetBedType.id === 'pediatric'
-      ? 'Pediatric Intensive Ward-C, 2nd Floor'
-      : 'General Inpatient Ward-D, 4th Floor';
+    const reservationKey = bookingId;
 
+    const allocation = getAllocationDetails(targetHospital, targetBedType.id);
     const bedNumber = `${targetBedType.id.toUpperCase()}-${Math.floor(10 + Math.random() * 89)}`;
 
     const newBooking = {
       id: bookingId,
+      reservationKey,
       timestamp: new Date().toISOString(),
       hospitalId: targetHospital.id,
       hospitalName: targetHospital.name[lang] || targetHospital.name['en-IN'],
@@ -554,8 +726,14 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
       bedTypeId: targetBedType.id,
       bedTypeName: targetBedType.name[lang] || targetBedType.name['en-IN'],
       bedTypeImage: targetBedType.image,
-      wardName,
+      plotNumber: allocation.plotNumber,
+      campus: allocation.campus,
+      blockWing: allocation.blockWing,
+      floor: allocation.floor,
+      roomNumber: allocation.roomNumber,
+      wardName: `${allocation.blockWing}, ${allocation.floor}`,
       bedNumber,
+      wayfinding: allocation.wayfinding,
       patientName,
       patientPhone,
       patientAbha: patientAbha || 'N/A',
@@ -1026,61 +1204,126 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
               {reservations.map((res) => (
                 <div
                   key={res.id}
-                  className="rounded-xl border border-slate-200 p-5 bg-slate-50/50 hover:bg-white transition-all space-y-4 shadow-2xs"
+                  className="rounded-2xl border border-slate-200 p-5 bg-white transition-all space-y-4 shadow-sm hover:shadow-md"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/70 pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold">
-                        <Bed className="w-5 h-5" />
+                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-600 to-emerald-700 text-white flex items-center justify-center font-bold shadow-xs">
+                        <Bed className="w-6 h-6" />
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-800">{res.hospitalName}</div>
-                        <div className="text-[11px] text-slate-500 font-mono">Token: {res.id}</div>
+                        <div className="text-sm font-bold text-slate-900">{res.hospitalName}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 font-mono text-xs font-bold">
+                            <Key className="w-3 h-3 text-amber-700" />
+                            {res.reservationKey || res.id}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyKey(res.reservationKey || res.id)}
+                            className="text-[11px] text-teal-700 hover:text-teal-900 font-semibold flex items-center gap-1 cursor-pointer bg-slate-50 px-2 py-0.5 rounded border border-slate-200"
+                            title="Copy Reservation Key"
+                          >
+                            <Copy className="w-3 h-3" />
+                            <span>{copiedKey ? txt.copied : txt.copyKeyBtn}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md border border-emerald-200 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span className="text-xs font-bold px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                         {txt.statusConfirmed}
                       </span>
                     </div>
                   </div>
 
-                  {/* Booking Details Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                    <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">
-                        {txt.allocatedBed}
+                  {/* Which Plot & Which Room Highlight Banner */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 bg-gradient-to-br from-slate-50 to-teal-50/40 p-3.5 rounded-xl border border-teal-100 text-xs">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-rose-500" />
+                        {txt.plotNumber}
                       </span>
-                      <span className="font-bold text-slate-900">{res.bedTypeName}</span>
-                      <div className="text-[11px] text-teal-700 font-semibold mt-0.5">
-                        Bed: {res.bedNumber}
+                      <div className="font-extrabold text-slate-900 leading-snug">
+                        {res.plotNumber || 'Main Hospital Enclave'}
                       </div>
                     </div>
 
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] uppercase font-bold text-teal-600 flex items-center gap-1">
+                        <DoorOpen className="w-3 h-3 text-teal-600" />
+                        {txt.roomNumber}
+                      </span>
+                      <div className="font-black text-teal-900 bg-white/90 px-2 py-0.5 rounded border border-teal-200 inline-block">
+                        {res.roomNumber || 'Room 204'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-semibold">
+                        Floor: {res.floor || '2nd Floor'}
+                      </div>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                        <Building2 className="w-3 h-3 text-indigo-500" />
+                        {txt.blockWing}
+                      </span>
+                      <div className="font-bold text-slate-800">
+                        {res.blockWing || res.wardName}
+                      </div>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                        <Bed className="w-3 h-3 text-emerald-600" />
+                        {txt.assignedBedNo}
+                      </span>
+                      <div className="font-black text-emerald-900 bg-white/90 px-2 py-0.5 rounded border border-emerald-200 inline-block font-mono">
+                        {res.bedNumber}
+                      </div>
+                      <div className="text-[10px] text-teal-700 font-semibold truncate">
+                        {res.bedTypeName}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Patient Info & Contact */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1 text-slate-600">
                     <div>
                       <span className="text-slate-400 block text-[10px] uppercase font-semibold">
                         {txt.patientInfo}
                       </span>
-                      <span className="font-bold text-slate-900">{res.patientName} ({res.patientAge}y, {res.patientGender})</span>
-                      <div className="text-[11px] text-slate-500">ABHA: {res.patientAbha}</div>
+                      <span className="font-bold text-slate-900">
+                        {res.patientName} ({res.patientAge}y, {res.patientGender})
+                      </span>
+                      <div className="text-[11px] text-slate-500">Phone: {res.patientPhone}</div>
                     </div>
 
                     <div>
                       <span className="text-slate-400 block text-[10px] uppercase font-semibold">
-                        {txt.wardNumber}
+                        ABHA & Health Scheme
                       </span>
-                      <span className="font-bold text-slate-900">{res.wardName}</span>
-                      <div className="text-[11px] text-slate-500">Helpline: {res.hospitalPhone}</div>
+                      <span className="font-semibold text-slate-800">ABHA: {res.patientAbha}</span>
+                      <div className="text-[11px] text-emerald-700 font-bold uppercase">{res.scheme}</div>
+                    </div>
+
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">
+                        Hospital Desk & Helpline
+                      </span>
+                      <span className="font-bold text-rose-600">{res.hospitalPhone}</span>
+                      <div className="text-[11px] text-slate-500">
+                        Admitted: {res.timestamp ? new Date(res.timestamp).toLocaleDateString() : 'Active'}
+                      </div>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/70">
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                     <button
                       onClick={() => handleCancelBooking(res.id)}
-                      className="px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg font-semibold flex items-center gap-1"
+                      className="px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg font-semibold flex items-center gap-1 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       {txt.cancelBtn}
@@ -1088,10 +1331,10 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
 
                     <button
                       onClick={() => setConfirmedSlip(res)}
-                      className="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs"
+                      className="px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-700 hover:from-teal-700 hover:to-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer transition active:scale-95"
                     >
-                      <Printer className="w-3.5 h-3.5" />
-                      {txt.printSlip}
+                      <Printer className="w-4 h-4" />
+                      <span>{txt.viewPass}</span>
                     </button>
                   </div>
                 </div>
@@ -1278,6 +1521,48 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
                 />
               </div>
 
+              {/* Live Allotment Preview */}
+              {(() => {
+                const preview = getAllocationDetails(targetHospital, targetBedType.id);
+                return (
+                  <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl p-3.5 border border-teal-200 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 font-bold text-teal-900">
+                        <Building2 className="w-4 h-4 text-teal-600" />
+                        <span>{txt.locationHeader}</span>
+                      </div>
+                      <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        Direct Reservation
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white/90 p-2.5 rounded-lg border border-teal-100">
+                        <span className="text-slate-400 block text-[10px] uppercase font-bold flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-rose-500" />
+                          {txt.plotNumber}
+                        </span>
+                        <span className="font-extrabold text-slate-900 block mt-0.5 text-[11px] leading-tight">
+                          {preview.plotNumber}
+                        </span>
+                      </div>
+                      <div className="bg-white/90 p-2.5 rounded-lg border border-teal-100">
+                        <span className="text-slate-400 block text-[10px] uppercase font-bold flex items-center gap-1">
+                          <DoorOpen className="w-3 h-3 text-teal-600" />
+                          {txt.roomNumber} &amp; {txt.floorLevel}
+                        </span>
+                        <span className="font-black text-teal-900 block mt-0.5 text-[11px] leading-tight">
+                          {preview.roomNumber} ({preview.floor})
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-teal-800 font-medium bg-teal-100/60 p-2 rounded flex items-center gap-1.5">
+                      <Compass className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+                      <span className="truncate">{preview.wayfinding}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Actions */}
               <div className="pt-3 border-t border-slate-200 space-y-3">
                 {currentUser?.isGuest && (
@@ -1305,7 +1590,7 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
                   <button
                     type="button"
                     onClick={() => setBookingModalOpen(false)}
-                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-bold"
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-bold cursor-pointer"
                   >
                     {txt.cancelBtn}
                   </button>
@@ -1339,55 +1624,142 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
       {/* CONFIRMED ADMISSION PASS SLIP MODAL */}
       {confirmedSlip && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-300 shadow-2xl overflow-hidden my-8">
+          <div className="bg-white rounded-2xl max-w-xl w-full border border-slate-300 shadow-2xl overflow-hidden my-8">
             {/* Header */}
-            <div className="bg-emerald-700 text-white p-5 text-center relative">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-2">
+            <div className="bg-gradient-to-r from-emerald-800 via-teal-800 to-teal-900 text-white p-5 text-center relative">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-full mb-2 shadow-inner">
                 <CheckCircle2 className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-base font-black tracking-wide">{txt.slipTitle}</h3>
               <p className="text-xs text-emerald-100 mt-0.5">{txt.slipSubtitle}</p>
               <button
+                type="button"
                 onClick={() => setConfirmedSlip(null)}
-                className="absolute top-4 right-4 text-white/80 hover:text-white"
+                className="absolute top-4 right-4 text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Slip Body */}
-            <div className="p-6 space-y-4 text-xs bg-slate-50/60">
-              {/* Token Display */}
-              <div className="bg-white rounded-xl p-3.5 border-2 border-dashed border-emerald-500 text-center">
-                <div className="text-[10px] uppercase font-bold text-slate-400">{txt.tokenNumber}</div>
-                <div className="text-xl font-black text-emerald-700 font-mono tracking-wider">
-                  {confirmedSlip.id}
+            <div className="p-6 space-y-4 text-xs bg-slate-50/70">
+              {/* Prominent RESERVATION KEY Container */}
+              <div className="bg-gradient-to-br from-amber-50 via-white to-emerald-50 rounded-2xl p-4 border-2 border-emerald-500 shadow-sm text-center relative">
+                <div className="inline-flex items-center gap-1.5 text-[11px] uppercase font-black tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full mb-2 border border-emerald-300">
+                  <Key className="w-3.5 h-3.5 text-amber-700" />
+                  <span>{txt.reservationKeyTitle || 'OFFICIAL RESERVATION KEY'}</span>
                 </div>
-                <span className="inline-block mt-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-                  {txt.statusConfirmed}
-                </span>
-              </div>
+                
+                <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-widest my-1 drop-shadow-xs selection:bg-amber-200">
+                  {confirmedSlip.reservationKey || confirmedSlip.id}
+                </div>
 
-              {/* Hospital & Bed Info */}
-              <div className="bg-white rounded-xl p-4 border border-slate-200 space-y-2">
-                <div className="flex justify-between items-start">
-                  <span className="text-slate-500">{txt.hospitalName}:</span>
-                  <span className="font-bold text-slate-900 text-right">{confirmedSlip.hospitalName}</span>
-                </div>
-                <div className="flex justify-between items-start">
-                  <span className="text-slate-500">{txt.allocatedBed}:</span>
-                  <span className="font-bold text-teal-700 text-right">{confirmedSlip.bedTypeName}</span>
-                </div>
-                <div className="flex justify-between items-start">
-                  <span className="text-slate-500">{txt.wardNumber}:</span>
-                  <span className="font-bold text-slate-900 text-right">{confirmedSlip.wardName}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500">Assigned Bed No:</span>
-                  <span className="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
-                    {confirmedSlip.bedNumber}
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleCopyKey(confirmedSlip.reservationKey || confirmedSlip.id)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-slate-50 text-teal-800 font-bold rounded-lg border border-teal-300 shadow-2xs cursor-pointer transition active:scale-95"
+                  >
+                    {copiedKey ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700">{txt.copied}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-teal-600" />
+                        <span>{txt.copyKeyBtn}</span>
+                      </>
+                    )}
+                  </button>
+                  <span className="inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-200">
+                    {txt.statusConfirmed}
                   </span>
                 </div>
+              </div>
+
+              {/* WHICH PLOT & WHICH ROOM (Prominent 4-tile Allotment Section) */}
+              <div className="bg-white rounded-2xl p-4 border border-teal-200 shadow-xs space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-1.5 font-black text-slate-900 text-xs">
+                    <Building2 className="w-4 h-4 text-teal-600" />
+                    <span>{txt.locationHeader || 'Allocated Plot & Room Location'}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                    Hospital Allotment
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* PLOT */}
+                  <div className="bg-gradient-to-br from-slate-50 to-rose-50/30 p-3 rounded-xl border border-slate-200 space-y-1">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                      {txt.plotNumber || 'Plot & Campus Location'}
+                    </span>
+                    <div className="font-extrabold text-slate-900 text-sm leading-snug">
+                      {confirmedSlip.plotNumber || 'Main Hospital Enclave'}
+                    </div>
+                    <div className="text-[11px] text-slate-500 font-semibold truncate">
+                      {confirmedSlip.hospitalName}
+                    </div>
+                  </div>
+
+                  {/* ROOM */}
+                  <div className="bg-gradient-to-br from-teal-50 to-emerald-50/50 p-3 rounded-xl border border-teal-200 space-y-1">
+                    <span className="text-teal-700 block text-[10px] uppercase font-bold flex items-center gap-1">
+                      <DoorOpen className="w-3.5 h-3.5 text-teal-600" />
+                      {txt.roomNumber || 'Allotted Room Number'}
+                    </span>
+                    <div className="font-black text-teal-950 text-base leading-snug">
+                      {confirmedSlip.roomNumber || 'Room 204'}
+                    </div>
+                    <div className="text-[11px] text-teal-700 font-bold">
+                      {txt.floorLevel}: {confirmedSlip.floor || '2nd Floor'}
+                    </div>
+                  </div>
+
+                  {/* BLOCK / WARD */}
+                  <div className="bg-gradient-to-br from-slate-50 to-indigo-50/30 p-3 rounded-xl border border-slate-200 space-y-1">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold flex items-center gap-1">
+                      <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+                      {txt.blockWing || 'Block & Wing'}
+                    </span>
+                    <div className="font-bold text-slate-800 text-xs">
+                      {confirmedSlip.blockWing || confirmedSlip.wardName}
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      Ward: {confirmedSlip.wardName}
+                    </div>
+                  </div>
+
+                  {/* BED */}
+                  <div className="bg-gradient-to-br from-slate-50 to-emerald-50/30 p-3 rounded-xl border border-slate-200 space-y-1">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold flex items-center gap-1">
+                      <Bed className="w-3.5 h-3.5 text-emerald-600" />
+                      {txt.assignedBedNo || 'Assigned Bed No'}
+                    </span>
+                    <div className="font-black text-emerald-900 text-sm font-mono">
+                      {confirmedSlip.bedNumber}
+                    </div>
+                    <div className="text-[10px] text-slate-600 font-semibold truncate">
+                      {confirmedSlip.bedTypeName}
+                    </div>
+                  </div>
+                </div>
+
+                {/* WAYFINDING NAVIGATION */}
+                {confirmedSlip.wayfinding && (
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1">
+                    <div className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                      <Navigation className="w-3 h-3 text-teal-600" />
+                      <span>{txt.wayfindingTitle || 'Route Directions to Your Room'}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                      {confirmedSlip.wayfinding}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Patient Info */}
@@ -1419,15 +1791,17 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
               {/* Action Buttons */}
               <div className="flex items-center gap-2 pt-2">
                 <button
+                  type="button"
                   onClick={() => window.print()}
-                  className="flex-1 py-2.5 bg-slate-900 hover:bg-black text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs"
+                  className="flex-1 py-2.5 bg-slate-900 hover:bg-black text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs cursor-pointer transition active:scale-95"
                 >
                   <Printer className="w-4 h-4" />
-                  {txt.printSlip}
+                  <span>{txt.printSlip}</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setConfirmedSlip(null)}
-                  className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl"
+                  className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl cursor-pointer transition"
                 >
                   {txt.closeBtn}
                 </button>
@@ -1435,6 +1809,7 @@ export default function BedBookingSystem({ currentUser, appLang, onOpenNmcSuite,
 
               {onOpenNmcSuite && (
                 <button
+                  type="button"
                   onClick={() => {
                     setConfirmedSlip(null);
                     onOpenNmcSuite();
